@@ -1,0 +1,3563 @@
+<?php
+/**
+ * @file
+ * Main module file for LevelTen Intelligence
+ */
+
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_alter.inc";
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+
+define('INTEL_PLATFORM', 'wp');
+define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
+define('INTEL_L10IAPI_JS_VER', '0.2.1');
+define('INTEL_L10IAPI_VER_MIN', '2.0.0');
+define('INTEL_PAGE_INTENT_DEFAULT', 'i');
+define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
+define('INTEL_TRACK_PAGE_TERMS_DEFAULT', 0);
+define('INTEL_TRACK_PAGE_TERMS_VISITOR_DEFAULT', 0);
+define('INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT', 1);
+define('INTEL_TRACK_PHONECALLS_DEFAULT', 0);
+define('INTEL_TRACK_EMAILCLICKS_DEFAULT', 0);
+define('INTEL_TRACK_REALTIME_DEFAULT', 0);
+
+define('INTEL_HELP_APIVERS', 'http://api.getlevelten.com');
+
+define('INTEL_STATUS_OK', 200);
+define('INTEL_STATUS_OK_NO_CONTENT', 204);
+define('INTEL_STATUS_BAD_REQUEST', 400);
+define('INTEL_STATUS_UNAUTHORIZED', 401);
+define('INTEL_STATUS_FORBIDDEN', 403);
+define('INTEL_STATUS_NOT_FOUND', 404);
+define('INTEL_STATUS_SERVER_ERROR', 500);
+
+// add intel_menu to hook_intel_menu_info
+add_filter('intel_menu_info', 'intel_menu');
+/**
+ *  Implements of hook_menu()
+ */
+function intel_menu($items = array()) {
+  $reports = intel_reports();
+  $api_level = intel_api_level();
+
+  // admin config callbacks
+  $items['admin/config/intel'] = array(
+    'title' => 'Intelligence',
+    'description' => 'Administer Intelligence configuration and associated modules.',
+    'position' => 'right',
+    'weight' => -5,
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer group'),
+    'file' => 'system.admin.inc',
+    'file path' => Intel_Df::drupal_get_path('module', 'system'),
+  );
+  $items['admin/config/intel/settings'] = array(
+    'title' => 'Settings',
+    'description' => 'API, global options, events, page attribute and visitor attribute settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'admin/intel.admin_config.inc',
+    'weight' => -10,
+  );
+  $items['admin/config/intel/settings/general'] = array(
+    'title' => 'General',
+    'description' => 'Basic setup',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $w = 0;
+  $items['admin/config/intel/settings/setup'] = array(
+    'title' => 'Setup',
+    'description' => 'Initial plugin setup',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_setup'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_ACTION,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_setup.inc',
+  );
+  $items['admin/config/intel/settings/scoring'] = array(
+    'title' => 'Scoring',
+    'description' => 'Set objects and scoring',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_scoring'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  /*
+  $items['admin/config/intel/settings/goals'] = array(
+    'title' => 'Goals',
+    'description' => 'Set analytics goals',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_goals'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  */
+  $items['admin/config/intel/settings/intel_event'] = array(
+    'title' => 'Events',
+    'description' => 'Intel events configuration.',
+    'page callback' => 'intel_admin_intel_event_list_page',
+    //'access callback' => 'user_access',
+    'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/page_attribute'] = array(
+    'title' => 'Page attributes',
+    'description' => 'Page attribute configuration.',
+    'page callback' => 'intel_admin_page_attribute_list_page',
+    //'access callback' => 'user_access',
+    'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/visitor_attribute'] = array(
+    'title' => 'Visitor attributes',
+    'description' => 'Visitor attribute configuration.',
+    'page callback' => 'intel_admin_visitor_attribute_list_page',
+    //'access callback' => 'user_access',
+    'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/external_tracking'] = array(
+    'title' => 'External tracking',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_external_tracking'),
+    'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/intel_event/add'] = array(
+    'title' => 'Add event',
+    'page callback' => 'intel_admin_intel_event_add_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_ACTION,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/intel_event/%intel_intel_event/edit'] = array(
+    'title' => 'Edit event',
+    'page callback' => 'intel_admin_intel_event_edit_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/intel_event/%intel_intel_event/delete'] = array(
+    'title' => 'Delete event',
+    'page callback' => 'intel_admin_intel_event_delete_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/visitor_attribute/add'] = array(
+    'title' => 'Add attribute',
+    'page callback' => 'intel_admin_visitor_attribute_add_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_ACTION,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/visitor_attribute/%intel_visitor_attribute/edit'] = array(
+    'title' => 'Visitor attribute',
+    'page callback' => 'intel_admin_visitor_attribute_edit_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/page_attribute/add'] = array(
+    'title' => 'Add attribute',
+    'page callback' => 'intel_admin_page_attribute_add_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_ACTION,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/page_attribute/%intel_page_attribute/edit'] = array(
+    'title' => 'Page attribute',
+    'page callback' => 'intel_admin_page_attribute_edit_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
+  $items['admin/config/intel/sync_visitor_queue'] = array(
+    'title' => 'Sync visitors',
+    'page callback' => 'intel_sync_visitordata_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('update all intel visitors'),
+    'type' => Intel_Df::MENU_LOCAL_ACTION,
+  );
+
+  // phonecall config
+  if (get_option('intel_track_phonecalls', INTEL_TRACK_PHONECALLS_DEFAULT)) {
+    $items['admin/config/intel/settings/phonenumber'] = array(
+      'title' => 'Phone numbers',
+      'description' => 'Intel phone number configuration.',
+      'page callback' => 'intel_admin_phonenumber_list_page',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'weight' => $w++,
+      'file' => 'admin/intel.admin_config.inc',
+    );
+    $items['admin/config/intel/settings/phonenumber/add'] = array(
+      'title' => 'Add phone number',
+      'page callback' => 'intel_admin_phonenumber_add_page',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_ACTION,
+      'file' => 'admin/intel.admin_config.inc',
+    );
+    $items['admin/config/intel/settings/phonenumber/%intel_phonenumber/edit'] = array(
+      'title' => 'Edit phone number',
+      'page callback' => 'intel_admin_phonenumber_edit_page',
+      'page arguments' => array(5),
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_NORMAL_ITEM,
+      'file' => 'admin/intel.admin_config.inc',
+    );
+    $items['admin/config/intel/settings/phonenumber/%intel_phonenumber/delete'] = array(
+      'title' => 'Delete phone number',
+      'page callback' => 'intel_admin_phonenumber_delete_page',
+      'page arguments' => array(5),
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_NORMAL_ITEM,
+      'file' => 'admin/intel.admin_config.inc',
+    );
+  }
+
+  // intel visitor config
+  $items['admin/config/people/intel'] = array(
+    'title' => 'Visitor settings',
+    'description' => 'Configure settings for visitors managed by Intelligence.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_visitor_admin_settings_form'),
+    'access arguments' => array('administer users'),
+    'file' => 'admin/intel.admin_visitor.inc',
+    'weight' => -10,
+  );
+  $items['admin/config/people/intel/settings'] = array(
+    'title' => 'Settings',
+    'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items['node/%node/intel'] = array(
+    'title' => 'Intelligence',
+    'page callback' => 'intel_scorecard_report_page',
+    'page arguments' => array('-', '-', '-', 'node', 1),
+    'access callback' => '_intel_permission_access_content_report',
+    'file' => 'reports/intel.report_scorecard.inc',
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => 1,
+    'context' => Intel_Df::MENU_CONTEXT_PAGE | Intel_Df::MENU_CONTEXT_INLINE,
+  );
+  /*
+  $items['node/%node/intel/scorecard/%intel_path_context/%intel_path_timeframe'] = array(
+  //$items['node/%node/intel/scorecard'] = array(
+    'title' => 'Scorecard',
+    'page arguments' => array('-', 4, 5, 'node', 1),
+    'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+  );
+
+  $w = 0;
+  foreach ($reports AS $category => $defs) {
+    $titles = array(
+      'scorecard' => t('Scorecard'),
+      'trafficsource' => t('Traffic sources'),
+      'visitor' => t('Visitors'),
+    );
+    foreach ($defs AS $slug => $def) {
+      if (($category == 'content') || ($category == 'team')) {
+        continue;
+      }
+      $path_element = $category . '-' . $slug;
+      $title = ' - ' . $def['title'];
+      if ($slug == '-') {
+        $path_element = $category;
+        $title = !empty($titles[$category]) ? $titles[$category] : $category;
+      }
+      $path_element .= '/%intel_path_context/%intel_path_timeframe';
+      $access = !empty($def['access callback']) ? $def['access callback'] : 'user_access';
+      $items['node/%node/intel/' . $path_element] = array(
+        'title' => $title,
+        'description' => !empty($def['description']) ? $def['description'] : '',
+        'page callback' => 'intel_' . $category . '_list_report_page',
+        'page arguments' => array($slug, 4, 5, 'node', 1),
+        'access callback' => $access,
+        'access arguments' => array('view all intel reports'),
+        //'type' => ($slug == '-') ? Intel_Df::MENU_DEFAULT_LOCAL_TASK : Intel_Df::MENU_LOCAL_TASK,
+        'type' => Intel_Df::MENU_LOCAL_TASK,
+        'weight' => $w++,
+        'file' => 'reports/intel.report_' . $category . '_list.inc',
+        'intel_api_access' => !empty($def['intel_api_access']) ? $def['intel_api_access'] : '',
+      );
+    }
+  }
+  */
+
+  if (1 || $api_level == 'pro') {
+
+    $items['visitor/%intel_visitor'] = array(
+      //'title callback' => 'intel_visitor_title',
+      //'title arguments' => array(1),
+      'title' => 'Visitor',
+      'page callback' => 'intel_visitor_page',
+      'page arguments' => array(1),
+      //'access arguments' => array('view intel visitor data'),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('view', 1),
+      'file' => 'admin/intel.admin_visitor.inc',
+    );
+    $items['visitor/%intel_visitor/view'] = array(
+      'title' => 'View',
+      'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -20,
+    );
+    /*
+    $items['visitor/add'] = array(
+      'title' => 'Add an visitor',
+      'page callback' => 'intel_visitor_add',
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('create', 1),
+      'file' => 'admin/intel.admin_visitor.inc',
+    );
+    $items['visitor/%intel_visitor/edit'] = array(
+      'title' => 'Edit',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('intel_visitor_edit_form', 1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('update', 1),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_visitor.inc',
+      'weight' => -19,
+    );
+    $items['visitor/%intel_visitor/delete'] = array(
+      'title' => 'Delete',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('intel_visitor_delete_confirm_form', 1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('delete', 1),
+      'type' => Intel_Df::MENU_CALLBACK,
+      'file' => 'admin/intel.admin_visitor.inc',
+    );
+    */
+
+    $items['visitor/%intel_visitor/resync'] = array(
+      'title' => 'Resync data',
+      'page callback' => 'intel_sync_visitordata_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('update', 1),
+      'type' => Intel_Df::MENU_LOCAL_ACTION,
+    );
+    $items['visitor/%intel_visitor/fullcontact/resync'] = array(
+      'title' => 'Resync data',
+      'page callback' => 'intel_sync_fullcontact_page',
+      'page arguments' => array(1),
+      'access callback' => 'user_access',
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('update', 1),
+      'type' => Intel_Df::MENU_CALLBACK,
+      'file' => 'includes/intel.visitor_sync.inc',
+    );
+    $items['visitor/%intel_visitor/clickstream'] = array(
+      'title' => 'Clickstream',
+      'description' => 'LevelTen insight.',
+      //'page callback' => 'intel_visitor_tab_clickstream',
+      'page callback' => 'intel_visitor_clickstream_report_page',
+      'page arguments' => array('-', 'clickstream', '-', 'intel_visitor', 1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('view', 1),
+      'weight' => -9,
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      //'file' => 'admin/intel.admin_visitor.inc',
+      'file' => 'reports/intel.report_visitor_clickstream.inc',
+      //'intel_api_access' => 'pro',
+    );
+    $items['visitor/%intel_visitor/analytics'] = array(
+      'title' => 'Analytics',
+      'page callback' => 'intel_scorecard_report_page',
+      'page arguments' => array('-', '-', '-', 'intel_visitor', 1),
+      'access callback' => '_intel_permission_access_content_report',
+      'access arguments' => array('view intel visitor data'),
+      'file' => 'reports/intel.report_scorecard.inc',
+      'weight' => -8,
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'context' => Intel_Df::MENU_CONTEXT_PAGE | Intel_Df::MENU_CONTEXT_INLINE,
+      'intel_api_access' => 'pro',
+    );
+    $items['visitor/%intel_visitor/analytics/scorecard'] = array(
+      'title' => 'Scorecard',
+      'weight' => -8,
+      'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+      'intel_api_access' => 'pro',
+    );
+
+    /*
+    $w = 0;
+    foreach ($reports AS $category => $defs) {
+      $titles = array(
+        'trafficsource' => t('Traffic sources'),
+        'content' => t('Content'),
+      );
+      foreach ($defs AS $slug => $def) {
+        if (($category == 'visitor') || ($category == 'team')) {
+          continue;
+        }
+        $path_element = $category . '-' . $slug;
+        $title = ' - ' . $def['title'];
+        if ($slug == '-') {
+          $path_element = $category;
+          $title = !empty($titles[$category]) ? $titles[$category] : $category;
+        }
+        $access = !empty($def['access callback']) ? $def['access callback'] : 'user_access';
+        $items['visitor/%intel_visitor/analytics/' . $path_element] = array(
+          'title' => $title,
+          'description' => !empty($def['description']) ? $def['description'] : '',
+          'page callback' => 'intel_' . $category . '_list_report_page',
+          'page arguments' => array($slug, 'visitor', 1),
+          'access callback' => $access,
+          'access arguments' => array('view intel visitor data'),
+          //'type' => ($slug == '-') ? Intel_Df::MENU_DEFAULT_LOCAL_TASK : Intel_Df::MENU_LOCAL_TASK,
+          'type' => Intel_Df::MENU_LOCAL_TASK,
+          'weight' => $w++,
+          'file' => 'reports/intel.report_' . $category . '_list.inc',
+          'intel_api_access' => !empty($def['intel_api_access']) ? $def['intel_api_access'] : '',
+        );
+      }
+    }
+    */
+
+    $items['visitor/%intel_user_by_vid/intel/launch'] = array(
+      'title' => 'User profile',
+      'description' => 'View full user profile and categories.',
+      'page callback' => 'intel_goto_user',
+      'page arguments' => array(1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('view', 1),
+      'type' => Intel_Df::MENU_LOCAL_ACTION,
+      //'file' => 'people/intel.people.inc',
+    );
+
+    $items['user/%intel_visitor_by_uid/intel_launch'] = array(
+      'title' => 'Intel profile',
+      'description' => 'View full visitor Intelligence profile.',
+      'page callback' => 'intel_goto_visitor',
+      'page arguments' => array(1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('view', 1),
+      'type' => Intel_Df::MENU_LOCAL_ACTION,
+    );
+  }
+
+  if (1 || $api_level == 'pro') {
+    $items['admin/people/contacts'] = array(
+      'title' => 'Contacts',
+      'description' => 'Information about visitors.',
+      'page callback' => 'intel_admin_people_contacts',
+      //'page arguments' => array(4),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('list'),
+      'position' => 'left',
+      'weight' => -4,
+      //'type' => Intel_Df::MENU_NORMAL_ITEM,
+      'file' => 'admin/intel.admin_visitor.inc',
+      'intel_api_access' => 'pro',
+    );
+    $items['admin/people/visitors'] = array(
+      'title' => 'Visitors',
+      'description' => 'Information about visitors.',
+      'page callback' => 'intel_admin_people_visitors',
+      //'page arguments' => array(4),
+      'access callback' => '_intel_user_access_extended',
+      'access arguments' => array('view intel visitor data'),
+      'type' => Intel_Df::MENU_NORMAL_ITEM,
+      'file' => 'admin/intel.admin_visitor.inc',
+      'intel_api_access' => 'pro',
+    );
+
+    $items['admin/people/submissions'] = array(
+      'title' => 'Form submissions',
+      'description' => 'Information about visitors.',
+      'page callback' => 'intel_admin_people_submissions',
+      //'page arguments' => array(4),
+      'access callback' => 'intel_submission_access',
+      'access arguments' => array('list'),
+      'type' => Intel_Df::MENU_NORMAL_ITEM,
+      'file' => 'admin/intel.admin_submission.inc',
+      'intel_api_access' => 'pro',
+    );
+
+    $items['submission/%intel_submission'] = array(
+      'title' => 'Submission',
+      'description' => 'Information about visitors.',
+      'page callback' => 'intel_submission_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_submission_access',
+      'access arguments' => array('view', 1),
+      //'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_submission.inc',
+    );
+
+    if (get_option('intel_track_phonecalls', INTEL_TRACK_PHONECALLS_DEFAULT)) {
+      $items['phonecall/%'] = array(
+        'title' => 'Phone call',
+        'description' => 'Information about a phone call.',
+        'page callback' => 'intel_phonecall_page',
+        'page arguments' => array(1),
+        'access callback' => 'intel_phonecall_access',
+        'access arguments' => array('view', 1),
+        //'type' => Intel_Df::MENU_LOCAL_TASK,
+        'file' => 'admin/intel.admin_phonecall.inc',
+      );
+      $items['admin/people/phonecalls'] = array(
+        'title' => 'Phone calls',
+        'description' => 'Inbound phone calls.',
+        'page callback' => 'intel_admin_people_phonecalls',
+        //'page arguments' => array(4),
+        'access callback' => 'intel_phonecall_access',
+        'access arguments' => array('list'),
+        'type' => Intel_Df::MENU_NORMAL_ITEM,
+        'file' => 'admin/intel.admin_phonecall.inc',
+      );
+    }
+
+    if (get_option('intel_track_emailclicks', INTEL_TRACK_EMAILCLICKS_DEFAULT)) {
+      $items['emailclick/%'] = array(
+        'title' => 'Email click',
+        'description' => 'Information about a pn email click.',
+        'page callback' => 'intel_emailclick_page',
+        'page arguments' => array(1),
+        'access callback' => 'intel_emailclick_access',
+        'access arguments' => array('view', 1),
+        //'type' => Intel_Df::MENU_LOCAL_TASK,
+        'file' => 'admin/intel.admin_emailclick.inc',
+      );
+      $items['admin/people/emailclicks'] = array(
+        'title' => 'Email clicks',
+        'description' => 'Clicks from emails.',
+        'page callback' => 'intel_admin_people_emailclicks',
+        //'page arguments' => array(4),
+        'access callback' => 'intel_emailclick_access',
+        'access arguments' => array('list'),
+        'type' => Intel_Df::MENU_NORMAL_ITEM,
+        'file' => 'admin/intel.admin_emailclick.inc',
+      );
+    }
+  }
+
+  // admin reports callbacks
+  $items['admin/reports/intel'] = array(
+    'title' => 'Intelligence',
+    'description' => 'Analytics reports by LevelTen Intelligence.',
+    'page callback' => 'intel_dashboard_report_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'reports/intel.report_dashboard.inc',
+  );
+
+  $w = 0;
+  $items['admin/reports/intel/dashboard'] = array(
+    'title' => 'Dashboard',
+    'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+    'weight' => $w++,
+  );
+  $items['admin/reports/intel/scorecard'] = array(
+    'title' => 'Scorecard',
+    'page callback' => 'intel_scorecard_report_page',
+    'page arguments' => array('-'),
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'tab_root' => 'admin/reports/intel',
+    'weight' => $w++,
+    'file' => 'reports/intel.report_scorecard.inc',
+  );
+  $items['admin/reports/intel/trafficsource'] = array(
+    'title' => 'Sources',
+    'page callback' => 'intel_trafficsource_list_report_page',
+    'page arguments' => array('-'),
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'tab_root' => 'admin/reports/intel',
+    'weight' => $w++,
+    'file' => 'reports/intel.report_trafficsource_list.inc',
+  );
+  $items['admin/reports/intel/content'] = array(
+    'title' => 'Content',
+    'page callback' => 'intel_content_list_report_page',
+    'page arguments' => array('-'),
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'tab_root' => 'admin/reports/intel',
+    'weight' => $w++,
+    'file' => 'reports/intel.report_content_list.inc',
+  );
+  $items['admin/reports/intel/event'] = array(
+    //'title' => 'Engagement',
+    'title' => 'Events',
+    'page callback' => 'intel_event_list_report_page',
+    'page arguments' => array('-'),
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'reports/intel.report_event_list.inc',
+  );
+  /*
+  $items['admin/reports/intel/conversion'] = array(
+    'title' => 'Conversion',
+    'page callback' => 'intel_landingpage_list_report_page',
+    'page arguments' => array(4),
+    'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'tab_root' => 'admin/reports/intel',
+    'weight' => $w++,
+    'file' => 'reports/intel.report_landingpage_list.inc',
+  );
+  */
+
+  $items['admin/reports/intel/visitor'] = array(
+    'title' => 'Visitors',
+    'page callback' => 'intel_visitor_list_report_page',
+    'page arguments' => array('-'),
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'tab_root' => 'admin/reports/intel',
+    'weight' => $w++,
+    'file' => 'reports/intel.report_visitor_list.inc',
+    'intel_api_access' => 'pro',
+  );
+  /*
+  $items['admin/reports/intel/team'] = array(
+    'title' => 'Team',
+    'page callback' => 'intel_author_list_report_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'reports/intel.report_author_list.inc',
+  );
+  */
+
+  $items['admin/reports/intel/ga_explorer'] = array(
+    'title' => 'Google Analytics Explorer',
+    'description' => 'Add a new cta block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_ga_explorer_report'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'weight' => $w++,
+    'file' => 'reports/intel.ga_explorer_report.inc',
+  );
+
+  // add sub reports
+  foreach ($reports AS $category => $defs) {
+    $w = 0;
+    foreach ($defs AS $slug => $def) {
+      $access = isset($def['access callback']) ? $def['access callback'] : 'user_access';
+      $items["admin/reports/intel/$category/$slug"] = array(
+        'title' => $def['title'],
+        'description' => !empty($def['description']) ? $def['description'] : '',
+        'page callback' => !empty($def['page callback']) ? $def['page callback'] : 'intel_' . $category . '_list_report_page',
+        'page arguments' => array('-', 4),
+        'access callback' => $access,
+        'access arguments' => array('view all intel reports'),
+        'type' => isset($def['type']) ? $def['type'] : (($slug == '-') ? Intel_Df::MENU_DEFAULT_LOCAL_TASK : Intel_Df::MENU_LOCAL_TASK),
+        //'tab_parent' => "admin/reports/intel/$category/%intel_path_report_args",
+        'weight' => $w++,
+        'file' => !empty($def['file']) ? $def['file'] : 'reports/intel.report_' . $category . '_list.inc',
+        'intel_api_access' => !empty($def['intel_api_access']) ? $def['intel_api_access'] : '',
+      );
+    }
+  }
+
+  $items['intel/api'] = array(
+    'title' => '',
+    'page callback' => 'intel_ajax',
+    'access callback' => TRUE,
+    //'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'includes/intel.ajax.inc',
+  );
+
+  // admin enhancements callbacks
+
+  $items['intel/admin_content_alter_js'] = array(
+    'title' => '',
+    'page callback' => 'intel_admin_content_alter_js',
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'reports/intel.admin_content_alter.inc',
+  );
+  $items['intel/admin_content_cta_alter_js'] = array(
+    'title' => '',
+    'page callback' => 'intel_admin_content_cta_alter_js',
+    'access callback' => 'user_access',
+    'access arguments' => array('view all intel reports'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'reports/intel.admin_content_cta_alter.inc',
+  );
+
+  // util callbacks
+
+  $items['admin/util'] = array(
+    'title' => 'Utilities',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/reset_site'] = array(
+    'title' => 'Reset site',
+    //'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_reset_site',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/ga_explorer'] = array(
+    'title' => 'GA Explorer',
+    'description' => 'Add a new cta block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_ga_explorer_report'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'reports/intel.ga_explorer_report.inc',
+  );
+
+  $items['admin/util/init_options'] = array(
+    'title' => 'Init Config',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_init_options',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/visitordata'] = array(
+    'title' => 'SEO Tools Util',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_visitordata',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+
+  $items['admin/util/apivisitordata'] = array(
+    'title' => 'SEO Tools Util',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_apivisitordata',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+
+  $items['admin/util/sync_visitordata'] = array(
+    'title' => 'Utility: sync visitor data',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_sync_visitordata',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+
+  $items['admin/util/clear_test_visitors'] = array(
+    'title' => 'Utility: Clear test visitors',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_clear_test_visitors',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+
+
+
+  $items['admin/util/test'] = array(
+    'title' => 'Test',
+    //'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_test',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/test/url_parsing'] = array(
+    'title' => 'URL parsing',
+    //'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_test_url_parsing',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/temp'] = array(
+    'title' => 'Temp',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_temp',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/temp_form'] = array(
+    'title' => 'Temp Form',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_util_temp_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+  return $items;
+}
+
+function intel_get_path_to_arg_base() {
+  if (arg(0) != 'admin') {
+    return 3;
+  }
+  return 4;
+}
+
+function intel_path_report_args_to_arg($arg) {
+  $parg = arg(5);
+  if (empty($arg) && (arg(0) == 'admin') && !empty($parg)) {
+    $arg = $parg;
+  }
+  return !empty($arg) ? $arg : '-';
+}
+
+function intel_path_report_subtype_to_arg($arg) {
+  $parg = arg(4);
+  if (empty($arg) && (arg(0) == 'admin') && !empty($parg)) {
+    $arg = $parg;
+  }
+  return !empty($arg) ? $arg : '-';
+}
+
+
+function intel_path_context_to_arg($arg) {
+  $parg = arg(5);
+  if (empty($arg) && (arg(0) == 'admin') && !empty($parg)) {
+    $arg = $parg;
+  }
+  return !empty($arg) ? $arg : '-';
+}
+
+function intel_path_timeframe_to_arg($arg) {
+  $parg = arg(6);
+  if (empty($arg) && (arg(0) == 'admin') && !empty($parg)) {
+    $arg = $parg;
+  }
+  return !empty($arg) ? $arg : '-';
+}
+
+
+function intel_path_filter_type_to_arg($arg) {
+  $parg = arg(7);
+  if (empty($arg) && (arg(0) == 'admin') && !empty($parg)) {
+    $arg = $parg;
+  }
+  return !empty($arg) ? $arg : '-';
+}
+
+function intel_path_filter_value_to_arg($arg) {
+  if (empty($arg) && (arg(0) == 'admin') && !empty($parg)) {
+    $arg = $parg;
+  }
+  return !empty($arg) ? $arg : '-';
+}
+
+// TODO: this last arg breaks, maybe Drupal has limit to depth
+function intel_path_subsite_to_arg($arg) {
+  $parg = arg(9);
+  if (empty($arg) && (arg(0) == 'admin') && !empty($parg)) {
+    $arg = $parg;
+  }
+  return !empty($arg) ? $arg : '-';
+}
+
+/**
+ * Defines available intel reports
+ */
+function intel_reports() {
+
+  $reports['content'] = array();
+  $reports['content']['-'] = array(
+    'key' => 'default.top.combined',
+    'title' => Intel_Df::t('Top pages'),
+    'default' => 1,
+  );
+  $reports['content']['_trend'] = array(
+    'key' => 'default.trend.combined',
+    'title' => Intel_Df::t('Trending pages'),
+    'access callback' => '_intel_user_access_extended',
+    //'page callback' => 'intel_content_trend_report_page',
+    //'file' => 'reports/intel.report_content_trend.inc'
+  );
+  $reports['content']['entrances'] = array(
+    'key' => 'default.top.entrance',
+    'title' => Intel_Df::t('Entrance pages'),
+  );
+  /*
+  $reports['content']['attraction'] = array(
+    'key' => 'page_attribute:i-t.top.entrance',
+    'title' => t('Attraction pages'),
+    'access callback' => '_intel_user_access_extended',
+  );
+  */
+  $reports['content']['seo'] = array(
+    'key' => 'seo.top.entrance',
+    'title' => Intel_Df::t('Search attractors'),
+  );
+  $reports['content']['social'] = array(
+    'key' => 'social.top.pageview',
+    'title' => Intel_Df::t('Social attractors'),
+  );
+  $reports['content']['engagement'] = array(
+    'key' => 'engagement.top.pageview',
+    'title' => Intel_Df::t('Engagement'),
+  );
+  $pa_infos = intel_get_page_attribute_info();
+  foreach ($pa_infos AS $key => $info) {
+    //if ($info['type'] == 'item' || $info['type'] == 'list') {
+      $reports['content']['pa-' . $key] = array(
+        'key' => 'page_attribute:' . $key . '.top.entrance',
+        'title' => Intel_Df::t('Segment') . ': ' . ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
+        'page callback' => 'intel_page_attribute_list_report_page',
+        //'intel_api_access' => 'basic',
+        'file' => 'reports/intel.report_page_attribute_list.inc'
+      );
+    if (isset($info['access callback'])) {
+      $reports['content']['pa-' . $key]['access callback'] = $info['access callback'];
+    }
+    //}
+  }
+
+  $reports['event'] = array();
+  $reports['event']['-'] = array(
+    'key' => 'default.top.pageview',
+    'title' => Intel_Df::t('All events'),
+    'default' => 1,
+  );
+  $reports['event']['nonvalued'] = array(
+    'key' => 'default.top.pageview.nonvalued',
+    'title' => Intel_Df::t('Standard events'),
+  );
+  $reports['event']['valued'] = array(
+    'key' => 'default.top.pageview.valued',
+    'title' => Intel_Df::t('Valued events'),
+  );
+  $reports['event']['goal'] = array(
+    'key' => 'default.top.pageview.goal',
+    'title' => Intel_Df::t('Goal events'),
+  );
+  $reports['event']['entrance_valued'] = array(
+    'key' => 'default.top.entrance.valued',
+    'title' => Intel_Df::t('Valued events (entrance)'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+  $reports['event']['entrance_goal'] = array(
+    'key' => 'default.top.entrance.goal',
+    'title' => Intel_Df::t('Goal events (entrance)'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+  $reports['event']['pageview_valued'] = array(
+    'key' => 'default.top.pageview.valued',
+    'title' => Intel_Df::t('Valued events (on page)'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+  $reports['event']['pageview_goal'] = array(
+    'key' => 'default.top.pageview.goal',
+    'title' => Intel_Df::t('Goal events (on page)'),
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+
+  $event_infos = intel_get_intel_event_info();
+  foreach ($event_infos AS $key => $info) {
+    $conversion_events = array(
+      'landingpage_view',
+      'landingpage_conversion',
+      'phonecall',
+    );
+    //if (strpos($key, 'submission_goal_') === FALSE && strpos($key, 'phonecall_goal_') === FALSE) {
+    if (empty($info['ga_id']) || in_array($key, $conversion_events)) {
+      $reports['event']['ec-' . $key] = array(
+        'key' => 'event:' . $key . '.top.pageview',
+        'title' => $info['category'],
+        //'title' => ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
+        'page callback' => 'intel_event_list_report_page',
+        'file' => 'reports/intel.report_event_list.inc'
+      );
+    }
+  }
+  /*
+  $reports['content']['pa'] = array(
+    'key' => 'default.top.combined',
+    'title' => t('Attraction pages'),
+    'access callback' => '_intel_user_access_extended',
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+  $reports['content']['pa-ct'] = array(
+    'key' => 'page_attribute:ct.top.entrance',
+    'title' => t('Content types'),
+    'page callback' => 'intel_page_attribute_list_report_page',
+    'file' => 'reports/intel.report_page_attribute_list.inc'
+  );
+  $reports['content']['pa-ct-p'] = array(
+    'key' => 'page_attribute:i-t.top.entrance',
+    'title' => t('Attraction pages'),
+    'access callback' => '_intel_user_access_extended',
+    'type' => Intel_Df::MENU_CALLBACK,
+  );
+  $reports['content']['pa-i'] = array(
+    'key' => 'page_attribute:i.top.entrance',
+    'title' => Intel_Df::t('Page intent'),
+    'page callback' => 'intel_page_attribute_list_report_page',
+    'file' => 'reports/intel.report_page_attribute_list.inc'
+  );
+  $reports['content']['pa-t'] = array(
+    'key' => 'page_attribute:t.top.entrance',
+    'title' => Intel_Df::t('Terms'),
+    'page callback' => 'intel_page_attribute_list_report_page',
+    'file' => 'reports/intel.report_page_attribute_list.inc'
+  );
+  $reports['content']['pa-j'] = array(
+    'key' => 'page_attribute:j.top.entrance',
+    'title' => Intel_Df::t('Subjects'),
+    'page callback' => 'intel_page_attribute_list_report_page',
+    'file' => 'reports/intel.report_page_attribute_list.inc'
+  );
+  $reports['content']['pa-a'] = array(
+    'key' => 'page_attribute:a.top.entrance',
+    'title' => Intel_Df::t('Authors'),
+    'page callback' => 'intel_page_attribute_list_report_page',
+    'file' => 'reports/intel.report_page_attribute_list.inc'
+  );
+  */
+  $reports['conversion']['-'] = array(
+    'key' => 'landingpage.top',
+    'title' => Intel_Df::t('Top pages'),
+    'default' => 1,
+  );
+
+  $reports['trafficsource'] = array();
+  $reports['trafficsource']['-'] = array(
+    'key' => 'trafficcategory.top',
+    'title' => Intel_Df::t('Categories'),
+    'default' => 1,
+  );
+  $reports['trafficsource']['medium'] = array(
+    'key' => 'medium.top',
+    'title' => Intel_Df::t('Mediums'),
+  );
+  $reports['trafficsource']['source'] = array(
+    'key' => 'source.top',
+    'title' => Intel_Df::t('Sources'),
+  );
+  $reports['trafficsource']['searchengine'] = array(
+    'key' => 'searchEngine.top',
+    'title' => Intel_Df::t('Search engines'),
+  );
+  $reports['trafficsource']['searchkeyword'] = array(
+    'key' => 'searchKeyword.top',
+    'title' => Intel_Df::t('Search keywords'),
+  );
+  $reports['trafficsource']['keyword'] = array(
+    'key' => 'keyword.top',
+    'title' => Intel_Df::t('Keywords'),
+  );
+  $reports['trafficsource']['socialnetwork'] = array(
+    'key' => 'socialNetwork.top',
+    'title' => Intel_Df::t('Social networks'),
+  );
+  $reports['trafficsource']['referralhostname'] = array(
+    'key' => 'referralHostname.top',
+    'title' => Intel_Df::t('Referral domains'),
+  );
+  $reports['trafficsource']['referralhostpath'] = array(
+    'key' => 'referralHostpath.top',
+    'title' => Intel_Df::t('Referral pages'),
+  );
+
+  $reports['trafficsource']['campaign'] = array(
+    'key' => 'campaign.top',
+    'title' => Intel_Df::t('Campaigns'),
+  );
+  /*
+  $reports['team'] = array();
+  $reports['team']['-'] = array(
+    'key' => 'author.top',
+    'title' => Intel_Df::t('Authors'),
+    'default' => 1,
+  );
+  */
+  $reports['visitor'] = array();
+  $reports['visitor']['-'] = array(
+    'key' => 'visitor.top',
+    'title' => Intel_Df::t('Top visitors'),
+    'default' => 1,
+    //'intel_api_access' => 'pro',
+  );
+  $reports['visitor']['recentvisits'] = array(
+    'key' => 'visit.recent',
+    'timeframe' => 'l30dfn',
+    'title' => Intel_Df::t('Recent visits'),
+    //'intel_api_access' => 'pro',
+  );
+  $reports['visitor']['geo'] = array(
+    'key' => 'address.top',
+    'title' => Intel_Df::t('Geo'),
+    'page callback' => 'intel_audience_list_report_page',
+    'file' => 'reports/intel.report_audience_list.inc',
+  );
+  $reports['visitor']['clickstream'] = array(
+    'key' => 'visitor.clickstream',
+    'timeframe' => 'l90dfn',
+    'title' => Intel_Df::t('Clickstream'),
+    'page callback' => 'intel_visitor_clickstream_report_page',
+    'file' => 'reports/intel.report_visitor_clickstream.inc',
+    'type' => Intel_Df::MENU_CALLBACK,
+    //'intel_api_access' => 'pro',
+  );
+
+  $reports = apply_filters('intel_reports_alter', $reports);
+
+  return $reports;
+}
+
+function intel_goto_visitor($visitor) {
+  drupal_goto($visitor->uri());
+}
+
+function intel_goto_user($account) {
+  drupal_goto('user/' . $account->uid);
+}
+
+/**
+ * Determines if the api access level is adequate to access the
+ * data needed to build the current page/path (e.g. a report)
+ */
+function intel_api_access() {
+  $access = &Intel_Df::drupal_static(__FUNCTION__);
+  if (isset($access)) {
+    return $access;
+  }
+  // TODO WP
+  $access = TRUE;
+  return $access;
+  // end TODO WP
+  $item = menu_get_item();
+  $path = $item['path'];
+  $items = intel_menu();
+  $access = TRUE;
+  if (!isset($items[$path])) {
+    return $access;
+  }
+  $item = $items[$path];
+  if (empty($item['intel_api_access']) || ($item['intel_api_access'] == 'free')) {
+    return $access;
+  }
+
+  $api_level = intel_api_level();
+  if ($api_level == 'pro') {
+    return $access;
+  }
+  if (($api_level == 'basic') && ($item['intel_api_access'] != 'pro')) {
+    return $access;
+  }
+  return FALSE;
+}
+
+function intel_api_level() {
+  $api_level = get_option('intel_api_level', '');
+  return $api_level;
+}
+
+/**
+ * Formats an error message if api access level is inadequate
+ * @param $vars
+ *   array of options: currently not used
+ */
+function intel_api_access_error($vars = array()) {
+  $msg = '';
+  if (isset($vars['message'])) {
+    $msg = $vars['message'];
+  }
+  else {
+    $object_name = isset($vars['object_name']) ? $vars['object_name'] : Intel_Df::t('report');
+    $msg = Intel_Df::t('The API version associated with this property does not have access to this @object_name.',
+      array(
+        '@object_name' => $object_name,
+      )
+    );
+  }
+
+  $msg .= ' ' . l(t('Learn more about API versions'), INTEL_HELP_APIVERS, array('attributes' => array('target' => '_blank'))) . '.';
+  drupal_set_message($msg, 'warning');
+  return '';
+}
+
+/**
+ * Implements hook_admin_paths()
+ */
+function intel_admin_paths() {
+  $paths = array(
+    //'node/*/analytics' => 1,
+    //'node/*/analytics/*' => 1,
+    'node/*/intel' => 1,
+    'node/*/intel/*' => 1,
+    'visitor/*' => 1,
+    'submission/*' => 1,
+    'phonecall/*' => 1,
+    'emailclick/*' => 1,
+  );
+  return $paths;
+}
+
+/**
+ * Implements of hook_perm().
+ */
+function intel_permission() {
+  $permissions = array();
+  $permissions['admin intel'] = array(
+    'title' => Intel_Df::t('Administer Intelligence'),
+    'description' => Intel_Df::t('Enables user to configure module settings.'),
+  );
+  $permissions['view all intel reports'] = array(
+    'title' => Intel_Df::t('View all Intelligence reports'),
+    'description' => Intel_Df::t('Grants access to all reports.'),
+    'roles' => array('editor', 'author'),
+  );
+  $permissions['view own intel reports'] = array(
+    'title' => Intel_Df::t('View own Intelligence reports'),
+    'description' => Intel_Df::t('Grants access to content reports on nodes that a user has authored.'),
+    'roles' => array('editor', 'author'),
+  );
+  $permissions['view all intel visitors'] = array(
+    'title' => Intel_Df::t('View all visitors'),
+    'description' => Intel_Df::t('Grants access to visitor information and reports.'),
+    'roles' => array('editor', 'author'),
+  );
+  $permissions['update all intel visitors'] = array(
+    'title' => Intel_Df::t('Edit any visitor'),
+    'description' => Intel_Df::t('Grants access to edit visitor information.'),
+  );
+  $permissions['delete all intel visitors'] = array(
+    'title' => Intel_Df::t('Delete any visitor'),
+    'description' => Intel_Df::t('Grants access to delete visitors.'),
+  );
+  $permissions['view all intel submissions'] = array(
+    'title' => Intel_Df::t('View submissions'),
+    'description' => Intel_Df::t('Grants access to view submissions.'),
+    'roles' => array('editor', 'author'),
+  );
+  $permissions['view all intel phonecalls'] = array(
+    'title' => Intel_Df::t('View phonecalls'),
+    'description' => Intel_Df::t('Grants access to view phonecalls.'),
+    'roles' => array('editor', 'author'),
+  );
+  $permissions['view all intel emailclicks'] = array(
+    'title' => Intel_Df::t('View emailclicks'),
+    'description' => Intel_Df::t('Grants access to view emailclicks.'),
+    'roles' => array('editor', 'author'),
+  );
+  return $permissions;
+}
+
+function intel_visitor_access($op, $visitor = NULL, $account = NULL) {
+  $account = isset($account) ? $account : wp_get_current_user();
+
+  $general_access = Intel_Df::user_access('view all intel visitors', $account);
+  //$general_access = Intel_Df::user_access('view all intel visitors');
+
+  $module_access = FALSE;
+  //$module_access = count(array_filter(module_invoke_all('intel_visitor_access', $visitor, $op, $account))) > 0;
+
+  switch ($op) {
+    case 'view':
+      return $module_access || $general_access;
+    case 'create':
+    case 'update':
+      return $module_access || ($general_access && Intel_Df::user_access('update all intel visitors', $account));
+    case 'delete':
+      return $module_access || ($general_access && Intel_Df::user_access('delete all intel visitors', $account));
+    case 'list':
+      return $module_access || $general_access;
+  }
+}
+
+function intel_submission_access($op, $submission = NULL, $account = NULL) {
+
+  $account = isset($account) ? $account : wp_get_current_user();
+
+  $general_access = Intel_Df::user_access('view all intel submissions', $account);
+
+  $module_access = FALSE;
+  //$module_access = count(array_filter(module_invoke_all('intel_submission_access', $submission, $op, $account))) > 0;
+
+  switch ($op) {
+    case 'view':
+      return $module_access || $general_access;
+    case 'list':
+      return $module_access || $general_access;
+  }
+}
+
+function intel_phonecall_access($op, $phonecall = NULL, $account = NULL) {
+  $account = isset($account) ? $account : wp_get_current_user();
+
+  $general_access = Intel_Df::user_access('view all intel phonecalls', $account);
+
+  $module_access = count(array_filter(module_invoke_all('intel_phonecall_access', $phonecall, $op, $account))) > 0;
+
+  switch ($op) {
+    case 'view':
+      return $module_access || $general_access;
+    case 'list':
+      return $module_access || $general_access;
+  }
+}
+
+function intel_emailclick_access($op, $emailclick = NULL, $account = NULL) {
+  global $user;
+  $account = isset($account) ? $account : $user;
+
+  $general_access = Intel_Df::user_access('view all intel emailclicks', $account);
+
+  $module_access = count(array_filter(module_invoke_all('intel_emailclick_access', $emailclick, $op, $account))) > 0;
+
+  switch ($op) {
+    case 'view':
+      return $module_access || $general_access;
+    case 'list':
+      return $module_access || $general_access;
+  }
+}
+
+/**
+ * Permission function to determine access to report access for owned/authored
+ * nodes
+ */
+function _intel_permission_access_content_report() {
+  global $user;
+
+  if (Intel_Df::user_access('view all intel reports')) {
+    return TRUE;
+  }
+  if (Intel_Df::user_access('view own intel reports')) {
+    $node = menu_get_object();
+    if (isset($node->uid) && ($user->uid == $node->uid)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+function _intel_user_access_extended($permissions) {
+  if (!get_option('intel_extended_mode', 0)) {
+    return FALSE;
+  }
+  if (!is_array($permissions)) {
+    $permissions = array($permissions);
+  }
+  foreach ($permissions AS $perm) {
+    if (Intel_Df::user_access($perm)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+function intel_get_library_path() {
+  $lib_path = intel()->libraries_get_path('LevelTen');
+  if (!$lib_path) {
+    return FALSE;
+  }
+  return $lib_path . "intel/";
+}
+
+function intel_include_library_file($file_name) {
+  $included = &Intel_Df::drupal_static(__FUNCTION__);
+  if (!isset($included)) {
+    $included = array();
+  }
+  if (!empty($included[$file_name])) {
+    return TRUE;
+  }
+  if(!$lib_path = intel_get_library_path()) {
+    return FALSE;
+  }
+  $req_path = $lib_path . "/" . $file_name;
+  if (!$lib_path || (!file_exists($req_path))) {
+    $msg = Intel_Df::t('LevelTen Intelligence library file @file not found!',
+      array(
+        '@file' => $req_path,
+      ));
+    $msg .= ' ' . Intel_Df::t('Download library from the !link and place it in the libraries directory following the pattern [your libraries dir]/LevelTen/Intel/intel.info.yml (typically: sites/all/libraries/LevelTen/Intel/intel.info.yml).',
+        array(
+          '!link' => Intel_Df::l(Intel_Df::t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
+          '@file_name' => $file_name,
+        )
+      );
+    Intel_Df::drupal_set_message($msg, 'error');
+  }
+  else {
+    require_once $req_path;
+    $included[$file_name] = 1;
+    return $req_path;
+  }
+  return FALSE;
+}
+
+function intel_verify_library(&$message = '') {
+  if (!$lib_path = intel_get_library_path()) {
+    $message = Intel_Df::t('LevelTen Intelligence library not found!');
+    $message .= ' ' . Intel_Df::t('Download the latest library version from the !link and place it in the libraries directory following the pattern [your libraries dir]/LevelTen/Intel/intel.info.yml (typically: sites/all/libraries/LevelTen/Intel/intel.info.yml).',
+        array(
+          '!link' => l( t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
+        )
+      );
+    return FALSE;
+  }
+  $file_path = $lib_path . "/intel.info.yml";
+  if (!file_exists($file_path)) {
+    $message = Intel_Df::t('LevelTen Intelligence library intel.info.yml file not found!');
+    $message .= ' ' . Intel_Df::t('Download the latest library version from the !link and place it in the libraries directory following the pattern [your libraries dir]/LevelTen/Intel/intel.info.yml (typically: sites/all/libraries/LevelTen/Intel/intel.info.yml).',
+        array(
+          '!link' => Intel_Df::l( Intel_Df::t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
+        )
+      );
+    return FALSE;
+  }
+
+  $file = file_get_contents($file_path);
+  $info = explode(PHP_EOL, $file);
+  $ver = '';
+  foreach ($info AS $line) {
+    $e = explode(':', $line);
+    if ($e[0] == 'version') {
+      $ver =  trim($e[1]);
+      break;
+    }
+  }
+  if ($ver < INTEL_L10IAPI_VER_MIN) {
+    $message = Intel_Df::t('LevelTen Intelligence library is out of date. Current installed version is @cur_ver. Minimum version is @min_ver',
+      array(
+        '@cur_ver' => ($ver) ? $ver : Intel_Df::t('unknown'),
+        '@min_ver' => INTEL_L10IAPI_VER_MIN,
+      )
+    );
+    $message .= ' ' . Intel_Df::t('Download the latest library version from the !link and place it in the libraries directory following the pattern [your libraries dir]/LevelTen/Intel/intel.info.yml',
+        array(
+          '!link' => l( t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
+        )
+      );
+    return FALSE;
+  }
+
+  return $lib_path;
+}
+
+function intel_verify_apikey(&$message = '', &$property = array(), $options = array()) {
+  if (!intel_verify_library($message)) {
+    return FALSE;
+  }
+
+  $tid = isset($options['tid']) ? $options['tid'] : get_option('intel_ga_tid', '');
+  if (!$tid) {
+    $message = Intel_Df::t('Tracking id is not set.');
+    return FALSE;
+  }
+  $apikey = isset($options['apikey']) ? $options['apikey'] : get_option('intel_apikey', '');
+  if (!$apikey) {
+    $message = Intel_Df::t('API key is not set');
+    return FALSE;
+  }
+  intel_include_library_file('class.apiclient.php');
+  $apiUrl = get_option('intel_l10iapi_url', '');
+  $api_params = get_option('intel_l10iapi_custom_params', array());
+  $apiClientProps = array(
+    'apiUrl' => ($apiUrl ? $apiUrl : INTEL_L10IAPI_URL) . '/',
+    'apiConnector' => get_option('intel_l10iapi_connector', ''),
+    'apiParams' => $api_params,
+  );
+  $apiclient = new \LevelTen\Intel\ApiClient($apiClientProps);
+  $ret = '';
+  $params = isset($options['params']) ? $options['params'] : array();
+  $params['tid'] = $tid;
+  $data = array(
+    'apikey' => $apikey,
+  );
+
+  try {
+    $ret = $apiclient->getJSON('property/validate', $params, $data);
+  }
+  catch (Exception $e) {
+    $message = $e->getMessage();
+  }
+  if (!empty($ret['property'])) {
+    $property = (array) $ret['property'];
+    $api_level = $property['level'];
+    update_option('intel_api_level', $api_level);
+    return $api_level;
+  }
+  else {
+    $message = Intel_Df::t('API key invalid.') . ' ' . $message;
+    return FALSE;
+  }
+}
+
+add_filter('intel_entity_info', 'intel_entity_info');
+/**
+ * Implements hook_entity_info().
+ *
+ * This is the fundamental description of the entity.
+ *
+ * It provides a single entity with a single bundle and without revision
+ * support.
+ */
+function intel_entity_info($info = array()) {
+  $info['intel_visitor'] = array(
+    // A human readable label to identify our entity.
+    'label' => Intel_Df::t('Intel visitor'),
+    'entity class' => 'Intel_Visitor',
+    'controller class' => 'Intel_Visitor_Controller',
+    'base table' => 'intel_visitor',
+    'label callback' => 'intel_visitor_label',
+    'uri callback' => 'intel_visitor_uri',
+    'fieldable' => TRUE,
+    'module' => 'intel',
+    'entity keys' => array(
+      'id' => 'vid',
+    ),
+    'file' => array(
+      'includes/class-intel-visitor.php',
+      'includes/class-intel-visitor-controller.php',
+    ),
+    'fields' => array(
+      'vid' => null,
+      'created' => time(),
+      'updated' => time(),
+      'last_activity' => '',
+      'name' => '',
+      'contact_created' => 0,
+      'data_updated' => 0,
+      'data' => array(),
+      'ext_updated' => 0,
+      'ext_data' => array(),
+    ),
+
+    // FALSE disables caching. Caching functionality is handled by Drupal core.
+    'static cache' => TRUE, // TODO: research this setting
+
+    'bundles' => array(
+      'intel_visitor' => array(
+        'label' => Intel_Df::t('Visitor'),
+        // 'admin' key is used by the Field UI to provide field and
+        // display UI pages.
+        'admin' => array(
+          'path' => 'admin/config/people/intel',
+          'access arguments' => array('administer intel_visitor entities'),
+        ),
+      ),
+    ),
+
+    // View modes allow entities to be displayed differently based on context.
+    // As a demonstration we'll support "Tweaky", but we could have and support
+    // multiple display modes.
+    'view modes' => array(
+      'full' => array(
+        'label' => Intel_Df::t('Full profile'),
+        'custom settings' => FALSE,
+      ),
+      'token' => array(
+        'label' => Intel_Df::t('Tokens'),
+        'custom settings' => FALSE,
+      ),
+    ),
+  );
+
+  // TODO uuid integration
+  if (FALSE && module_exists('uuid')) {
+    $info['intel_visitor']['uuid'] = TRUE;
+    $info['intel_visitor']['entity keys']['uuid'] = 'uuid';
+  }
+
+
+
+  $info['intel_submission'] = array(
+    // A human readable label to identify our entity.
+    'label' => Intel_Df::t('Intel submission'),
+    'entity class' => 'Intel_Submission',
+    'controller class' => 'Intel_Submission_Controller',
+    'base table' => 'intel_submission',
+    'label callback' => 'intel_submission_label',
+    'uri callback' => 'intel_submission_uri',
+    'fieldable' => FALSE,
+    'module' => 'intel',
+    'entity keys' => array(
+      'id' => 'sid',
+    ),
+    'file' => array(
+      'includes/class-intel-submission.php',
+      'includes/class-intel-submission-controller.php',
+    ),
+    'fields' => array(
+      'sid' => null,
+      'vid' => 0,
+      'submitted' => time(),
+      'type' => '',
+      'fid' => '',
+      'fsid' => '',
+      //'details_url' => '',
+      'submission_uri' => '',
+      //'response_page_host' => '',
+      'response_page_uri' => '',
+      'response_page_id' => '',
+      //'form_page_host' => '',
+      'form_page_uri' => '',
+      'form_page_id' => '',
+      //'cta_page_host' => '',
+      'cta_page_uri' => '',
+      'cta_page_id' => '',
+      'cta_id' => '',
+      'data' => array(),
+    ),
+  );
+
+  $info['post'] = array(
+    // A human readable label to identify our entity.
+    'label' => Intel_Df::t('Post'),
+    //'entity class' => 'Intel_Submission',
+    //'controller class' => 'Intel_Submission_Controller',
+    'base table' => 'posts',
+    'label callback' => 'intel_post_label',
+    'uri callback' => 'intel_post_uri',
+    'fieldable' => FALSE,
+    'module' => 'wp',
+    'entity keys' => array(
+      'id' => 'ID',
+      'bundle' => 'post_type',
+      'label' => 'post_title',
+      'author_id' => 'post_author',
+      'created' => array(
+        'key' => 'post_date',
+        'formatter callback' => 'intel_post_created_formatter',
+      ),
+      'updated' => array(
+        'key' => 'post_modified',
+        'formatter callback' => 'intel_post_created_formatter',
+      ),
+    ),
+    'fields' => array(
+      'ID' => null,
+      'post_author' => 0,
+      'post_date' => Intel_Df::format_date(time()),
+      'post_title' => '',
+    ),
+  );
+
+  return $info;
+}
+
+function intel_post_created_formatter($time) {
+  return strtotime($time);
+}
+
+function intel_entity_info_alter($info) {
+  //dpm($info);//
+}
+
+function intel_entity_property_info_alter(&$info) {
+  return'';
+  //$info = array();
+
+  $properties = &$info['intel_visitor']['properties'];
+  $properties['email'] = array(
+    'label' => Intel_Df::t('Email address'),
+    'description' => Intel_Df::t('Visitor\'s primary email address.'),
+    'type' => 'text',
+    'getter callback' => 'intel_visitor_email_get',
+  );
+
+  //return $info;
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ *
+ * This exposes the "extra fields" (usually properties that can be configured
+ * as if they were fields) of the entity as pseudo-fields
+ * so that they get handled by the Entity and Field core functionality.
+ * Node titles get treated in a similar manner.
+ */
+function intel_field_extra_fields() {
+  return array();
+  $extra_fields = array();
+  /*
+  $form_elements['item_description'] = array(
+    'label' => Intel_Df::t('Item Description'),
+    'description' => Intel_Df::t('Item Description (an extra form field)'),
+    'weight' => -5,
+  );
+
+  $display_elements['bio'] = array(
+    'label' => Intel_Df::t('Bio'),
+    'description' => Intel_Df::t('Short bio'),
+    'weight' => 0,
+  );
+  $display_elements['created'] = array(
+    'label' => Intel_Df::t('Creation date'),
+    'description' => Intel_Df::t('Creation date (an extra display field)'),
+    'weight' => 0,
+  );
+   */
+
+  $form_elements['email'] = array(
+    'label' => Intel_Df::t('Email'),
+    'description' => Intel_Df::t('Item Description (an extra form field)'),
+    'weight' => -5,
+  );
+  $display_elements['email'] = array(
+    'label' => Intel_Df::t('Email'),
+    'description' => Intel_Df::t('Just like title, but trying to point out that it is a separate property'),
+    'weight' => 0,
+  );
+
+  // Since we have only one bundle type, we'll just provide the extra_fields
+  // for it here.
+  $extra_fields['intel_visitor']['intel_visitor']['form'] = $form_elements;
+  $extra_fields['intel_visitor']['intel_visitor']['display'] = $display_elements;
+
+  return $extra_fields;
+}
+
+function intel_get_ApiClientProps() {
+  $apiUrl = get_option('intel_l10iapi_url', '');
+  $apiClientProps = array(
+    'apiUrl' => ($apiUrl ? $apiUrl : INTEL_L10IAPI_URL) . '/',
+    'apiConnector' => get_option('intel_l10iapi_connector', ''),
+    'apiParams' => get_option('intel_l10iapi_custom_params', array()),
+    'tid' => get_option('intel_ga_tid', ''),
+    'apikey' => get_option('intel_apikey', ''),
+  );
+  return $apiClientProps;
+}
+
+function intel_visitor_load($id = NULL, $reset = FALSE, $id_type = 'vid') {
+  $visitors = intel_visitor_load_multiple($id, array(), $reset, $id_type);
+  if (!empty($visitors)) {
+    return array_shift($visitors);
+  }
+  return FALSE;
+}
+
+/**
+ * Loads multiple basic entities.
+ *
+ * We only need to pass this request along to entity_load(), which
+ * will in turn call the load() method of our entity controller class.
+ */
+function intel_visitor_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE, $id_type = '') {
+
+  $cntrl = intel()->get_entity_controller('intel_visitor');
+
+  if (!empty($id_type)) {
+    $cntrl->setIdType($id_type);
+  }
+
+  return $cntrl->load($ids, $conditions, $reset);
+}
+
+/**
+ * Loads visitor based on uid. Used for user menu visitor loading.
+ * @param null $uid
+ * @param bool $reset
+ * @return bool|mixed
+ */
+function intel_visitor_by_uid_load($uid = NULL, $reset = FALSE) {
+  return intel_visitor_load($uid, $reset, 'uid');
+}
+
+/**
+ * Loads the associated user for a vid
+ * @param $vid
+ * @param bool $reset
+ * @return bool
+ */
+function intel_user_by_vid_load($vid, $reset = FALSE) {
+  $visitor = intel_visitor_load($vid, $reset);
+  if (!isset($visitor->uid)) {
+    return FALSE;
+  }
+  $account = user_load($visitor->uid);
+  return $account;
+}
+
+function intel_visitor_load_by_identifiers($identifiers, $reset = FALSE) {
+  $visitors = intel()->get_entity_controller('intel_visitor')->loadByIdentifiers($identifiers, $reset);
+  if (!empty($visitors)) {
+    return array_shift($visitors);
+  }
+  return FALSE;
+}
+
+
+
+/**
+ * Provides a wrapper on the edit form to add a new entity.
+ */
+function intel_visitor_create($values = array()) {
+  if (!is_array($values)) {
+    $values = array(
+      'id' => $values,
+    );
+  }
+  $entity = intel()->get_entity_controller('intel_visitor')->create($values);
+  return $entity ;
+}
+
+/**
+ * Provides a wrapper on the edit form to add a new entity.
+ */
+function intel_visitor_load_or_create($id = NULL, $reset = FALSE, $id_type = '') {
+  // first try to load
+  $entity  = intel_visitor_load($id, $reset, $id_type);
+  if (!empty($entity->vid)) {
+    return $entity;
+  }
+  return intel_visitor_create($id);
+}
+
+/**
+ * We save the entity by calling the controller.
+ */
+function intel_visitor_save(&$entity) {
+  return intel()->get_entity_controller('intel_visitor')->save($entity);
+}
+
+
+function intel_visitor_delete($vid) {
+  return intel()->get_entity_controller('intel_visitor')->delete_one($vid);
+}
+
+/**
+ * Delete multiple contact records.
+ */
+function intel_visitor_delete_multiple($vids = array()) {
+  return intel()->get_entity_controller('intel_visitor')->delete($vids);
+}
+
+
+
+// check if person is queried by pid or vtk
+function intel_query_alter($query) {
+  static $count;
+  if ($query->hasTag('intel_visitor_load_multiple')) {
+    $idType = intel()->get_entity_controller('intel_visitor')->getIdType();
+    $conditions = &$query->conditions();
+    if ($idType != 'vid') {
+      $i = $query->innerJoin('intel_visitor_identifier', 'i', '%alias.vid = base.vid');
+      $conditions[0]['field'] = "$i.value";
+      // vtkid is the first 20 chars of vtk. To query, IN condistion must be changed to
+      // REGEXP with | (or)s
+      if ($idType == 'vtkid') {
+        $conditions[0]['operator'] = "REGEXP";
+        $conditions[0]['value'] = '^' . implode('|^', $conditions[0]['value']);
+        $idType = 'vtk';
+      }
+      $query->condition("$i.type", $idType);
+      $query->addField($i, "value", $idType);
+    }
+    // check for alternate vid in identifier table also
+    else {
+      $i = $query->leftJoin('intel_visitor_identifier', 'i', '%alias.vid = base.vid');
+      //$conditions[0]['field'] = "$i.value";
+      // TODO there may be a better way to do this, particularly directly
+      // setting '#conjunction'
+      $db_and = db_and();
+      $db_and->condition("$i.value", $conditions[0]['value']);
+      $db_and->condition("$i.type", 'vid');
+      $query->condition($db_and);
+      $conditions['#conjunction'] = 'OR';
+    }
+
+    $count++;
+    if ($count == 1) {
+      //dpm($query->getArguments()); dpm($query->conditions()); dpm($query->getFields()); dpm("$query");//
+    }
+  }
+}
+
+
+/**
+ * Implements the uri callback.
+ */
+function intel_visitor_uri($entity) {
+  return array(
+    'path' => 'visitor/' . $entity->identifier(),
+  );
+}
+
+function intel_visitor_label($entity) {
+  return $entity->label();
+}
+
+function intel_visitor_view($entity, $view_mode = 'full', $langcode = NULL) {
+  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/intel.pages.inc";
+
+  //drupal_add_css(drupal_get_path('module', 'intel') . "/css/intel.visitor_profile.css");
+
+  if (!empty($_GET['debug'])) {
+    $entity->apiVisitorLoad();
+    dpm($entity);//
+  }
+
+  if (is_string($entity->data)) {
+    $entity->data = unserialize($entity->data);
+  }
+
+  if (is_string($entity->ext_data)) {
+    $entity->ext_data = unserialize($entity->ext_data);
+  }
+
+  if (!isset($langcode)) {
+    $langcode = $GLOBALS['language_content']->language;
+  }
+
+  // Retrieve all profile fields and attach to $entity->content.
+  intel_visitor_build_content($entity, $view_mode, $langcode);
+
+  $build = $entity->content;
+
+  // We don't need duplicate rendering info in entity->content.
+  unset($entity->content);
+
+  $build += array(
+    '#theme' => 'intel_visitor_profile',
+    '#entity' => $entity,
+    '#view_mode' => $view_mode,
+    '#language' => $langcode,
+  );
+
+  // Allow modules to modify the structured user.
+  $type = 'intel_visitor';
+  drupal_alter(array('intel_visitor_view', 'entity_view'), $build, $type);
+  return $build;
+}
+
+/**
+ * Initializes properties of submission stdClass object
+ */
+function intel_submission_construct() {
+  $submission = intel()->get_entity_controller('intel_submission')->create();
+  return $submission;
+}
+
+/**
+ * Saves submission objects
+ *
+ * @param stdClass $submission
+ */
+function intel_submission_save($submission) {
+  return $submission->save();
+  /*
+  foreach (module_implements('intel_submission_presave') AS $module) {
+    $function = $module . '_intel_submission_presave';
+    $function($submission);
+  }
+  $key = array(
+    'sid' => (!empty($submission->sid)) ? $submission->sid : 0,
+  );
+  $fields = array(
+    'vid' => (!empty($submission->vid)) ? $submission->vid : 0,
+    'submitted' => (!empty($submission->submitted)) ? $submission->submitted : time(),
+    'type' => $submission->type,
+    'fid' => $submission->fid,
+    'fsid' => (!empty($submission->fsid)) ? $submission->fsid : '',
+    'details_url' => (!empty($submission->details_url)) ? $submission->details_url : '',
+    'response_page_host' => (!empty($submission->response_page_host)) ?  $submission->response_page_host : '',
+    'response_page_path' => (!empty($submission->response_page_path)) ?  $submission->response_page_path : '',
+    'response_page_id' => (!empty($submission->response_page_id)) ?  $submission->response_page_id : '',
+    'form_page_host' => (!empty($submission->form_page_host)) ?  $submission->form_page_host : '',
+    'form_page_path' => (!empty($submission->form_page_path)) ?  $submission->form_page_path : '',
+    'form_page_id' => (!empty($submission->form_page_id)) ?  $submission->form_page_id : '',
+    'cta_page_host' => (!empty($submission->cta_page_host)) ?  $submission->cta_page_host : '',
+    'cta_page_path' => (!empty($submission->cta_page_path)) ?  $submission->cta_page_path : '',
+    'cta_page_id' => (!empty($submission->cta_page_id)) ?  $submission->cta_page_id : '',
+    'cta_id' => (!empty($submission->cta_id)) ?  $submission->cta_id : '',
+    'data' => (!empty($submission->data)) ?  $submission->data : array(),
+  );
+  if (!is_string($fields['data'])) {
+    $fields['data'] = serialize($fields['data']);
+  }
+
+  if (!$key['sid']) {
+    // merge key into fields
+    $query = db_insert('intel_submission')
+      ->fields($fields);
+    $sid = $query->execute();
+    $submission->sid = $sid;
+    $hook = 'intel_submission_insert';
+  }
+  else {
+    $query = db_merge('intel_submission')
+      ->key($key)
+      ->fields($fields);
+    $query->execute();
+    $sid = $key['sid'];
+    $hook = 'intel_submission_update';
+  }
+
+  module_invoke_all($hook, $submission);
+
+  return $sid;
+  */
+}
+
+/**
+ * Loads submission object from database
+ *
+ * @param $sid Primary session id
+ *
+ * @return Submission stdClass object
+ */
+function intel_submission_load($sid) {
+  //$submission = &Intel_Df::drupal_static(__FUNCTION__);
+  $submissions = intel()->get_entity_controller('intel_submission')->load($sid);
+  if (!empty($submissions)) {
+    return array_shift($submission);
+  }
+  return FALSE;
+}
+
+/**
+ * Loads submission object using any table field
+ *
+ * @param $vars Array of key value pairs used to identify submission in table
+ *
+ * @return Submission stdClass object
+ */
+function intel_submission_load_by_vars($vars) {
+  //$submission = &Intel_Df::drupal_static(__FUNCTION__);
+
+  $submissions = intel()->get_entity_controller('intel_submission')->loadByVars($vars);
+
+  if (!empty($submissions) && is_array($submissions)) {
+    return array_shift($submissions);
+  }
+
+  return FALSE;
+}
+
+function intel_submission_load_filtered($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
+  $query = db_select('intel_submission', 's')
+    ->extend('PagerDefault')
+    ->limit($limit);
+  $v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = s.vid');
+  $query->fields('s');
+  $query->addField($v, 'name', 'name');
+  //$query->addField($v, 'email', 'email');
+  //$query->addField($v, 'vtkid', 'vtkid');
+  $query->addField($v, 'data', 'visitor_data');
+  $query->addField($v, 'ext_data', 'visitor_ext_data');
+  $query->addTag('intel_submission_load_filtered');
+
+  if (!empty($header)) {
+    $query->extend('TableSort')->orderByHeader($header);
+  }
+
+  //TODO get filters working
+  if (!empty($filter['where'])) {
+    //$sql .= " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') . $filter['where'];
+    //$count_sql .=  " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') .  $filter['where'];
+  }
+  if (!empty($filter['conditions'])) {
+    foreach ($filter['conditions'] AS $condition) {
+      if (count($condition) == 3) {
+        $query->condition($condition[0], $condition[1], $condition[2]);
+      }
+      else {
+        $query->condition($condition[0], $condition[1]);
+      }
+    }
+  }
+
+  $result = $query->execute();
+
+  return $result;
+}
+
+/**
+ * Initializes properties of submission stdClass object
+ */
+function intel_phonecall_construct() {
+  $phonecall = new stdClass();
+  $phonecall->data = array();
+  $phonecall->initiated = REQUEST_TIME;
+  return $phonecall;
+}
+
+/**
+ * Saves submission objects
+ *
+ * @param stdClass $submission
+ */
+function intel_phonecall_save($phonecall) {
+  foreach (module_implements('intel_phonecall_presave') AS $module) {
+    $function = $module . '_intel_phonecall_presave';
+    $function($phonecall);
+  }
+  $key = array(
+    'cid' => (!empty($phonecall->cid)) ? $phonecall->cid : 0,
+  );
+  $fields = array(
+    'vid' => (!empty($phonecall->vid)) ? $phonecall->vid : 0,
+    'initiated' => (!empty($phonecall->initiated)) ? $phonecall->initiated : REQUEST_TIME,
+    'completed' => (!empty($phonecall->completed)) ? $phonecall->completed : 0,
+    'type' => $phonecall->type,
+    'to_num' => $phonecall->to_num,
+    'from_num' => (!empty($phonecall->from_num)) ? $phonecall->from_num : '',
+    'details_url' => (!empty($phonecall->details_url)) ? $phonecall->details_url : '',
+    'form_page_host' => (!empty($phonecall->form_page_host)) ?  $phonecall->form_page_host : '',
+    'form_page_path' => (!empty($phonecall->form_page_path)) ?  $phonecall->form_page_path : '',
+    'form_page_id' => (!empty($phonecall->form_page_id)) ?  $phonecall->form_page_id : '',
+    'cta_page_host' => (!empty($phonecall->cta_page_host)) ?  $phonecall->cta_page_host : '',
+    'cta_page_path' => (!empty($phonecall->cta_page_path)) ?  $phonecall->cta_page_path : '',
+    'cta_page_id' => (!empty($phonecall->cta_page_id)) ?  $phonecall->cta_page_id : '',
+    'cta_id' => (!empty($phonecall->cta_id)) ?  $phonecall->cta_id : '',
+    'data' => (!empty($phonecall->data)) ?  $phonecall->data : array(),
+  );
+  if (!is_string($fields['data'])) {
+    $fields['data'] = serialize($fields['data']);
+  }
+
+  if (!$key['cid']) {
+    // merge key into fields
+    $query = db_insert('intel_phonecall')
+      ->fields($fields);
+    $cid = $query->execute();
+    $phonecall->cid = $cid;
+    $hook = 'intel_phonecall_insert';
+  }
+  else {
+    $query = db_merge('intel_phonecall')
+      ->key($key)
+      ->fields($fields);
+    $query->execute();
+    $cid = $key['cid'];
+    $hook = 'intel_phonecall_update';
+  }
+
+  module_invoke_all($hook, $phonecall);
+
+  return $cid;
+}
+
+/**
+ * Loads phonecall object from database
+ *
+ * @param $sid Primary session id
+ *
+ * @return Submission stdClass object
+ */
+function intel_phonecall_load($cid) {
+  //$phonecall = &Intel_Df::drupal_static(__FUNCTION__);
+
+  $query = db_select('intel_phonecall', 'c')
+    ->fields('c')
+    ->condition('cid', $cid);
+  //$v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = s.vid');
+  $phonecall = $query->execute()->fetchObject();
+  return $phonecall;
+}
+
+function intel_load_filtered_phonecall_result($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
+  $query = db_select('intel_phonecall', 'c')
+    ->extend('PagerDefault')
+    ->limit($limit);
+  $v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = c.vid');
+  $query->fields('c');
+  $query->addField($v, 'name', 'name');
+  $query->addField($v, 'data', 'visitor_data');
+  $query->addField($v, 'ext_data', 'visitor_ext_data');
+
+  if (!empty($header)) {
+    $query->extend('TableSort')->orderByHeader($header);
+  }
+
+  //TODO get filters working
+  if (!empty($filter['where'])) {
+    //$sql .= " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') . $filter['where'];
+    //$count_sql .=  " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') .  $filter['where'];
+  }
+  if (!empty($filter['conditions'])) {
+    foreach ($filter['conditions'] AS $condition) {
+      if (count($condition) == 3) {
+        $query->condition($condition[0], $condition[1], $condition[2]);
+      }
+      else {
+        $query->condition($condition[0], $condition[1]);
+      }
+    }
+  }
+
+  $result = $query->execute();
+
+  return $result;
+}
+
+/**
+ * Initializes properties of submission stdClass object
+ */
+function intel_emailclick_construct() {
+  $emailclick = new stdClass();
+  $emailclick->data = array();
+  $emailclick->clicked = REQUEST_TIME;
+  return $emailclick;
+}
+
+/**
+ * Saves submission objects
+ *
+ * @param stdClass $submission
+ */
+function intel_emailclick_save($emailclick) {
+  foreach (module_implements('intel_emailclick_presave') AS $module) {
+    $function = $module . '_intel_emailclick_presave';
+    $function($emailclick);
+  }
+  $key = array(
+    'cid' => (!empty($emailclick->cid)) ? $emailclick->cid : 0,
+  );
+  $fields = array(
+    'vid' => (!empty($emailclick->vid)) ? $emailclick->vid : 0,
+    'clicked' => (!empty($emailclick->initiated)) ? $emailclick->initiated : REQUEST_TIME,
+    'last' => (!empty($emailclick->completed)) ? $emailclick->completed : REQUEST_TIME,
+    'type' => $emailclick->type,
+    'eid' => (!empty($emailclick->eid)) ? $emailclick->eid : '',
+    'lid' => (!empty($emailclick->lid)) ? $emailclick->lid : '',
+    'email' => (!empty($emailclick->email)) ? $emailclick->email : '',
+    'response_page_host' => (!empty($emailclick->response_page_host)) ?  $emailclick->response_page_host : '',
+    'response_page_path' => (!empty($emailclick->response_page_path)) ?  $emailclick->response_page_path : '',
+    'response_page_id' => (!empty($emailclick->response_page_id)) ?  $emailclick->response_page_id : '',
+    'data' => (!empty($emailclick->data)) ?  $emailclick->data : array(),
+  );
+  if (!is_string($fields['data'])) {
+    $fields['data'] = serialize($fields['data']);
+  }
+
+  if (!$key['cid']) {
+    // merge key into fields
+    $query = db_insert('intel_emailclick')
+      ->fields($fields);
+    $cid = $query->execute();
+    $emailclick->cid = $cid;
+    $hook = 'intel_emailclick_insert';
+  }
+  else {
+    $query = db_merge('intel_emailclick')
+      ->key($key)
+      ->fields($fields);
+    $query->execute();
+    $cid = $key['cid'];
+    $hook = 'intel_emailclick_update';
+  }
+
+  module_invoke_all($hook, $emailclick);
+
+  return $cid;
+}
+
+/**
+ * Loads phonecall object from database
+ *
+ * @param $sid Primary session id
+ *
+ * @return Submission stdClass object
+ */
+function intel_emailclick_load($cid) {
+  //$phonecall = &Intel_Df::drupal_static(__FUNCTION__);
+
+  $query = db_select('intel_emailclick', 'c')
+    ->fields('c')
+    ->condition('cid', $cid);
+  //$v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = s.vid');
+  $emailclick = $query->execute()->fetchObject();
+  return $emailclick;
+}
+
+/**
+ * Loads submission object using any table field
+ *
+ * @param $vars Array of key value pairs used to identify submission in table
+ *
+ * @return Submission stdClass object
+ */
+function intel_emailclick_load_by_vars($vars) {
+  //$submission = &Intel_Df::drupal_static(__FUNCTION__);
+
+  $query = db_select('intel_emailclick', 's')
+    ->fields('s');
+  //$v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = s.vid');
+  foreach ($vars AS $key => $value) {
+    $query->condition($key, $value);
+  }
+  $emailclick = $query->execute()->fetchObject();
+  return $emailclick;
+}
+
+function intel_load_filtered_emailclick_result($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
+  $query = db_select('intel_emailclick', 'c')
+    ->extend('PagerDefault')
+    ->limit($limit);
+  $v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = c.vid');
+  $query->fields('c');
+  $query->addField($v, 'name', 'name');
+  $query->addField($v, 'data', 'visitor_data');
+  $query->addField($v, 'ext_data', 'visitor_ext_data');
+
+  if (!empty($header)) {
+    $query->extend('TableSort')->orderByHeader($header);
+  }
+
+  //TODO get filters working
+  if (!empty($filter['where'])) {
+    //$sql .= " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') . $filter['where'];
+    //$count_sql .=  " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') .  $filter['where'];
+  }
+  if (!empty($filter['conditions'])) {
+    foreach ($filter['conditions'] AS $condition) {
+      if (count($condition) == 3) {
+        $query->condition($condition[0], $condition[1], $condition[2]);
+      }
+      else {
+        $query->condition($condition[0], $condition[1]);
+      }
+    }
+  }
+
+  $result = $query->execute();
+
+  return $result;
+}
+
+function intel_entity_attr_save($entity_attr) {
+  $page_specified = 0;
+  /*
+  $key = array(
+    'attr_key' => $entity_attr->attr_key,
+  );
+  $fields = array();
+  */
+  $key = array();
+  $fields = array(
+    'attr_key' => $entity_attr->attr_key,
+  );
+  if (!empty($entity_attr->entity_id)) {
+    $key['entity_id'] = $entity_attr->entity_id;
+    $key['entity_type'] = $entity_attr->entity_type;
+    $page_specified = 1;
+  }
+  if (!empty($entity_attr->path)) {
+    if ($page_specified) {
+      $fields['path'] = $entity_attr->path;
+    }
+    else {
+      $key['path'] = $entity_attr->path;
+      $page_specified = 1;
+    }
+  }
+  if (!empty($entity_attr->alias)) {
+    if ($page_specified) {
+      $fields['alias'] = $entity_attr->alias;
+    }
+    else {
+      $key['alias'] = $entity_attr->alias;
+      $page_specified = 1;
+    }
+  }
+
+  if (isset($entity_attr->value)) {
+    $val_field = 'value_' . intel_determine_entity_attr_value_type($entity_attr);
+    $key[$val_field] = $entity_attr->value;
+  }
+  else {
+    if (isset($entity_attr->value_str)) {
+      $key['value_str'] = $entity_attr->value_str;
+    }
+    if (isset($entity_attr->value_num)) {
+      $key['value_num'] = $entity_attr->value_num;
+    }
+  }
+
+
+
+  // if value_str is being saved, check if id exists or create one
+  if (isset($key['value_str'])) {
+    if (empty($key['vsid'])) {
+      $key['vsid'] = intel_value_str_save((object)$key);
+    }
+    unset($key['value_str']);
+  }
+
+  if ($page_specified) {
+    $query = db_merge('intel_entity_attr')
+      ->key($key)
+      ->fields($fields);
+    $query->execute();
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+
+/**
+ * Determines is a entity_attr value should be stored as a string or number
+ * @param $value - either the value of a primitive type or entity_attr object
+ * @param null $value_type
+ * @return string
+ */
+function intel_determine_entity_attr_value_type($value, $value_type = null) {
+  if (is_object($value) && isset($value->value)) {
+    if (!isset($value_type) && isset($value->value_type)) {
+      $value_type = $value->value_type;
+    }
+    $value = $value->value;
+  }
+  if (!empty($value_type)) {
+    if ($value_type == 'vsid') {
+      return 'vsid';
+    }
+    else if ($value_type == 'num') {
+      return 'num';
+    }
+    else {
+      return 'str';
+    }
+  }
+  else {
+    if (!is_string($value)) {
+      return 'num';
+    }
+    else {
+      return 'str';
+    }
+  }
+}
+
+function intel_entity_attr_load_by_params($entity_type = null, $entity_id = null, $path = null, $alias = null, $attr_key = null, $value = null, $value_type = null) {
+  // TODO WP
+  return array();
+  $query = db_select('intel_entity_attr', 'a')
+    ->fields('a');
+
+  $vs_alias = $query->leftJoin('intel_value_str', 'vs', '%alias.vsid = a.vsid');
+  $query->addField($vs_alias, 'value_str');
+
+  if (isset($entity_type) && isset($entity_id)) {
+    $query->condition('entity_id', $entity_id);
+    $query->condition('entity_type', $entity_type);
+  }
+  if (isset($path)) {
+    $query->condition('path', $path);
+  }
+  if (isset($alias)) {
+    $query->condition('alias', $alias);
+  }
+  if (isset($attr_key)) {
+    $query->condition('attr_key', $attr_key);
+  }
+  if (isset($value)) {
+    //$value_field = 'value_' . intel_determine_entity_attr_value_type($value, $value_type);
+    $value_field = intel_determine_entity_attr_value_type($value, $value_type);
+    if ($value_field == 'vsid') {
+      $value_field = 'a.' . $value_field;
+    } else {
+      $value_field = 'value_' . $value_field;
+    }
+    $query->condition($value_field, $value);
+  }
+
+  $result = $query->execute();
+  $entity_attrs = array();
+
+  while($row = $result->fetchObject()) {
+    if (!empty($value_field)) {
+      if ($value_field == 'a.vsid') {
+        $row->value = $row->value_str;
+      }
+      else {
+        $row->value = $row->{$value_field};
+      }
+      unset($row->value_num);
+      unset($row->value_str);
+    }
+    else {
+      $row->value = !empty($row->value_str) ? $row->value_str : $row->value_num;
+    }
+
+    $entity_attrs[] = $row;
+  }
+  return $entity_attrs;
+}
+
+function intel_entity_attr_entity_count($attr_key = null, $value0 = null, $value1 = null, $op0 = null, $op1 = null, $value_type = null) {
+  $query = db_select('intel_entity_attr', 'a')
+    ->fields('a', array('vsid', 'value_num'));
+
+  if (isset($attr_key)) {
+    $query->condition('attr_key', $attr_key);
+  }
+
+  $value_field = intel_determine_entity_attr_value_type($value0, $value_type);
+  if ($value_field == 'vsid') {
+    $value_field = 'a.' . $value_field;
+  } else {
+    $value_field = 'value_' . $value_field;
+  }
+
+  if ($value_field != 'value_num') {
+    $vs_alias = $query->innerJoin('intel_value_str', 'vs', '%alias.vsid = a.vsid');
+    $query->addField($vs_alias, 'value_str');
+  }
+
+  if (isset($value0)) {
+    if (!isset($value1)) {
+      if (!isset($op0)) {
+        $op0 = '=';
+      }
+      $query->condition($value_field, $value0, $op0);
+    }
+    else {
+      if (!isset($op0)) {
+        $op0 = '>=';
+      }
+      if (!isset($op1)) {
+        $op1 = '<';
+      }
+      $query->condition($value_field, $value0, $op0);
+      $query->condition($value_field, $value1, $op1);
+    }
+  }
+  dsm("$value0, " . $query);
+
+  $count = $query->execute()->rowCount();
+
+  dsm($count);
+
+  return $count;
+}
+
+function intel_entity_attr_delete_by_params($entity_type = null, $entity_id = null, $path = null, $alias = null, $attr_key = null, $value = null, $value_type = null) {
+  $query = db_delete('intel_entity_attr');
+  if (isset($entity_type) && isset($entity_id)) {
+    $query->condition('entity_id', $entity_id);
+    $query->condition('entity_type', $entity_type);
+  }
+  if (isset($path)) {
+    $query->condition('path', $path);
+  }
+  if (isset($alias)) {
+    $query->condition('alias', $alias);
+  }
+  if (isset($attr_key)) {
+    $query->condition('attr_key', $attr_key);
+  }
+  if (isset($value)) {
+    $val_field = 'value_' . intel_determine_entity_attr_value_type($value, $value_type);
+    $query->condition($val_field, $value);
+  }
+
+  $result = $query->execute();
+}
+
+function intel_value_str_save($value_str) {
+
+  $key = array();
+  $fields = array();
+  if (!isset($value_str->value_str)) {
+    return FALSE;
+  }
+
+  // check if value_str already exists, if so return
+  $vs = intel_value_str_load($value_str);
+  if (!empty($vs->vsid)) {
+    return $vs->vsid;
+  }
+
+  $query = db_insert('intel_value_str')
+    ->fields(array(
+      'value_str' => $value_str->value_str,
+    ));
+
+  return $query->execute();
+}
+
+/**
+ * Loads value string object from database
+ * @param $id - can be a value_str object, vsid or value_str
+ * @return mixed
+ */
+function intel_value_str_load($id) {
+
+  $vsid = 0;
+  $value_str = '';
+  if (is_object($id)) {
+    if (isset($id->vsid)) {
+      $vsid = $id->vsid;
+    }
+    if (isset($id->value_str)) {
+      $value_str = $id->value_str;
+    }
+  }
+  else if (is_string($id)) {
+    $value_str = $id;
+  }
+  else {
+    $vsid = $id;
+  }
+
+  $query = db_select('intel_value_str', 'vs')
+    ->fields('vs');
+
+  if ($vsid) {
+    $query->condition('vsid', $vsid);
+  }
+  if ($value_str) {
+    $query->condition('value_str', $value_str);
+  }
+
+  return $query->execute()->fetchObject();
+}
+
+
+
+/**
+ * Implements hook_entity_delete()
+ * @param $entity
+ * @param $entity_type
+ */
+function intel_entity_delete($entity, $entity_type) {
+  $eids = entity_extract_ids($entity_type, $entity);
+  intel_entity_attr_delete_by_params($entity_type, $eids[0]);
+}
+
+/**
+ * Alias of Intel::intel_script_info();
+ *
+ * @return null
+ */
+function intel_intel_scripts() {
+  return intel()->intel_script_info();
+}
+
+// add _intel_intel_script_info to hook_intel_script_info
+add_filter('intel_intel_script_info', '_intel_intel_script_info');
+/**
+ * Implements hook_intel_intel_script
+ */
+function _intel_intel_script_info($info = array()) {
+  /*
+  $scripts['seo'] = array(
+    'title' => Intel_Df::t('SEO'),
+    'description' => Intel_Df::t('Tracks additional stats about search engine traffic.'),
+    'path' => libraries_get_path('intel') . '/js/intel_seo.js',
+    'site_enabled' => true,
+  );
+  */
+  $info['addthis'] = array(
+    'title' => Intel_Df::t('AddThis'),
+    'description' => Intel_Df::t('Tracks AddThis shares and clickbacks.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_addthis.js',
+    'enabled' => 0,
+    'selectable' => 1,
+  );
+  $info['youtube'] = array(
+    'title' => Intel_Df::t('YouTube'),
+    'description' => Intel_Df::t('Tracks YouTube video play events.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_youtube.js',
+    'enabled' => 0,
+    'selectable' => 1,
+  );
+  $info['dyn'] = array(
+    'title' => Intel_Df::t('Dynamics'),
+    'description' => Intel_Df::t('Dynamic content support. (under development)'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_dyn.js',
+    'enabled' => 0,
+    'selectable' => 1,
+  );
+  $info['geo'] = array(
+    'title' => Intel_Df::t('Geo'),
+    'description' => Intel_Df::t('Geo location data support. (under development)'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_geo.js',
+    'enabled' => 0,
+    'selectable' => 1,
+  );
+
+  return $info;
+}
+
+function intel_form_alter(&$form, &$form_state, $form_id) {
+  if (substr($form_id, 0, 20) == 'webform_client_form_') {
+    $form['referrer'] = array(
+      '#type' => 'hidden',
+      '#value' => $_GET['q'],
+    );
+  }
+  $entity_edit_forms = array(
+    'node_type_form' => 1,
+    'taxonomy_form_vocabulary' => 1,
+  );
+  if (!empty($entity_edit_forms[$form_id])) {
+    require_once Intel_Df:: drupal_get_path('module', 'intel') . "/admin/intel.admin_entity.inc";
+    intel_admin_entity_type_form_alter($form, $form_state, $form_id);
+  }
+}
+
+
+function intel_form_node_form_alter(&$form, &$form_state) {
+  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/admin/intel.admin_entity.inc";
+  intel_admin_entity_edit_form_alter($form, $form_state);
+}
+
+
+function intel_entity_type_form_submit($form, &$form_state) {
+  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/admin/intel.admin_entity.inc";
+  intel_admin_entity_type_form_submit($form, $form_state);
+}
+/**
+ * Implements hook_form_FORM_ID_alter
+ * Removes options input when creating new field
+ * @param unknown_type $form
+ * @param unknown_type $form_state
+ */
+function intel_form_field_ui_field_settings_form_alter(&$form, &$form_state) {
+  $auto_fields = array(
+    'field_visitor_attribute',
+    'field_page_attribute',
+    'field_intel_event',
+    'field_track_submission',
+  );
+  $field_name = $form['field']['field_name']['#value'];
+  if (in_array($field_name, $auto_fields)) {
+    $form['field']['settings']['allowed_values_function']['#value'] = 'intel_get_' . $field_name . '_allowed_values';
+    $form['field']['settings']['allowed_values']['#type'] = 'hidden';
+    $form['field']['settings']['allowed_values_function_display']['#markup'] = str_replace('<em class="placeholder"></em>', '<em class="placeholder">intel_get_' . $field_name . '_allowed_values</em>', $form['field']['settings']['allowed_values_function_display']['#markup']);
+    $form['field']['settings']['allowed_values_function_display']['#access'] = TRUE;
+  }
+}
+
+/**
+ * iImplements hook_form_field_ui_field_edit_form_alter
+ * sets allowed values for track submission field to generate by a function
+ * @param $form
+ * @param $form_state
+ */
+
+function intel_form_field_ui_field_edit_form_alter(&$form, &$form_state) {
+  if (isset($form_state['field']['field_visitor_attribute'])) {
+    $form['field']['settings']['allowed_values_function']['#value'] = 'intel_get_field_visitor_attribute_allowed_values';
+  }
+  if (isset($form_state['field']['field_page_attribute'])) {
+    $form['field']['settings']['allowed_values_function']['#value'] = 'intel_get_field_page_attribute_allowed_values';
+  }
+  if (isset($form_state['field']['field_intel_event'])) {
+    $form['field']['settings']['allowed_values_function']['#value'] = 'intel_get_field_intel_event_allowed_values';
+  }
+  if (isset($form_state['field']['field_track_submission'])) {
+    $form['field']['settings']['allowed_values_function']['#value'] = 'intel_get_field_track_submission_allowed_values';
+  }
+  if (isset($form_state['field']['field_page_intent'])) {
+    $form['field']['settings']['allowed_values_function']['#value'] = 'intel_get_field_page_intent_allowed_values';
+  }
+}
+
+function intel_get_field_track_submission_allowed_values() {
+  require_once './' . Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+
+  $values = array(
+    'form_submission' => 'Form submission',
+    'form_submission!' => 'Form submission!',
+  );
+  $submission_goals = get_option('intel_submission_goals', intel_get_submission_goals_default());
+  foreach ($submission_goals AS $goal) {
+    $item = 'Goal: ' . $goal['title'];
+    $values['goal_' . strtolower(drupal_clean_css_identifier($goal['title']))] = $item;
+  }
+  return $values;
+}
+
+function intel_get_field_visitor_attribute_allowed_values() {
+  return intel_get_field_attribute_allowed_values('visitor');
+}
+
+function intel_get_field_page_attribute_allowed_values() {
+  return intel_get_field_attribute_allowed_values('page');
+}
+
+function intel_get_field_attribute_allowed_values($mode = 'visitor', $existing_fields = array()) {
+  require_once './' . Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+
+  $attribute_types = array();
+  $values = array();
+  $attributes = ($mode == 'page') ?  intel_get_page_attribute_info() : intel_get_visitor_attribute_info();
+  foreach ($attributes AS $key => $va) {
+    if (empty($va['selectable'])) {
+      continue;
+    }
+    if (($va['type'] == 'flag') || ($va['type'] == 'value')|| ($va['type'] == 'item') || ($va['type'] == 'scalar')) {
+      $values[$key] = $va['title'];
+    }
+    else {
+      if (isset($va['options'])) {
+        foreach ($va['options'] AS $ok => $ot) {
+          $values["$key.$ok"] = $va['title'] . ": " . $ot['title'];
+        }
+      }
+    }
+    $attribute_types[$key] = $va['type'];
+  }
+  $js = array(
+    'intel' => array(
+      $mode . '_attribute_types' => $attribute_types,
+    ),
+  );
+  drupal_add_js($js, 'setting');
+  return $values;
+}
+
+function intel_get_field_intel_event_allowed_values() {
+  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+
+  $events = intel_get_intel_event_info();
+  $values = array();
+
+  foreach ($events AS $key => $va) {
+    if (empty($va['selectable'])) {
+      continue;
+    }
+    $values[$key] = $va['title'];
+  }
+  return $values;
+}
+
+function intel_get_field_page_intent_allowed_values() {
+  require_once './' . Intel_Df:: drupal_get_path('module', 'intel') . '/includes/intel.page_data.inc';
+
+  $values = array();
+  $page_intents = intel_get_page_intents('entity_edit');
+  foreach ($page_intents AS $key => $value) {
+    $values[$key] = $value['title'];
+  }
+  return $values;
+}
+
+function intel_add_visitor_sync_request($visitor, $delay = 0) {
+  $intel = intel();
+  $items = get_option('intel_sync_visitor_requests', array());
+  if (!isset($items[$visitor->vtk])) {
+    $item = new stdClass;
+    $item->created = time();
+    $item->run_after =  time() + $delay;
+    $item->vtk = $visitor->vtk;
+    $item->attempts = 0;
+    $items[$visitor->vtk] = $item;
+    update_option('intel_sync_visitor_requests', $items);
+  }
+}
+
+/**
+ * Implements hook_node_type_delete()
+ * @param $info
+ */
+function intel_node_type_delete($info) {
+  variable_del('intel_entity_settings_node__' . $info->type);
+}
+
+/**
+ * Implements hook_ttaxonomy_vocabulary_delete
+ *
+ * Delete entity settings variable
+ */
+function intel_taxonomy_vocabulary_delete($vocabulary) {
+  variable_del('intel_entity_settings_taxonomy__' . $vocabulary->machine_name);
+}
+
+/**
+ * Syncs a given visitor or visitors in the queue
+ *
+ * @param null $visitor
+ * @return string
+ */
+function intel_sync_visitordata_page($visitor = null, $count = 5) {
+  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
+  $output = '';
+  if ($visitor) {
+    $visitor = intel_sync_visitordata($visitor);
+    $statuses = $visitor->getSyncProcessStatus();
+    foreach ($statuses AS $k => $v) {
+      $output .= "$k: $v<br>\n";
+    }
+  }
+  else {
+    intel_queue_sync_visitor_requests();
+    $items = intel_work_sync_visitor_request_queue($count);
+    foreach ($items AS $item) {
+      $output .= l(t('Visitor') . ': ' . substr($item->vtk, 0, 20), 'visitor/' . $item->vtk) . "<br>\n";
+      foreach ($item->statuses AS $k => $v) {
+        $output .= "- $k: $v<br>\n";
+      }
+    }
+  }
+
+  if (!empty($_GET['destination'])) {
+    drupal_goto($_GET['destination']);
+    exit;
+  }
+
+  return $output;
+}
+
+add_filter( 'cron_schedules', 'intel_add_cron_interval' );
+
+function intel_add_cron_interval( $schedules ) {
+  $schedules['intel_cron_interval'] = array(
+    'interval' => 5 * 60,
+    'display'  => esc_html__( 'Execution interval of Intelligence cron' ),
+  );
+
+  $schedules['intel_cron_queue_interval'] = array(
+    'interval' => 1 * 60,
+    'display'  => esc_html__( 'Execution interval of Intelligence cron queue' ),
+  );
+
+  return $schedules;
+}
+
+add_action( 'intel_cron_hook', 'intel_cron');
+/**
+ * Implements hook_cron()
+ */
+function intel_cron() {
+  require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
+  intel_queue_sync_visitor_requests();
+}
+
+add_action( 'intel_cron_queue_hook', 'intel_cron_queue');
+/**
+ * Implements hook_cron_queue()
+ * Processes cron_queue
+ */
+function intel_cron_queue() {
+  $cq_info = intel()->cron_queue_info();
+  foreach ($cq_info as $cq_name => $info) {
+    $queue = IntelQueue::get($cq_name);
+    //Intel_Df::watchdog('intel_cron_queue 3', print_r($queue, 1));
+    $cq_item = $queue->claimItem();
+    Intel_Df::watchdog('intel_cron_queue cq_item', print_r($cq_item, 1));
+    $func = $info['worker callback'];
+    $func($cq_item['data']);
+    $queue->deleteItem($cq_item);
+  }
+}
+
+add_action( 'intel_cron_queue_info', 'intel_cron_queue_info');
+function intel_cron_queue_info($queues = array()) {
+  $queues['intel_sync_visitor_requests'] = array(
+    'worker callback' => 'intel_sync_visitor_request_worker',
+    'time' => 60,
+  );
+  return $queues;
+}
+
+function intel_sync_visitor_request_worker($item) {
+  require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
+
+  static $requeues;
+  global $intel;
+
+  if (!isset($requeues)) {
+    $requeues = get_option('intel_sync_visitor_requests', array());
+  }
+  // if vtk does not exist, do not process the visitor
+  if (empty($item->vtk)) {
+    return;
+  }
+  // if run_after has not occurred, requeue the item
+  if ($item->run_after > time()) {
+    $requeues[$item->vtk] = $item;
+    update_option('intel_sync_visitor_requests', $requeues);
+    return;
+  }
+
+  $visitor = intel_visitor_load($item->vtk, TRUE, 'vtk');
+  $visitor = intel_sync_visitordata($visitor, $item);
+  $statuses = $visitor->getSyncProcessStatus();
+
+  $success = 1;
+  // check status of each hook
+  foreach ($statuses AS $module => $flag) {
+    if (!$flag) {
+      $success = 0;
+      break;
+    }
+  }
+
+  if (!$success) {
+    $msg = Intel_Df::t('Failed: @vtk', array('@vtk' => $item->vtk)) . "<br>\n<br>\nitem:<br>\n" . print_r($item, 1) . "<br>\n<br>\nstatus:<br>\n" . print_r($statuses, 1);
+    Intel_Df::watchdog('intel sync visitor', $msg);
+    if ($item->attempts >= ((!empty($_GET['debug'])) ? 10 : 2)) {
+      return;
+    }
+    $item->attempts++;
+    $item->run_after = time() + ((!empty($_GET['debug'])) ? 30 : 300);  // delay for at least 5 minutes
+    $requeues[$item->vtk] = $item;
+    update_option('intel_sync_visitor_requests', $requeues);
+  }
+  else {
+    Intel_Df::watchdog('intel sync visitor', Intel_Df::t('Success: @vtk', array('@vtk' => $item->vtk)));
+  }
+  $item->statuses = $statuses;
+  return $item;
+}
+
+function intel_get_visitor_property_info_all() {
+  return intel()->visitor_property_info();
+}
+
+function intel_get_visitor_property_construct($name) {
+  $prop_info = intel_get_visitor_property_info($name);
+  if (isset($prop_info['variables'])) {
+    return $prop_info['variables'];
+  }
+  return FALSE;
+}
+
+/**
+ * Returns visitor property info.
+ *
+ * @param string $name (optional)
+ *    used to request a specific visitor property by name. If omitted, all
+ *    visitor properties info will be returned as an array.
+ * @return array|bool
+ */
+
+function intel_get_visitor_property_info($name = NULL) {
+  $props = intel_get_visitor_property_info_all();
+
+  if (!isset($name)) {
+    return $props;
+  }
+  if (!empty($props[$name])) {
+    return $props[$name];
+  }
+  else {
+    return FALSE;
+  }
+}
+
+add_filter('intel_visitor_property_info', 'intel_intel_visitor_property_info');
+function intel_intel_visitor_property_info($info = array()) {
+
+  require_once INTEL_DIR . "/includes/intel.visitor_properties.inc";
+
+  $info = _intel_intel_visitor_property_info($info);
+
+  return $info;
+}
+
+/**
+ * Used to catch Error at offset issues with unserializing
+ * TODO This does not work. Try looking at solution at: http://stackoverflow.com/questions/5373780/how-to-catch-this-error-notice-undefined-offset-0
+ * @param $string
+ */
+function intel_unserialize($string) {
+  try {
+    $ret = unserialize($string);
+  }
+  catch (Exception $e) {
+    throw new Exception( 'Something really gone wrong', 0, $e);
+    //$string = preg_replace('!s:(\d+):"(.*?)";!se', "'s:'.strlen('$2').':\"$2\";'", $string );
+    $ret = unserialize($string);
+  }
+  return $ret;
+}
+
+function intel_is_debug($mode = '') {
+
+  return intel_debug_mode($mode);
+}
+
+function intel_debug_mode($mode = '') {
+
+  return get_option('intel_debug_mode', 0) || !empty($_GET['debug']);
+}
+
+function intel_extended_mode() {
+
+  return get_option('intel_extended_mode', 0) || !empty($_GET['extended']);
+}
+
+function intel_print_var($var, $console = FALSE) {
+  if ($console) {
+    $json = json_encode($var);
+    print "<script> console.log($json); </script>";
+  }
+  if (function_exists('d')) {
+    if ( !Kint::enabled() ) return '';
+    $_ = func_get_args();
+    return call_user_func_array( array( 'Kint', 'dump' ), $_ );
+  }
+}
+
+if ( !function_exists( 'intel_d' ) ) {
+  function intel_d() {
+    static $kint_aliases;
+    $_ = func_get_args();
+
+    if (class_exists('Kint')) {
+      if (!Kint::enabled()) {
+        return '';
+      }
+
+      // add to static aliases so the function caller info translates
+      if (empty($kint_aliases)) {
+        $kint_aliases = Kint::$aliases;
+        $kint_aliases['functions'][] = 'intel_d';
+        Kint::$aliases = $kint_aliases;
+      }
+
+      ob_start();
+      call_user_func_array(array('Kint', 'dump'), $_);
+      $output = ob_get_clean();
+      if (intel()->is_intel_admin_page()) {
+        Intel_Df::drupal_set_message($output);
+      }
+      else {
+        print $output;
+      }
+    }
+    else {
+      if (intel()->is_intel_admin_page()) {
+        Intel_Df::drupal_set_message(print_r($_, 1));
+      }
+      else {
+        print_r($_);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function intel_theme($themes = array()) {
+  //$themes = array();
+  $themes['intel_page'] = array(
+    'variables' => array(
+      'title' => NULL,
+      'navbar' => NULL,
+      'breadcrumbs' => NULL,
+      'markup' => NULL,
+    ),
+    'template' => 'intel-page',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_navbar'] = array(
+    'variables' => array(
+      'brand' => NULL,
+      'tree' => NULL,
+    ),
+    'template' => 'intel-navbar',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_breadcrumbs'] = array(
+    'variables' => array(
+      'breadcrumbs' => array(),
+    ),
+    'template' => 'intel-breadcrumbs',
+    //'file' => 'intel.pages.inc',
+  );
+  $themes['intel_property_browser_environment'] = array(
+    'variables' => array('entity' => NULL),
+    'callback' => 'theme_intel_property_browser_environment',
+    //'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_profile'] = array(
+    'render element' => 'elements',
+    'variables' => array(
+      'view_mode' => NULL,
+    ),
+    'template' => 'intel-visitor-profile',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_picture'] = array(
+    'variables' => array('entity' => NULL),
+    'template' => 'intel-visitor-picture',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_property'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'info' => NULL,
+      'value' => NULL,
+      'attributes' => NULL,
+    ),
+    'callback' => 'intel_theme_visitor_property',
+    //'template' => 'intel-visitor-property',
+    'file' => 'intel.visitor_properties.inc',
+  );
+  $themes['intel_visitor_profile_item'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'title' => NULL,
+      'value' => NULL,
+      'attributes' => NULL,
+    ),
+    'template' => 'intel-visitor-profile-item',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_profile_item_list'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'items' => array(),
+      'attributes' => array(),
+    ),
+    'template' => 'intel-visitor-profile-item-list',
+    'file' => 'intel.pages.inc',
+  );
+  $theme['bootstrap_card'] = array(
+    'variables' => array(
+      'header' => NULL,
+      'body' => NULL,
+      'footer' => NULL,
+    ),
+    'template' => 'intel-bootstrap-card',
+    'file' => 'intel.pages.inc',
+  );
+  $theme['bootstrap_element'] = array(
+    'variables' => array(
+      'wrapper' => NULL,
+      'markup' => NULL,
+    ),
+    'template' => 'intel-bootstrap-element',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_profile_block'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'title' => NULL,
+      'markup' => NULL,
+    ),
+    'template' => 'intel-visitor-profile-block',
+    //'template' => 'intel-bootstrap-card',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_social_links'] = array(
+    'variables' => array('entity' => NULL),
+    'template' => 'intel-visitor-social-links',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_social_link'] = array(
+    'variables' => array(
+      'link' => NULL,
+      'class' => NULL,
+    ),
+    'template' => 'intel-visitor-social-link',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_bio'] = array(
+    'variables' => array('entity' => NULL),
+    'template' => 'intel-visitor-bio',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_summary_item'] = array(
+    'variables' => array('entity' => NULL),
+    'template' => 'intel-visitor-summary-item',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_location'] = array(
+    'variables' => array('entity' => NULL),
+    'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_location'] = array(
+    'variables' => array(
+      'entity' => NULL,
+      'location' => NULL,
+    ),
+    'callback' => 'theme_intel_location',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_location_block'] = array(
+    'variables' => $themes['intel_location']['variables'] + array('title' => NULL),
+    'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_map'] = array(
+    'variables' => array(
+      'locations' => array(),
+    ),
+    'template' => 'intel-map',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_browser_environment'] = array(
+    'variables' => array('entity' => NULL),
+    'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visitor_visits_table'] = array(
+    'variables' => array('entity' => NULL),
+    'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visit_steps_table'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'steps' => array(),
+      'attributes' => array(),
+    ),
+    'callback' => 'theme_intel_visit_steps_table',
+    'file' => 'intel.pages.inc',
+  );
+
+  $themes['intel_browser_environment'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'entity' => NULL,
+      'environment' => array(),
+    ),
+    'callback' => 'theme_intel_property_browser_environment',
+    'file' => 'intel.pages.inc',
+  );
+
+  $themes['intel_browser_environment_block'] = array(
+    'variables' => $themes['intel_browser_environment']['variables'] + array('title' => NULL),
+    'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+
+  $themes['intel_trafficsource'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'entity' => NULL,
+      'trafficsource' => array(),
+    ),
+    'callback' => 'theme_intel_property_trafficsource',
+    'file' => 'intel.pages.inc',
+  );
+
+  $themes['intel_trafficsource_block'] = array(
+    'variables' => $themes['intel_trafficsource']['variables'] + array('title' => NULL),
+    'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+
+
+
+  return $themes;
+}
+
+/**
+ * Implements hook_features_api().
+ */
+function intel_features_api() {
+  return array(
+    'intel_phonenumber' => array(
+      'name' => Intel_Df::t('Intel phone numbers'),
+      'default_hook' => 'intel_phonenumber_defaults',
+      'feature_source' => TRUE,
+      'file' => Intel_Df:: drupal_get_path('module', 'intel') . '/intel.features.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_features_pipe_COMPONENT_alter().
+ */
+function intel_features_pipe_node_alter(&$pipe, $data, $export) {
+  foreach ($data as $node_type) {
+    $pipe['variable'][] = "intel_entity_settings_node__{$node_type}";
+  }
+}
+
+/**
+ * Implements hook_features_pipe_COMPONENT_alter().
+ */
+function intel_features_pipe_taxonomy_alter(&$pipe, $data, $export) {
+  foreach ($data as $vocabulary) {
+    $pipe['variable'][] = "intel_entity_settings_taxonomy__{$vocabulary}";
+  }
+}
+
+/**
+ * Implements hook_features_pipe_COMPONENT_alter().
+ */
+/*
+function intel_features_pipe_node_alter(&$pipe, $data, $export) {
+  foreach ($data as $node_type) {
+    $pipe['variable'][] = "intel_entity_settings_node_{$node_type}";
+  }
+}
+*/
+
+function intel_get_rl_keys() {
+  // 1 defined as primary identifier
+  return array(
+    'rt' => 1,
+    'rt2' => 1,
+    'rk' => 1,
+  );
+}
+
+function intel_gen_cid() {
+  return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+    // 32 bits for "time_low"
+    mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
+
+    // 16 bits for "time_mid"
+    mt_rand( 0, 0xffff ),
+
+    // 16 bits for "time_hi_and_version",
+    // four most significant bits holds version number 4
+    mt_rand( 0, 0x0fff ) | 0x4000,
+
+    // 16 bits, 8 bits for "clk_seq_hi_res",
+    // 8 bits for "clk_seq_low",
+    // two most significant bits holds zero and one for variant DCE1.1
+    mt_rand( 0, 0x3fff ) | 0x8000,
+
+    // 48 bits for "node"
+    mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
+  );
+}
+
+/**
+ * Implements hook_block_info().
+ *
+ * This hook declares what blocks are provided by the module.
+ */
+
+function intel_block_info() {
+  $blocks = array();
+  $blocks['report_dashboard'] = array(
+    'info' => Intel_Df::t('Intelligence: Report: Dashboard'),
+    'cache' => DRUPAL_NO_CACHE,
+    //'status' => TRUE,
+  );
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view().
+ *
+ * This hook generates the contents of the blocks themselves.
+ */
+
+function intel_block_view($delta = '') {
+  // The $delta parameter tells us which block is being requested.
+  $block = array();
+  switch ($delta) {
+    case 'report_dashboard':
+      require_once Intel_Df:: drupal_get_path('module', 'intel') . "/reports/intel.report_dashboard.inc";
+      $block['subject'] = Intel_Df::t("Intelligence dashboard");
+      $block['content'] = '';
+      // TODO: inline style is hackish for making text smaller for dashboard blocks
+      $block['content'] = '<style>#intel-report .summary-box {font-size: .85em;}</style>';
+      $block['content'] .= intel_dashboard_report_page('-', '-', '-', '-', '-', array('q' => 'admin/reports/intel/dashboard'));
+      //$block['content'] .= intel_dashboard_report_page('-', '-', '-', '-', '-', array('q' => 'admin/reports/intel/dashboard', 'return_type' => 'nonajax'));
+      break;
+  }
+  return $block;
+}
+
+function intel_linked_field_settings_alter(&$settings, $context) {
+
+  $attrs = intel_get_entity_intel_attributes($context['entity'], $context['entity_type']);
+  if (!empty($attrs['page']['rl'])) {
+    $settings['options']['attributes']['data-io-uri'] = $attrs['page']['rl'];
+  }
+  return;
+  $uro = array();
+  $rl_keys = intel_get_rl_keys();
+  foreach ($rl_keys as $k => $v) {
+    if ($v && !empty($attrs['page'][$k])) {
+      $uro[$k] = $attrs['page'][$k];
+    }
+  }
+  if (!empty($uro)) {
+    $settings['options']['attributes']['data-io-uro'] = json_encode($uro);
+  }
+  return;
+  $entity_type = $context['entity_type'];
+  $entity = $context['entity'];
+  list(, , $bundle) = entity_extract_ids($entity_type, $entity);
+  $view_mode = $context['view_mode'];
+
+  // Add custom attribute for the link.
+  if ($entity_type == 'node' && $bundle == 'article' && $view_mode == 'default') {
+    $settings['options']['attributes']['data-id'] = $entity->nid;
+  }
+}
