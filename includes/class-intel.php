@@ -284,7 +284,6 @@ class Intel {
 
 		// on intel admin pages, buffer page output and create sessions
 		if (self::is_intel_admin_page()) {
-			Intel_Df::watchdog('is_intel_admin_page', '');
 			// page buffer management hooks
 			$this->loader->add_action( 'admin_init', $plugin_admin, 'ob_start' );
 			$this->loader->add_action( 'admin_footer', $plugin_admin, 'ob_end' );
@@ -579,6 +578,14 @@ class Intel {
 			$infos[$type] = apply_filters('intel_' . $type .'_info_alter', $infos[$type]);
 		}
 		return $infos[$type];
+	}
+
+	public function addon_info($name = NULL) {
+		$info = self::build_info('addon');
+		if (!isset($name)) {
+			return $info;
+		}
+		return !empty($info[$name]) ? $info[$name] : NULL;
 	}
 
 	public function intel_script_info($name = NULL) {

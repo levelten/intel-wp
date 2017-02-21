@@ -160,7 +160,10 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Custom API URL'),
     '#field_prefix' => 'http(s)://',
     '#default_value' => get_option('intel_l10iapi_url', ''),
-    '#description' => Intel_Df::t('The URL for the API without the protocall. Leave blank to use the default of api.getlevelten.com/api/intel.'),
+    '#description' => Intel_Df::t('The URL for the API without the protocall. Leave blank to use the default of !default.',
+      array(
+        '!default' => INTEL_L10IAPI_URL,
+      )),
     '#field_suffix' => '/',
   );
   $options = array(
@@ -187,6 +190,17 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Custom API custom params'),
     '#default_value' => http_build_query($api_params),
     '#description' => Intel_Df::t('Enter custom params as query formated string. (e.g. key1=value1&key2=value2)'),
+  );
+  $form['l10iapi']['advanced']['intel_imapi_url'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Custom Management API URL'),
+    '#field_prefix' => 'http(s)://',
+    '#default_value' => get_option('intel_imapi_url', ''),
+    '#description' => Intel_Df::t('The URL for the API without the protocall. Leave blank to use the default of !default.',
+      array(
+        '!default' => INTEL_IMAPI_URL,
+      )),
+    '#field_suffix' => '/',
   );
   $form['l10iapi']['advanced']['intel_debug_mode'] = array(
     '#type' => 'checkbox',
@@ -476,7 +490,6 @@ function intel_admin_scoring($form, &$form_state) {
     );
   }
   $goals = get_option('intel_goals', array());
-  d($goals);
   $form_state['goals'] = $goals;
   foreach ($goals AS $i => $m) {
     //$value = !empty($scorings['goal_' . $i]) ? $scorings['goal_' . $i] : (isset($m['value']) ? $m['value'] : 0);
@@ -558,7 +571,7 @@ function intel_admin_scoring($form, &$form_state) {
 
 function intel_admin_scoring_submit(&$form, &$form_state) {
   $values = $form_state['values'];
-  intel_d($values);
+
   $scores = array();
   $targets = array();
   $goals = $form_state['goals'];

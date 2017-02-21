@@ -858,7 +858,7 @@ class Intel_Form  {
 		$url = Intel_Df::url($path, array('query' => $query));
 
 		// Setting this error will cause the form to fail validation.
-		form_set_error('form_token', Intel_Df::t('The form has become outdated. Copy any unsaved work in the form below and then <a href="@link">reload this page</a>.', array('@link' => $url)));
+		Intel_Form::form_set_error('form_token', Intel_Df::t('The form has become outdated. Copy any unsaved work in the form below and then <a href="@link">reload this page</a>.', array('@link' => $url)));
 	}
 
 	/**

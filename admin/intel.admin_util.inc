@@ -16,292 +16,53 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  global $wpdb;
+  include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $sql = "
-    SELECT post_id
-    FROM {$wpdb->prefix}postmeta AS pm
-    LEFT JOIN {$wpdb->prefix}posts AS p ON pm.post_id = p.ID
-    WHERE p.ID IS NULL
-    GROUP BY post_id
-  ";
-  $results = $wpdb->get_results( $sql );
-  foreach ($results as $row) {
-    $wpdb->delete("{$wpdb->prefix}postmeta", array('post_id' => $row->post_id), array('%d'));
-  }
-  intel_d($results);
+  $status = array();
 
-  return 'OK 4';
+  $ga_dimensions = intel_fetch_ga_custom_dimensions(TRUE);
 
-  $intel_events = intel_get_intel_event_info();
-  d($intel_events);
-
-  $scorings = intel_get_scorings();
-  d($scorings);
-
-  $vars = intel_form_submission_vars_default();
-  $submission = &$vars['submission'];
-
-  $submission->type = 'testform';
-  $submission->type = 'testform';
-  $submission->fid = 'test-machine-name';  // $submission->fid
-  $submission->fsid = rand(1, 1000); // $submission->fsid
-  $submission->form_title = 'Test form';
-  $submission->form_page_uri = ':post:1';
-  $submission->form_page_id = 1;
-  $submission->response_page_uri = ':post:1';
-  $submission->response_page_id = 1;
-
-  $vars['track_id'] = 'form_submission__contact';
-
-  // primary
-
-  d($vars);
-  $_GET['debug'] = 1;
-  intel_process_form_submission($vars);
-
-  return 'OK';
-
-
-/*
-  $urls = array(
-    'http://www.alpha.com',
-    '//www.beta.com',
-    'http://www.alpha.com/blog/alpha',
-    '//www.beta.com/blog/beta',
-    'http://www.alpha.com/blog/alpha?id=4',
-    '//www.beta.com/blog/beta?id=4&view=full',
-    ':post:1',
-    'http://getlevelten.compost:1',
-    'urn:post:1',
-    'urn::post:1',
-  );
-
-  foreach ($urls as $url) {
-    $parse = intel_parse_url($url);
-    d($url);
-    d($parse);
-  }
-
-  return 'OK';
-*/
-
-  $entity_info = intel()->entity_info('intel_submission');
-
-  d($entity_info);
-
-  return 'OK';
-
-
-
-
-  return;
-  require_once INTEL_DIR . 'includes/class-intel-gapi.php';
-
-  $intel = intel();
-  if ( null === $intel->gapi ) {
-    $intel->gapi = new Intel_GAPI_Controller();
-  }
-  return '';
-
-  $goal_categories = intel_get_goal_categories();
-  d($goal_categories);
-
-  $event_goal_info = intel_get_event_goal_info();
-  d($event_goal_info);
-
-  return $out;
-  $action = !empty($_GET['action']) ? $_GET['action'] : 'load';
-
-
-  if ($action == 'load') {
-    $visitor = intel_visitor_load_or_create('user');
-  }
-  if ($action == 'create') {
-    $visitor = intel_visitor_load_or_create('user');
-
-    $visitor_properties = array(
-      'data.givenName' => 'Abe',
-      'data.familyName' => 'Tester',
-      'data.name' => 'Abe Tester',
-      'data.email' => !empty($_GET['email']) ? $_GET['email'] : 'abe@example.com',
-      'data.twitter:username' => 'levelten_tom',
-    );
-
-    $property_options = array(
-      'source' => 'form',
-    );
-    if(!empty($visitor_properties) && is_array($visitor_properties)) {
-      foreach ($visitor_properties as $k => $fv) {
-        $kt = $k;
-        if (strpos($k, 'data.') === 0) {
-          $kt = substr($k, 5);
-        }
-        $a = explode(':', $kt);
-        $prop_name = $a[0];
-        $var_name = !empty($a[1]) ? $a[1] : '@value';
-        $value = $visitor->getProp($kt);
-        $value[$var_name] = $fv;
-        $visitor->setProp($prop_name, $value, $property_options);
-      }
-    }
-
-    $visitor->save();
-  }
-  if ($action == 'delete') {
-    $visitor = intel_visitor_load_or_create('user');
-    if (!empty($visitor->vid)) {
-      intel_visitor_delete($visitor->vid);
-    }
-  }
-
-
-  d($visitor);
-  return 'OK';
-
-  include_once 'includes/intel.visitor_properties.inc';
-
-  jsonld_init();
-
-  $contexts = array();
-
-  $contexts['Person'] = intel_get_itemprop_context('Person');
-
-  print_r($contexts['Person']);
-  //echo json_encode($contexts['Person'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-  echo "\n-------------------\n";
-
-  /*
-  $contexts['Person'] = (object)array(
-    // Aliases
-    //'id' => '@id',  // alias id to @id
-    'type' => '@type',
-    'url' => '@id',
-    // Namespaces
-    'io' => 'http://oepro3p.localhost/intel/itemprop/context/',
-    'foaf' => 'http://xmlns.com/foaf/0.1/',
-    'schema' => 'http://schema.org/', // add schema namespace
-    // Properties
-    'name' => 'http://schema.org/name',
-    'description' => 'http://schema.org/description',
-    'image' => 'http://schema.org/image',
-    'familyName' => 'http://schema.org/familyName',
-    'givenName' => 'http://schema.org/givenName',
-    'nickname' => 'foaf:nick',
-    'preferredName' => 'http://schema.org/name',
-    'socialProfile' => 'http://schema.org/sameAs',
-    // just testing a custom definition
-    'birthday' => (object)array(
-      '@id' => 'http://schema.org/birthDate',
-      '@type' => 'xsd:date',
-    ),
-    //'facebook' => array(
-    //  '@id' => 'http://schema.org/sameAs',
-      //'@type' => 'URL',
-    //),
-  );
-
-  print_r($contexts['Person']);
-  //echo json_encode($contexts['Person'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-  echo "\n-------------------\n";
-  */
-
-
-  $visitor = (object)array(
-    '@context' =>       $contexts['Person'],
-    '@type' =>          'Person',
-    'name' =>           'Tommy Tester',
-    'description' =>    'He is a tester!',
-    'image' =>          'http://getlevelten.com/sites/default/files/tom_1.png',
-    'url' =>            'http://getlevelten.com/about-us/tom-mccracken',
-    'familyName' =>     'Tester',
-    'givenName' =>      'Tommy',
-    'preferredName' =>  'Tom Dude',
-    'foaf:nick' => 'Tom Dude Nick',
-    'nickname' => 'Nick 2',
-    'schema:gender' =>   'Male',
-    'birthday' => '1969-07-02',
-    'schema:knows' => (object)array(
-      'name' => 'Boris',
-    ),
-    //'facebook' =>       (object)array(
-    //  '@value' => 'http://facebook.com/tommy',
-    //  '@type'  =>
-    //),
-    //'socialProfile' =>  '',
-  );
-
-  //$visitor->{'schema:knows'} = 'http://facebook.com/boris';
-  //$visitor->{'schema:knows'} = array('http://facebook.com/boris', 'http://facebook.com/carrie');
-
-  $visitor->image = (object)array(
-    //'caption' => 'Image caption',
-    '@value' => 'http://getlevelten.com/sites/default/files/tom_1.png',
-    //'name' => 'Image name',
-    'caption' => 'Image caption',
-  );
-
-  $js = '<script id="intel-ld" type="application/ld+json">' . json_encode($visitor, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . '</script>';
-
-  $markup = array(
-    '#type' => 'markup',
-    '#markup' => $js,
-  );
-
-  drupal_add_html_head($markup, 'intel');
-
-  //drupal_add_js($js, 'inline');
-
-  echo json_encode($visitor, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-  echo "\n-------------------\n";
-
-  $expanded = jsonld_expand($visitor);
-
-  echo json_encode($expanded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
-  echo "\n-------------------\n";
-
-  $compacted = jsonld_compact($expanded, $contexts['Person']);
-
-  echo json_encode($compacted, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+  intel_d($ga_dimensions);
 
   return '';
 
-  $context = (object)array(
-    "name" => "http://schema.org/name",
-    "homepage" => (object)array("@id" => "http://schema.org/url", "@type" => "@id"),
-    "image" => (object)array("@id" => "http://schema.org/image", "@type" => "@id")
+  include_once INTEL_DIR . 'includes/intel.imapi.inc';
+
+  $response = intel_imapi_ga_goal_get();
+
+  intel_d($response);
+
+  if (empty($response['1'])) {
+    return 'goal not found';
+  }
+
+  $goal = $response['1'];
+  $goal['name'] = 'Contact 4';
+  $goal['details']['conditions'][0]['expression'] = $goal['name'] . '\+$';
+  $response = intel_imapi_ga_goal_save($goal);
+
+  intel_d($response);
+
+  $response = intel_imapi_ga_goal_get();
+
+  intel_d($response);
+
+
+  return '';
+
+  $ga_goal = array(
+    'name'
   );
-
-  $doc = (object)array(
-    "http://schema.org/name" => "Manu Sporny",
-    "http://schema.org/url" => (object)array("@id" => "http://manu.sporny.org/"),
-    "http://schema.org/image" => (object)array("@id" => "http://manu.sporny.org/images/manu.png")
-  );
-
-// compact a document according to a particular context
-// see: http://json-ld.org/spec/latest/json-ld/#compacted-document-form
-  $compacted = jsonld_compact($doc, $context);
-
-  echo json_encode($compacted, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
-  $doc = (object)array(
-    "name" => "Manu Sporny",
-    "url" => "http://manu.sporny.org/",
-    "image" => "http://manu.sporny.org/images/manu.png",
-  );
+  $options = array();
+  try {
+    $response = intel_imapi_ga_goal_save($ga_goal, $options);
+  }
+  catch (Exception $e) {
+    Intel_Df::drupal_set_message($e->getMessage());
+  }
 
 
-  $doc->{'@context'} = $context;
-
-  echo json_encode($doc, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
-  $expanded = jsonld_expand($doc);
-
-  echo json_encode($expanded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
-  //$p = new JsonLdDrupalProcessor();
-  //return $p->fromRDF($input);
+  intel_d($response);
 
 
   return '';

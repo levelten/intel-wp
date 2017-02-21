@@ -10,6 +10,7 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.
 
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
+define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
 define('INTEL_L10IAPI_JS_VER', '0.2.1');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
@@ -2755,6 +2756,46 @@ function _intel_intel_script_info($info = array()) {
   );
 
   return $info;
+}
+
+// add _intel_intel_script_info to hook_intel_script_info
+add_filter('intel_addon_info', '_intel_addon_info');
+/**
+ * Implements hook_intel_intel_script
+ */
+function _intel_addon_info($info = array()) {
+  $info['addthis'] = array(
+    'title' => Intel_Df::t('AddThis'),
+    'description' => Intel_Df::t('Tracks AddThis shares, clickbacks and follows.'),
+    'enabled' => 0,
+    'enabled_default' => 0,
+    'enable_callback' => 'intel_addthis_addon_enable',
+  );
+  $info['youtube'] = array(
+    'title' => Intel_Df::t('YouTube'),
+    'description' => Intel_Df::t('Tracks YouTube video play events.'),
+    'enabled' => 0,
+    'enabled_default' => 0,
+    'enable_callback' => 'intel_addthis_youtube_enable',
+  );
+
+  return $info;
+}
+
+function intel_addthis_addon_enable($enable) {
+  $enabled = get_option('intel_intel_scripts_enabled', array());
+
+  $enabled['addthis'] = !empty($enable) ? 1 : 0;
+
+  update_option('intel_intel_scripts_enabled', $enabled);
+}
+
+function intel_youtube_addon_enable($enable) {
+  $enabled = get_option('intel_intel_scripts_enabled', array());
+
+  $enabled['youtube'] = !empty($enable) ? 1 : 0;
+
+  update_option('intel_intel_scripts_enabled', $enabled);
 }
 
 function intel_form_alter(&$form, &$form_state, $form_id) {

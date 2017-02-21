@@ -1502,6 +1502,83 @@ function intel_get_base_scorings() {
   return $scoring;
 }
 
+function intel_get_intel_goals_default($info = array()) {
+
+  $title = Intel_Df::t('Contact');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('General contact. Use as a default goal.'),
+    'value' => 50,
+  );
+
+  $title = Intel_Df::t('Sales inquiry');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to initiate sales communication'),
+    'value' => 100,
+  );
+
+  $title = Intel_Df::t('Research request');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive top of the funnel education premium offer.'),
+    'value' => 50,
+  );
+
+  $title = Intel_Df::t('Research request');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive educational (ToFu) premium offer.'),
+    'value' => 25,
+  );
+
+  $title = Intel_Df::t('Consideration request');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive brand building (MoFu) premium offer.'),
+    'value' => 50,
+  );
+
+  $title = Intel_Df::t('Decision request');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive sales (BoFu) premium offer.'),
+    'value' => 100,
+  );
+
+  $title = Intel_Df::t('Subscribe');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to subscribe to newsletter style updates.'),
+    'value' => 50,
+  );
+
+  $title = Intel_Df::t('Job application');
+  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Job posting submission.'),
+    'value' => 50,
+  );
+
+  return $info;
+}
+
 function intel_get_submission_goals_default() {
   $defs = array();
   $defs['tofu-conversion'] = array(
@@ -2890,4 +2967,27 @@ function intel_get_ga_admin_custom_dimensions_url() {
   $ga_profile = get_option('intel_ga_profile');
   return "https://analytics.google.com/analytics/web/#management/Settings/a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['viewId']}/%3Fm.page%3DCustomDimensions";
   //$url = "https://analytics.google.com/analytics/web/#management/Settings/a5541069w22533750p78133449/%3Fm.page%3DGoals";
+}
+
+function intel_is_intl_goal($ga_goal) {
+  if (!empty($ga_goal['type']) && $ga_goal['type'] == 'EVENT') {
+    if (!empty($ga_goal['details']['conditions'])) {
+      $cat_cond = array();
+      foreach ($ga_goal['details']['conditions'] as $v) {
+        if ($v['type'] == 'CATEGORY') {
+          $cat_cond = $v;
+        }
+      }
+      if (!empty($cat_cond)) {
+        if (!empty($cat_cond['matchType']) && !empty($cat_cond['expression']) && $cat_cond['matchType'] == 'REGEXP') {
+          $name = substr($cat_cond['expression'], 0, -3);
+          $term = substr($cat_cond['expression'], -3);
+          if ($term == '\+$' && $name == $ga_goal['name']) {
+            return TRUE;
+          }
+        }
+      }
+    }
+  }
+  return FALSE;
 }
