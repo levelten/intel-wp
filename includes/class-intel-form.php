@@ -899,7 +899,7 @@ class Intel_Form  {
 		if (isset($form['#token'])) {
 			//if (!drupal_valid_token($form_state['values']['form_token'], $form['#token']) || !empty($form_state['invalid_token'])) {
 			if (!wp_verify_nonce($form_state['values']['form_token'], $form['#token']) || !empty($form_state['invalid_token'])) {
-				self:_drupal_invalid_token_set_form_error();
+				self::_drupal_invalid_token_set_form_error();
 				// Stop here and don't run any further validation handlers, because they
 				// could invoke non-safe operations which opens the door for CSRF
 				// vulnerabilities.

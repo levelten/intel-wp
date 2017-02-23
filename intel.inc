@@ -11,7 +11,7 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.1');
+define('INTEL_L10IAPI_JS_VER', '0.2.2');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -2773,10 +2773,10 @@ function _intel_addon_info($info = array()) {
   );
   $info['youtube'] = array(
     'title' => Intel_Df::t('YouTube'),
-    'description' => Intel_Df::t('Tracks YouTube video play events.'),
+    'description' => Intel_Df::t('Tracks video play events on site embedded YouTube videos.'),
     'enabled' => 0,
     'enabled_default' => 0,
-    'enable_callback' => 'intel_addthis_youtube_enable',
+    'enable_callback' => 'intel_youtube_addon_enable',
   );
 
   return $info;

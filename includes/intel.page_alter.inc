@@ -314,9 +314,9 @@ function intel_page_alter(&$page) {
     drupal_add_js($script, array('type' => 'inline', 'scope' => 'header', 'weight' => -99, 'group' => -101));
   }
   */
-  
+
   $script = intel_get_js_embed('l10i', 'local');
-  wp_enqueue_script('intel_tracker_embed', $script);
+  //wp_enqueue_script('intel_tracker_embed', $script);
   //drupal_add_js($script, array('type' => 'inline', 'scope' => 'header', 'weight' => 0));
 
   /**
@@ -1126,7 +1126,7 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
     $l10iq_pushes[] = array('ga.create', $l10i_ga_account, 'auto', $params);
 
     // trigger alter to enable other modules to add pushes
-    $l10iq_pushes = add_filter('intel_l10iq_pushes_alter', $l10iq_pushes);
+    $l10iq_pushes = apply_filters('intel_l10iq_pushes_alter', $l10iq_pushes);
     //drupal_alter('intel_l10iq_pushes', $l10iq_pushes);
 
     if ($version == 'simple') {

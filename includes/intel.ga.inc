@@ -2636,6 +2636,7 @@ function intel_fetch_ga_profiles() {
           'timeshift' => $timeshift,
           'defaultPage' => $profile->getDefaultPage(),
         );
+
         $ga_profiles[$id] = $item;
         //$ga_dash_profile_list[] = array( $profile->getName(), $profile->getId(), $profile->getwebPropertyId(), $profile->getwebsiteUrl(), $timeshift, $profile->getTimezone(), $profile->getDefaultPage() );
         $startindex++;

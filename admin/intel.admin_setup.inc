@@ -12,6 +12,11 @@ function intel_admin_setup($form, &$form_state) {
     '#markup' => '<div class="row"><div class="col-md-3">',
   );
 
+  $sys_meta = get_option('intel_system_meta', array());
+  if (!isset($sys_meta['setup_step'])) {
+    $sys_meta['setup_step'] = 0;
+  }
+
 
   $setup_step = -1;
   $statuses = array();
@@ -32,6 +37,14 @@ function intel_admin_setup($form, &$form_state) {
   if (!empty($_GET['step'])) {
     $setup_step = (int) $_GET['step'];
   }
+
+  if ($setup_step > $sys_meta['setup_step']) {
+    $sys_meta['setup_step'] = $setup_step;
+    update_option('intel_system_meta', $sys_meta);
+  }
+
+  intel_d($statuses);
+  intel_d($setup_step);
 
 /*
   //d($statuses);
@@ -65,6 +78,9 @@ function intel_admin_setup($form, &$form_state) {
   $items[] = array(
     'text' => Intel_Df::t('Scoring'),
   );
+  $items[] = array(
+    'text' => Intel_Df::t('Complete'),
+  );
 
   $checklist = '';
   $checklist .= '<ul class="list-group checked-list-box">';
@@ -93,6 +109,7 @@ function intel_admin_setup($form, &$form_state) {
   }
   $checklist .= '</ul>';
   $form_state['intel_statuses'] = $statuses;
+  $form_state['intel_setup_step'] = $setup_step;
 
   $form['markup_sidebar'] = array(
     '#type' => 'markup',
@@ -227,7 +244,7 @@ function intel_admin_setup_1($form, &$form_state) {
       'target' => 'gadwp',
     ),
   );
-  $items[] = Intel_Df::t('Complete the Google Analytics Dashboard For WP setup on the !link.', array(
+  $items[] = Intel_Df::t('Complete the Google Analytics Dashboard For WP plugin setup on the !link.', array(
     '!link' => Intel_Df::l(Intel_Df::t('plugin settings page'), 'wp-admin/admin.php?page=gadash_settings', $l_options),
   ));
   $items[] = Intel_Df::t('Be sure to complete the Plugin Authorization and Select View configuration.');
@@ -298,7 +315,9 @@ function intel_admin_setup_2($form, &$form_state) {
     '#markup' => implode(' ', $items),
   );
 
-  $gap_options = array();
+  $gap_options = array(
+    '' => '--  ' . Intel_Df::t('none') . '  --',
+  );
   $ga_profiles = $form_state['intel_ga_profiles'];
   foreach ($ga_profiles as $profile) {
     // split off http protocal on domain
@@ -309,7 +328,7 @@ function intel_admin_setup_2($form, &$form_state) {
 
   $f['intel_ga_view'] = array(
     '#type' => 'select',
-    '#title' => Intel_Df::t('Google Analytics profile / view'),
+    '#title' => Intel_Df::t('Intelligence Google Analytics profile / view'),
     '#default_value' => get_option('intel_ga_view', ''),
     '#options' => $gap_options,
     //'#description' => $desc,
@@ -381,25 +400,25 @@ function intel_admin_setup_3($form, &$form_state) {
       'target' => 'intl',
     ),
   );
+  $imapi_domain = get_option('intel_imapi_url', INTEL_IMAPI_URL);
+  $imapi_domain = explode('/', $imapi_domain);
+  $imapi_domain = $imapi_domain[0];
   $items[] = '<p>';
   $items[] = Intel_Df::t('You will need to create an Intelligence API key and add it to your site using the field below.');
   $items[] = Intel_Df::t('First you will want to login or create an account on the !link.', array(
-    '!link' => Intel_Df::l(Intel_Df::t('API management site'), 'http://intl.getlevelten.com', $l_options),
+    '!link' => Intel_Df::l(Intel_Df::t('API management site'), "http://$imapi_domain", $l_options),
   ));
   $items[] = '</p><p>';
   $items[] = Intel_Df::t('Your Google Analytics Tracking ID is: @tid', array(
     '@tid' => $form_state['intel_ga_profile']['propertyId'],
   ));
-
+intel_d($form_state['intel_ga_profile']);
   $items[] = '</p><p>';
-  $l_options = array(
-    'query' => array(
-      'name' => 'test',
-      'tid' => 'UA-1'
-    ),
+  $l_options['query'] = array(
+    'gaviewid' => $form_state['intel_ga_profile']['viewId'],
   );
   $items[] = Intel_Df::t('Once logged in, use the !link option to add a new property and create your API key.', array(
-    '!link' => Intel_Df::l(Intel_Df::t('API management site'), 'http://intl.getlevelten.com/property/add'),
+    '!link' => Intel_Df::l(Intel_Df::t('API management site'), "http://$imapi_domain/property/add", $l_options),
   ));
   $items[] = Intel_Df::t('Copy and paste the API key into the field below.');
   $f['instructions'] = array(
@@ -554,7 +573,7 @@ function intel_admin_setup_5($form, &$form_state) {
 
   $status = $form_state['intel_statuses'][4];
 
-  $ga_goals = $form_state['ga_goals'];
+  $ga_goals = $form_state['intel_ga_goals'];
   $goals = get_option('intel_goals', array());
 
   $goals_default = intel_get_intel_goals_default();
@@ -727,40 +746,17 @@ function intel_admin_setup_5($form, &$form_state) {
       $ga_goal['type'] = 'INTL';
       $ga_goal['typeLabel'] = Intel_Df::t('Intl');
     }
-    /*
-    if (!empty($ga_goal['type']) && $ga_goal['type'] == 'EVENT') {
-      if (!empty($ga_goal['details']['conditions'])) {
-        $cat_cond = array();
-        foreach ($ga_goal['details']['conditions'] as $v) {
-          if ($v['type'] == 'CATEGORY') {
-            $cat_cond = $v;
-          }
-        }
-        if (!empty($cat_cond)) {
-          if (!empty($cat_cond['matchType']) && !empty($cat_cond['expression']) && $cat_cond['matchType'] == 'REGEXP') {
-            $name = substr($cat_cond['expression'], 0, -3);
-            $term = substr($cat_cond['expression'], -3);
-            if ($term == '\+$' && $name == $ga_goal['name']) {
-              $ga_goal['type'] = 'INTL';
-              $ga_goal['typeLabel'] = Intel_Df::t('Intl');
-            }
-          }
-        }
-      }
-    }
-    */
-
-
 
     if (empty($ga_goal) || $ga_goal['type'] == 'INTL') {
+      // if no goals exist, add first default so at least one intel goal is created
+      if (empty($ga_goal) && !$intl_goal_cnt) {
+        reset($goals_default);
+        $goal_default = current($goals_default);
+        $ga_goal['name'] = $goal_default['title'];
+        $goal['description'] = $goal_default['description'];
+      }
       $intl_goal_cnt++;
 
-      $defaults = !empty($goal['context']) ? $goal['context'] : $context_options;
-      foreach ($defaults as $kk => $vv) {
-        if ($vv) {
-          $defaults[$kk] = $kk;
-        }
-      }
 
       $f["goal_{$i}_name"] = array(
         '#type' => 'textfield',
@@ -770,76 +766,30 @@ function intel_admin_setup_5($form, &$form_state) {
         '#prefix' => '<td class="' . $col_classes[1] . '">',
         '#suffix' => '</td>',
         '#default_value' => !empty($ga_goal['name']) ? $ga_goal['name'] : '',
-        //'#size' => 8,
       );
 
-      /*
-      $f["goal_{$i}_value"] = array(
-        '#type' => 'textfield',
-        '#attributes' => array(
-          'placeholder' => Intel_Df::t('value') . ' ' . $i,
-        ),
-        //'#field_prefix' => '$',
-        '#prefix' => '<td class="' . $col_classes[4] . '">',
-        '#suffix' => '</td>',
-        '#default_value' => !empty($goal['value']) ? $goal['value'] : 0,
-        '#size' => 8,
-      );
-
-      $f["goal_{$i}_context"] = array(
-        '#type' => 'checkboxes',
-        '#prefix' => '<td class="' . $col_classes[3] . '" rowspan="2">',
-        '#suffix' => '</td>',
-        '#options' => $context_options,
-        '#default_value' => $defaults,
-      );
-      */
     }
     else {
-      // if no goals exist, add first default so at least one intel goal is created
-      if (empty($ga_goal) && !$intl_goal_cnt) {
-        $ga_goal['name'] = $goals_default['1']['title'];
-        $goal['description'] = $goals_default['1']['description'];
-        $intl_goal_cnt++;
-      }
+
 
       $f["goal_{$i}_name"] = array(
         '#type' => 'item',
         '#prefix' => '<td class="' . $col_classes[1] . '">',
-        '#suffix' => '</th>',
+        '#suffix' => '</td>',
         '#markup' => $ga_goal['name'],
       );
-
-      /*
-      $f["goal_{$i}_type"] = array(
-        '#type' => 'item',
-        '#prefix' => '<td class="' . $col_classes[2] . '">',
-        '#suffix' => '</th>',
-        '#markup' => $ga_goal['typeLabel'],
-      );
-
-      /*
-      $f["goal_{$i}_value"] = array(
-        '#type' => 'item',
-        '#prefix' => '<td class="' . $col_classes[4] . '">',
-        '#suffix' => '</td>',
-        '#markup' => $ga_goal['value'],
-      );
-
-      $f["goal_{$i}_context"] = array(
-        '#type' => 'item',
-        '#prefix' => '<td class="' . $col_classes[3] . '" rowspan="2">',
-        '#suffix' => '</td>',
-        '#markup' => Intel_Df::t('NA'),
-      );
-      */
     }
 
-    $f["goal_{$i}_type"] = array(
+    $f["goal_{$i}_typeLabel"] = array(
       '#type' => 'item',
       '#prefix' => '<td class="' . $col_classes[2] . '">',
-      '#suffix' => '</th>',
+      '#suffix' => '</td>',
       '#markup' => !empty($ga_goal['typeLabel']) ? $ga_goal['typeLabel'] : 'Intl',
+    );
+
+    $f["goal_{$i}_type"] = array(
+      '#type' => 'value',
+      '#value' => !empty($ga_goal['type']) ? $ga_goal['type'] : 'INTL',
     );
 
     $f["goal_{$i}_description"] = array(
@@ -875,135 +825,82 @@ function intel_admin_setup_check_5($form, &$form_state) {
 
   $ga_goals = get_option('intel_ga_goals', array());
   $op_meta = get_option('intel_option_meta', array());
+
   if (
     !empty($_GET['refresh'])
     || empty($op_meta['ga_goals_updated'])
     || (time() - $op_meta['ga_goals_updated']) > 3600) {
 
-    //$ga_goals = intel_fetch_ga_goals(TRUE);
     $ga_goals = intel_imapi_ga_goal_get();
   }
 
-  $form_state['ga_goals'] = $ga_goals;
+  $form_state['intel_ga_goals'] = $ga_goals;
+  $form_state['intel_goals'] = $goals = get_option('intel_goals', array());
 
-  if (empty($ga_goals)) {
-    $status['error_msg'] = Intel_Df::t('No goals have been set. Please set at least one goal in Google Analytics.');
-    return $status;
-  }
+  intel_d($goals);
 
-  $goals = get_option('intel_goals', array());
-
-  //intel_d($goals);
-  //intel_d($scorings);
-
-  // build goals from the ground up, if validating form submission
+  // if form submitted, process form_state values
   if (!empty($form_state['values'])) {
-    foreach ($ga_goals as $id => $ga_goal) {
-      $name = strtolower(Intel_Df::drupal_clean_css_identifier($ga_goal['name']));
-      $goals[$id] = array(
-        'ga_id' => $id,
-        'name' => $name,
-        'title' => $ga_goal['name'],
-        'description' => !empty($goals0[$id]['description']) ? $goals0[$id]['description'] : '',
-        //'value' => !empty($scorings["goal_$name"]) ? $scorings["goal_$name"] : 0,
-      );
-
-      // if no context exists for goal, add all contexts
-      if (empty($goals0[$id]['context'])) {
-        $goals[$id]['context'] = array(
-          'general' => 1,
-          'phonecall' => 1,
-          'submission' => 1,
+    $values = $form_state['values'];
+    $has_intl_goal = 0;
+    for ($i = 1; $i <= 20; $i++) {
+      if (!empty($values["goal_{$i}_name"])) {
+        $goals["$i"] = array(
+          'name' => $values["goal_{$i}_name"],
+          'type' => $values["goal_{$i}_type"],
         );
-      }
-      else {
-        $goals[$id]['context'] = $goals0[$id]['context'];
-      }
-
-      if (isset($values["goal_{$id}_description"])) {
-        $goals[$id]['description'] = $values["goal_{$id}_description"];
       }
     }
   }
 
-  $status['success'] = 1;
-  $status['goal_errors'] = array();
-  foreach ($ga_goals as $id => $ga_goal) {
-    if (empty($goals[$id])) {
-      unset($status['success']);
+  $has_intl_goal = 0;
+  foreach ($goals as $goal) {
+    if ($goal['type'] == 'INTL') {
+      $has_intl_goal = 1;
       break;
     }
-    $goal = $goals[$id];
-    if ($ga_goal['type'] == 'event') {
-      if (empty($ga_goal['details']['conditions']['category'])) {
-        $msg = Intel_Df::t('Event conditions not set in Google Analytics for goal @goal.',
-          array(
-            '@goal' => $ga_goal['id'] . ' ' . $ga_goal['name'],
-          ));
-        $status['goal_errors'][$id] = array(
-          'type' => 'condition_category_notset',
-          'message' => $msg,
-        );
-      }
-      if (empty($ga_goal['details']['conditions']['category']['matchType'])) {
-        $msg = Intel_Df::t('Event condition match type not set in Google Analytics for goal @goal.',
-          array(
-            '@goal' => $ga_goal['id'] . ' ' . $ga_goal['name'],
-          ));
-        $status['goal_errors'][$id] = array(
-          'type' => 'condition_category_matchtype_notset',
-          'message' => $msg,
-        );
-      }
-      if ($ga_goal['details']['conditions']['category']['matchType'] != 'regexp') {
-        $msg = Intel_Df::t('Event condition match type not set properly in Google Analytics for goal @goal. Please set to "Regular expression"',
-          array(
-            '@goal' => $ga_goal['id'] . ' ' . $ga_goal['name'],
-          ));
-        $status['goal_errors'][$id] = array(
-          'type' => 'condition_category_matchtype_incorrect',
-          'message' => $msg,
-        );
-      }
-      if ($ga_goal['details']['conditions']['category']['expression'] != $ga_goal['name'] . '\+$') {
-        $msg = Intel_Df::t('Event condition match text set properly in Google Analytics for goal %goal. Please set to "@name\+$"',
-          array(
-            '%goal' => $ga_goal['id'] . ' ' . $ga_goal['name'],
-            '@name' => $ga_goal['name'],
-          ));
-        $status['goal_errors'][$id] = array(
-          'type' => 'condition_category_expression_incorrect',
-          'message' => $msg,
-        );
-      }
-    }
-
   }
 
-  if (!empty($status['goal_errors'])) {
-    unset($status['success']);
+  if (!$has_intl_goal) {
+    $status['error_msg'] = Intel_Df::t('No Intl Goals have been set. Please set at least one Intl Goal.');
   }
+  else {
+    $status['success'] = 1;
+  }
+
+  intel_d($status);
 
   return $status;
 }
 
 function intel_admin_setup_validate_5($form, &$form_state, $status) {
-  if (!empty($status['error_msg'])) {
-    Intel_Form::form_set_error('intel_apikey', $status['error_msg']);
-    return;
+  $values = &$form_state['values'];
+  $goals = $form_state['intel_goals'];
+
+  foreach ($goals as $i => $goal) {
+    if ($values["goal_{$i}_type"] == 'INTL' && empty($values["goal_{$i}_name"])) {
+      $msg = Intel_Df::t('Intl Goal name missing. Intl Goals must have a name. If you are trying to delete a goal, not that GA goals cannot be deleted. Previous goal name was @name',
+        array(
+          '@name' => $goal['title'],
+        ));
+      Intel_Form::form_set_error('goal_' . $i . '_name', $msg);
+    }
   }
+
+
   if (!empty($status['goal_errors'])) {
     foreach ($status['goal_errors'] as $i => $err) {
       Intel_Form::form_set_error('goal_' . $i . '_name', $err['message']);
     }
-
   }
 }
 
 function intel_admin_setup_submit_5($form, &$form_state) {
   $values = $form_state['values'];
 
-  $ga_goals = $form_state['ga_goals'];
+  intel_d($values);
+
+  $ga_goals = $form_state['intel_ga_goals'];
 
   $goals_default = intel_get_intel_goals_default();
 
@@ -1093,26 +990,34 @@ function intel_admin_setup_submit_5($form, &$form_state) {
       'name' => $name,
       'title' => $ga_goal['name'],
       'description' => !empty($goals0[$id]['description']) ? $goals0[$id]['description'] : '',
+      'type' => !empty($goals0[$id]['type']) ? $goals0[$id]['type'] : '',
       'value' => $value,
+      'context' => array(),
     );
 
-    // if no context exists for goal, add all contexts
-    if (empty($goals0[$id]['context'])) {
-      $goals[$id]['context'] = array(
-        'general' => 1,
-        'phonecall' => 1,
-        'submission' => 1,
-      );
-    }
-    else {
-      $goals[$id]['context'] = $goals0[$id]['context'];
+    if (isset($values["goal_{$id}_type"])) {
+      $goals[$id]['type'] = $values["goal_{$id}_type"];
     }
 
     if (isset($values["goal_{$id}_description"])) {
       $goals[$id]['description'] = $values["goal_{$id}_description"];
     }
-  }
 
+    // if goal type INTL, set contexts
+    if ($goals[$id]['type'] == 'INTL') {
+      // if no context exists for goal, add all contexts
+      if (empty($goals0[$id]['context'])) {
+        $goals[$id]['context'] = array(
+          'general' => 1,
+          'phonecall' => 1,
+          'submission' => 1,
+        );
+      }
+      else {
+        $goals[$id]['context'] = $goals0[$id]['context'];
+      }
+    }
+  }
   update_option('intel_goals', $goals);
 }
 
@@ -1183,13 +1088,13 @@ function intel_admin_setup_6($form, &$form_state) {
       '#size' => 8,
     );
   }
+  $ga_goals =
   $goals = get_option('intel_goals', array());
   intel_d($goals);
   $form_state['goals'] = $goals;
   foreach ($goals AS $i => $m) {
-    //$value = !empty($scorings['goal_' . $i]) ? $scorings['goal_' . $i] : (isset($m['value']) ? $m['value'] : 0);
-    $value = !empty($m['value']) ? $m['value'] : 0;
-    if (!empty($m['context'])) {
+    $value = !empty($scorings['goal_' . $i]) ? $scorings['goal_' . $i] : (isset($m['value']) ? $m['value'] : 0);
+    if ($goals[$i]['type'] == 'INTL') {
       $f['goals']['score_goal_' . $i] = array(
         '#type' => 'textfield',
         '#title' => $m['title'],
@@ -1203,7 +1108,7 @@ function intel_admin_setup_6($form, &$form_state) {
         '#type' => 'item',
         '#title' => $m['title'],
         '#markup' => $value,
-        '#description' => $m['description'] . ' ' . Intel_Df::t('Goal value set in Google Analytics.'),
+        '#description' => $m['description'] . ' (' . Intel_Df::t('Goal value set in Google Analytics.') . ')',
         '#size' => 8,
       );
     }
@@ -1220,15 +1125,12 @@ function intel_admin_setup_check_6($form, &$form_state) {
 
   $status = array();
 
-  $scorings = intel_get_scorings();
+  $form_state['intel_scorings'] = $scorings = intel_get_scorings();
 
-  intel_d($scorings);
+  $scorings_option = get_option('intel_scorings', array());
 
-  $form_state['intel_scorings'] = $scorings;
-
-  intel_d($scorings);
-
-  if (empty($status['dimension_errors'])) {
+  // successful if scorings option has been set.
+  if (!empty($scorings_option)) {
     $status['success'] = 1;
   }
 
@@ -1246,15 +1148,69 @@ function intel_admin_setup_validate_6($form, &$form_state, $status) {
 
 function intel_admin_setup_submit_6($form, &$form_state) {
   $values = $form_state['values'];
-
+intel_d($values);
   $scores = array();
-  $goals = $form_state['goals'];
+  $goals = $form_state['intel_goals'];
   foreach ($values AS $k => $value) {
     if (substr($k, 0, 6) == 'score_') {
       $key = substr($k, 6);
+      $id = substr($key, 5);
       $scores[$key] = (float)$value;
+      if (!empty($goals[$id]['name'])) {
+        $scores['goal_' . $goals[$id]['name']] = $scores[$key];
+      }
     }
   }
+intel_d($scores);
   update_option('intel_scorings', $scores);
+}
+
+function intel_admin_setup_7($form, &$form_state) {
+  $f = array();
+
+  $status = $form_state['intel_statuses'][5];
+
+  $items = array();
+
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Congratulations. Intelligence setup is complete.');
+  $items[] = '</p><br />';
+
+  $f['instructions'] = array(
+    '#type' => 'markup',
+    '#markup' => implode(' ', $items),
+  );
+
+  $sys_meta = get_option('intel_system_meta', array());
+  if (!isset($sys_meta['setup_step']) || $sys_meta['setup_step'] < 100) {
+    $sys_meta['setup_step'] = 100;
+    $sys_meta['setup_complete'] = time();
+    $sys_meta = update_option('intel_system_meta', $sys_meta);
+  }
+
+
+  return $f;
+}
+
+
+
+function intel_admin_setup_check_7($form, &$form_state) {
+
+  $status = array();
+
+  return $status;
+}
+
+function intel_admin_setup_validate_7($form, &$form_state, $status) {
+  if (!empty($status['dimension_errors'])) {
+    foreach ($status['dimension_errors'] as $i => $err) {
+      Intel_Form::form_set_error('dim_' . $i . '_name', $err['message']);
+    }
+
+  }
+}
+
+function intel_admin_setup_submit_7($form, &$form_state) {
+
 }
 

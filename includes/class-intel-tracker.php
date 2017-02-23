@@ -169,6 +169,68 @@ class Intel_Tracker {
 		require_once INTEL_DIR . 'includes/intel.page_alter.inc';
 		$page = array();
 		intel_page_alter($page);
+
+		$js_settings = intel()->get_js_settings();
+
+		$io_name = 'io';
+
+		$script = "var intel_settings = " . json_encode($js_settings) . ";\n";
+		$script .= intel_get_js_embed('l10i', 'local');
+		$script .= "$io_name('set', 'config', intel_settings.intel.config);\n";
+		if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
+			foreach ($js_settings['intel']['pushes'] as $cm => $push) {
+				if ($cm == 'setUserId') {
+					$script .= $io_name . '("' . $cm . '","' . $push[0][0];
+					if (!empty($push[0][1])) {
+						$script .= '","' . $push[0][1];
+					}
+					$script .= '");' . "\n";
+				} else {
+					$script .= "$io_name('$cm', intel_settings.intel.pushes.$cm);\n";
+				}
+			}
+		}
+
+
+		//$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
+		//if (!empty($js_settings['intel']['pushes']['events'])) {
+		//	$script .= "$io_name('event', intel_settings.intel.pushes.event);\n";
+		//}
+
+		print '<script>' . $script . '</script>';
+		return;
+
+		/*
+		// mimics logic in intel_js_alter()
+		$intel_js_settings = intel()->get_js_settings();
+		$
+
+
+		$io_name = 'io';
+		$pushstr = $io_name . '("set", "config", );' . "\n";
+		//$str = '_l10iq.push(["set", "config", ' . drupal_json_encode($options['config']) . ']);' . "\n";
+		if (isset($options['pushes']) && is_array($options['pushes'])) {
+			foreach ($options['pushes'] as $cm => $push) {
+				if ($cm == 'setUserId') {
+					$pushstr .= $io_name . '("' . $cm . '","' . $push[0][0];
+					if (!empty($push[0][1])) {
+						$pushstr .= '","' . $push[0][1];
+					}
+					$pushstr .= '");' . "\n";
+				} else {
+					$pushstr .= $io_name . '("' . $cm . '",' . drupal_json_encode($push) . ');' . "\n";
+				}
+				//$str .= '_l10iq.push(["' . $cm . '",' . drupal_json_encode($push) . ']);' . "\n";
+			}
+		}
+
+		$io_name = 'io';
+		print '<script>';
+    print "var intel_settings = " . json_encode(intel()->get_js_settings()) . ";\n";
+		print "$io_name('set', 'config', intel_settings.intel.config);\n";
+		print '</script>';
+		return;
+
 		$ga_tid = get_option( 'intel_ga_tid' );
 		$l10iapi_url = get_option('intel_l10iapi_url', '');
 		if (empty($l10iapi_url)) {
@@ -183,6 +245,7 @@ class Intel_Tracker {
 		$l10iapi_js_file = $l10iapi_js_ver . '/' . (($debug_mode) ? 'l10i.js' : 'l10i.min.js');
 
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/intel-tracking-code.php';
+		*/
 	}
 
 }

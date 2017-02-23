@@ -148,7 +148,7 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 	 * @access public
 	 */
 	public function no_items() {
-		_e( 'No contacts found.' );
+		_e( 'No contacts found in database.' );
 	}
 
 	/**

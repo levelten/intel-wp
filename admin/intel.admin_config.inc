@@ -17,38 +17,19 @@ function intel_admin_settings($form, &$form_state) {
 
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
+  $sys_meta = get_option('intel_system_meta', array());
+  if (empty($sys_meta['setup_step']) || $sys_meta['setup_step'] < 100) {
+    $msg = Intel_Df::t('Intelligence has not yet been setup. !link.', array(
+      '!link' => Intel_Df::l(Intel_Df::t('Click here to run the setup wizard'), 'admin/config/intel/settings/setup'),
+    ));
+    Intel_Df::drupal_set_message($msg, 'warning');
+
+    return '';
+  }
+
   // check dependencies
   // verify if gadwp exists
   $ga_data_source = intel_ga_data_source();
-  if (!$ga_data_source) {
-    if (is_plugin_active( 'google-analytics-dashboard-for-wp/gadwp.php' ) ) {
-      update_option('intel_ga_data_source', 'gadwp');
-    }
-    else {
-      $l_options = array(
-        'attributes' => array(
-          'target' => 'gadwp',
-        ),
-      );
-      Intel_Df::drupal_set_message( Intel_Df::t('Required plugin missing. Please install and activate the !plugin.',
-        array(
-          '!plugin' => Intel_Df::l(Intel_Df::t('Google Analytics Dashboard for WP plugin'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options),
-        )), 'error');
-      return $form;
-    }
-  }
-  // continue if all dependencies active
-
-
-  $apiUrl = get_option('intel_l10iapi_url', '');
-  $api_params = get_option('intel_l10iapi_custom_params', array());
-  $apiClientProps = array(
-    'apiUrl' => ($apiUrl ? $apiUrl : INTEL_L10IAPI_URL) . '/',
-    'apiConnector' => get_option('intel_l10iapi_connector', ''),
-    'apiParams' => $api_params,
-  );
-  $api_connection = 0;
-  $account_level = '';
 
   $message = '';
   //if (count($form_state['input']) == 0) { // hack to assure check and messages are only done once when form is submitted
@@ -63,13 +44,6 @@ function intel_admin_settings($form, &$form_state) {
       Intel_Df::drupal_set_message($msg, 'error');
     }
   //}
-
-  $gadwp = GADWP();
-  $network_settings = false;
-  if ( null === $gadwp->gapi_controller ) {
-    $gadwp->gapi_controller = new GADWP_GAPI_Controller();
-  }
-  $options = $gadwp->config->options; // Get current options
 
   $form['l10iapi'] = array(
     '#type' => 'fieldset',
@@ -96,22 +70,19 @@ function intel_admin_settings($form, &$form_state) {
   );
   */
 
-  $ga_profiles = $gadwp->gapi_controller->refresh_profiles();
+  $ga_profiles = intel_fetch_ga_profiles();
   $form_state['intel_ga_profiles'] = $ga_profiles;
-  $gap_options = array();
+  $gap_options = array(
+    '' => '--  ' . Intel_Df::t('none') . '  --',
+  );
 
-  $profile = GADWP_Tools::guess_default_domain( $ga_profiles );
-
-  foreach ($ga_profiles as $profile) {
-    // split off http protocal on domain
-    $domain = explode('//', $profile[3]);
-    $domain = count($domain) == 2 ? $domain[1] : $domain[0];
-    $gap_options[$profile[1]] = "$domain ({$profile[2]}): {$profile[0]}";
+  foreach ($ga_profiles as $view_id => $profile) {
+    $gap_options[$view_id] = "{$profile['propertyId']} / {$profile['viewName']}";
   }
 
   $form['l10iapi']['intel_ga_view'] = array(
     '#type' => 'select',
-    '#title' => Intel_Df::t('Google Analytics profile'),
+    '#title' => Intel_Df::t('Google Analytics profile (tracking id / view name)'),
     '#default_value' => get_option('intel_ga_view', ''),
     '#options' => $gap_options,
     '#description' => $desc,
@@ -188,7 +159,7 @@ function intel_admin_settings($form, &$form_state) {
   $form['l10iapi']['advanced']['intel_l10iapi_custom_params'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('Custom API custom params'),
-    '#default_value' => http_build_query($api_params),
+    '#default_value' => get_option('intel_l10iapi_custom_params', array()),
     '#description' => Intel_Df::t('Enter custom params as query formated string. (e.g. key1=value1&key2=value2)'),
   );
   $form['l10iapi']['advanced']['intel_imapi_url'] = array(
@@ -303,6 +274,7 @@ function intel_admin_settings($form, &$form_state) {
   }
   $enabled = get_option('intel_intel_scripts_enabled', array());
   $enabled += $defaults;
+
   $form['extensions']['intel_intel_scripts_enabled'] = array(
     '#type' => 'checkboxes',
     '#title' => Intel_Df::t('Intel scripts'),
@@ -381,8 +353,14 @@ function intel_admin_settings_submit($form, &$form_state) {
       update_option($k, $v);
     }
   }
-  d($form_state['intel_ga_profiles']);
-  d($values);
+
+  $ga_profiles = $form_state['intel_ga_profiles'];
+  if (!empty($ga_profiles[$values['intel_ga_view']])) {
+    $profile = $ga_profiles[$values['intel_ga_view']];
+    update_option('intel_ga_profile', $profile);
+    update_option('intel_ga_tid', $profile['propertyId']);
+  }
+
   Intel_Df::drupal_set_message(Intel_Df::t('General settings have been saved.'));
 
   //Intel_Df::drupal_goto('admin/config/intel/settings/general');

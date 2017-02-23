@@ -197,11 +197,19 @@ function intel_util_reset_site() {
     return __('No flags set', 'intel');
   }
   $flags = $_GET['flags'];
-  if ($flags = '_') {
+  if ($flags == '_') {
     $flags = 'c,v,f';
   }
   $flags = explode(',', $flags);
   global $wpdb;
+
+  $plugins_enabled = array(
+    'gadwp' => is_plugin_active( 'google-analytics-dashboard-for-wp/gadwp.php' ),
+    'flamingo' => is_plugin_active( 'flamingo/flamingo.php' )
+  );
+
+  intel_d($plugins_enabled);
+
   // clear comments
   if (in_array('c', $flags)) {
     $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}comments");
@@ -234,7 +242,7 @@ function intel_util_reset_site() {
       Intel_Df::drupal_set_message(Intel_Df::t('Gravity Forms form entries truncated.'));
     }
 
-    if (is_plugin_active( 'flamingo/flamingo.php' )) {
+    if (!empty($plugins_enabled['flamingo'])) {
       // flamingo data is stored as posts.
       $sql = "
         SELECT ID
@@ -261,6 +269,34 @@ function intel_util_reset_site() {
       Intel_Df::drupal_set_message(Intel_Df::t('Flamingo contacts and messages truncated.'));
     }
   }
+
+  $del_options = array(
+
+  );
+
+  if (in_array('is', $flags)) {
+    if (!empty($plugins_enabled['gadwp'])) {
+      // see google-analytics-dashboard-for-wp/install/install.php
+      $del_keys = array(
+        'ga_dash_tableid_jail' => '',
+        'ga_dash_token' => '',
+        'ga_dash_profile_list' => array(),
+      );
+      $gadwp_options = get_option('gadash_options', '{}');
+      $gadwp_options = json_decode($gadwp_options, 1);
+      foreach ($del_keys as $k => $v) {
+        $gadwp_options[$k] = $v;
+      }
+      update_option('gadash_options', json_encode( $gadwp_options) );
+
+      Intel_Df::drupal_set_message(Intel_Df::t('GADWP options cleared.'));
+    }
+
+    foreach ($del_options as $option) {
+      $wpdb->delete( $wpdb->prefix . 'options', array( 'option_name' => $option ), array( '%s') );
+    }
+  }
+
 
 }
 
