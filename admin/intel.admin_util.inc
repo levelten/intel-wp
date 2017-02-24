@@ -22,15 +22,11 @@ function intel_util_temp() {
 
   $ga_dimensions = intel_fetch_ga_custom_dimensions(TRUE);
 
-  intel_d($ga_dimensions);
-
   return '';
 
   include_once INTEL_DIR . 'includes/intel.imapi.inc';
 
   $response = intel_imapi_ga_goal_get();
-
-  intel_d($response);
 
   if (empty($response['1'])) {
     return 'goal not found';
@@ -41,12 +37,7 @@ function intel_util_temp() {
   $goal['details']['conditions'][0]['expression'] = $goal['name'] . '\+$';
   $response = intel_imapi_ga_goal_save($goal);
 
-  intel_d($response);
-
   $response = intel_imapi_ga_goal_get();
-
-  intel_d($response);
-
 
   return '';
 
@@ -60,10 +51,6 @@ function intel_util_temp() {
   catch (Exception $e) {
     Intel_Df::drupal_set_message($e->getMessage());
   }
-
-
-  intel_d($response);
-
 
   return '';
 }
@@ -111,7 +98,6 @@ function intel_util_temp_form_validate($form, &$form_state) {
  */
 function intel_util_temp_form_submit($form, &$form_state) {
   $values = $form_state['values'];
-  intel_d($values);
 }
 
 function intel_util_init_options() {
@@ -208,8 +194,6 @@ function intel_util_reset_site() {
     'flamingo' => is_plugin_active( 'flamingo/flamingo.php' )
   );
 
-  intel_d($plugins_enabled);
-
   // clear comments
   if (in_array('c', $flags)) {
     $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}comments");
@@ -271,7 +255,33 @@ function intel_util_reset_site() {
   }
 
   $del_options = array(
-
+    'intel_addons_enabled',
+    'intel_api_level',
+    'intel_apikey',
+    'intel_custom_embed_script',
+    'intel_debug_ga_debug',
+    'intel_debug_mode',
+    //'intel_extended_mode',
+    'intel_ga_data_source',
+    'intel_ga_profile',
+    'intel_ga_tid',
+    'intel_ga_view',
+    'intel_goals',
+    'intel_icon_urls',
+    //'intel_imapi_url',
+    'intel_intel_scripts_enabled',
+    'intel_l10iapi_connector',
+    'intel_l10ipai_custom_params',
+    'intel_l10iapi_js_embed_style',
+    'intel_l10iapi_js_ver',
+    'intel_l10iapi_url',
+    'intel_scorings',
+    'intel_sync_visitor_requests',
+    'intel_sync_visitordata_fullcontact',
+    'intel_system_meta',
+    'intel_track_emailclicks',
+    'intel_track_phonecalls',
+    'intel_track_realtime',
   );
 
   if (in_array('is', $flags)) {
@@ -295,6 +305,7 @@ function intel_util_reset_site() {
     foreach ($del_options as $option) {
       $wpdb->delete( $wpdb->prefix . 'options', array( 'option_name' => $option ), array( '%s') );
     }
+    Intel_Df::drupal_set_message(Intel_Df::t('Intelligence options cleared.'));
   }
 
 

@@ -167,7 +167,7 @@ function intel_ga_explorer_report() {
 
 function intel_ga_explorer_report_submit($form, &$form_state) {
   $values = $form_state['values'];
-  intel_d($values);
+
   $presets = intel_ga_explorer_presets();
   $request = array(
     'preset' => array(),
@@ -212,7 +212,7 @@ function intel_ga_explorer_report_submit($form, &$form_state) {
   $request['custom']['start_date'] = strtotime(str_replace("'", '', $values['start_date']));
   $request['custom']['end_date'] = strtotime(str_replace("'", '', $values['end_date']));
   $request['custom']['max_results'] = str_replace("'", '', $values['max_results']);
-intel_d($request);
+
   update_option('intel_ga_explorer_request', $request);
 }
 

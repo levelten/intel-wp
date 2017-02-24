@@ -77,7 +77,8 @@ class Intel_Df  {
 	 * the administrator. Use this for most menu items. It is the default value if
 	 * no menu item type is specified.
 	 */
-  const MENU_NORMAL_ITEM = self::MENU_VISIBLE_IN_TREE | self::MENU_VISIBLE_IN_BREADCRUMB;
+	//const MENU_NORMAL_ITEM = self::MENU_VISIBLE_IN_TREE | self::MENU_VISIBLE_IN_BREADCRUMB;
+	const MENU_NORMAL_ITEM = 0x0006;
 
 	/**
 	 * Menu type -- A hidden, internal callback, typically used for API calls.
@@ -95,7 +96,8 @@ class Intel_Df  {
 	 * Note for the value: 0x0010 was a flag which is no longer used, but this way
 	 * the values of MENU_CALLBACK and MENU_SUGGESTED_ITEM are separate.
 	 */
-	const MENU_SUGGESTED_ITEM = self::MENU_VISIBLE_IN_BREADCRUMB | 0x0010;
+	//const MENU_SUGGESTED_ITEM = self::MENU_VISIBLE_IN_BREADCRUMB | 0x0010;
+	const MENU_SUGGESTED_ITEM = 0x0014;
 
 	/**
 	 * Menu type -- A task specific to the parent item, usually rendered as a tab.
@@ -104,7 +106,8 @@ class Intel_Df  {
 	 * parent item. An example is the path "node/52/edit", which performs the
 	 * "edit" task on "node/52".
 	 */
-	const MENU_LOCAL_TASK = self::MENU_IS_LOCAL_TASK | self::MENU_VISIBLE_IN_BREADCRUMB;
+	//const MENU_LOCAL_TASK = self::MENU_IS_LOCAL_TASK | self::MENU_VISIBLE_IN_BREADCRUMB;
+	const MENU_LOCAL_TASK = 0x0084;
 
 	/**
 	 * Menu type -- The "default" local task, which is initially active.
@@ -112,7 +115,8 @@ class Intel_Df  {
 	 * Every set of local tasks should provide one "default" task, that links to the
 	 * same path as its parent when clicked.
 	 */
-	const MENU_DEFAULT_LOCAL_TASK = self::MENU_IS_LOCAL_TASK | self::MENU_LINKS_TO_PARENT | self::MENU_VISIBLE_IN_BREADCRUMB;
+	//const MENU_DEFAULT_LOCAL_TASK = self::MENU_IS_LOCAL_TASK | self::MENU_LINKS_TO_PARENT | self::MENU_VISIBLE_IN_BREADCRUMB;
+	const MENU_DEFAULT_LOCAL_TASK = 0x0092;
 
 	/**
 	 * Menu type -- An action specific to the parent, usually rendered as a link.
@@ -120,7 +124,8 @@ class Intel_Df  {
 	 * Local actions are menu items that describe actions on the parent item such
 	 * as adding a new user, taxonomy term, etc.
 	 */
-	const MENU_LOCAL_ACTION = self::MENU_IS_LOCAL_TASK | self::MENU_IS_LOCAL_ACTION | self::MENU_VISIBLE_IN_BREADCRUMB;
+	//const MENU_LOCAL_ACTION = self::MENU_IS_LOCAL_TASK | self::MENU_IS_LOCAL_ACTION | self::MENU_VISIBLE_IN_BREADCRUMB;
+	const MENU_LOCAL_ACTION = 0x0184;
 
 	/**
 	 * Internal menu flag: Invisible local task.
@@ -467,8 +472,7 @@ class Intel_Df  {
 		// The 'Location' HTTP header must be absolute.
 		$options['absolute'] = TRUE;
 		$url = self::url($path, $options);
-print $url;
-		return;
+
 		wp_redirect( $url, $http_response_code );
 		exit;
 
@@ -763,7 +767,7 @@ print $url;
 
 
 
-  public static function format_date($time, $format = '') {
+	public static function format_date($time, $format = '') {
 		$formats = array(
 			'' => 'Y-m-d G:i:s',
 			'medium' => 'Y-m-d G:i',
@@ -809,7 +813,7 @@ print $url;
 		if ($type == 'module') {
 
 		}
-  }
+	}
 
 	public static function url($path = NULL, array $options = array()) {
 // Merge in defaults.
@@ -1092,7 +1096,9 @@ print $url;
 		else if (!empty($theme_info[$hook]['callback'])) {
 			$func = $theme_info[$hook]['callback'];
 			if (is_string($func) && is_callable($func)) {
-				$output = $func($variables);
+				//$output = $func($variables);
+				//$output = call_user_func($func, $variables);
+				$output = call_user_func_array($func, array(&$variables));
 			}
 		}
 
@@ -1175,11 +1181,13 @@ print $url;
 		if (isset($elements['#pre_render'])) {
 			foreach ($elements['#pre_render'] as $function) {
 				if (is_callable($function)) {
-					$elements = $function($elements);
+					//$elements = $function($elements);
+					$elements = call_user_func($function, $elements);
 				}
 				$function = 'intel_df_' . $function;
 				if (is_callable($function)) {
-					$elements = $function($elements);
+					//$elements = $function($elements);
+					$elements = call_user_func($function, $elements);
 				}
 			}
 		}
@@ -1670,7 +1678,7 @@ print $url;
 	}
 
 	public static function url_is_external($path) {
-    $colonpos = strpos($path, ':');
+		$colonpos = strpos($path, ':');
 		// Some browsers treat \ as / so normalize to forward slashes.
 		$path = str_replace('\\', '/', $path);
 		// If the path starts with 2 slashes then it is always considered an external
@@ -1685,7 +1693,7 @@ print $url;
 		// any - as this would clearly mean it is not a URL.
 		|| ($colonpos !== FALSE
 			&& !preg_match('![/?#]!', substr($path, 0, $colonpos))
-		//	&& drupal_strip_dangerous_protocols($path) == $path);
+			//	&& drupal_strip_dangerous_protocols($path) == $path);
 		);
 	}
 
@@ -1710,7 +1718,7 @@ print $url;
 		$msg = __('WATCHDOG', 'intel') . ': ' . $type . ":\n" . $message;
 		//self::drupal_set_message($msg);
 		error_log($msg);
-  }
+	}
 }
 
 /**
@@ -1746,7 +1754,7 @@ class IntelCronQueue {
 	public function __construct($name) {
 		$this->name = $name;
 		$this->option_name = $name . '_queue';
-  }
+	}
 
 	public function getInstance($name) {
 

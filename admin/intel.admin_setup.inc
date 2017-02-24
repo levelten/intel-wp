@@ -43,9 +43,6 @@ function intel_admin_setup($form, &$form_state) {
     update_option('intel_system_meta', $sys_meta);
   }
 
-  intel_d($statuses);
-  intel_d($setup_step);
-
 /*
   //d($statuses);
   foreach ($statuses as $i => $status) {
@@ -177,7 +174,7 @@ function intel_admin_setup_submit($form, &$form_state) {
   if (function_exists($func)) {
     $f = $func($form, $form_state);
   }
-  intel_d($form_state);
+
   if (!empty($_GET['step'])) {
     $l_options = array(
       'query' => array(
@@ -191,7 +188,7 @@ function intel_admin_setup_submit($form, &$form_state) {
   }
 }
 
-function intel_admin_setup_0($form, &$form_state, $status) {
+function intel_admin_setup_0($form, &$form_state) {
   $f = array();
 
   $items = array();
@@ -412,7 +409,7 @@ function intel_admin_setup_3($form, &$form_state) {
   $items[] = Intel_Df::t('Your Google Analytics Tracking ID is: @tid', array(
     '@tid' => $form_state['intel_ga_profile']['propertyId'],
   ));
-intel_d($form_state['intel_ga_profile']);
+
   $items[] = '</p><p>';
   $l_options['query'] = array(
     'gaviewid' => $form_state['intel_ga_profile']['viewId'],
@@ -466,7 +463,6 @@ function intel_admin_setup_check_3($form, &$form_state) {
 }
 
 function intel_admin_setup_validate_3($form, &$form_state, $status) {
-  d($status);
   if (!empty($status['error_msg'])) {
     Intel_Form::form_set_error('intel_apikey', $status['error_msg']);
   }
@@ -481,9 +477,6 @@ function intel_admin_setup_4($form, &$form_state) {
   $f = array();
 
   $form_state['intel_addon_info'] = $addon_info = intel()->addon_info();
-
-  intel_d($addon_info);
-
 
   $items = array();
   $l_options = array(
@@ -507,7 +500,7 @@ function intel_admin_setup_4($form, &$form_state) {
   );
 
   $addon_enabled = get_option('intel_addons_enabled', array());
-  intel_d($addon_enabled);
+
   foreach ($addon_info as $k => $info) {
     $default = isset($info['enable_default']) ? $info['enable_default'] : 0;
     if (isset($addon_enabled[$k])) {
@@ -837,8 +830,6 @@ function intel_admin_setup_check_5($form, &$form_state) {
   $form_state['intel_ga_goals'] = $ga_goals;
   $form_state['intel_goals'] = $goals = get_option('intel_goals', array());
 
-  intel_d($goals);
-
   // if form submitted, process form_state values
   if (!empty($form_state['values'])) {
     $values = $form_state['values'];
@@ -868,8 +859,6 @@ function intel_admin_setup_check_5($form, &$form_state) {
     $status['success'] = 1;
   }
 
-  intel_d($status);
-
   return $status;
 }
 
@@ -897,8 +886,6 @@ function intel_admin_setup_validate_5($form, &$form_state, $status) {
 
 function intel_admin_setup_submit_5($form, &$form_state) {
   $values = $form_state['values'];
-
-  intel_d($values);
 
   $ga_goals = $form_state['intel_ga_goals'];
 
@@ -1090,7 +1077,7 @@ function intel_admin_setup_6($form, &$form_state) {
   }
   $ga_goals =
   $goals = get_option('intel_goals', array());
-  intel_d($goals);
+
   $form_state['goals'] = $goals;
   foreach ($goals AS $i => $m) {
     $value = !empty($scorings['goal_' . $i]) ? $scorings['goal_' . $i] : (isset($m['value']) ? $m['value'] : 0);
@@ -1148,7 +1135,7 @@ function intel_admin_setup_validate_6($form, &$form_state, $status) {
 
 function intel_admin_setup_submit_6($form, &$form_state) {
   $values = $form_state['values'];
-intel_d($values);
+
   $scores = array();
   $goals = $form_state['intel_goals'];
   foreach ($values AS $k => $value) {
@@ -1161,7 +1148,7 @@ intel_d($values);
       }
     }
   }
-intel_d($scores);
+
   update_option('intel_scorings', $scores);
 }
 

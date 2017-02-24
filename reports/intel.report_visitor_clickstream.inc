@@ -922,8 +922,6 @@ function theme_intel_visitor_map($locations, $options = array(), $s = '') {
   $output = Intel_Df::theme('intel_map', $vars);
   return $output;
 
-  $args = func_get_args();
-  d($args);
   static $map_index;
   if (!isset($map_index)) {
     $map_index = 0;

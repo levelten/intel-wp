@@ -1595,7 +1595,8 @@ class Intel_Form  {
 		if (isset($element['#process']) && !$element['#processed']) {
 			foreach ($element['#process'] as $process) {
 				if (is_callable($process)) {
-					$element = $process($element, $form_state, $form_state['complete form']);
+					//$element = $process($element, $form_state, $form_state['complete form']);
+					$element = call_user_func( $process, $element, $form_state, $form_state['complete form']);
 				}
 			}
 			$element['#processed'] = TRUE;
@@ -1833,7 +1834,8 @@ class Intel_Form  {
 						// Skip all value callbacks except safe ones like text if the CSRF
 						// token was invalid.
 						if (empty($form_state['invalid_token']) || in_array($value_callback, $safe_core_value_callbacks)) {
-							$element['#value'] = $value_callback($element, $input, $form_state);
+							//$element['#value'] = $value_callback($element, $input, $form_state);
+							$element['#value'] = call_user_func($value_callback, $element, $input, $form_state);
 						}
 						else {
 							$input = NULL;
@@ -1852,7 +1854,8 @@ class Intel_Form  {
 			if (!isset($element['#value'])) {
 				// Call #type_value without a second argument to request default_value handling.
 				if (is_callable($value_callback)) {
-					$element['#value'] = $value_callback($element, FALSE, $form_state);
+					//$element['#value'] = $value_callback($element, FALSE, $form_state);
+					$element['#value'] = call_user_func( $value_callback, $element, FALSE, $form_state);
 				}
 				// Final catch. If we haven't set a value yet, use the explicit default value.
 				// Avoid image buttons (which come with garbage value), so we only get value
@@ -3446,11 +3449,11 @@ class Intel_Form  {
 				// Since a hyphen is the most common alternative replacement character,
 				// a corresponding validation error message is supported here.
 				if ($element['#machine_name']['replace'] == '-') {
-					form_error($element, t('The machine-readable name must contain only lowercase letters, numbers, and hyphens.'));
+					form_error($element, Intel_Df::t('The machine-readable name must contain only lowercase letters, numbers, and hyphens.'));
 				}
 				// Otherwise, we assume the default (underscore).
 				else {
-					form_error($element, t('The machine-readable name must contain only lowercase letters, numbers, and underscores.'));
+					form_error($element, Intel_Df::t('The machine-readable name must contain only lowercase letters, numbers, and underscores.'));
 				}
 			}
 			else {
@@ -4102,11 +4105,11 @@ class Intel_Form  {
 		}
 
 		if ($element['#type'] == 'checkbox') {
-			return ' <label' . Intel_Df::drupal_attributes($attributes) . '>' . $element['#children'] . $t('!title !required', array('!title' => $title, '!required' => $required)) . "</label>\n";
+			return ' <label' . Intel_Df::drupal_attributes($attributes) . '>' . $element['#children'] . call_user_func($t, '!title !required', array('!title' => $title, '!required' => $required)) . "</label>\n";
 		}
 
 		// The leading whitespace helps visually separate fields from inline labels.
-		return ' <label' . Intel_Df::drupal_attributes($attributes) . '>' . $t('!title !required', array('!title' => $title, '!required' => $required)) . "</label>\n";
+		return ' <label' . Intel_Df::drupal_attributes($attributes) . '>' . call_user_func($t, '!title !required', array('!title' => $title, '!required' => $required)) . "</label>\n";
 	}
 
 
