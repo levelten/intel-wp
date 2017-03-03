@@ -71,6 +71,13 @@ class Intel_Form  {
 	 * @see drupal_build_form()
 	 */
 	public static function drupal_get_form($form_id) {
+		$count = Intel_Df::drupal_static(__FUNCTION__, 0);
+
+		if ($count == 0) {
+			wp_enqueue_script( 'intel_form', INTEL_URL . 'admin/js/intel-form.js', array( 'jquery' ), intel()->get_version(), false );
+		}
+		$count++;
+
 		$form_state = array();
 
 		$args = func_get_args();
@@ -2704,9 +2711,14 @@ class Intel_Form  {
 		$output .= '<div class="panel panel-default">';
 		if (!empty($element['#title'])) {
 			// Always wrap fieldset legends in a SPAN for CSS positioning.
-			$output .= '<div class="panel-heading"><div class="panel-title"><a data-toggle="collapse" data-parent="#accordion" href="#collapse-fieldset-' . $count . '">' . $element['#title'] . '</a></div></div>';
+			if (!empty($element['#collapsible'])) {
+				$output .= '<div class="panel-heading"><div class="panel-title collapsible-fieldset-title"><a data-toggle="collapse" data-parent="#accordion" href="#fieldset-panel-' . $count . '" class="collapsible-fieldset-link collapsible-fieldset-link-' . $count . '">' . $element['#title'] . ' <span class="collapsible-fieldset-icon collapsible-fieldset-icon-' . $count . ' glyphicon" aria-hidden="true"></span></a></div></div>';
+			}
+			else {
+				$output .= '<div class="panel-heading"><div class="panel-title">' . $element['#title'] . '</div></div>';
+			}
 		}
-		$output .= '<div id="collapse-fieldset-' . $count . '" class="panel-collapse collapse in">';
+		$output .= '<div id="fieldset-panel-' . $count . '" class="fieldset-panel panel-collapse collapse ' . (!empty($element['#collapsed']) ? '' : ' in') . '"">';
 		$output .= '<div class="panel-body">';
 
 		if (!empty($element['#description'])) {

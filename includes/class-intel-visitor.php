@@ -754,7 +754,7 @@ class Intel_Visitor extends Intel_Entity  {
     );
 
     $entity->content['location'] = array(
-      '#markup' => Intel_Df::theme('intel_visitor_location', array('entity' => $entity)),
+      '#markup' => Intel_Df::theme('intel_location_block', array('entity' => $entity)),
       '#region' => 'sidebar',
       '#weight' => $weight++,
     );
