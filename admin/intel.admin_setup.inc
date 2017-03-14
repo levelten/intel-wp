@@ -80,7 +80,7 @@ function intel_admin_setup($form, &$form_state) {
   );
 
   $checklist = '';
-  $checklist .= '<ul class="list-group checked-list-box">';
+  $checklist .= '<ul class="list-group checked-list-box wizard-list-group">';
   foreach ($items as $i => $item) {
     $tag = array(
       'tag' => 'li',
@@ -256,7 +256,7 @@ function intel_admin_setup_1($form, &$form_state) {
 
 function intel_admin_setup_check_1($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
-  include_once INTEL_DIR . 'includes/class-intel-gapi.php';
+  //include_once INTEL_DIR . 'includes/class-intel-gapi.php';
 
   $status = array();
 
@@ -824,7 +824,20 @@ function intel_admin_setup_check_5($form, &$form_state) {
     || empty($op_meta['ga_goals_updated'])
     || (time() - $op_meta['ga_goals_updated']) > 3600) {
 
-    $ga_goals = intel_imapi_ga_goal_get();
+    try {
+      $ga_goals = intel_imapi_ga_goal_get();
+    }
+    catch (Exception $e) {
+      if ($e instanceof \LevelTen\Intel\LevelTen_Service_Exception) {
+        $e_type = $e->getType();
+        $e_errors = $e->getErrors();
+        $status['error_msg'] = $e->getMessage();
+        return $status;
+      }
+      else {
+        Intel_Df::drupal_set_message($e->getMessage(), 'error');
+      }
+    }
   }
 
   $form_state['intel_ga_goals'] = $ga_goals;
@@ -1035,19 +1048,16 @@ function intel_admin_setup_6($form, &$form_state) {
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Traffic metrics'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
   );
   $f['events'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Valued events'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
   );
   $f['goals'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Goals'),
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
   );
   $base_scorings = intel_get_base_scorings();
   foreach ($base_scorings AS $i => $m) {

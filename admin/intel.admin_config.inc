@@ -32,7 +32,7 @@ function intel_admin_settings($form, &$form_state) {
   $ga_data_source = intel_ga_data_source();
 
   $message = '';
-  //if (count($form_state['input']) == 0) { // hack to assure check and messages are only done once when form is submitted
+  if (count($form_state['input']) == 0) { // hack to assure check and messages are only done once when form is submitted
     $account_level = intel_verify_apikey($message);
     if ($account_level) {
       Intel_Df::drupal_set_message( Intel_Df::t('LevelTen Intelligence API connected.'), 'success');
@@ -43,7 +43,7 @@ function intel_admin_settings($form, &$form_state) {
       $msg .= ' ' . Intel_Df::l(Intel_Df::t('View setup instructions tutorial.'), 'http://getlevelten.com/blog/tom-mccracken/intelligence-tutorial-install', array('attributes' =>  array('target' => 'getlevelten')));
       Intel_Df::drupal_set_message($msg, 'error');
     }
-  //}
+  }
 
   $form['l10iapi'] = array(
     '#type' => 'fieldset',
@@ -281,6 +281,23 @@ function intel_admin_settings($form, &$form_state) {
     '#options' => $options,
     '#default_value' => $enabled,
     '#description' => Intel_Df::t('Select any intel integration scripts you want to include on your site.'),
+  );
+
+  $form['apis'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Additional APIs'),
+    '#collapsible' => TRUE,
+  );
+  $desc = Intel_Df::t('To display Google Maps you need an API key.');
+  $l_options = Intel_Df::l_options_add_target ('gmap');
+  $desc .= ' ' . Intel_Df::t('You can get one via the !link.', array(
+      '!link' => Intel_Df::l(Intel_Df::t('Google API Console'), 'https://developers.google.com/maps/documentation/javascript/'),
+    ));
+  $form['apis']['intel_gmap_apikey'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Google Maps API key'),
+    '#default_value' => get_option('intel_gmap_apikey', ''),
+    '#description' => $desc,
   );
 
 

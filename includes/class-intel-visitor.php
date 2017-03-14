@@ -764,38 +764,40 @@ class Intel_Visitor extends Intel_Entity  {
       '#weight' => $weight++,
     );
 
-		$prop_info = intel()->visitor_property_info();
-		$items = array();
-		foreach ($prop_info as $k => $info) {
-			$kt = $k;
-			if (substr($k, 0, 5) == 'data.') {
-				$kt = substr($k, 5);
-			}
+		if (intel_is_extended()) {
+			$prop_info = intel()->visitor_property_info();
+			$items = array();
+			foreach ($prop_info as $k => $info) {
+				$kt = $k;
+				if (substr($k, 0, 5) == 'data.') {
+					$kt = substr($k, 5);
+				}
 
-			$vars = array();
-			$value = $entity->getProp($kt);
-			if (!empty($value)) {
-				$vars = array(
-					'info' => $info,
-					'value' => $value,
-				);
-				$ivars = array(
-					'title' => $info['title'],
-					'value' => Intel_Df::theme('intel_visitor_property', $vars),
-				);
-				$items[] = Intel_Df::theme('intel_visitor_profile_item', $ivars);
+				$vars = array();
+				$value = $entity->getProp($kt);
+				if (!empty($value)) {
+					$vars = array(
+						'info' => $info,
+						'value' => $value,
+					);
+					$ivars = array(
+						'title' => $info['title'],
+						'value' => Intel_Df::theme('intel_visitor_property', $vars),
+					);
+					$items[] = Intel_Df::theme('intel_visitor_profile_item', $ivars);
+				}
 			}
-		}
-		if (count($items)) {
-			$markup = '';
-			foreach ($items AS $item) {
-				$markup .= $item;
+			if (count($items)) {
+				$markup = '';
+				foreach ($items AS $item) {
+					$markup .= $item;
+				}
+				$entity->content['intel_visitor_properties'] = array(
+					//'#markup' => Intel_Df::theme('intel_visitor_profile_block', array('title' => __('Properties', 'intel'), 'markup' => $markup)),
+					'#markup' => Intel_Df::theme('intel_visitor_profile_block', array('title' => __('Properties', 'intel'), 'markup' => $markup)),
+					'#weight' => $weight++,
+				);
 			}
-			$entity->content['intel_visitor_properties'] = array(
-				//'#markup' => Intel_Df::theme('intel_visitor_profile_block', array('title' => __('Properties', 'intel'), 'markup' => $markup)),
-				'#markup' => Intel_Df::theme('intel_visitor_profile_block', array('title' => __('Properties', 'intel'), 'markup' => $markup)),
-				'#weight' => $weight++,
-			);
 		}
 
     $entity->content['visit_table'] = array(

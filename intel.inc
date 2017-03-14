@@ -597,6 +597,7 @@ function intel_menu($items = array()) {
   );
 
   $w = 0;
+
   $items['admin/reports/intel/dashboard'] = array(
     'title' => 'Dashboard',
     'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
@@ -613,6 +614,13 @@ function intel_menu($items = array()) {
     'weight' => $w++,
     'file' => 'reports/intel.report_scorecard.inc',
   );
+  // TODO WP: temporarly hide dashboard report until it can be migrated to WP
+  if (!intel_is_extended()) {
+    $items['admin/reports/intel'] = $items['admin/reports/intel/scorecard'];
+    $items['admin/reports/intel']['type'] = Intel_Df::MENU_NORMAL_ITEM;
+    $items['admin/reports/intel/scorecard']['type'] = Intel_Df::MENU_DEFAULT_LOCAL_TASK;
+    unset($items['admin/reports/intel/dashboard']);
+  }
   $items['admin/reports/intel/trafficsource'] = array(
     'title' => 'Sources',
     'page callback' => 'intel_trafficsource_list_report_page',
@@ -2785,7 +2793,7 @@ function _intel_addon_info($info = array()) {
 function intel_addthis_addon_enable($enable) {
   $enabled = get_option('intel_intel_scripts_enabled', array());
 
-  $enabled['addthis'] = !empty($enable) ? 1 : 0;
+  $enabled['addthis'] = !empty($enable) ? 'addthis' : 0;
 
   update_option('intel_intel_scripts_enabled', $enabled);
 }
@@ -2793,7 +2801,7 @@ function intel_addthis_addon_enable($enable) {
 function intel_youtube_addon_enable($enable) {
   $enabled = get_option('intel_intel_scripts_enabled', array());
 
-  $enabled['youtube'] = !empty($enable) ? 1 : 0;
+  $enabled['youtube'] = !empty($enable) ? 'youtube' : 0;
 
   update_option('intel_intel_scripts_enabled', $enabled);
 }
@@ -3192,6 +3200,11 @@ function intel_is_debug($mode = '') {
 function intel_debug_mode($mode = '') {
 
   return get_option('intel_debug_mode', 0) || !empty($_GET['debug']);
+}
+
+function intel_is_extended() {
+
+  return intel_extended_mode();
 }
 
 function intel_extended_mode() {

@@ -16,6 +16,9 @@ function intel_util() {
  */
 function intel_util_temp() {
 
+  $a = plugin_basename(__FILE__);
+  return $a;
+
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
@@ -101,23 +104,6 @@ function intel_util_temp_form_submit($form, &$form_state) {
 }
 
 function intel_util_init_options() {
-  update_option('intel_apikey', "e84cac6f1c6640dbd143755675fb05b0");
-  update_option('intel_api_level', 'pro');
-  update_option('intel_custom_embed_script', '');
-  update_option('intel_debug_ga_debug', 0);
-  update_option('intel_debug_mode', 0);
-  update_option('intel_domain_name', '');
-  update_option('intel_extended_mode', 0);
-  update_option('intel_ga_tid', "UA-5541069-16");
-  update_option('intel_ga_view', "78133449");
-  update_option('intel_ga_data_source', "gadwp");
-  update_option('intel_icon_urls', array());
-  update_option('intel_intel_scripts_enabled', array());
-  update_option('intel_js_monitor_script', '');
-  update_option('intel_l10iapi_connector', '');
-  update_option('intel_l10iapi_custom_params', array());
-  update_option('intel_l10iapi_js_embed_style', '');
-  update_option('intel_gmap_apikey', 'AIzaSyDsafj-vVtKc-MzEPmSB1GCJb9Jpqgsg5M');
   return 'OK - options initialized';
 }
 

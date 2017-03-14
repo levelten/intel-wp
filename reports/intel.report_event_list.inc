@@ -7,8 +7,8 @@
  */
 
 function intel_event_list_report_page($report_params = '-', $report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.reports.inc";
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+  require_once INTEL_DIR . "includes/intel.reports.inc";
+  require_once INTEL_DIR . "includes/intel.ga.inc";
   $output = '';
   $vars = array();
   if (!empty($entity_type) && $entity_type != '-') {
@@ -25,7 +25,7 @@ function intel_event_list_report_page($report_params = '-', $report_subtype = '-
 //function intel_event_list_report($vars['filters'] = array(), $vars['context'] = 'site', $report_mode = '-', $mode = '') {
 function intel_event_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
+  require_once INTEL_DIR . "/includes/intel.page_data.inc";
 
   $output = '';
 
@@ -104,7 +104,7 @@ function intel_event_list_report($vars) {
 
 
   $d = $ga_data->data;
-//dsm($data);
+//intel_d($ga_data);
 
   ksort($d['date']);
 

@@ -75,6 +75,7 @@ class Intel_Form  {
 
 		if ($count == 0) {
 			wp_enqueue_script( 'intel_form', INTEL_URL . 'admin/js/intel-form.js', array( 'jquery' ), intel()->get_version(), false );
+			wp_enqueue_style( 'intel_form', INTEL_URL . 'admin/css/intel-form.css', array(), intel()->get_version(), 'all');
 		}
 		$count++;
 

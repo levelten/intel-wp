@@ -9,6 +9,13 @@
  */
 
 function template_process_intel_page(&$variables) {
+  if (empty($variables['class'])) {
+    $variables['class'] = '';
+  }
+  if (!empty($_GET['q'])) {
+    $q = str_replace('/', '--', $_GET['q']);
+    $variables['class'] .= ' ' . Intel_Df::drupal_clean_css_identifier($q);
+  }
   if (empty($variables['title'])) {
     $variables['title'] = intel()->get_page_title();
   }

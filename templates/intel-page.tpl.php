@@ -34,7 +34,7 @@
  * @ingroup themeable
  */
 ?>
-<div class="wrap bootstrap-wrapper intel-wrapper">
+<div class="wrap bootstrap-wrapper intel-wrapper <?php print $class; ?>">
   <h1><?php print $title; ?></h1>
 
   <?php if (!empty($navbar)) : ?>

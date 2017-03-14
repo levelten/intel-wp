@@ -300,6 +300,11 @@ class Intel {
 		// column headers
 		$this->loader->add_filter('manage_intelligence_page_intel_visitor_columns', $plugin_admin, 'contacts_column_headers');
 
+		// admin notices
+  	$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_setup_notice' );
+
+		// plugin action links
+		$this->loader->add_action( 'plugin_action_links_intel/intel.php', $plugin_admin, 'plugin_action_links' );
 	}
 
 	public function is_intel_admin_page() {

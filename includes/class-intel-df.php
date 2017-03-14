@@ -1006,6 +1006,22 @@ class Intel_Df  {
 		return '<a href="' . self::check_plain(self::url($path, $options)) . '"' . self::drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $text : self::check_plain($text)) . '</a>';
 	}
 
+	public static function l_options_add_query ($query, $l_options = array()) {
+		if (!isset($l_options['query'])) {
+			$l_options['query'] = array();
+		}
+		$l_options['query'] += $query;
+		return $l_options;
+	}
+
+	public static function l_options_add_target ($target, $l_options = array()) {
+		if (!isset($l_options['attributes'])) {
+			$l_options['attributes'] = array();
+		}
+		$l_options['attributes']['target'] = $target;
+		return $l_options;
+	}
+
 	public static function t($string, array $args = array(), array $options = array()) {
 		// if replace value args, convert into sprintf format
 		$wp_args = array();

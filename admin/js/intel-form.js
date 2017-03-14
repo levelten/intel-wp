@@ -13,6 +13,7 @@
 			id = $this.attr('id');
 			// strip off 'fieldset-panel-'
 			var i = id.substr(15);
+
 			if ($this.hasClass('in')) {
 				$('.collapsible-fieldset-icon-' + i).addClass('glyphicon-triangle-bottom');
 			}
@@ -20,15 +21,16 @@
 				$('.collapsible-fieldset-icon-' + i).addClass('glyphicon-triangle-right');
 			}
 
-			$('#fieldset-panel-' + i).on('shown.bs.collapse', function(event) {
-				console.log(i);
+			$('#fieldset-panel-' + i).first().on('shown.bs.collapse', function(event) {
+				// prevents embedded fieldset events from bubbling up.
+				event.stopPropagation();
 				$('.collapsible-fieldset-icon-' + i).addClass('glyphicon-triangle-bottom').removeClass('glyphicon-triangle-right');
 			});
-			$('#fieldset-panel-' + i).on('hidden.bs.collapse', function(event) {
-				console.log(i);
+			$('#fieldset-panel-' + i).first().on('hidden.bs.collapse', function(event) {
+				// prevents embedded fieldset events from bubbling up.
+				event.stopPropagation();
 				$('.collapsible-fieldset-icon-' + i).addClass('glyphicon-triangle-right').removeClass('glyphicon-triangle-bottom');
 			});
-
 		});
 
 		/*

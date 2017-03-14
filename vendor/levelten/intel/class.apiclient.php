@@ -11,6 +11,7 @@
  */
 namespace LevelTen\Intel;
 require_once 'class.exception.php';
+
 if (!empty($_GET['debug'])) {
   require_once 'libs/class.debug.php'; 
 }
@@ -121,15 +122,22 @@ class ApiClient {
       curl_close($ch);
     }
     if ($errno > 0) {
-        throw new \Exception ('cURL error: ' . $error);
+      throw new LevelTen_Service_Exception ('cURL error: ' . $error);
     } else {
-        $ret = json_decode($retjson, true);
-        if (empty($ret['status'])) {
-          $msg = !empty($ret['message']) ? $ret['message'] : $retjson;
-          $msg = (strlen($msg) > 210) ? substr($msg, 0, 200) . '...' : $msg;
-          throw new \Exception ('API response error. returned: ' . $msg);
+      $ret = json_decode($retjson, true);
+      if (empty($ret['status'])) {
+        $msg = !empty($ret['message']) ? $ret['message'] : $retjson;
+        $msg = (strlen($msg) > 210) ? substr($msg, 0, 200) . '...' : $msg;
+        throw new LevelTen_Service_Exception ('API response error. returned: ' . $msg);
+      }
+      else if ((int)$ret['status'] >= 400) {
+        $msg = !empty($ret['message']) ? $ret['message'] : $retjson;
+        if (!empty($ret['error']['message'])) {
+          $msg = $ret['error']['message'];
         }
-        return $ret;
+        throw new LevelTen_Service_Exception ($msg, $ret['status'], NULL, self::getResponseErrors($ret));
+      }
+      return $ret;
     }
   }
 
@@ -194,6 +202,15 @@ class ApiClient {
   protected function setLastStatusFromCurl($ch) {
       $info = curl_getinfo($ch);
       $this->lastStatus = (isset($info['http_code'])) ? $info['http_code'] : null;
+  }
+
+  protected function getResponseErrors($response) {
+    if (!empty($response['error']['errors'])) {
+      return $response['error']['errors'];
+    }
+    else {
+      return array();
+    }
   }
 
   /**

@@ -139,7 +139,6 @@ class Intel_Admin {
 	public function site_menu() {
 		global $wp_version;
 		if ( current_user_can( 'manage_options' ) ) {
-			include ( INTEL_DIR . 'admin/class-intel-settings.php' );
 			add_menu_page( __( "Intelligence", 'intel' ), __( "Intelligence", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-chart-area' : GADWP_URL . 'admin/images/gadash-icon.png' );
 			add_submenu_page( 'intel_reports', __( "Reports", 'intel' ), __( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_reports', __( "Contacts", 'intel' ), __( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
@@ -193,7 +192,7 @@ class Intel_Admin {
 		if ($_GET['page'] == 'intel_config') {
 			$q = 'admin/config/intel/settings';
 			$breadcrumbs[] = array(
-				'text' => __('Config', 'intel'),
+				'text' => __('Settings', 'intel'),
 				'path' => Intel_Df::url($q),
 			);
 		}
@@ -484,6 +483,39 @@ class Intel_Admin {
 			//'timeOnSite' => __('Time on site', 'intel'),
 		);
 		return $ch;
+	}
+
+	public function plugin_action_links($links) {
+		$l = array();
+		$l[] = Intel_Df::l(Intel_Df::t('Settings'), 'admin/config/intel/settings');
+		$links = $l + $links;
+		return $links;
+	}
+
+	public function admin_setup_notice() {
+  	if (!empty(intel_api_level())) {
+			//return;
+		}
+		// Don't show the connect notice anywhere but the plugins.php after activating
+		$current = get_current_screen();
+		if ( 'plugins' !== $current->parent_base ) {
+			return;
+		}
+
+		?>
+		<div id="message" class="bootstrap-wrapper wrap">
+			<div class="panel panel-info m-t-1">
+				<h2 class="panel-heading m-t-0"><?php _e( 'Get Intelligence!', 'intel' ); ?></h2>
+				<div class="panel-body">
+					<p><?php _e( 'To complete the installation of Intelligence launch the setup wizard using the button below.', 'intel' ); ?></p>
+					<p>
+						<a href="<?php print Intel_Df::url('admin/config/intel/settings/setup'); ?>" class="btn btn-info">Launch Setup Wizard</a>
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<?php
 	}
 
 }
