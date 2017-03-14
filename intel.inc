@@ -855,6 +855,16 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_util.inc',
   );
 
+  $items['admin/util/test/webform'] = array(
+    'title' => 'Webform',
+    //'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_test_webform_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
   $items['admin/util/temp'] = array(
     'title' => 'Temp',
     'description' => 'Analyze and optimize node content.',
@@ -3292,6 +3302,13 @@ function intel_theme($themes = array()) {
     'template' => 'intel-breadcrumbs',
     //'file' => 'intel.pages.inc',
   );
+  $themes['intel_shortcode'] = array(
+    'variables' => array(
+      'markup' => NULL,
+    ),
+    'template' => 'intel-shortcode',
+    'file' => 'intel.pages.inc',
+  );
   $themes['intel_property_browser_environment'] = array(
     'variables' => array('entity' => NULL),
     'callback' => 'theme_intel_property_browser_environment',
@@ -3613,5 +3630,25 @@ function intel_linked_field_settings_alter(&$settings, $context) {
   // Add custom attribute for the link.
   if ($entity_type == 'node' && $bundle == 'article' && $view_mode == 'default') {
     $settings['options']['attributes']['data-id'] = $entity->nid;
+  }
+}
+
+add_shortcode('intel_form', 'intel_form_shortcode');
+function intel_form_shortcode($vars) {
+  include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
+
+  $name_arr = explode('_', $vars['name']);
+  if ($name_arr[0] == 'intel' && !empty($name_arr[1])) {
+    if ($name_arr[1] == 'util') {
+      include_once ( INTEL_DIR . 'admin/intel.admin_util.inc' );
+      if (is_callable($vars['name'])) {
+        $form = Intel_Form::drupal_get_form($vars['name']);
+      }
+    }
+  }
+  if (!empty($form)) {
+    $tvars = array();
+    $tvars['markup'] = $form;
+    print Intel_Df::theme('intel_shortcode', $tvars);
   }
 }

@@ -172,6 +172,8 @@ class Intel_Tracker {
 
 		$js_settings = intel()->get_js_settings();
 
+		intel_d($js_settings);
+
 		$io_name = 'io';
 
 		$script = "var intel_settings = " . json_encode($js_settings) . ";\n";

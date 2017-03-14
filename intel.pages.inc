@@ -82,6 +82,19 @@ function template_process_intel_navbar(&$variables) {
   }
 }
 
+function template_process_intel_shortcode(&$variables) {
+  if (!isset($variables['class'])) {
+    $variables['class'] = '';
+  }
+  if (!empty($_GET['q'])) {
+    $q = str_replace('/', '--', $_GET['q']);
+    $variables['class'] .= ' ' . Intel_Df::drupal_clean_css_identifier($q);
+  }
+  if (!isset($variables['messages'])) {
+    $variables['messages'] = Intel_Df::drupal_get_messages();
+  }
+}
+
 function template_process_intel_visitor_profile(&$variables) {
   //$visitor = $variables['elements']['#visitor'];
 

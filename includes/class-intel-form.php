@@ -1018,6 +1018,10 @@ class Intel_Form  {
 	 * @see drupal_build_form()
 	 */
 	public static function drupal_redirect_form($form_state) {
+		// if form is on front side of WP, don't do redirect
+		if (!is_admin()) {
+			$form_state['no_redirect'] = TRUE;
+		}
 		// Skip redirection for form submissions invoked via drupal_form_submit().
 		if (!empty($form_state['programmed'])) {
 			return;

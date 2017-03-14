@@ -163,7 +163,12 @@ class Intel_Df  {
 	}
 
 	public static function current_path() {
-		return $_GET['q'];
+		if (!empty($_GET['q'])) {
+			return $_GET['q'];
+		}
+		else {
+			return get_permalink();
+		}
 	}
 
 	/**
@@ -473,6 +478,8 @@ class Intel_Df  {
 		$options['absolute'] = TRUE;
 		$url = self::url($path, $options);
 
+		// remove anything set to the output buffer as to not block the location
+		// header
 		wp_redirect( $url, $http_response_code );
 		exit;
 

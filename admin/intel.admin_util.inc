@@ -107,6 +107,155 @@ function intel_util_init_options() {
   return 'OK - options initialized';
 }
 
+function intel_util_test() {
+  return Intel_Df::t('Placeholder page');
+}
+
+function intel_util_test_webform_page() {
+  include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
+
+  $form = Intel_Form::drupal_get_form('intel_util_test_webform_form');
+  return $form;
+}
+
+/**
+ * Form Test function
+ */
+function intel_util_test_webform_form($form, &$form_state) {
+
+  $account = wp_get_current_user();
+
+  $form['data.givenName'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Given name'),
+    '#default_value' => !empty($account->user_firstname) ? $account->user_firstname : Intel_Df::t('Tommy'),
+    //'#description' => Intel_Df::t('Input family name.'),
+  );
+
+  $form['data.familyName'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Family name'),
+    '#default_value' => !empty($account->user_lastname) ? $account->user_lastname : Intel_Df::t('Tester'),
+    //'#default_value' => !empty($defaults['test']) ? $defaults['test'] : '',
+    //'#description' => Intel_Df::t('Input family name.'),
+  );
+
+  $form['data.email'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Email'),
+    '#default_value' => !empty($account->user_email) ? $account->user_email : '',
+    //'#default_value' => !empty($defaults['test']) ? $defaults['test'] : '',
+    //'#description' => Intel_Df::t('Input family name.'),
+  );
+
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Advanced'),
+    '#description' => Intel_Df::t('Configure the Google Analytics event/goal to trigger upon submission.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $submission_goals = intel_get_event_goal_info('submission');
+
+  $options = array();
+  $options[''] = esc_html__( '-- None --', 'wpcf7_intel' );
+  $options['form_submission-'] = esc_html__( 'Event: Form submission', 'wpcf7_intel' );
+  $options['form_submission'] = esc_html__( 'Valued Event: Form submission!', 'wpcf7_intel' );
+
+  foreach ($submission_goals AS $key => $goal) {
+    $options[$key] = esc_html__( 'Goal: ', 'intel') . $goal['goal_title'];
+  }
+  // Set #tree to group all cf7_intel data in POST
+  $form['advanced']['tracking_event_name'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Tracking event'),
+    '#options' => $options,
+    '#default_value' => !empty($settings['tracking_event_name']) ? $settings['tracking_event_name'] : '',
+    //'#description' => $desc,
+    //'#size' => 32,
+  );
+
+  $form['advanced']['tracking_event_value'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Tracking value'),
+    '#default_value' => !empty($settings['tracking_event_value']) ? $settings['tracking_event_value'] : '',
+    //'#description' => $desc,
+    '#size' => 8,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => Intel_Df::t('Submit'),
+    '#prefix' => '<br>',
+  );
+
+  return $form;
+}
+
+function intel_util_test_webform_form_validate($form, &$form_state) {
+  $_SESSION['intel_weform_test']['time0'] = microtime (TRUE);
+}
+
+function intel_util_test_webform_form_submit($form, &$form_state) {
+  $msg = Intel_Df::t('Form submitted');
+  $values = $form_state['values'];
+  intel_d($values);
+
+  // get initialied var structure
+  $vars = intel_form_submission_vars_default();
+
+  // create pointer aliases
+  $submission = &$vars['submission'];
+  $track = &$vars['track'];
+
+  // set visitor properties from webform values
+  $vp_info = intel()->visitor_property_info();
+  foreach ($values as $k => $v) {
+    if (!empty($vp_info[$k])) {
+      $vars['visitor_properties'][$k] = $v;
+    }
+  }
+  //$vars['visitor_properties']
+
+  // set type of submission, e.g. gravityform, cf7, webform
+  $submission->type = 'intel_form';
+  // if form type allows multiple form, set id of form that was submitted
+  $submission->fid = $values['form_id'];
+  // if form submision creates a submission record, set it here
+  $submission->fsid = 0;
+  //$submission->submission_uri = "/wp-admin/admin.php?page=gf_entries&view=entry&id={$submission->fid}&lid={$submission->fsid}";
+  // set title of form
+  $submission->form_title = !empty($form_state['form_title']) ? $form_state['form_title'] : ucwords(str_replace('_', ' ', $values['form_id']));
+
+  if (!empty($values['tracking_event_name'])) {
+    $track['name'] = $values['tracking_event_name'];
+    if (substr($track['name'], -1) == '-') {
+      $track['name'] = substr($track['name'], 0, -1);
+      $track['valued_event'] = 0;
+    }
+    if (!empty($values['tracking_event_value'])) {
+      $track['value'] = $values['tracking_event_value'];
+    }
+  }
+
+  $time1 = microtime(TRUE);
+  $msg .= " (t1d=" .  number_format($time1 - $_SESSION['intel_weform_test']['time0'], 3) . 'sec';
+
+  intel_d($vars);
+
+  // process submission data
+  intel_process_form_submission($vars);
+
+  $msg .= ", t2d=" .  number_format(microtime(TRUE) - $time1, 3) . "sec)";
+
+  $msg .= "\n" . intel()->tracker->get_pushes_script();
+  intel_d($msg);
+  Intel_Df::drupal_set_message($msg, 'status');
+
+  unset($_SESSION['intel_weform_test']);
+}
+
 function intel_util_test_url_parsing() {
   $urls = array(
     'http://www.alpha.com',
