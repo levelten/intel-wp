@@ -200,6 +200,9 @@ class ListReportView extends ReportView {
     if ($context == 'page-attr') {
       $divTargetByItemCount = 1;
     }
+    if (empty($this->data[$dataSource]) || !is_array($this->data[$dataSource])) {
+      $this->data[$dataSource] = array();
+    }
     foreach($this->data[$dataSource] AS $n => $d) {
       if (empty($d['i']) || (substr($d['i'], 0 , 1) == '_')) { continue; }
 

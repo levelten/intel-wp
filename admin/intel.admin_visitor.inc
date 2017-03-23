@@ -367,7 +367,6 @@ function intel_visitor_set_data_from_fields(&$visitor, $prop_options = array()) 
   foreach ($field_map as $field_name => $v) {
     if ($v == '_set') {
       $fib = field_info_field($field_name);
-      dsm($fib);
       if (empty($fib['settings']['allowed_values'][0]['vocabulary'])) {
         continue;
       }
@@ -431,7 +430,7 @@ function intel_visitor_delete_submit($form, &$form_state) {
 }
 
 function intel_visitor_delete_confirm_form($form, &$form_state, $entity) {
-  drupal_set_title(t('Are you sure you want to delete visitor @title?', array('@title' => $entity->label())));
+  drupal_set_title(Intel_Df::t('Are you sure you want to delete visitor @title?', array('@title' => $entity->label())));
   $form['entity'] = array(
     '#type' => 'value',
     '#value' => $entity,
@@ -442,9 +441,9 @@ function intel_visitor_delete_confirm_form($form, &$form_state, $entity) {
   return confirm_form($form,
     $confirm_question,
     'admin/content',
-    t('This action cannot be undone.'),
-    t('Delete'),
-    t('Cancel'));
+    Intel_Df::t('This action cannot be undone.'),
+    Intel_Df::t('Delete'),
+    Intel_Df::t('Cancel'));
 }
 
 /**
@@ -465,7 +464,29 @@ function intel_visitor_page($entity) {
   $langcode = 'UND';
   if (intel()->is_debug()) {
     $entity->apiVisitorLoad();
-    d($entity);//
+    intel_d($entity);//
+    intel_d($entity->data);//
+    intel_d($entity->ext_data);//
+  }
+
+  $synced = $entity->getSynced();
+  if (empty($synced)) {
+    $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
+    $msg = Intel_Df::t('Visitor data has not yet been synced. !link.', array(
+      '!link' => Intel_Df::l(Intel_Df::t('Click here to sync'), "visitor/{$entity->vid}/sync", $l_options),
+    ));
+    Intel_Df::drupal_set_message($msg, 'warning');
+  }
+  else if (
+    !empty($entity->data['analytics_visits']['_lasthit'])
+    && (($synced - $entity->data['analytics_visits']['_lasthit']) < 1800)
+    && ((time() - $entity->data['analytics_visits']['_lasthit']) > 1800)
+  ) {
+    $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
+    $msg = Intel_Df::t('Google Analytics data may be incomplete. !link.', array(
+      '!link' => Intel_Df::l(Intel_Df::t('Click here to fetch the latest Google Analytics data'), "visitor/{$entity->vid}/sync", $l_options),
+    ));
+    Intel_Df::drupal_set_message($msg, 'warning');
   }
 
   intel()->set_page_title('Visitor profile');

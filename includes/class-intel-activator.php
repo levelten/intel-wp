@@ -85,18 +85,11 @@ class Intel_Activator {
 			type varchar(32) NOT NULL,
 			fid varchar(64) NOT NULL,
 			fsid varchar(128) NOT NULL,
-			//details_url varchar(255) NOT NULL,
 			submission_uri varchar(255) NOT NULL,
-			//response_page_host varchar(255) NOT NULL,
-			//response_page_path varchar(255) NOT NULL,
 			response_page_uri varchar(255) NOT NULL,
 			response_page_id varchar(32) NOT NULL,
-			//form_page_host varchar(255) NOT NULL,
-			//form_page_path varchar(255) NOT NULL,
 			form_page_uri varchar(255) NOT NULL,
 			form_page_id varchar(32) NOT NULL,
-			//cta_page_host varchar(255) NOT NULL,
-			//cta_page_path varchar(255) NOT NULL,
 			cta_page_uri varchar(255) NOT NULL,
 			cta_page_id varchar(255) NOT NULL,
 			cta_id varchar(255) NOT NULL,
@@ -120,12 +113,14 @@ class Intel_Activator {
 	public static function setup_cron() {
 		// setup intel_cron_hook
 		$timestamp = wp_next_scheduled( 'intel_cron_hook' );
+Intel_Df::watchdog('setup_cron cron_hook ts', $timestamp);
 		if ($timestamp == FALSE) {
 			wp_schedule_event( time(), 'intel_cron_interval', 'intel_cron_hook' );
 		}
 
 		// setup intel_cron_queue_hook
 		$timestamp = wp_next_scheduled( 'intel_cron_queue_hook' );
+Intel_Df::watchdog('setup_cron cron_queue_hook ts', $timestamp);
 		if ($timestamp == FALSE) {
 			wp_schedule_event( time(), 'intel_cron_queue_interval', 'intel_cron_queue_hook' );
 		}

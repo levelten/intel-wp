@@ -16,8 +16,14 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $a = plugin_basename(__FILE__);
-  return $a;
+  $cron = get_option('cron', array());
+  intel_d($cron);
+
+  return '';
+
+  $scorings = intel_get_scorings();
+  intel_d($scorings);
+  return '';
 
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
@@ -328,6 +334,24 @@ function intel_util_reset_site() {
     'gadwp' => is_plugin_active( 'google-analytics-dashboard-for-wp/gadwp.php' ),
     'flamingo' => is_plugin_active( 'flamingo/flamingo.php' )
   );
+
+  if (in_array('test', $flags)) {
+    $identifiers = array(
+      'email' => 'tomm@getlevelten.com',
+    );
+    $visitor = intel_visitor_load_by_identifiers($identifiers);
+    if (!empty($visitor->vid)) {
+      intel_visitor_delete($visitor->vid);
+      Intel_Df::drupal_set_message(Intel_Df::t('Tommy Tester deleted.'));
+    }
+    else {
+      Intel_Df::drupal_set_message(Intel_Df::t('Tommy Tester not in database.'));
+    }
+
+    // clear visitor sync requests
+    update_option('intel_sync_visitor_requests', array());
+    update_option('intel_sync_visitor_requests_queue', array());
+  }
 
   // clear comments
   if (in_array('c', $flags)) {

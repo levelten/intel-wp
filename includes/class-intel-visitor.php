@@ -62,7 +62,7 @@ class Intel_Visitor extends Intel_Entity  {
 			$this->vtk = $this->identifiers['vtk'][0];
 		}
 		if (!empty($this->identifiers['gacid'])) {
-			$this->vtk = $this->identifiers['gacid'][0];
+			$this->gacid = $this->identifiers['gacid'][0];
 		}
 
     if (empty($this->vtk) && !empty($this->vtkid)) {
@@ -754,12 +754,22 @@ class Intel_Visitor extends Intel_Entity  {
     );
 
     $entity->content['location'] = array(
-      '#markup' => Intel_Df::theme('intel_location_block', array('entity' => $entity)),
+      '#markup' => Intel_Df::theme('intel_location_block',
+				array(
+					'title' => Intel_Df::t('Location'),
+				  'entity' => $entity,
+				)
+			),
       '#region' => 'sidebar',
       '#weight' => $weight++,
     );
     $entity->content['browser_environment'] = array(
-      '#markup' => Intel_Df::theme('intel_visitor_browser_environment', array('entity' => $entity)),
+      '#markup' => Intel_Df::theme('intel_browser_environment_block',
+				array(
+					'title' => Intel_Df::t('Browser environment'),
+				  'entity' => $entity,
+			  )
+			),
       '#region' => 'sidebar',
       '#weight' => $weight++,
     );
@@ -941,16 +951,21 @@ class Intel_Visitor extends Intel_Entity  {
 		);
 		$subs = intel()->get_entity_controller('intel_submission')->loadByVars($vars);
 
-		uasort($subs, function ($a, $b) {
-			return ($a->submitted < $b->submitted) ? 1 : -1;
-		});
+		if (!empty($subs) && is_array($subs)) {
+			uasort($subs, function ($a, $b) {
+				return ($a->submitted < $b->submitted) ? 1 : -1;
+			});
+		}
+		else {
+			$subs = array();
+		}
 
     foreach ($subs AS $row) {
       $ops = array();
       $ops[] = Intel_Df::l(__('meta', 'intel'), 'submission/' . $row->sid);
       $title = 'NA';
 
-      if ($row->type == 'gravityforms') {
+      if ($row->type == 'gravityform') {
 				$fs = GFAPI::get_entry($row->fsid);
 				if (!empty($fs['form_id'])) {
 					$fd = GFAPI::get_form($fs['form_id']);

@@ -6,7 +6,9 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
-function intel_sync_visitordata($visitor, $request = array()) {
+
+
+function x_intel_sync_visitordata($visitor, $request = array()) {
   if (!empty($_GET['debug'])) {
     dpm('visitor0');//
     dpm($visitor);//
@@ -54,7 +56,7 @@ function intel_sync_visitordata($visitor, $request = array()) {
 function intel_queue_sync_visitor_requests() {
   // get existing sync requests
   $items = get_option('intel_sync_visitor_requests', array());
-  $msg = Intel_Df::t('requests') . '0: ' . count($items);
+  //$msg = Intel_Df::t('requests') . '0: ' . count($items);
 
   // add them to the DrupalQueue
   if (count($items)) {
@@ -64,7 +66,7 @@ function intel_queue_sync_visitor_requests() {
     foreach ($items AS $i => $item) {
       if ($item->run_after < time()) {
         if (isset($item->vtk)) {
-          $msg .= ($c ? ', ' : '') . substr($item->vtk, 0, 10);
+          //$msg .= ($c ? ', ' : '') . substr($item->vtk, 0, 10);
         }
         $queue->createItem($item, $item->vtk);
         // remove items from request variable. If sync fails they will be re-added
@@ -78,8 +80,8 @@ function intel_queue_sync_visitor_requests() {
     }
     update_option('intel_sync_visitor_requests', $items);
   }
-  $msg .= "<br>\n" . Intel_Df::t('requests') . '1: ' . count($items);
-  Intel_Df::watchdog('intel_queue_sync_visitor', $msg);
+  //$msg .= "<br>\n" . Intel_Df::t('requests') . '1: ' . count($items);
+  //Intel_Df::watchdog('intel_queue_sync_visitor', $msg);
 }
 
 // alternate way to work sync_visitor_request queue
@@ -101,6 +103,7 @@ function intel_work_sync_visitor_request_queue($limit = 10, $runtime = 60) {
   return $items;
 }
 
+add_filter( 'intel_sync_visitor', 'intel_ga_sync_visitordata' );
 /**
  * Implements intel_sync_visitordata
  * @param unknown_type $visitor
@@ -138,6 +141,8 @@ function intel_ga_sync_visitordata($visitor) {
     }
   }
 
+  $gadata['visits']['_lasthit'] = !empty($gadata['lasthit']) ? $gadata['lasthit'] : 0;
+
   $visitor->setVar('data', 'location', $gadata['location']);
   $visitor->setVar('data', 'environment', $gadata['environment']);
   $visitor->setVar('data', 'analytics_visits', $gadata['visits']);
@@ -169,25 +174,27 @@ function intel_sync_fullcontact_page($vtk) {
   $visitor = intel_visitor_load($vtk, 1);
   $status = intel_l10iapi_sync_visitordata($visitor);
 
-  $output = t('status:') . ' ' . $status;
+  $output = Intel_Df::t('status:') . ' ' . $status;
 
   return $output;
 }
 
-function intel_l10iapi_sync_visitordata(&$visitor) {
+add_filter( 'intel_sync_visitor', 'intel_l10iapi_sync_visitordata' );
+function intel_l10iapi_sync_visitordata($visitor) {
+
   $status = 1;
 
   if (
     intel_api_access()
     && get_option('intel_sync_visitordata_fullcontact', INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT)
     && $visitor->getVar('data', 'settings', 'sync_visitordata.fullcontact', INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT)
+    && $visitor->getEmail()
   ) {
     $person = $visitor->apiPersonLoad();
     $fc_data = $visitor->getVar('api_person_fullcontact');
-d($fc_data);
-    d($visitor);
+
     if (!empty($_GET['debug'])) {
-      d('FullContact person:'); d($fc_data);//
+      intel_d('FullContact person:'); intel_d($fc_data);//
     }
 
     if (!empty($fc_data)) {
@@ -330,4 +337,11 @@ function intel_sync_fullcontact_visitordata(&$visitor, $data) {
     $visitor->setProp('description', $v, $prop_options);
   }
 
+}
+
+add_filter( 'intel_sync_visitor_alter', 'intel_sync_visitor_alter' );
+function intel_sync_visitor_alter($visitor) {
+  Intel_Df::watchdog('intel_sync_visitor_alter', print_r($visitor, 1));
+
+  return $visitor;
 }

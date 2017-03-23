@@ -381,16 +381,16 @@ function intel_menu($items = array()) {
     );
     */
 
-    $items['visitor/%intel_visitor/resync'] = array(
-      'title' => 'Resync data',
+    $items['visitor/%intel_visitor/sync'] = array(
+      'title' => 'Sync data',
       'page callback' => 'intel_sync_visitordata_page',
       'page arguments' => array(1),
       'access callback' => 'intel_visitor_access',
       'access arguments' => array('update', 1),
       'type' => Intel_Df::MENU_LOCAL_ACTION,
     );
-    $items['visitor/%intel_visitor/fullcontact/resync'] = array(
-      'title' => 'Resync data',
+    $items['visitor/%intel_visitor/fullcontact/sync'] = array(
+      'title' => 'Sync data',
       'page callback' => 'intel_sync_fullcontact_page',
       'page arguments' => array(1),
       'access callback' => 'user_access',
@@ -1915,7 +1915,7 @@ function intel_visitor_save(&$entity) {
 
 
 function intel_visitor_delete($vid) {
-  return intel()->get_entity_controller('intel_visitor')->delete_one($vid);
+  return intel()->get_entity_controller('intel_visitor')->deleteOne($vid);
 }
 
 /**
@@ -2972,7 +2972,7 @@ function intel_get_field_page_intent_allowed_values() {
 }
 
 function intel_add_visitor_sync_request($visitor, $delay = 0) {
-  $intel = intel();
+  //$intel = intel();
   $items = get_option('intel_sync_visitor_requests', array());
   if (!isset($items[$visitor->vtk])) {
     $item = new stdClass;
@@ -3010,6 +3010,7 @@ function intel_taxonomy_vocabulary_delete($vocabulary) {
  */
 function intel_sync_visitordata_page($visitor = null, $count = 5) {
   require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
+
   $output = '';
   if ($visitor) {
     $visitor = intel_sync_visitordata($visitor);
@@ -3022,7 +3023,7 @@ function intel_sync_visitordata_page($visitor = null, $count = 5) {
     intel_queue_sync_visitor_requests();
     $items = intel_work_sync_visitor_request_queue($count);
     foreach ($items AS $item) {
-      $output .= l(t('Visitor') . ': ' . substr($item->vtk, 0, 20), 'visitor/' . $item->vtk) . "<br>\n";
+      $output .= Intel_Df::l( Intel_Df::t('Visitor') . ': ' . substr($item->vtk, 0, 20), 'visitor/' . $item->vtk) . "<br>\n";
       foreach ($item->statuses AS $k => $v) {
         $output .= "- $k: $v<br>\n";
       }
@@ -3030,11 +3031,33 @@ function intel_sync_visitordata_page($visitor = null, $count = 5) {
   }
 
   if (!empty($_GET['destination'])) {
-    drupal_goto($_GET['destination']);
+    Intel_Df::drupal_set_message(Intel_Df::t('Visitor synced: @output', array(
+      '@output' => $output,
+    )));
+    Intel_Df::drupal_goto($_GET['destination']);
     exit;
   }
 
   return $output;
+}
+
+function intel_sync_visitordata($visitor, $request = array()) {
+  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
+
+  if (!empty($_GET['debug'])) {
+    intel_d($visitor);//
+  }
+
+  // don't sync data if no pro api
+  $api_level = intel_api_level();
+  if ($api_level != 'pro') {
+    $visitor->setSyncProcessStatus('na', 1);
+    return $visitor;
+  }
+
+  $visitor->syncData();
+
+  return $visitor;
 }
 
 add_filter( 'cron_schedules', 'intel_add_cron_interval' );
@@ -3053,7 +3076,7 @@ function intel_add_cron_interval( $schedules ) {
   return $schedules;
 }
 
-add_action( 'intel_cron_hook', 'intel_cron');
+add_action( 'intel_cron_hook', 'intel_cron' );
 /**
  * Implements hook_cron()
  */
@@ -3062,25 +3085,26 @@ function intel_cron() {
   intel_queue_sync_visitor_requests();
 }
 
-add_action( 'intel_cron_queue_hook', 'intel_cron_queue');
+add_action( 'intel_cron_queue_hook', 'intel_cron_queue' );
 /**
  * Implements hook_cron_queue()
  * Processes cron_queue
  */
 function intel_cron_queue() {
+
   $cq_info = intel()->cron_queue_info();
   foreach ($cq_info as $cq_name => $info) {
     $queue = IntelQueue::get($cq_name);
-    //Intel_Df::watchdog('intel_cron_queue 3', print_r($queue, 1));
+
     $cq_item = $queue->claimItem();
-    Intel_Df::watchdog('intel_cron_queue cq_item', print_r($cq_item, 1));
+
     $func = $info['worker callback'];
     $func($cq_item['data']);
     $queue->deleteItem($cq_item);
   }
 }
 
-add_action( 'intel_cron_queue_info', 'intel_cron_queue_info');
+add_action( 'intel_cron_queue_info', 'intel_cron_queue_info' );
 function intel_cron_queue_info($queues = array()) {
   $queues['intel_sync_visitor_requests'] = array(
     'worker callback' => 'intel_sync_visitor_request_worker',
@@ -3110,6 +3134,12 @@ function intel_sync_visitor_request_worker($item) {
   }
 
   $visitor = intel_visitor_load($item->vtk, TRUE, 'vtk');
+  if (empty($visitor->vid)) {
+    Intel_Df::watchdog(Intel_Df::t('Visitor not found during sync queue processing. vtk=@vtk', array(
+      '@vtk' => $item->vtk,
+    )));
+    return;
+  }
   $visitor = intel_sync_visitordata($visitor, $item);
   $statuses = $visitor->getSyncProcessStatus();
 
@@ -3123,8 +3153,11 @@ function intel_sync_visitor_request_worker($item) {
   }
 
   if (!$success) {
-    $msg = Intel_Df::t('Failed: @vtk', array('@vtk' => $item->vtk)) . "<br>\n<br>\nitem:<br>\n" . print_r($item, 1) . "<br>\n<br>\nstatus:<br>\n" . print_r($statuses, 1);
-    Intel_Df::watchdog('intel sync visitor', $msg);
+    if (1 || intel_is_debug()) {
+      $msg = Intel_Df::t('Failed: @vtk', array('@vtk' => $item->vtk)) . "<br>\n<br>\nitem:<br>\n" . print_r($item, 1) . "<br>\n<br>\nstatus:<br>\n" . print_r($statuses, 1);
+      Intel_Df::watchdog('intel sync visitor', $msg);
+    }
+
     if ($item->attempts >= ((!empty($_GET['debug'])) ? 10 : 2)) {
       return;
     }
@@ -3134,7 +3167,9 @@ function intel_sync_visitor_request_worker($item) {
     update_option('intel_sync_visitor_requests', $requeues);
   }
   else {
-    Intel_Df::watchdog('intel sync visitor', Intel_Df::t('Success: @vtk', array('@vtk' => $item->vtk)));
+    if (1 || intel_is_debug()) {
+      Intel_Df::watchdog('intel sync visitor', Intel_Df::t('Success: @vtk', array('@vtk' => $item->vtk)));
+    }
   }
   $item->statuses = $statuses;
   return $item;
@@ -3209,7 +3244,7 @@ function intel_is_debug($mode = '') {
 
 function intel_debug_mode($mode = '') {
 
-  return get_option('intel_debug_mode', 0) || !empty($_GET['debug']);
+  return (get_option('intel_debug_mode', 0) || !empty($_GET['debug']));
 }
 
 function intel_is_extended() {
@@ -3219,7 +3254,7 @@ function intel_is_extended() {
 
 function intel_extended_mode() {
 
-  return get_option('intel_extended_mode', 0) || !empty($_GET['extended']);
+  return (get_option('intel_extended_mode', 0) || !empty($_GET['extended']));
 }
 
 function intel_print_var($var, $console = FALSE) {

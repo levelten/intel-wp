@@ -116,7 +116,7 @@ class Intel_Df  {
 	 * same path as its parent when clicked.
 	 */
 	//const MENU_DEFAULT_LOCAL_TASK = self::MENU_IS_LOCAL_TASK | self::MENU_LINKS_TO_PARENT | self::MENU_VISIBLE_IN_BREADCRUMB;
-	const MENU_DEFAULT_LOCAL_TASK = 0x0092;
+	const MENU_DEFAULT_LOCAL_TASK = 0x008C;
 
 	/**
 	 * Menu type -- An action specific to the parent, usually rendered as a link.
@@ -677,6 +677,54 @@ class Intel_Df  {
 		return intel()->get_page_title();
 	}
 
+	public static function drupal_parse_url($url) {
+		$options = array(
+			'path' => NULL,
+			'query' => array(),
+			'fragment' => '',
+		);
+
+		// External URLs: not using parse_url() here, so we do not have to rebuild
+		// the scheme, host, and path without having any use for it.
+		if (strpos($url, '://') !== FALSE) {
+			// Split off everything before the query string into 'path'.
+			$parts = explode('?', $url);
+			$options['path'] = $parts[0];
+			// If there is a query string, transform it into keyed query parameters.
+			if (isset($parts[1])) {
+				$query_parts = explode('#', $parts[1]);
+				parse_str($query_parts[0], $options['query']);
+				// Take over the fragment, if there is any.
+				if (isset($query_parts[1])) {
+					$options['fragment'] = $query_parts[1];
+				}
+			}
+		}
+		// Internal URLs.
+		else {
+			// parse_url() does not support relative URLs, so make it absolute. E.g. the
+			// relative URL "foo/bar:1" isn't properly parsed.
+			$parts = parse_url('http://example.com/' . $url);
+			// Strip the leading slash that was just added.
+			$options['path'] = substr($parts['path'], 1);
+			if (isset($parts['query'])) {
+				parse_str($parts['query'], $options['query']);
+			}
+			if (isset($parts['fragment'])) {
+				$options['fragment'] = $parts['fragment'];
+			}
+		}
+		// The 'q' parameter contains the path of the current page if clean URLs are
+		// disabled. It overrides the 'path' of the URL when present, even if clean
+		// URLs are enabled, due to how Apache rewriting rules work.
+		if (isset($options['query']['q'])) {
+			$options['path'] = $options['query']['q'];
+			unset($options['query']['q']);
+		}
+
+		return $options;
+	}
+
 	public static function drupal_pre_render_markup($elements) {
 		$elements['#children'] = $elements['#markup'];
 		return $elements;
@@ -1011,6 +1059,14 @@ class Intel_Df  {
 			$options['attributes']['title'] = strip_tags($options['attributes']['title']);
 		}
 		return '<a href="' . self::check_plain(self::url($path, $options)) . '"' . self::drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $text : self::check_plain($text)) . '</a>';
+	}
+
+	public static function l_options_add_destination ($destination, $l_options = array()) {
+		$query = array(
+			'destination' => $destination,
+		);
+		$l_options = self::l_options_add_query($query, $l_options);
+		return $l_options;
 	}
 
 	public static function l_options_add_query ($query, $l_options = array()) {

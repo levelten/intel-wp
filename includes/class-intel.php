@@ -65,6 +65,8 @@ class Intel {
 
 	public $created;
 
+	public $admin;
+
 	public $tracker;
 
 	public $gapi;
@@ -241,7 +243,6 @@ class Intel {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-intel-entity.php';
 
 		$this->loader = new Intel_Loader();
-
 	}
 
 	/**
@@ -264,6 +265,8 @@ class Intel {
 	private function define_global_hooks() {
 		add_filter('intel_theme_info', 'intel_theme');
 		add_filter('intel_theme_info', 'intel_df_theme');
+
+
 	}
 
 	/**
@@ -275,15 +278,21 @@ class Intel {
 	 */
 	private function define_admin_hooks() {
 
-		$plugin_admin = new Intel_Admin( $this->get_plugin_name(), $this->get_version() );
+		$this->admin = $plugin_admin = new Intel_Admin( $this->get_plugin_name(), $this->get_version() );
+
+
 
 		$this->loader->add_action( 'admin_init', $this, 'setup_role_caps');
 
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
-		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_init', $this, 'setup_cron');
+
+
 
 		// on intel admin pages, buffer page output and create sessions
 		if (self::is_intel_admin_page()) {
+			$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
+			$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+
 			// page buffer management hooks
 			$this->loader->add_action( 'admin_init', $plugin_admin, 'ob_start' );
 			$this->loader->add_action( 'admin_footer', $plugin_admin, 'ob_end' );
@@ -305,6 +314,20 @@ class Intel {
 
 		// plugin action links
 		$this->loader->add_action( 'plugin_action_links_intel/intel.php', $plugin_admin, 'plugin_action_links' );
+	}
+
+	public function setup_cron() {
+		// setup intel_cron_hook
+		$timestamp = wp_next_scheduled('intel_cron_hook');
+		if ($timestamp == FALSE) {
+			wp_schedule_event(time(), 'intel_cron_interval', 'intel_cron_hook');
+		}
+
+		// setup intel_cron_queue_hook
+		$timestamp = wp_next_scheduled('intel_cron_queue_hook');
+		if ($timestamp == FALSE) {
+			wp_schedule_event(time(), 'intel_cron_queue_interval', 'intel_cron_queue_hook');
+		}
 	}
 
 	public function is_intel_admin_page() {
@@ -351,6 +374,8 @@ class Intel {
 	private function define_public_hooks() {
 
 		$plugin_public = new Intel_Public( $this->get_plugin_name(), $this->get_version() );
+
+		$this->loader->add_action( 'init', $this, 'setup_cron');
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );

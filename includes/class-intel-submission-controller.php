@@ -216,9 +216,7 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 			// maximum dimensions is 10 or run if no more goals to process
 			if (count($request['metrics']) >= 9 || (count($submission_goals) == $i)) {
 				$data = intel_ga_api_data($request, $cache);
-				d($data);
 				$rows = intel_get_ga_feed_rows($data);
-				d($rows);
 				$goal_id = 0;
 				if (!empty($rows) && is_array($rows)) {
 					foreach ($rows AS $row) {

@@ -367,6 +367,11 @@ function theme_intel_location(&$variables) {
 
 function template_process_intel_location_block(&$variables) {
   $variables['markup'] = Intel_Df::theme('intel_location', $variables);
+  if (empty($variables['markup'])) {
+    // remove title to clear block
+    $variables['title'] = '';
+    return;
+  }
   if (empty($variables['title'])) {
     $variables['title'] = Intel_Df::t('Location');
   }
@@ -652,6 +657,11 @@ function theme_intel_property_browser_environment($variables) {
 
 function template_process_intel_browser_environment_block(&$variables) {
   $variables['markup'] = Intel_Df::theme('intel_browser_environment', $variables);
+  if (empty($variables['markup'])) {
+    // remove title to clear block
+    $variables['title'] = '';
+    return;
+  }
   if (empty($variables['title'])) {
     $variables['title'] = Intel_Df::t('Browser environment');
   }

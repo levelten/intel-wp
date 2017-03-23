@@ -13,6 +13,12 @@ function intel_ga_explorer_report() {
   foreach ($presets AS $name => $arr) {
     $options[$name] = $arr['title'];
   }
+
+  $form['markup00'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="panel panel-default"><h3 class="panel-heading">' . Intel_Df::t('Request form') . '</h3><div class="panel-body">',
+  );
+
   $form['preset'] = array(
     '#type' => 'select',
     '#title' => Intel_Df::t('Preset'),
@@ -39,6 +45,12 @@ function intel_ga_explorer_report() {
       '#markup' => implode("<br />", $items),
     );
   }
+
+
+  $form['markup1'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="row"><div class="col-md-7">',
+  );
   $form['dimensions'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('dimensions'),
@@ -73,6 +85,10 @@ function intel_ga_explorer_report() {
     //'#description' => Intel_Df::t('Enter a value to assign to the event when the CTA is clicked. Must be an whole number.'),
     '#default_value' => (isset($request['custom']['sort_metric'])) ? $request['custom']['sort_metric'] : '',
   );
+  $form['markup2'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div><div class="col-md-5">',
+  );
   $form['start_date'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('start date'),
@@ -99,6 +115,14 @@ function intel_ga_explorer_report() {
     '#type' => 'submit',
     '#value' => 'Submit',
   );
+  $form['markup3'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div></div>',
+  );
+  $form['markup01'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div></div>',
+  );
   if (!empty($request)) {
     //$req = drupal_array_merge_deep($request['preset'], $request['custom']);
     $req = $request['preset'] + $request['custom'];
@@ -108,7 +132,11 @@ function intel_ga_explorer_report() {
     if (!empty($request['custom']['metrics'])) {
       $req['metrics'] += array_merge($req['metrics'], $request['custom']['metrics']);
     }
-    intel_d($req);//
+
+    if (intel_is_debug()) {
+      intel_d($req);//
+    }
+
     if (!empty($req['metrics']) || !empty($req['dimensions'])) {
       $items = array(
         'dimensions: ' . implode(',', $req['dimensions']),
@@ -122,17 +150,23 @@ function intel_ga_explorer_report() {
       );
       $form['report_req'] = array(
         '#type' => 'markup',
-        '#markup' => '<br><h3>Request</h3>' . implode("<br>\n", $items),
+        '#markup' => '<br><div class="panel panel-default"><h3 class="panel-heading">Request</h3><div class="panel-body">' . implode("<br>\n", $items) . '</div></div>',
       );
+
       $options = array('refresh' => TRUE);
       //$data = google_analytics_reports_api_report_data($req, $options);
       $data = intel_ga_api_data($req, $options);
-      intel_d($data);//
+
+      if (intel_is_debug()) {
+        intel_d($data);//
+      }
 
       $header = array();
       $rows = array();
-      if (!empty($data->results->rows) && is_array($data->results->rows)) {
-        foreach ($data->results->rows AS $r) {
+      $data_rows = intel_get_ga_feed_totals($data);
+      intel_d($data_rows);
+      if (!empty($data_rows) && is_array($data_rows)) {
+        foreach ($data_rows AS $r) {
           $row = array();
           if (!count($header)) {
             foreach ($r AS $k => $e) {
@@ -146,7 +180,8 @@ function intel_ga_explorer_report() {
         }
       }
       $row = array();
-      foreach ($data->totals AS $k => $e) {
+      $data_totals = intel_get_ga_feed_totals($data);
+      foreach ($data_totals AS $k => $e) {
         $row[] = "<strong>" . $e . "</strong>";
       }
       $rows[] = $row;
@@ -157,7 +192,7 @@ function intel_ga_explorer_report() {
       );
       $form['report'] = array(
         '#type' => 'markup',
-        '#markup' => '<br><h3>Results</h3>' . Intel_Df::theme('table', $vars),
+        '#markup' => '<div class="panel panel-default"><h3 class="panel-heading">Results</h3><div>' . Intel_Df::theme('table', $vars) . '</div></div>',
       );
     }
   }

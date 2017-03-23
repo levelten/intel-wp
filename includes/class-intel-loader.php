@@ -47,10 +47,8 @@ class Intel_Loader {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-
 		$this->actions = array();
 		$this->filters = array();
-
 	}
 
 	/**
@@ -125,5 +123,4 @@ class Intel_Loader {
 		}
 
 	}
-
 }

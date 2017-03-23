@@ -208,11 +208,15 @@ function intel_dashboard_report($vars) {
   $ga_data->loadFeedData('entrances_events_valued');
   
   $ga_data->setRequestDefaultParam('max_results', 5 * $number_of_days);
-  $conversion_goals = variable_get('intel_submission_goals', intel_get_submission_goals_default());
-  $a = variable_get('intel_phonecall_goals', intel_get_phonecall_goals_default());
-  if (is_array($a)) {
-    $conversion_goals += $a;
+  $cg = get_option('intel_goals', array());
+  $conversion_goals = array();
+  foreach ($cg as $v) {
+    if (!empty($cg['context']['submission']) || !empty($cg['context']['phonecall'])) {
+      $conversion_goals[] = $v;
+    }
   }
+
+
   $i = 0;
 //$ga_data->setDebug(1);
   foreach ($conversion_goals AS $key => $goal) {

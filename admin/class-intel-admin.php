@@ -198,6 +198,7 @@ class Intel_Admin {
 		}
 		if ($_GET['page'] == 'intel_util') {
 			$q = 'admin/util';
+			$navbar_base_q = $navbar_base_qt = $q;
 		}
 		if (isset($_GET['q'])) {
 			$q = $_GET['q'];
@@ -232,8 +233,15 @@ class Intel_Admin {
 						$info = $menu_info[$qt];
 						if (!empty($path_args[1])) {
 							$entity_type = substr($a[1], 1);
-							$entity = $intel->get_entity_controller($entity_type)
-								->loadOne($path_args[1]);
+							$entity = $intel->get_entity_controller($entity_type)->loadOne($path_args[1]);
+							if (empty($entity)) {
+								$vars = array(
+									'title' => __('404 Error', 'intel'),
+									'markup' => __('Entity not found', 'intel'),
+								);
+								print Intel_Df::theme('intel_page', $vars);
+								return;
+							}
 							$path_args_t[1] = $entity;
 						}
 						if ($path_args[0] == 'visitor') {
@@ -296,7 +304,6 @@ class Intel_Admin {
 		$info += $defs;
 
 		if ($info['type'] & Intel_Df::MENU_LINKS_TO_PARENT ) {
-
 			if (isset($menu_info[$parent_qt])) {
 				$info += $menu_info[$parent_qt];
 			}
@@ -313,8 +320,8 @@ class Intel_Admin {
 				'title' => __('401 Error', 'intel'),
 				'markup' => __('Not authorized', 'intel'),
 			);
-			print Intel_Df::theme('intel_page', $vars);
-			return;
+			//print Intel_Df::theme('intel_page', $vars);
+			//return;
 		}
 
 		// process page arguments
@@ -494,7 +501,7 @@ class Intel_Admin {
 
 	public function admin_setup_notice() {
   	if (!empty(intel_api_level())) {
-			//return;
+			return;
 		}
 		// Don't show the connect notice anywhere but the plugins.php after activating
 		$current = get_current_screen();

@@ -172,7 +172,9 @@ class Intel_Tracker {
 
 		$js_settings = intel()->get_js_settings();
 
-		intel_d($js_settings);
+		if (intel_is_debug()) {
+			intel_d($js_settings);
+		}
 
 		$io_name = 'io';
 

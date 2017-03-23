@@ -470,7 +470,7 @@ function intel_admin_setup_validate_3($form, &$form_state, $status) {
 
 function intel_admin_setup_submit_3($form, &$form_state) {
   $values = $form_state['values'];
-  update_option('intel_apikey', $values['intel_apikey']);
+  update_option('intel_apikey', trim($values['intel_apikey']));
 }
 
 function intel_admin_setup_4($form, &$form_state) {

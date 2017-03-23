@@ -402,11 +402,11 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 
 			if ( current_user_can( 'edit_intel_visitor',  $visitor->vid ) ) {
 				$edit = "<strong><a href=\"$edit_link\">$visitor->name</a></strong><br />";
-				$actions['edit'] = '<a href="' . $edit_link . '">' . __( 'Edit' ) . '</a>';
+				//$actions['edit'] = '<a href="' . $edit_link . '">' . __( 'Edit' ) . '</a>';
 			} else {
 				//$edit = "<strong>$visitor->name</strong><br />";
 				$edit = "<strong>" . Intel_Df::l($visitor->name, 'visitor/' . $visitor->vid) . "</strong><br />";
-				$actions['edit'] = Intel_Df::l(__('Edit', 'intel'), 'visitor/' . $visitor->vid . '/edit');
+				//$actions['edit'] = Intel_Df::l(__('Edit', 'intel'), 'visitor/' . $visitor->vid . '/edit');
 				$actions['clickstream'] = Intel_Df::l(__('Clickstream', 'intel'), 'visitor/' . $visitor->vid . '/clickstream');
 			}
 
@@ -439,6 +439,7 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 		} else {
 			$edit = '<strong>' . $visitor->name . '</strong>';
 		}
+		$avatar = get_avatar(1, 32);
 		//$avatar = get_avatar( $visitor->vid, 32 );
 		//$avatar = '<img alt=\'\' src=\'http://1.gravatar.com/avatar/a3fb5be6c1191b366c8b18ad613050bf?s=32&#038;d=mm&#038;r=g\' srcset=\'http://1.gravatar.com/avatar/a3fb5be6c1191b366c8b18ad613050bf?s=64&amp;d=mm&amp;r=g 2x\' class=\'avatar avatar-32 photo\' height=\'32\' width=\'32\' />';
     $vars = array(

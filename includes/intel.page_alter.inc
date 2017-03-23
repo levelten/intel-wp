@@ -1773,7 +1773,7 @@ function intel_process_form_submission($vars) {
   if (!isset($track['value']) && isset($track['name'])) {
     $k = $track['name'];
     if (!empty($intel_event['goal_name'])) {
-      $k = 'goal_' . $k;
+      $k = 'goal_' . $intel_event['goal_name'];
     }
     if (isset($scorings[$k])) {
       $track['value'] = $scorings[$k];

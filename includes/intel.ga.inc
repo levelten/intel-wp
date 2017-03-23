@@ -2327,7 +2327,7 @@ function intel_get_ga_feed_rows($feed) {
   if (isset($feed->results->rows) && is_array($feed->results->rows)) {
     return $feed->results->rows;
   }
-  if (isset($feed->results) && is_array($feed->results)) {
+  else if (isset($feed->results) && is_array($feed->results)) {
     return $feed->results;
   }
   else {
@@ -2335,6 +2335,29 @@ function intel_get_ga_feed_rows($feed) {
   }
   $rows = (is_array($feed->results)) ? $feed->results : $feed->results->rows;
   return $rows;
+}
+
+/**
+ * Selects data rows based on if feed is ver 2 or ver 3
+ * @param $feed
+ * @return array
+ */
+function intel_get_ga_feed_totals($feed) {
+  if (isset($feed->results->totals) && is_array($feed->results->totals)) {
+    return $feed->results->totals;
+  }
+  else if (isset($feed->results->totalsForAllResults) && is_array($feed->results->totalsForAllResults)) {
+    return $feed->results->totalsForAllResults;
+  }
+  else if (isset($feed->totals) && is_array($feed->totals)) {
+    return $feed->totals;
+  }
+  else if (isset($feed->totalsForAllResults) && is_array($feed->totalsForAllResults)) {
+    return $feed->totalsForAllResults;
+  }
+  else {
+    return array();
+  }
 }
 
 /**
