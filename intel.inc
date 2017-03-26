@@ -994,13 +994,9 @@ function intel_reports() {
     'key' => 'engagement.top.pageview',
     'title' => Intel_Df::t('Engagement'),
   );
-
-  // TODO WP: implement segment reports
-  if (intel_is_extended()) {
-    $pa_infos = intel_get_page_attribute_info();
-
-    foreach ($pa_infos AS $key => $info) {
-      //if ($info['type'] == 'item' || $info['type'] == 'list') {
+  $pa_infos = intel_get_page_attribute_info();
+  foreach ($pa_infos AS $key => $info) {
+    //if ($info['type'] == 'item' || $info['type'] == 'list') {
       $reports['content']['pa-' . $key] = array(
         'key' => 'page_attribute:' . $key . '.top.entrance',
         'title' => Intel_Df::t('Segment') . ': ' . ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
@@ -1008,13 +1004,11 @@ function intel_reports() {
         //'intel_api_access' => 'basic',
         'file' => 'reports/intel.report_page_attribute_list.inc'
       );
-      if (isset($info['access callback'])) {
-        $reports['content']['pa-' . $key]['access callback'] = $info['access callback'];
-      }
-      //}
+    if (isset($info['access callback'])) {
+      $reports['content']['pa-' . $key]['access callback'] = $info['access callback'];
     }
+    //}
   }
-
 
   $reports['event'] = array();
   $reports['event']['-'] = array(
