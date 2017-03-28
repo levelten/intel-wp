@@ -16,8 +16,14 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $cron = get_option('cron', array());
-  intel_d($cron);
+  //get_next_sub_seq( 1 );
+  $form = Ninja_Forms()->form( 1 );
+
+  $seq_num = NF_Database_Models_Form::get_next_sub_seq( 1 );
+
+  intel_d($form);
+
+  intel_d($seq_num);
 
   return '';
 

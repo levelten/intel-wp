@@ -500,7 +500,8 @@ class Intel_Admin {
 	}
 
 	public function admin_setup_notice() {
-  	if (!empty(intel_api_level())) {
+		$api_level = intel_api_level();
+  	if (!empty($api_level)) {
 			return;
 		}
 		// Don't show the connect notice anywhere but the plugins.php after activating

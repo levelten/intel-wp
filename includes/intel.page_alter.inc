@@ -1536,6 +1536,14 @@ function intel_process_form_submission($vars) {
     'source' => 'form',
   );
   if(!empty($visitor_properties) && is_array($visitor_properties)) {
+    // if name not set, but givenName is, construct name from givenName & familyName
+    if (empty($visitor_properties['data.name']) && !empty($visitor_properties['data.givenName'])) {
+      $props['data.name'] = $visitor_properties['data.givenName'];
+      if (!empty($visitor_properties['data.familyName'])) {
+        $visitor_properties['data.name'] .= ' ' . $visitor_properties['data.familyName'];
+      }
+    }
+
     foreach ($visitor_properties as $k => $fv) {
       $kt = $k;
       if (strpos($k, 'data.') === 0) {

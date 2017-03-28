@@ -128,6 +128,11 @@ function intel_get_goal_categories() {
   return $goal_categories;
 }
 
+function intel_get_goal_info() {
+  $goal_info = get_option('intel_goals', array());
+  return $goal_info;
+}
+
 function intel_get_event_goal_info($filter = '') {
   $event = array();
   //$goals = get_option('intel_event_goals', array());
@@ -2150,7 +2155,6 @@ function intel_ga_data_source() {
 function intel_ga_api_data($request = array(), $cache_options = array()) {
   $feed = array();
   $source = intel_ga_data_source();
-  Intel_Df::watchdog('intel_ga_api_data source', print_r($source, 1));
   if ($source == 'gadwp') {
     $feed = intel_ga_api_data_gadwp($request, $cache_options);
     //$feed = intel_ga_api_data_internal($request, $cache_options);
@@ -2251,7 +2255,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
  * @return bool|int|mixed
  */
 function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options = array() ) {
-  Intel_Df::watchdog('intel_gadwp transient', print_r($cache_options, 1));
+
   try {
 
     if ( $from == "today" ) {

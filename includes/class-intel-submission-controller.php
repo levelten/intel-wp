@@ -202,19 +202,20 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 		}
 
 		$goals = array();
-		$submission_goals = get_option('intel_submission_goals', intel_get_submission_goals_default());
+		$goal_info = intel_get_goal_info();
+
 		$request['dimensions'] = array('ga:dimension4');
 		$request['metrics'] = array();
 		$goal_names = array();
 		$i = 0;
-		foreach ($submission_goals AS $key => $goal) {
-			$id = $submission_goals[$key]['ga_id'];
+		foreach ($goal_info AS $key => $goal) {
+			$id = $goal_info[$key]['ga_id'];
 			$request['metrics'][] = "ga:goal{$id}Completions";
 			$request['metrics'][] = "ga:goal{$id}Value";
-			$goal_names[$id] = $submission_goals[$key]['title'];
+			$goal_names[$id] = $goal_info[$key]['title'];
 			$i++;
 			// maximum dimensions is 10 or run if no more goals to process
-			if (count($request['metrics']) >= 9 || (count($submission_goals) == $i)) {
+			if (count($request['metrics']) >= 9 || (count($goal_info) == $i)) {
 				$data = intel_ga_api_data($request, $cache);
 				$rows = intel_get_ga_feed_rows($data);
 				$goal_id = 0;
@@ -226,18 +227,20 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 							if ((substr($rk, -11) == 'Completions') && (int)$rv > 0) {
 								// extract goalId from key in format goalXXCompletions
 								$goal_id = substr($rk, 4); //
-								$goal_id = (int)substr($goal_id, 0, -11);
+								$goal_id = substr($goal_id, 0, -11);
 								break;
 							}
 						}
-						$step = array(
-							'time' => (int) $row['dimension4'],
-							'type' => 'goal',
-							'id' => $goal_id,
-							'name' => $goal_names[$goal_id],
-							'value' => (int) $row["goal{$goal_id}Value"],
-						);
-						$ret['session']['steps'][] = $step;
+						if ($goal_id) {
+							$step = array(
+								'time' => (int) $row['dimension4'],
+								'type' => 'goal',
+								'id' => $goal_id,
+								'name' => $goal_info[$goal_id]['title'],
+								'value' => (int) $row["goal{$goal_id}Value"],
+							);
+							$ret['session']['steps'][] = $step;
+						}
 					}
 				}
 				$request['metrics'] = array();
