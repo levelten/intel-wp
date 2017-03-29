@@ -48,13 +48,16 @@ class EventListReportView extends ReportView {
     //dsm($datasum[$eventSrc]);
     //dsm($datasum[$eventSrc]['events']['_all']['totalEvents'] . " == " . $datasum[$eventSrc]['events']['_all']['totalValuedEvents']);
     // if totalEvents == totalValuedEvents, this category is all standard events
-    if ($datasum[$eventScope]['events']['_all']['totalEvents'] == $datasum[$eventScope]['events']['_all']['totalValuedEvents']) {
-      $eventType = 'valued';
+    if (!empty($datasum[$eventScope]['events']['_all'])) {
+      if ($datasum[$eventScope]['events']['_all']['totalEvents'] == $datasum[$eventScope]['events']['_all']['totalValuedEvents']) {
+        $eventType = 'valued';
+      }
+      // if totalEvents == totalValuedEvents, this category is all standard events
+      elseif ($datasum[$eventScope]['events']['_all']['totalValuedEvents'] == 0) {
+        $eventType = 'nonvalued';
+      }
     }
-    // if totalEvents == totalValuedEvents, this category is all standard events
-    elseif ($datasum[$eventScope]['events']['_all']['totalValuedEvents'] == 0) {
-      $eventType = 'nonvalued';
-    }
+
 
     if ($eventType == 'valued') {
       $table->setOption('sortColumn', 2);

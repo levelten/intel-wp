@@ -6,7 +6,10 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
-function intel_event_list_report_page($report_params = '-', $report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
+function intel_event_list_report_page($report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
+  // TODO WP hack for debugging
+  $_GET['return_type'] = 'nonajax';
+
   require_once INTEL_DIR . "includes/intel.reports.inc";
   require_once INTEL_DIR . "includes/intel.ga.inc";
   $output = '';
@@ -15,6 +18,7 @@ function intel_event_list_report_page($report_params = '-', $report_subtype = '-
     $vars['entity_type'] = $entity_type;
     $vars['entity'] = $entity;
   }
+  $report_params = !empty($_GET['report_params']) ? $_GET['report_params'] : '-';
   $vars = intel_init_reports_vars('event_list', 'event', $report_params, $report_subtype, $report_subfilter, $vars);
 
   $output = intel_build_report($vars);
@@ -26,7 +30,7 @@ function intel_event_list_report_page($report_params = '-', $report_subtype = '-
 function intel_event_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
   require_once INTEL_DIR . "/includes/intel.page_data.inc";
-
+intel_d($vars);
   $output = '';
 
   /*
@@ -104,10 +108,18 @@ function intel_event_list_report($vars) {
 
 
   $d = $ga_data->data;
-//intel_d($ga_data);
+intel_d($d);
+  intel_d($dataScope);
 
-  ksort($d['date']);
+  if (!empty($d[$indexBy])) {
+    ksort($d[$indexBy]);
+  }
 
+
+  if (empty($d[$indexBy]['_all'][$dataScope]['events'])) {
+    $d[$indexBy]['_all'][$dataScope]['events'] = array();
+  }
+intel_d($d[$indexBy]['_all'][$dataScope]['events']);
   foreach ($d[$indexBy]['_all'][$dataScope]['events'] AS $index => $de) {
     if (isset($de['i'])) {
       $params = $vars['report_params'];
@@ -128,31 +140,19 @@ function intel_event_list_report($vars) {
       );
       $d[$indexBy]['_all'][$dataScope]['events'][$index]['links'] = intel_build_report_links($link_keys, $filter, $vars['report_params']);
       if (!$vars['report_subfilter']) {
-        $link = l(t('details'), intel_build_report_path('event', array(), '-', $filter));
+        $link = Intel_Df::l( Intel_Df::t('details'), intel_build_report_path('event', array(), '-', $filter));
         if (count($vars['report_params']) > 0) {
-          $link .= l('+', intel_build_report_path('event', $params, '-', $filter));
+          $link .= Intel_Df::l('+', intel_build_report_path('event', $params, '-', $filter));
         }
         $d[$indexBy]['_all'][$dataScope]['events'][$index]['links'][] = $link;
       }
-
-      /*
-      $d[$indexBy]['_all']['pageview']['events'][$index]['links'] = array();
-      $params = $vars['report_params'];
-      $params['_filter_add'] = $filter;
-      $d[$indexBy]['_all']['pageview']['events'][$index]['links'][] = l(t('+'), intel_build_report_path('scorecard', $params));
-
-      $params = $vars['report_params'];
-      $params['_filter_only'] = $filter;
-      $d[$indexBy]['_all']['pageview']['events'][$index]['links'][] = l(t('scorecard'), intel_build_report_path('scorecard', $params));
-      $d[$indexBy]['_all']['pageview']['events'][$index]['links'][] = l(t('sources'), intel_build_report_path('trafficsource', $params));
-      $d[$indexBy]['_all']['pageview']['events'][$index]['links'][] = l(t('pages'), intel_build_report_path('page', $params));
-      $d[$indexBy]['_all']['pageview']['events'][$index]['links'][] = l(t('visitors'), intel_build_report_path('visitor', $params));
-      if (!$vars['report_subfilter']) {
-        $d[$indexBy]['_all']['pageview']['events'][$index]['links'][] = l(t('details'), intel_build_report_path('event', array(), '-', $filter));
-      }
-      */
     }
   }
+
+
+
+
+
 
 //dsm($d);
 
@@ -165,6 +165,7 @@ function intel_event_list_report($vars) {
   return $output;
 }
 
+/*
 function theme_intel_event_list_report($vars) {
   intel_include_library_file("reports/class.event_report_view.php");
   
@@ -184,3 +185,4 @@ function theme_intel_event_list_report($vars) {
   
   return $output; 
 }
+*/

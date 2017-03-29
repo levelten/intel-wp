@@ -10,6 +10,9 @@
 function intel_init_reports_vars($report_name, $report_type, $report_params = '-', $report_subtype = '-', $report_subfilter = '-',  $vars = array()) {
 //$args = func_get_args();
 //dsm($args);
+  if (!empty($_GET['report_params'])) {
+    $report_params = $_GET['report_params'];
+  }
   if (!is_array($vars)) {
     $vars = array();
   }
@@ -459,10 +462,11 @@ function intel_build_report_params_arg($params) {
 
 function intel_build_report_path($report_type, $report_params = '', $report_subtype = '', $report_subfilter = '') {
   $path = 'admin/reports/intel/' . $report_type;
-  if (is_array($report_params)) {
-    $report_params = intel_build_report_params_arg($report_params);
-  }
-  $path .= '/' . (($report_params) ? $report_params : '-');
+// removed for WP
+//  if (is_array($report_params)) {
+//    $report_params = intel_build_report_params_arg($report_params);
+//  }
+//  $path .= '/' . (($report_params) ? $report_params : '-');
   if ($report_subtype) {
     $path .= '/' . $report_subtype;
   }
@@ -472,6 +476,13 @@ function intel_build_report_path($report_type, $report_params = '', $report_subt
 
 
   return $path;
+}
+
+function intel_build_report_query($report_type, $report_params = '', $report_subtype = '', $report_subfilter = '', $query = array()) {
+  if (is_array($report_params)) {
+    $query['report_params'] = intel_build_report_params_arg($report_params);
+  }
+  return $query;
 }
 
 function intel_build_report_links($link_keys, $filter, $report_params) {
@@ -484,22 +495,22 @@ function intel_build_report_links($link_keys, $filter, $report_params) {
   foreach ($link_keys AS $def) {
     if (!empty($def['subtype'])) {
       $text = (isset($trans[$def['subtype']])) ? $trans[$def['subtype']] : $def['subtype'];
-      $item = Intel_Df::l($text, intel_build_report_path($def['type'], array(), $def['subtype'], $filter));
+      $item = Intel_Df::l($text, intel_build_report_path($def['type'], array(), $def['subtype'], $filter), array('query' => intel_build_report_query($def['type'], array(), $def['subtype'], $filter)));
     }
     else {
       $params['_filter_only'] = $filter;
       $text = (isset($trans[$def['type']])) ? $trans[$def['type']] : $def['type'];
-      $item = Intel_Df::l(Intel_Df::t($text), intel_build_report_path($def['type'], $params));
+      $item = Intel_Df::l(Intel_Df::t($text), intel_build_report_path($def['type'], $params), array('query' => intel_build_report_query($def['type'], $params)));
     }
 
     if (count($report_params) > 0) {
       $params = $report_params;
-      if ($def['subtype']) {
-        $item .= Intel_Df::l('+', intel_build_report_path($def['type'], $params, $def['subtype'], $filter));
+      if (!empty($def['subtype'])) {
+        $item .= Intel_Df::l('+', intel_build_report_path($def['type'], $params, $def['subtype'], $filter), array('query' => intel_build_report_query($def['type'], $params, $def['subtype'], $filter)));
       }
       else {
         $params['_filter_add'] = $filter;
-        $item .= Intel_Df::l('+', intel_build_report_path($def['type'], $params));
+        $item .= Intel_Df::l('+', intel_build_report_path($def['type'], $params), array('query' => intel_build_report_query($def['type'], $params)));
       }
     }
     $links[] = $item;
@@ -537,10 +548,10 @@ function intel_build_report($vars) {
     if (!empty($vars['title'])) {
       intel()->set_page_title($vars['title']);
     }
-    /* TODO WP
-    $filter_form = drupal_get_form('intel_report_filters_form', $vars['filters'], $vars);
-    $output .= drupal_render($filter_form);
-    */
+    require_once INTEL_DIR . 'includes/class-intel-form.php';
+    //$filter_form = Intel_Form::drupal_get_form('intel_report_filters_form', $vars['filters'], $vars);
+    //$output .= Intel_Df::render($filter_form);
+    $output .= Intel_Form::drupal_get_form('intel_report_filters_form', $vars['filters'], $vars);
   }
 
   if ($error) {
@@ -570,7 +581,7 @@ function theme_intel_report($vars) {
   $class = str_replace('_', ' ', $vars['report_name']);
   $class = ucwords($class);
   $class = 'levelten\intel\\' . str_replace(' ', '', $class) . 'ReportView';
-
+intel_d($vars);
   $report_view = new $class();
   $report_view->setData($vars['data']);
   $report_view->setTableRowCount($vars['row_count']);
@@ -770,11 +781,11 @@ function intel_reports_filter_types() {
 }
 
 function intel_report_filters_form($form, &$form_state, $filters = array(), $vars = array()) {
-  $access = user_access('view all intel reports');
+  //$access = user_access('view all intel reports');
   // TODO: this is a hack, work out more elegant way of handeling permissions
-  if (!$access) {
-    drupal_add_css('.intel-static-filter, .intel-related-links {display: none;} #intel-report a.intel-more {display: none;}', array('group' => CSS_THEME, 'type' => 'inline'));
-  }
+  //if (!$access) {
+  //  drupal_add_css('.intel-static-filter, .intel-related-links {display: none;} #intel-report a.intel-more {display: none;}', array('group' => CSS_THEME, 'type' => 'inline'));
+  //}
 
   $dynamic_filters = array();
   $context = (!empty($vars['context'])) ? $vars['context'] : '';

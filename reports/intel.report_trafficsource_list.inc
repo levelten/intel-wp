@@ -6,7 +6,10 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
-function intel_trafficsource_list_report_page($report_params = '-', $report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-', $vars = array()) {
+function intel_trafficsource_list_report_page($report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-', $vars = array()) {
+  // TODO WP hack for debugging
+  $_GET['return_type'] = 'nonajax';
+
   require_once INTEL_DIR . "includes/intel.reports.inc";
   require_once INTEL_DIR . "includes/intel.ga.inc";
   $output = '';
@@ -15,6 +18,7 @@ function intel_trafficsource_list_report_page($report_params = '-', $report_subt
     $vars['entity_type'] = $entity_type;
     $vars['entity'] = $entity;
   }
+  $report_params = !empty($_GET['report_params']) ? $_GET['report_params'] : '-';
   $vars = intel_init_reports_vars('trafficsource_list', 'trafficsource', $report_params, $report_subtype, $report_subfilter, $vars);
 
   $output = intel_build_report($vars);
@@ -24,7 +28,7 @@ function intel_trafficsource_list_report_page($report_params = '-', $report_subt
 //function intel_trafficsource_list_report($vars['filters'] = array(), $vars['context'] = 'site', $sub_index = '-') {
 function intel_trafficsource_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
-
+intel_d($vars);
   if (empty($vars['report_subtype'])) {
     $vars['report_subtype'] = 'trafficcategory';
   }

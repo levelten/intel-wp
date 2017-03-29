@@ -15,7 +15,9 @@
  *
  * @return string
  */
-function intel_scorecard_report_page($report_params = '-', $report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
+function intel_scorecard_report_page($report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
+  // TODO WP hack for debugging
+  $_GET['return_type'] = 'nonajax';
 //$args = func_get_args();
 //dsm($args);
   require_once INTEL_DIR . "includes/intel.reports.inc";
@@ -27,6 +29,7 @@ function intel_scorecard_report_page($report_params = '-', $report_subtype = '-'
     $vars['entity_type'] = $entity_type;
     $vars['entity'] = $entity;
   }
+  $report_params = !empty($_GET['report_params']) ? $_GET['report_params'] : '-';
   $vars = intel_init_reports_vars('scorecard', 'scorecard', $report_params, $report_subtype, $report_subfilter, $vars);
   $vars['title'] = $title = Intel_Df::t('Scorecard');
 
@@ -147,7 +150,7 @@ $ga_data->setDebug(0);
   $request = $ga_data->loadFeedData('entrances', 'trafficsources'); 
   
   $d = $ga_data->data;
- 
+
   if (!empty($path)) {
     $created = intel_get_node_created($path);
     $start = ($created > $start_date) ? $created : $start_date;
@@ -158,22 +161,24 @@ $ga_data->setDebug(0);
     $analysis_days = ($end_date - $start) / 86400;
   }
 
-  
-  foreach ($d['date'] AS $index => $de) {
-    $score_components = array();
-    $method = 'site';
-    if ($context == 'page' || $context == 'page-attr') {
-      $method = 'page';
+  if (!empty($d['date'])) {
+    foreach ($d['date'] AS $index => $de) {
+      $score_components = array();
+      $method = 'site';
+      if ($context == 'page' || $context == 'page-attr') {
+        $method = 'page';
+      }
+      $d['date'][$index]['score'] = intel_score_item($de, 1, $score_components, '', $method);
+      $d['date'][$index]['score_components'] = $score_components;
     }
-    $d['date'][$index]['score'] = intel_score_item($de, 1, $score_components, '', $method);
-    $d['date'][$index]['score_components'] = $score_components;  
+    $d['date']['_links'] = array(
+      'events' => array(),
+      'goals' => array(),
+      'events_pageview' => array(),
+      'goals_pageview' => array(),
+    );
   }
-  $d['date']['_links'] = array(
-    'events' => array(),
-    'goals' => array(),
-    'events_pageview' => array(),
-    'goals_pageview' => array(),
-  );
+
   $more_link_options = array(
     'attributes' => array(
       'class' => array(
@@ -182,14 +187,18 @@ $ga_data->setDebug(0);
     ),
   );
   if ($vars['context'] == 'page' || $vars['context'] == 'page-attr') {
+    $more_link_options['query'] = intel_build_report_query('event', $vars['report_params']);
     $d['date']['_links']['events'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'entrance_valued'), $more_link_options);
     $d['date']['_links']['goals'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'entrance_goal'), $more_link_options);
     $d['date']['_links']['events_pageview'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'pageview_valued'), $more_link_options);
   }
   else {
+    $more_link_options['query'] = intel_build_report_query('event', $vars['report_params']);
     $d['date']['_links']['events'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'valued'), $more_link_options);
     $d['date']['_links']['goals'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'goal'), $more_link_options);
   }
+
+
 
   //$params = $vars['report_params'];
   //$params['_filter_add'] = 'pa-i:t';
@@ -210,6 +219,7 @@ $ga_data->setDebug(0);
       'default' => array(),
       'i.t' => array(),
     );
+    $more_link_options['query'] = intel_build_report_query('content', $vars['report_params']);
     $d['content']['_links']['default'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('content', $vars['report_params']), $more_link_options);
     $params = $vars['report_params'];
     $params['_filter_add'] = 'pa-i:t';
@@ -224,9 +234,10 @@ $ga_data->setDebug(0);
         $d['trafficsources'][$sub_index][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'entrance');
         $d['trafficsources'][$sub_index][$index]['score_components'] = $score_components;  
       }
+      $more_link_options['query'] = intel_build_report_query('trafficsource', $vars['report_params']);
       $d['trafficsources'][$sub_index]['_links'] = array();
       $d['trafficsources'][$sub_index]['_links'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('trafficsource', $vars['report_params'], $sub_index), $more_link_options);
-    }   
+    }
   }
   // order date data cronologically
   ksort($d['date']);

@@ -1,4 +1,7 @@
-/* $Id: intel.css,v 1.1.2.1 2010/12/28 17:45:39 randallknutson Exp $ */
+
+form#intel_report_filters_form {
+  margin-bottom: 1em;
+}
 
 #intel-report {
   font-family: arial,sans-serif;

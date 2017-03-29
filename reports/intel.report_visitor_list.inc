@@ -6,7 +6,10 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
-function intel_visitor_list_report_page($report_params = '-', $report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
+function intel_visitor_list_report_page($report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
+  // TODO WP hack for debugging
+  $_GET['return_type'] = 'nonajax';
+
   require_once INTEL_DIR . "includes/intel.reports.inc";
   require_once INTEL_DIR . "includes/intel.ga.inc";
   $output = '';
@@ -16,6 +19,7 @@ function intel_visitor_list_report_page($report_params = '-', $report_subtype = 
     $vars['entity_type'] = $entity_type;
     $vars['entity'] = $entity;
   }
+  $report_params = !empty($_GET['report_params']) ? $_GET['report_params'] : '-';
   $vars = intel_init_reports_vars('visitor_list', 'visitor', $report_params, $report_subtype, $report_subfilter, $vars);
 
   $output = intel_build_report($vars);

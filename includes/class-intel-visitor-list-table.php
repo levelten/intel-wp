@@ -232,6 +232,8 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 	protected function get_bulk_actions() {
 		$actions = array();
 
+		return $actions;
+
 		if ( is_multisite() ) {
 			if ( current_user_can( 'remove_users' ) )
 				$actions['remove'] = __( 'Remove' );
@@ -253,6 +255,7 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 	 *                      or below the table ("bottom").
 	 */
 	protected function extra_tablenav( $which ) {
+	  return;
 		$id = 'bottom' === $which ? 'new_role2' : 'new_role';
 	?>
 	<div class="alignleft actions">

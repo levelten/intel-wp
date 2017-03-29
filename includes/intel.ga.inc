@@ -2224,8 +2224,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   if (!empty($feed->rows)) {
     $ch = $feed->getColumnHeaders();
     if (!is_array($ch)) {
-      d('ga-error');
-      d($feed);
+      intel_d($feed);
     }
     $colHeaders = array();
     foreach ($ch as $v) {
@@ -2270,7 +2269,6 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
     else {
       $transient = GADWP_Tools::get_cache( $serial );
     }
-    Intel_Df::watchdog('intel_gadwp transient', json_encode($transient));
     if ( $transient === false ) {
       if ( $gapi->gapi_errors_handler() ) {
         return - 23;

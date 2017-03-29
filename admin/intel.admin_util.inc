@@ -8,7 +8,9 @@
 
 
 function intel_util() {
-  return 'OK';
+  $output = '';
+  //$output .= Intel_Df::l(Intel_Df::t('Clear Google Analytics API cache.'))
+  return $output;
 }
 
 /**
@@ -113,6 +115,35 @@ function intel_util_temp_form_validate($form, &$form_state) {
  */
 function intel_util_temp_form_submit($form, &$form_state) {
   $values = $form_state['values'];
+}
+
+function intel_util_clear_gapi_cache() {
+  global $wpdb;
+
+
+  $ga_data_src = intel_ga_data_source();
+
+  if ($ga_data_src == 'gadwp') {
+    $sql = "
+        SELECT option_name
+        FROM {$wpdb->prefix}options
+        WHERE option_name LIKE %s
+      ";
+    $data = array(
+      'gadwp_cache_intel_%',
+    );
+
+    $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
+intel_d($results);
+    foreach ($results as $row) {
+      delete_option($row->option_name);
+    }
+    delete_option('gadwp_cache_gapi_errors');
+    delete_option('gadwp_cache_last_error');
+    Intel_Df::drupal_set_message(Intel_Df::t('gawdp_cache cleared'));
+  }
+
+  return 'OK';
 }
 
 function intel_util_init_options() {
@@ -329,8 +360,11 @@ function intel_util_reset_site() {
   if (empty($_GET['flags'])) {
     return __('No flags set', 'intel');
   }
+
   $flags = $_GET['flags'];
-  if ($flags == '_') {
+
+  if ($flags == '_' || $flags == 'installtest') {
+    $mode = $flags;
     $flags = 'c,v,f';
   }
   $flags = explode(',', $flags);
@@ -338,7 +372,9 @@ function intel_util_reset_site() {
 
   $plugins_enabled = array(
     'gadwp' => is_plugin_active( 'google-analytics-dashboard-for-wp/gadwp.php' ),
-    'flamingo' => is_plugin_active( 'flamingo/flamingo.php' )
+    'flamingo' => is_plugin_active( 'flamingo/flamingo.php' ),
+    'gravityforms' => is_plugin_active( 'gravityforms/gravityforms.php' ),
+    'ninja_forms' => is_plugin_active( 'ninja-forms/ninja-forms.php' ),
   );
 
   if (in_array('test', $flags)) {
@@ -416,6 +452,26 @@ function intel_util_reset_site() {
       }
 
       Intel_Df::drupal_set_message(Intel_Df::t('Flamingo contacts and messages truncated.'));
+    }
+
+    if (!empty($plugins_enabled['ninja_forms'])) {
+      // flamingo data is stored as posts.
+      $sql = "
+        SELECT ID
+        FROM {$wpdb->prefix}posts
+        WHERE post_type = %s
+      ";
+      $data = array(
+        'nf_sub',
+      );
+
+      $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
+
+      foreach ($results as $row) {
+        wp_delete_post($row->ID);
+      }
+
+      Intel_Df::drupal_set_message(Intel_Df::t('Ninja Forms submissions truncated.'));
     }
   }
 

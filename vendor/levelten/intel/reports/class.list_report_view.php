@@ -34,7 +34,7 @@ class ListReportView extends ReportView {
     $reportModes = $this->modes;
     $targets = $this->targets;
     $indexBy = $this->params['indexBy'];
-    $indexByLabel = $this->params['indexByLabel'];
+    $indexByLabel = !empty($this->params['indexByLabel']) ? $this->params['indexByLabel'] : $this->params['indexBy'];
     $context = $this->params['context'];
     $enablePageCount = isset($this->params['enablePageCount']) ? $this->params['enablePageCount'] : 0;
 

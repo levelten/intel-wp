@@ -341,7 +341,6 @@ function intel_sync_fullcontact_visitordata(&$visitor, $data) {
 
 add_filter( 'intel_sync_visitor_alter', 'intel_sync_visitor_alter' );
 function intel_sync_visitor_alter($visitor) {
-  Intel_Df::watchdog('intel_sync_visitor_alter', print_r($visitor, 1));
 
   return $visitor;
 }

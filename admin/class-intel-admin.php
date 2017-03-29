@@ -185,8 +185,6 @@ class Intel_Admin {
 				'path' => Intel_Df::url($q),
 			);
 			$navbar_base_q = $navbar_base_qt = $q;
-			// TODO WP hack for debugging
-			$_GET['return_type'] = 'nonajax';
 		}
 
 		if ($_GET['page'] == 'intel_config') {
@@ -331,10 +329,6 @@ class Intel_Admin {
 			if (is_integer($arg)) {
 				$page_args[$k] = !empty($path_args_t[$arg]) ? $path_args_t[$arg] : $path_args[$arg];
 			}
-		}
-
-		if ($_GET['page'] == 'intel_reports') {
-			$page_args[0] = isset($path_args[5]) ? $path_args[5] : '-';
 		}
 
 		// TODO WP handle permissions

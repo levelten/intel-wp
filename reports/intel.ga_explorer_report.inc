@@ -163,7 +163,8 @@ function intel_ga_explorer_report() {
 
       $header = array();
       $rows = array();
-      $data_rows = intel_get_ga_feed_totals($data);
+      $data_rows = intel_get_ga_feed_rows($data);
+      $cols = array();
       intel_d($data_rows);
       if (!empty($data_rows) && is_array($data_rows)) {
         foreach ($data_rows AS $r) {
@@ -181,9 +182,10 @@ function intel_ga_explorer_report() {
       }
       $row = array();
       $data_totals = intel_get_ga_feed_totals($data);
-      foreach ($data_totals AS $k => $e) {
-        $row[] = "<strong>" . $e . "</strong>";
+      foreach ($header as $r) {
+        $row[] = isset($data_totals[$r]) ? "<strong>" . $data_totals[$r] . "</strong>" : '';
       }
+
       $rows[] = $row;
       $vars = array(
         'header' => $header,

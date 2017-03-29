@@ -348,7 +348,7 @@ function intel_menu($items = array()) {
       'file' => 'admin/intel.admin_visitor.inc',
     );
     $items['visitor/%intel_visitor/view'] = array(
-      'title' => 'View',
+      'title' => 'Profile',
       'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
       'weight' => -20,
     );
@@ -413,6 +413,20 @@ function intel_menu($items = array()) {
       'file' => 'reports/intel.report_visitor_clickstream.inc',
       //'intel_api_access' => 'pro',
     );
+    $items['visitor/%intel_visitor/analytics'] = array(
+      'title' => 'Analytics',
+      'page callback' => 'intel_scorecard_report_page',
+      'page arguments' => array('-', '-', '-', 'intel_visitor', 1),
+      'access callback' => '_intel_permission_access_content_report',
+      'access arguments' => array('view intel visitor data'),
+      'file' => 'reports/intel.report_scorecard.inc',
+      'weight' => -8,
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'context' => Intel_Df::MENU_CONTEXT_PAGE | Intel_Df::MENU_CONTEXT_INLINE,
+      'intel_api_access' => 'pro',
+    );
+
+    /*
     $items['visitor/%intel_visitor/analytics'] = array(
       'title' => 'Analytics',
       'page callback' => 'intel_scorecard_report_page',
@@ -692,6 +706,7 @@ function intel_menu($items = array()) {
   );
   */
 
+  /*
   $items['admin/reports/intel/ga_explorer'] = array(
     'title' => 'Google Analytics Explorer',
     'description' => 'Add a new cta block.',
@@ -703,6 +718,7 @@ function intel_menu($items = array()) {
     'weight' => $w++,
     'file' => 'reports/intel.ga_explorer_report.inc',
   );
+  */
 
   // add sub reports
   foreach ($reports AS $category => $defs) {
@@ -713,7 +729,7 @@ function intel_menu($items = array()) {
         'title' => $def['title'],
         'description' => !empty($def['description']) ? $def['description'] : '',
         'page callback' => !empty($def['page callback']) ? $def['page callback'] : 'intel_' . $category . '_list_report_page',
-        'page arguments' => array('-', 4),
+        'page arguments' => array(4),
         'access callback' => $access,
         'access arguments' => array('view all intel reports'),
         'type' => isset($def['type']) ? $def['type'] : (($slug == '-') ? Intel_Df::MENU_DEFAULT_LOCAL_TASK : Intel_Df::MENU_LOCAL_TASK),
@@ -759,6 +775,16 @@ function intel_menu($items = array()) {
     'title' => 'Utilities',
     'description' => 'Analyze and optimize node content.',
     'page callback' => 'intel_util',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/clear_gapi_cache'] = array(
+    'title' => 'Utilities',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_clear_gapi_cache',
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_CALLBACK,
@@ -885,6 +911,17 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_LOCAL_TASK,
     'file' => 'admin/intel.admin_util.inc',
   );
+
+  /*
+  $r = array();
+  foreach ($items as $k => $v) {
+    if (substr($k, 0 ,13) == 'admin/reports') {
+      $r[$k] = $v;
+    }
+  }
+  intel_d($r);
+  */
+
   return $items;
 }
 
@@ -994,9 +1031,11 @@ function intel_reports() {
     'key' => 'engagement.top.pageview',
     'title' => Intel_Df::t('Engagement'),
   );
-  $pa_infos = intel_get_page_attribute_info();
-  foreach ($pa_infos AS $key => $info) {
-    //if ($info['type'] == 'item' || $info['type'] == 'list') {
+
+  if (intel_is_extended()) {
+    $pa_infos = intel_get_page_attribute_info();
+    foreach ($pa_infos AS $key => $info) {
+      //if ($info['type'] == 'item' || $info['type'] == 'list') {
       $reports['content']['pa-' . $key] = array(
         'key' => 'page_attribute:' . $key . '.top.entrance',
         'title' => Intel_Df::t('Segment') . ': ' . ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
@@ -1004,10 +1043,11 @@ function intel_reports() {
         //'intel_api_access' => 'basic',
         'file' => 'reports/intel.report_page_attribute_list.inc'
       );
-    if (isset($info['access callback'])) {
-      $reports['content']['pa-' . $key]['access callback'] = $info['access callback'];
+      if (isset($info['access callback'])) {
+        $reports['content']['pa-' . $key]['access callback'] = $info['access callback'];
+      }
+      //}
     }
-    //}
   }
 
   $reports['event'] = array();
@@ -1201,6 +1241,21 @@ function intel_reports() {
 
   return $reports;
 }
+
+/*
+add_filter('intel_url_outbound_alter', 'intel_url_outbound_alter');
+function intel_url_outbound_alter($vars) {
+  // enables menu items in reports to maintain report params if set
+  if (!empty($_GET['report_params'])
+    && !isset($vars['options']['query']['report_params'])
+    && (substr($vars['path'], 0, 14) == 'admin/reports/')
+  ) {
+    $vars['options']['query']['report_params'] = $_GET['report_params'];
+  }
+
+  return $vars;
+}
+*/
 
 function intel_goto_visitor($visitor) {
   drupal_goto($visitor->uri());
@@ -2915,7 +2970,7 @@ function intel_get_field_page_attribute_allowed_values() {
 }
 
 function intel_get_field_attribute_allowed_values($mode = 'visitor', $existing_fields = array()) {
-  require_once './' . Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
 
   $attribute_types = array();
   $values = array();
@@ -2941,7 +2996,8 @@ function intel_get_field_attribute_allowed_values($mode = 'visitor', $existing_f
       $mode . '_attribute_types' => $attribute_types,
     ),
   );
-  drupal_add_js($js, 'setting');
+  // TODO WP
+  //Intel_Df::drupal_add_js($js, 'setting');
   return $values;
 }
 

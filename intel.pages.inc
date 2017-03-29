@@ -27,6 +27,7 @@ function template_process_intel_navbar(&$variables) {
     'nav' => 'tree',
     'nav_right' => 'tree2',
   );
+
   foreach ($navs as $k => $kk) {
     $variables[$k] = '';
     $variables[$k] .= ($k == 'nav_right') ? '<ul class="nav navbar-nav navbar-right">' : '<ul class="nav navbar-nav">';
@@ -59,7 +60,11 @@ function template_process_intel_navbar(&$variables) {
         }
       }
       $variables[$k] .= "<li class=\"$class\">";
-
+      if (!empty($_GET['report_params'])) {
+        $link_options['query'] = array(
+          'report_params' => $_GET['report_params']
+        );
+      }
       $variables[$k] .= Intel_Df::l($link_text, $base_path . '/' . $key, $link_options);
       if ($dropdown) {
         $variables[$k] .= '<ul class="dropdown-menu">';
@@ -69,6 +74,11 @@ function template_process_intel_navbar(&$variables) {
           }
           $sinfo = $sitem['#info'];
           $slink_options = array();
+          if (!empty($_GET['report_params'])) {
+            $slink_options['query'] = array(
+              'report_params' => $_GET['report_params']
+            );
+          }
           $class = !empty($sinfo['active']) ? 'active' : '';
           $variables[$k] .= "<li class=\"$class\">";
           $variables[$k] .= Intel_Df::l($sinfo['title'], $base_path . '/' . $key . '/' . $skey, $slink_options);
