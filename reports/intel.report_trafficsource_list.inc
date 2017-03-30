@@ -28,7 +28,7 @@ function intel_trafficsource_list_report_page($report_subtype = '-', $report_sub
 //function intel_trafficsource_list_report($vars['filters'] = array(), $vars['context'] = 'site', $sub_index = '-') {
 function intel_trafficsource_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
-intel_d($vars);
+
   if (empty($vars['report_subtype'])) {
     $vars['report_subtype'] = 'trafficcategory';
   }

@@ -657,17 +657,20 @@ function intel_menu($items = array()) {
     'weight' => $w++,
     'file' => 'reports/intel.report_content_list.inc',
   );
-  $items['admin/reports/intel/event'] = array(
-    //'title' => 'Engagement',
-    'title' => 'Events',
-    'page callback' => 'intel_event_list_report_page',
-    'page arguments' => array('-'),
-    'access callback' => 'user_access',
-    'access arguments' => array('view all intel reports'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'weight' => $w++,
-    'file' => 'reports/intel.report_event_list.inc',
-  );
+
+  if (intel_is_extended()) {
+    $items['admin/reports/intel/event'] = array(
+      //'title' => 'Engagement',
+      'title' => 'Events',
+      'page callback' => 'intel_event_list_report_page',
+      'page arguments' => array('-'),
+      'access callback' => 'user_access',
+      'access arguments' => array('view all intel reports'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'weight' => $w++,
+      'file' => 'reports/intel.report_event_list.inc',
+    );
+  }
   /*
   $items['admin/reports/intel/conversion'] = array(
     'title' => 'Conversion',
@@ -780,25 +783,10 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_CALLBACK,
     'file' => 'admin/intel.admin_util.inc',
   );
-
-  $items['admin/util/clear_gapi_cache'] = array(
-    'title' => 'Utilities',
-    'description' => 'Analyze and optimize node content.',
-    'page callback' => 'intel_util_clear_gapi_cache',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_CALLBACK,
-    'file' => 'admin/intel.admin_util.inc',
-  );
-
-  $items['admin/util/reset_site'] = array(
-    'title' => 'Reset site',
-    //'description' => 'Analyze and optimize node content.',
-    'page callback' => 'intel_util_reset_site',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'file' => 'admin/intel.admin_util.inc',
+  $items['admin/util/general'] = array(
+    'title' => 'General',
+    'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+    'weight' => $w++,
   );
 
   $items['admin/util/ga_explorer'] = array(
@@ -813,6 +801,105 @@ function intel_menu($items = array()) {
     'file' => 'reports/intel.ga_explorer_report.inc',
   );
 
+  $items['admin/util/clear_gapi_cache'] = array(
+    'title' => 'Utilities',
+    'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_clear_gapi_cache',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  if (intel_test_mode()) {
+    $items['admin/util/test'] = array(
+      'title' => 'Tests',
+      //'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_test',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/test/url_parsing'] = array(
+      'title' => 'URL parsing',
+      //'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_test_url_parsing',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/test/webform'] = array(
+      'title' => 'Webform',
+      //'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_test_webform_page',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/dev'] = array(
+      'title' => 'Dev',
+      //'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_dev',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/dev/temp'] = array(
+      'title' => 'Temp',
+      'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_temp',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/dev/temp_form'] = array(
+      'title' => 'Temp Form',
+      'description' => 'Analyze and optimize node content.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('intel_util_temp_form'),
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/dev/reset_site'] = array(
+      'title' => 'Reset site',
+      //'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_reset_site',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/dev/clear_test_visitors'] = array(
+      'title' => 'Utility: Clear test visitors',
+      'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_clear_test_visitors',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_CALLBACK,
+    );
+
+  }
+
+
+
+
+
+
+/*
   $items['admin/util/init_options'] = array(
     'title' => 'Init Config',
     'description' => 'Analyze and optimize node content.',
@@ -822,6 +909,7 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_LOCAL_TASK,
     'file' => 'admin/intel.admin_util.inc',
   );
+*/
 
   $items['admin/util/visitordata'] = array(
     'title' => 'SEO Tools Util',
@@ -850,67 +938,7 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_CALLBACK,
   );
 
-  $items['admin/util/clear_test_visitors'] = array(
-    'title' => 'Utility: Clear test visitors',
-    'description' => 'Analyze and optimize node content.',
-    'page callback' => 'intel_util_clear_test_visitors',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_CALLBACK,
-  );
 
-
-
-  $items['admin/util/test'] = array(
-    'title' => 'Test',
-    //'description' => 'Analyze and optimize node content.',
-    'page callback' => 'intel_util_test',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'file' => 'admin/intel.admin_util.inc',
-  );
-
-  $items['admin/util/test/url_parsing'] = array(
-    'title' => 'URL parsing',
-    //'description' => 'Analyze and optimize node content.',
-    'page callback' => 'intel_util_test_url_parsing',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'file' => 'admin/intel.admin_util.inc',
-  );
-
-  $items['admin/util/test/webform'] = array(
-    'title' => 'Webform',
-    //'description' => 'Analyze and optimize node content.',
-    'page callback' => 'intel_util_test_webform_page',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'file' => 'admin/intel.admin_util.inc',
-  );
-
-  $items['admin/util/temp'] = array(
-    'title' => 'Temp',
-    'description' => 'Analyze and optimize node content.',
-    'page callback' => 'intel_util_temp',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'file' => 'admin/intel.admin_util.inc',
-  );
-
-  $items['admin/util/temp_form'] = array(
-    'title' => 'Temp Form',
-    'description' => 'Analyze and optimize node content.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('intel_util_temp_form'),
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'file' => 'admin/intel.admin_util.inc',
-  );
 
   /*
   $r = array();
@@ -1050,61 +1078,63 @@ function intel_reports() {
     }
   }
 
-  $reports['event'] = array();
-  $reports['event']['-'] = array(
-    'key' => 'default.top.pageview',
-    'title' => Intel_Df::t('All events'),
-    'default' => 1,
-  );
-  $reports['event']['nonvalued'] = array(
-    'key' => 'default.top.pageview.nonvalued',
-    'title' => Intel_Df::t('Standard events'),
-  );
-  $reports['event']['valued'] = array(
-    'key' => 'default.top.pageview.valued',
-    'title' => Intel_Df::t('Valued events'),
-  );
-  $reports['event']['goal'] = array(
-    'key' => 'default.top.pageview.goal',
-    'title' => Intel_Df::t('Goal events'),
-  );
-  $reports['event']['entrance_valued'] = array(
-    'key' => 'default.top.entrance.valued',
-    'title' => Intel_Df::t('Valued events (entrance)'),
-    'type' => Intel_Df::MENU_CALLBACK,
-  );
-  $reports['event']['entrance_goal'] = array(
-    'key' => 'default.top.entrance.goal',
-    'title' => Intel_Df::t('Goal events (entrance)'),
-    'type' => Intel_Df::MENU_CALLBACK,
-  );
-  $reports['event']['pageview_valued'] = array(
-    'key' => 'default.top.pageview.valued',
-    'title' => Intel_Df::t('Valued events (on page)'),
-    'type' => Intel_Df::MENU_CALLBACK,
-  );
-  $reports['event']['pageview_goal'] = array(
-    'key' => 'default.top.pageview.goal',
-    'title' => Intel_Df::t('Goal events (on page)'),
-    'type' => Intel_Df::MENU_CALLBACK,
-  );
-
-  $event_infos = intel_get_intel_event_info();
-  foreach ($event_infos AS $key => $info) {
-    $conversion_events = array(
-      'landingpage_view',
-      'landingpage_conversion',
-      'phonecall',
+  if (intel_is_extended()) {
+    $reports['event'] = array();
+    $reports['event']['-'] = array(
+      'key' => 'default.top.pageview',
+      'title' => Intel_Df::t('All events'),
+      'default' => 1,
     );
-    //if (strpos($key, 'submission_goal_') === FALSE && strpos($key, 'phonecall_goal_') === FALSE) {
-    if (empty($info['ga_id']) || in_array($key, $conversion_events)) {
-      $reports['event']['ec-' . $key] = array(
-        'key' => 'event:' . $key . '.top.pageview',
-        'title' => $info['category'],
-        //'title' => ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
-        'page callback' => 'intel_event_list_report_page',
-        'file' => 'reports/intel.report_event_list.inc'
+    $reports['event']['nonvalued'] = array(
+      'key' => 'default.top.pageview.nonvalued',
+      'title' => Intel_Df::t('Standard events'),
+    );
+    $reports['event']['valued'] = array(
+      'key' => 'default.top.pageview.valued',
+      'title' => Intel_Df::t('Valued events'),
+    );
+    $reports['event']['goal'] = array(
+      'key' => 'default.top.pageview.goal',
+      'title' => Intel_Df::t('Goal events'),
+    );
+    $reports['event']['entrance_valued'] = array(
+      'key' => 'default.top.entrance.valued',
+      'title' => Intel_Df::t('Valued events (entrance)'),
+      'type' => Intel_Df::MENU_CALLBACK,
+    );
+    $reports['event']['entrance_goal'] = array(
+      'key' => 'default.top.entrance.goal',
+      'title' => Intel_Df::t('Goal events (entrance)'),
+      'type' => Intel_Df::MENU_CALLBACK,
+    );
+    $reports['event']['pageview_valued'] = array(
+      'key' => 'default.top.pageview.valued',
+      'title' => Intel_Df::t('Valued events (on page)'),
+      'type' => Intel_Df::MENU_CALLBACK,
+    );
+    $reports['event']['pageview_goal'] = array(
+      'key' => 'default.top.pageview.goal',
+      'title' => Intel_Df::t('Goal events (on page)'),
+      'type' => Intel_Df::MENU_CALLBACK,
+    );
+
+    $event_infos = intel_get_intel_event_info();
+    foreach ($event_infos AS $key => $info) {
+      $conversion_events = array(
+        'landingpage_view',
+        'landingpage_conversion',
+        'phonecall',
       );
+      //if (strpos($key, 'submission_goal_') === FALSE && strpos($key, 'phonecall_goal_') === FALSE) {
+      if (empty($info['ga_id']) || in_array($key, $conversion_events)) {
+        $reports['event']['ec-' . $key] = array(
+          'key' => 'event:' . $key . '.top.pageview',
+          'title' => $info['category'],
+          //'title' => ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
+          'page callback' => 'intel_event_list_report_page',
+          'file' => 'reports/intel.report_event_list.inc'
+        );
+      }
     }
   }
   /*
@@ -3291,6 +3321,16 @@ function intel_unserialize($string) {
     $ret = unserialize($string);
   }
   return $ret;
+}
+
+function intel_is_test($mode = '') {
+
+  return intel_test_mode($mode);
+}
+
+function intel_test_mode($mode = '') {
+
+  return (get_option('intel_test_mode', 0) || !empty($_GET['test']));
 }
 
 function intel_is_debug($mode = '') {

@@ -173,11 +173,17 @@ function intel_admin_settings($form, &$form_state) {
       )),
     '#field_suffix' => '/',
   );
+  $form['l10iapi']['advanced']['intel_test_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Test mode'),
+    '#default_value' => get_option('intel_test_mode', 0),
+    '#description' => Intel_Df::t('Enables testing functionality and menu options.'),
+  );
   $form['l10iapi']['advanced']['intel_debug_mode'] = array(
     '#type' => 'checkbox',
     '#title' => Intel_Df::t('Debug mode'),
     '#default_value' => get_option('intel_debug_mode', 0),
-    '#description' => Intel_Df::t('Switches to using non minified js, turns on js console logging.'),
+    '#description' => Intel_Df::t('Turns on various debuging helpers.'),
   );
   $form['l10iapi']['advanced']['intel_debug_ga_debug'] = array(
     '#type' => 'checkbox',

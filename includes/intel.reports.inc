@@ -581,7 +581,6 @@ function theme_intel_report($vars) {
   $class = str_replace('_', ' ', $vars['report_name']);
   $class = ucwords($class);
   $class = 'levelten\intel\\' . str_replace(' ', '', $class) . 'ReportView';
-intel_d($vars);
   $report_view = new $class();
   $report_view->setData($vars['data']);
   $report_view->setTableRowCount($vars['row_count']);

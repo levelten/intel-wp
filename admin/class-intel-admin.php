@@ -139,7 +139,7 @@ class Intel_Admin {
 	public function site_menu() {
 		global $wp_version;
 		if ( current_user_can( 'manage_options' ) ) {
-			add_menu_page( __( "Intelligence", 'intel' ), __( "Intelligence", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-chart-area' : GADWP_URL . 'admin/images/gadash-icon.png' );
+			add_menu_page( __( "Intelligence", 'intel' ), __( "Intelligence", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
 			add_submenu_page( 'intel_reports', __( "Reports", 'intel' ), __( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_reports', __( "Contacts", 'intel' ), __( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_reports', __( "Settings", 'intel' ), __( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
@@ -196,6 +196,10 @@ class Intel_Admin {
 		}
 		if ($_GET['page'] == 'intel_util') {
 			$q = 'admin/util';
+			$breadcrumbs[] = array(
+				'text' => __('Utilities', 'intel'),
+				'path' => Intel_Df::url($q),
+			);
 			$navbar_base_q = $navbar_base_qt = $q;
 		}
 		if (isset($_GET['q'])) {

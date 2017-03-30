@@ -9,7 +9,17 @@
 
 function intel_util() {
   $output = '';
-  //$output .= Intel_Df::l(Intel_Df::t('Clear Google Analytics API cache.'))
+  $l_options = array(
+    'attributes' => array(
+      'class' => array(
+        'btn btn-info'
+      )
+    ),
+    'query' => array(
+      'destination' => Intel_Df::current_path(),
+    ),
+  );
+  $output .= Intel_Df::l(Intel_Df::t('Clear Google Analytics API cache'), 'admin/util/clear_gapi_cache', $l_options);
   return $output;
 }
 
@@ -134,7 +144,7 @@ function intel_util_clear_gapi_cache() {
     );
 
     $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
-intel_d($results);
+
     foreach ($results as $row) {
       delete_option($row->option_name);
     }
@@ -143,15 +153,16 @@ intel_d($results);
     Intel_Df::drupal_set_message(Intel_Df::t('gawdp_cache cleared'));
   }
 
+  if (!empty($_GET['destination'])) {
+    Intel_Df::drupal_goto($_GET['destination']);
+    exit;
+  }
+
   return 'OK';
 }
 
-function intel_util_init_options() {
-  return 'OK - options initialized';
-}
-
 function intel_util_test() {
-  return Intel_Df::t('Placeholder page');
+  return Intel_Df::t('Test Utilities');
 }
 
 function intel_util_test_webform_page() {
@@ -351,6 +362,10 @@ function intel_util_test_url_parsing() {
   $out = Intel_Df::theme('table', $vars);
   return $out;
 
+}
+
+function intel_util_dev() {
+  return Intel_Df::t('Development Utilities');
 }
 
 function intel_util_reset_site() {
