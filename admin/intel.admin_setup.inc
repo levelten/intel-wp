@@ -390,6 +390,10 @@ function intel_admin_setup_submit_2($form, &$form_state) {
 
 function intel_admin_setup_3($form, &$form_state) {
   $f = array();
+  $status = $form_state['intel_statuses'][3];
+  if (!empty($status['error_type']) && ($status['error_type'] = 'property_not_configured')) {
+    Intel_Df::drupal_set_message($status['error_msg'], 'error');
+  }
 
   $items = array();
   $l_options = array(
@@ -444,10 +448,11 @@ function intel_admin_setup_check_3($form, &$form_state) {
     $intel_apikey = $form_state['values']['intel_apikey'];
   }
 
+  $tid = get_option('intel_ga_tid', '');
   $message = '';
   $property = array();
   $options = array(
-    'tid' => get_option('intel_ga_tid', ''),
+    'tid' => $tid,
     'apikey' => $intel_apikey,
   );
   $api_level = intel_verify_apikey($message, $property, $options);
@@ -458,6 +463,19 @@ function intel_admin_setup_check_3($form, &$form_state) {
     $status['error_msg'] = Intel_Df::t('Intelligence API not connected.');
   }
   $form_state['intel_api_level'] = $api_level;
+
+  // check custom dimensions setup correctly
+  if ($api_level) {
+    $dims = intel_fetch_ga_custom_dimensions();
+    if (empty($dims)) {
+      $status['success'] = 0;
+      $status['error_type'] = 'property_not_configured';
+      $l_options = Intel_Df::l_options_add_target('imapi');
+      $status['error_msg'] = Intel_Df::t('GA property configuration is not complete. !link', array(
+        '!link' => Intel_Df::l(Intel_Df::t('Click here to configure property.'), 'http://intl.getlevelten.com/property/' . $tid . '/ga_config', $l_options),
+      ));
+    }
+  }
 
   return $status;
 }

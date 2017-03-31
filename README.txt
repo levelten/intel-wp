@@ -8,11 +8,14 @@ Stable tag: 4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Here is a short description of the plugin.  This should be no more than 150 characters.  No markup here.
+Integrates results oriented analytics and visitor intelligence gathering into WordPress.
 
 == Description ==
 
-To learn more about Intelligence for WordPress visit http://www.intelligencewp.com
+Intelligence's goal is to provide impactful and actionable data. It focuses on two areas, analytics and visitor data.
+
+The object of the analytics side is to focus site stakeholders towards from typical vanity metrics to more meaniful ones such as
+goals and valued events. Intelligence steps you through implementing a meansurement plan by automating goal setup.
 
 This is the long description.  No limit, and you can use Markdown (as well as in the following sections).
 
@@ -38,6 +41,8 @@ that lacks those changes -- as long as the trunk's `readme.txt` points to the co
 
     If no stable tag is provided, it is assumed that trunk is stable, but you should specify "trunk" if that's where
 you put the stable version, in order to eliminate any doubt.
+
+To learn more about Intelligence for WordPress visit http://www.intelligencewp.com
 
 == Installation ==
 

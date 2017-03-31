@@ -2262,23 +2262,27 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
     } else {
       $timeouts = 1;
     }
-    $transient = false;
+
     if (!empty($cache_options['refresh'])) {
       GADWP_Tools::delete_cache( $serial );
-    }
-    else {
-      $transient = GADWP_Tools::get_cache( $serial );
-    }
-    if ( $transient === false ) {
-      if ( $gapi->gapi_errors_handler() ) {
-        return - 23;
-      }
       $data = $gapi->service->data_ga->get( 'ga:' . $projectId, $from, $to, $metrics, $options );
       GADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( $timeouts ) );
-      //$gapi->gadwp->config->options['api_backoff'] = 0;
-      //$gapi->gadwp->config->set_plugin_options();
-    } else {
-      $data = $transient;
+    }
+    else {
+      $transient = FALSE;
+      $transient = GADWP_Tools::get_cache($serial);
+      if ($transient === FALSE) {
+        if ($gapi->gapi_errors_handler()) {
+          return -23;
+        }
+        $data = $gapi->service->data_ga->get('ga:' . $projectId, $from, $to, $metrics, $options);
+        GADWP_Tools::set_cache($serial, $data, $gapi->get_timeouts($timeouts));
+        //$gapi->gadwp->config->options['api_backoff'] = 0;
+        //$gapi->gadwp->config->set_plugin_options();
+      }
+      else {
+        $data = $transient;
+      }
     }
   } catch ( Google_Service_Exception $e ) {
     GADWP_Tools::set_cache( 'last_error', date( 'Y-m-d H:i:s' ) . ': ' . esc_html( "(" . $e->getCode() . ") " . $e->getMessage() ), $gapi->error_timeout );

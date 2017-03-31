@@ -110,6 +110,12 @@ class Intel_Admin {
 
 		wp_enqueue_script('intel_admin_bootstrap', INTEL_URL . 'vendor/bootstrap/js/bootstrap.min.js', false, $this->version, false);
 
+
+		$data = array();
+		$data['intel_dir'] = INTEL_DIR;
+		$data['intel_url'] = INTEL_URL;
+		$data['intel_file'] = INTEL_FILE;
+		wp_localize_script('intel_admin_js_bootstrap_hack', 'intel_admin_settings', $data);
 	}
 
 	// buffer page output incase we need to do a redirect
@@ -508,6 +514,8 @@ class Intel_Admin {
 			return;
 		}
 
+		$this->enqueue_scripts();
+		$this->enqueue_styles();
 		?>
 		<div id="message" class="bootstrap-wrapper wrap">
 			<div class="panel panel-info m-t-1">
