@@ -2272,9 +2272,9 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
       $transient = FALSE;
       $transient = GADWP_Tools::get_cache($serial);
       if ($transient === FALSE) {
-        if ($gapi->gapi_errors_handler()) {
-          return -23;
-        }
+        //if ($gapi->gapi_errors_handler()) {
+        //  return -23;
+        //}
         $data = $gapi->service->data_ga->get('ga:' . $projectId, $from, $to, $metrics, $options);
         GADWP_Tools::set_cache($serial, $data, $gapi->get_timeouts($timeouts));
         //$gapi->gadwp->config->options['api_backoff'] = 0;

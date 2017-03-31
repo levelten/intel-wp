@@ -188,14 +188,16 @@ $ga_data->setDebug(0);
   );
   if ($vars['context'] == 'page' || $vars['context'] == 'page-attr') {
     $more_link_options['query'] = intel_build_report_query('event', $vars['report_params']);
-    $d['date']['_links']['events'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'entrance_valued'), $more_link_options);
-    $d['date']['_links']['goals'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'entrance_goal'), $more_link_options);
-    $d['date']['_links']['events_pageview'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'pageview_valued'), $more_link_options);
+    // TODO WP: reenable links after Events reports working again
+    //$d['date']['_links']['events'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'entrance_valued'), $more_link_options);
+    //$d['date']['_links']['goals'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'entrance_goal'), $more_link_options);
+    //$d['date']['_links']['events_pageview'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'pageview_valued'), $more_link_options);
   }
   else {
     $more_link_options['query'] = intel_build_report_query('event', $vars['report_params']);
-    $d['date']['_links']['events'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'valued'), $more_link_options);
-    $d['date']['_links']['goals'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'goal'), $more_link_options);
+    // TODO WP: reenable links after Events reports working again
+    //$d['date']['_links']['events'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'valued'), $more_link_options);
+    //$d['date']['_links']['goals'][] = Intel_Df::l(Intel_Df::t('more'), intel_build_report_path('event', $vars['report_params'], 'goal'), $more_link_options);
   }
 
 

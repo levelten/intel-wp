@@ -962,7 +962,7 @@ class Intel_Visitor extends Intel_Entity  {
 
     foreach ($subs AS $row) {
       $ops = array();
-      $ops[] = Intel_Df::l(__('meta', 'intel'), 'submission/' . $row->sid);
+      //$ops[] = Intel_Df::l(__('meta', 'intel'), 'submission/' . $row->sid);
       $title = 'NA';
 
       if ($row->type == 'gravityform') {
