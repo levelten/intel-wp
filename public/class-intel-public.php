@@ -100,4 +100,63 @@ class Intel_Public {
 
 	}
 
+	/**
+	 * Adds Intelligence link to admin bar
+	 * @param $wp_admin_bar
+	 */
+	public function admin_bar_menu($wp_admin_bar) {
+
+		// check permissions to access reports
+		if (!Intel_Df::user_access('view all intel reports')) {
+			return;
+		}
+
+		// only include toolbar link on front end
+		if (is_admin()) {
+			return;
+		}
+
+
+		$l_options = array(
+			'query' => array(
+				'report_params' => 'f0=pagePath:' . Intel_Df::current_pagepath(),
+			),
+		);
+		$args = array(
+			'id'    => 'intel',
+			'title' => '<span class="icon ab-icon dashicons-before dashicons-analytics"></span>' . Intel_Df::t('Intelligence'),
+			//'href'  => Intel_Df::url('admin/reports/intel/scorecard', $l_options),
+			'meta'  => array( 'class' => 'intel-toolbar-item' ),
+		);
+		$wp_admin_bar->add_node( $args );
+
+		$args = array(
+			'parent' => 'intel',
+			'id'    => 'intel-content-scorecard',
+			'title' => Intel_Df::t('Content scorecard'),
+			'href'  => Intel_Df::url('admin/reports/intel/scorecard', $l_options),
+			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+		);
+		$wp_admin_bar->add_node( $args );
+
+		$args = array(
+			'parent' => 'intel',
+			'id'    => 'intel-content-trafficsource',
+			'title' => Intel_Df::t('Content traffic source'),
+			'href'  => Intel_Df::url('admin/reports/intel/trafficsource', $l_options),
+			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+		);
+		$wp_admin_bar->add_node( $args );
+
+		$args = array(
+			'parent' => 'intel',
+			'id'    => 'intel-content-visitor',
+			'title' => Intel_Df::t('Content visitors'),
+			'href'  => Intel_Df::url('admin/reports/intel/visitor', $l_options),
+			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+		);
+		$wp_admin_bar->add_node( $args );
+
+	}
+
 }

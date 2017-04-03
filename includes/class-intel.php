@@ -265,8 +265,6 @@ class Intel {
 	private function define_global_hooks() {
 		add_filter('intel_theme_info', 'intel_theme');
 		add_filter('intel_theme_info', 'intel_df_theme');
-
-
 	}
 
 	/**
@@ -384,6 +382,10 @@ class Intel {
 
 		$this->loader->add_action( 'init', $this, 'quick_session_init' );
 		$this->loader->add_filter( 'wp_redirect', $this, 'wp_redirect_quick_session_cache', 10, 2 );
+
+		//$this->loader->add_action( 'wp_head', $plugin_public, 'admin_bar_menu_styles' );
+
+		$this->loader->add_action( 'admin_bar_menu', $plugin_public, 'admin_bar_menu', 100);
 
 		//$this->loader->add_action( 'wp_footer', $this, 'process_js_settings' );
 	}

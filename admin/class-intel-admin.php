@@ -481,6 +481,16 @@ class Intel_Admin {
 		return $tree;
 	}
 
+	public function admin_bar_menu($wp_admin_bar) {
+		$args = array(
+			'id'    => 'my_page',
+			'title' => 'My Page',
+			'href'  => 'http://mysite.com/my-page/',
+			'meta'  => array( 'class' => 'my-toolbar-page' )
+		);
+		$wp_admin_bar->add_node( $args );
+	}
+
 	public function contacts_column_headers() {
 		$ch = array(
 			'cb' => '<input type="checkbox" />',

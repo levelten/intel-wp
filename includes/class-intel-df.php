@@ -162,12 +162,33 @@ class Intel_Df  {
 		return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 	}
 
+	/**
+	 * Returns the GA page path of current page
+	 */
+	public static function current_pagepath() {
+		return $_SERVER['REQUEST_URI'];
+		global $wp;
+		$current_url = home_url(add_query_arg(array(),$wp->request));
+
+
+		Intel_Df::watchdog('$request_uri', $request_uri);
+
+		Intel_Df::watchdog('current_url', $current_url);
+		$site_url = get_site_url();
+		Intel_Df::watchdog('get_site_url', $site_url);
+		$path = str_replace($site_url, '', $current_url);
+		Intel_Df::watchdog('path', $path);
+		return $path;
+	}
+
 	public static function current_path() {
+		global $wp;
 		if (!empty($_GET['q'])) {
 			return $_GET['q'];
 		}
 		else {
-			return get_permalink();
+			$current_url = home_url(add_query_arg(array(),$wp->request));
+			return $current_url;
 		}
 	}
 
