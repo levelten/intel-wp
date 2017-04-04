@@ -3783,3 +3783,50 @@ function intel_form_shortcode($vars) {
     print Intel_Df::theme('intel_shortcode', $tvars);
   }
 }
+
+add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
+function intel_intel_plugin_path_info($info) {
+  $info['gravityforms'] = array(
+    'directory' => array(
+      'gravityforms'
+    ),
+    'filename' => array(
+      'gravityforms.php'
+    )
+  );
+  $info['gravityforms_intel'] = array(
+    'directory' => array(
+      'gravityforms-intelligence',
+      'gravityformsintel',
+    ),
+    'filename' => array(
+      'gf-intel.php'
+    )
+  );
+  return $info;
+}
+
+function intel_is_plugin_active($name) {
+  $plugin_path_info = intel()->plugin_path_info($name);
+
+  // if info does not exist, return false
+  if (!$plugin_path_info) {
+    return FALSE;
+  }
+
+  $info = $plugin_path_info;
+  if (!is_array($info['directory'])) {
+    $info['directory'] = array($info['directory']);
+  }
+  if (!is_array($info['filename'])) {
+    $info['filename'] = array($info['filename']);
+  }
+  foreach ($info['directory'] as $directory) {
+    foreach ($info['filename'] as $filename) {
+      if (is_plugin_active( "$directory/$filename" )) {
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}

@@ -712,6 +712,22 @@ class Intel {
 		return !empty($info[$name]) ? $info[$name] : array();
 	}
 
+	public function plugin_path_info($name = NULL) {
+		$info = self::build_info('plugin_path');
+		if (!isset($name)) {
+			return $info;
+		}
+		return !empty($info[$name]) ? $info[$name] : NULL;
+	}
+
+	public function form_type_forms_info($name = NULL) {
+		$info = self::build_info('form_type_forms');
+		if (!isset($name)) {
+			return $info;
+		}
+		return !empty($info[$name]) ? $info[$name] : NULL;
+	}
+
 	/**
 	 * Generates tracking code
 	 */

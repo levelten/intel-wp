@@ -43,6 +43,8 @@ function intel_admin_setup($form, &$form_state) {
     update_option('intel_system_meta', $sys_meta);
   }
 
+
+
 /*
   //d($statuses);
   foreach ($statuses as $i => $status) {
@@ -74,6 +76,9 @@ function intel_admin_setup($form, &$form_state) {
   );
   $items[] = array(
     'text' => Intel_Df::t('Scoring'),
+  );
+  $items[] = array(
+    'text' => Intel_Df::t('Form settings'),
   );
   $items[] = array(
     'text' => Intel_Df::t('Complete'),
@@ -1183,6 +1188,260 @@ function intel_admin_setup_submit_6($form, &$form_state) {
 function intel_admin_setup_7($form, &$form_state) {
   $f = array();
 
+  $status = $form_state['intel_statuses'][7];
+  $form_data = $status['form_data'];
+
+  $sys_meta = get_option('intel_system_meta', array());
+
+  if (!empty($sys_meta['setup_form_ignore'])) {
+    $ignore = $sys_meta['setup_form_ignore'];
+  }
+  else {
+    $ignore = array();
+  }
+
+  $items = array();
+
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Intelligence integrates with various types of forms to trigger tracking events and to create contacts upon submission.');
+  $items[] = Intel_Df::t('Below is a list of forms you should setup to work with Intelligence.');
+  $items[] = Intel_Df::t('You can use the <em>settings</em> link to configure form level Intelligence settings.');
+  $items[] = Intel_Df::t('If you do not want to track a form, click the ignore checkbox to bypass checks.');
+  $items[] = '</p><br />';
+
+  $items[] .= '<h3>' . Intel_Df::t('Forms List') . '</h3>';
+
+  $f['instructions2'] = array(
+    '#type' => 'markup',
+    '#markup' => implode(' ', $items),
+  );
+
+  $cells = array();
+  $cells[] = Intel_Df::t('Type');
+  $cells[] = Intel_Df::t('Title');
+  $cells[] = Intel_Df::t('Tracking event');
+  $cells[] = Intel_Df::t('Field map');
+  //$cells[] = Intel_Df::t('Ignore');
+  $cells[] = Intel_Df::t('Ops');
+
+  $col_classes = array();
+  $markup = '';
+  $markup .= '<style>
+    th.col-type { width: 10%; }
+    th.col-title { width: 20%; }
+    th.col-tracking-event { width: 20%; }
+    th.col-field-map { width: 35%; }
+    th.col-ops { width: 15%; }
+    td.col-ops div { display: inline-block; }
+    td.col-ops div.checkbox {display: inline-block;}
+</style>';
+  $cell_markup = '';
+  foreach ($cells as $i => $cell) {
+    $col_classes[$i] = 'col-' . Intel_Df::drupal_clean_css_identifier(strtolower($cell));
+    $cell_markup .= '<th class="' . $col_classes[$i] . '">' . $cell . '</th>';
+  }
+  $markup .= '<table class="table table-striped form-table"><thead><tr>' . $cell_markup . '</tr></thead><tbody>';
+  $f['table_forms_0'] = array(
+    '#type' => 'markup',
+    '#markup' => $markup,
+  );
+
+  //intel_d($form_type_forms_info);
+  foreach ($form_data as $form_type => $form_type_data) {
+    foreach ($form_type_data as $form_id => $data) {
+
+      $row_class = $data['row_class'];
+      $f["row_{$data['type']}-{$data['id']}_0"] = array(
+        '#type' => 'markup',
+        '#markup' => "<tr class=\"$row_class\">",
+      );
+
+      $field_map = !empty($data['field_map']) ? $data['field_map'] : '(' . Intel_Df::t('not set') . ')';
+      if (is_array($field_map)) {
+        $field_map = implode(', ', $field_map);
+      }
+      $ops = '';
+      if (!empty($data['settings_url'])) {
+        $l_options = Intel_Df::l_options_add_target('form_type');
+        $ops .= Intel_Df::l(Intel_Df::t('settings'), $data['settings_url'], $l_options);
+      }
+
+      $f["form_{$data['type']}-{$data['id']}_type"] = array(
+        '#type' => 'item',
+        '#prefix' => '<td class="' . $col_classes[0] . '">',
+        '#suffix' => '</td>',
+        '#markup' => $data['type'],
+      );
+      $f["form_{$data['type']}-{$data['id']}_title"] = array(
+        '#type' => 'item',
+        '#prefix' => '<td class="' . $col_classes[1] . '">',
+        '#suffix' => '</td>',
+        '#markup' => !empty($data['title']) ? $data['title'] : '(' . Intel_Df::t('not set') . ')',
+      );
+      $f["form_{$data['type']}-{$data['id']}_tracking_event"] = array(
+        '#type' => 'item',
+        '#prefix' => '<td class="' . $col_classes[2] . '">',
+        '#suffix' => '</td>',
+        '#markup' => !empty($data['tracking_event']) ? $data['tracking_event'] : '(' . Intel_Df::t('not set') . ')',
+      );
+      $f["form_{$data['type']}-{$data['id']}_field_map"] = array(
+        '#type' => 'item',
+        '#prefix' => '<td class="' . $col_classes[3] . '">',
+        '#suffix' => '</td>',
+        '#markup' => $field_map,
+      );
+
+
+
+      /*
+      $f["form_{$data['type']}-{$data['id']}_ops"] = array(
+        '#type' => 'item',
+        '#prefix' => '<td class="' . $col_classes[1] . '">',
+        //'#suffix' => '</td>',
+        '#markup' => $ops,
+      );
+      */
+      $key = "form_{$data['type']}-{$data['id']}_ignore";
+      $f[$key] = array(
+        '#type' => 'checkbox',
+        '#title' => 'Ignore',
+        '#prefix' => '<td class="' . $col_classes[4] . '">' . $ops,
+        '#suffix' => '</td>',
+        '#default_value' => !empty($ignore[$data['type']][$data['id']]) ? 1 : 0,
+      );
+
+      $f["row_{$data['type']}-{$data['id']}_1"] = array(
+        '#type' => 'markup',
+        '#markup' => "</tr>",
+      );
+    }
+  }
+
+  $f['table_forms_1'] = array(
+    '#type' => 'markup',
+    '#markup' => '</tbody></table>'
+  );
+
+
+  return $f;
+}
+
+
+
+function intel_admin_setup_check_7($form, &$form_state) {
+  include_once INTEL_DIR . 'includes/intel.ga.inc';
+
+  $status = array();
+  $status['success'] = 1;
+
+  $sys_meta = get_option('intel_system_meta', array());
+
+  if (!empty($sys_meta['setup_form_ignore'])) {
+    $ignore = $sys_meta['setup_form_ignore'];
+  }
+  else {
+    $ignore = array();
+  }
+
+  if (!empty($form_state['values'])) {
+    foreach ($form_state['values'] as $k => $v) {
+      $elms = explode('_', $k);
+      if (count($elms) == 3 && $elms[0] == 'form' && $elms[2] == 'ignore') {
+        list($type, $id) = explode('-', $elms[1]);
+        if (!isset($ignore[$type])) {
+          $ignore[$type] = array();
+        }
+        $ignore[$type][$id] = !empty($v) ? 1 : 0;
+      }
+    }
+  }
+
+  $status['success'] = 1;
+  $form_type_forms_info = intel()->form_type_forms_info();
+  $form_data = array();
+  foreach ($form_type_forms_info as $form_type => $forms_info) {
+    $form_data[$form_type] = array();
+    foreach ($forms_info as $form_info) {
+      $data = array(
+        'type' => $form_type,
+        'id' => 0,
+        'title' => NULL,
+        'tracking_event' => NULL,
+        'field_map' => NULL,
+        'settings_url' => NULL,
+      );
+      $data = apply_filters('intel_form_type_' . $form_type . '_form_setup', $data, $form_info);
+
+      $form_id = $data['id'];
+      if (empty($data['tracking_event']) && empty($data['field_map'])) {
+        if (empty($ignore[$form_type][$form_id])) {
+          $data['row_class'] = 'danger';
+          $status['success'] = 0;
+        }
+        else {
+          $data['row_class'] = 'warning';
+        }
+      }
+      else {
+        $data['row_class'] = 'success';
+      }
+      if (empty($ignore[$form_type][$form_id]) && empty($data['tracking_event']) && empty($data['field_map'])) {
+        $data['class'] = 'warning';
+        $status['success'] = 0;
+      }
+      else {
+        $data['status'] = 'success';
+      }
+      $form_data[$form_type][$form_id] = $data;
+    }
+  }
+
+  $status['form_data'] = $form_data;
+
+  return $status;
+}
+
+function intel_admin_setup_validate_7($form, &$form_state, $status) {
+  if (empty($status['success'])) {
+    $msg = Intel_Df::t('Not all forms have been configured.');
+    $msg .= ' ' . Intel_Df::t('Either configure the Inteligence tracking or check the Ignore checkbox for each form.');
+    Intel_Form::form_set_error('test', $msg);
+  }
+}
+
+function intel_admin_setup_submit_7($form, &$form_state) {
+  $values = $form_state['values'];
+
+  $sys_meta = get_option('intel_system_meta', array());
+
+  if (!empty($sys_meta['setup_form_ignore'])) {
+    $ignore = $sys_meta['setup_form_ignore'];
+  }
+  else {
+    $ignore = array();
+  }
+
+  if (!empty($form_state['values'])) {
+    foreach ($form_state['values'] as $k => $v) {
+      $elms = explode('_', $k);
+      if (count($elms) == 3 && $elms[0] == 'form' && $elms[2] == 'ignore') {
+        list($type, $id) = explode('-', $elms[1]);
+        if (!isset($ignore[$type])) {
+          $ignore[$type] = array();
+        }
+        $ignore[$type][$id] = !empty($v) ? 1 : 0;
+      }
+    }
+  }
+
+  $sys_meta['setup_form_ignore'] = $ignore;
+
+  update_option('intel_system_meta', $sys_meta);
+}
+
+function intel_admin_setup_8($form, &$form_state) {
+  $f = array();
+
   $status = $form_state['intel_statuses'][5];
 
   $items = array();
@@ -1209,14 +1468,14 @@ function intel_admin_setup_7($form, &$form_state) {
 
 
 
-function intel_admin_setup_check_7($form, &$form_state) {
+function intel_admin_setup_check_8($form, &$form_state) {
 
   $status = array();
 
   return $status;
 }
 
-function intel_admin_setup_validate_7($form, &$form_state, $status) {
+function intel_admin_setup_validate_8($form, &$form_state, $status) {
   if (!empty($status['dimension_errors'])) {
     foreach ($status['dimension_errors'] as $i => $err) {
       Intel_Form::form_set_error('dim_' . $i . '_name', $err['message']);
@@ -1225,7 +1484,7 @@ function intel_admin_setup_validate_7($form, &$form_state, $status) {
   }
 }
 
-function intel_admin_setup_submit_7($form, &$form_state) {
+function intel_admin_setup_submit_8($form, &$form_state) {
 
 }
 
