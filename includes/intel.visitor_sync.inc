@@ -240,62 +240,62 @@ function intel_sync_fullcontact_visitordata(&$visitor, $data) {
       if ($v['type'] == 'aboutme') {
         $visitor->setProp('aboutme', $v, $prop_options);
       }
-      else if ($v['type'] == 'facebook') {
+      elseif ($v['type'] == 'facebook') {
         $visitor->setProp('facebook', $v, $prop_options);
       }
-      else if ($v['type'] == 'flickr') {
+      elseif ($v['type'] == 'flickr') {
         $visitor->setProp('flickr', $v, $prop_options);
       }
-      else if ($v['type'] == 'foursquare') {
+      elseif ($v['type'] == 'foursquare') {
         $visitor->setProp('foursquare', $v, $prop_options);
       }
-      else if ($v['type'] == 'friendfeed') {
+      elseif ($v['type'] == 'friendfeed') {
         $visitor->setProp('friendfeed', $v, $prop_options);
       }
-      else if ($v['type'] == 'googleplus') {
+      elseif ($v['type'] == 'googleplus') {
         $visitor->setProp('googleplus', $v, $prop_options);
       }
-      else if ($v['type'] == 'googleprofile') {
+      elseif ($v['type'] == 'googleprofile') {
         $visitor->setProp('googleprofile', $v, $prop_options);
       }
-      else if ($v['type'] == 'gravatar') {
+      elseif ($v['type'] == 'gravatar') {
         $visitor->setProp('gravatar', $v, $prop_options);
       }
-      else if ($v['type'] == 'klout') {
+      elseif ($v['type'] == 'klout') {
         //intel_visitor_property_set($visitor, 'data.klout', $v, $prop_options);
         $klout = $v;
       }
-      else if ($v['type'] == 'lanyrd') {
+      elseif ($v['type'] == 'lanyrd') {
         $visitor->setProp('lanyrd', $v, $prop_options);
       }
-      else if ($v['type'] == 'linkedin') {
+      elseif ($v['type'] == 'linkedin') {
         $visitor->setProp('linkedin', $v, $prop_options);
         if (!empty($v['bio'])) {
           $bio = $v['bio'];
         }
       }
-      else if ($v['type'] == 'myspace') {
+      elseif ($v['type'] == 'myspace') {
         $visitor->setProp('myspace', $v, $prop_options);
       }
-      else if ($v['type'] == 'picasa') {
+      elseif ($v['type'] == 'picasa') {
         $visitor->setProp('picasa', $v, $prop_options);
       }
-      else if ($v['type'] == 'tumblr') {
+      elseif ($v['type'] == 'tumblr') {
         $visitor->setProp('tumblr', $v, $prop_options);
       }
-      else if ($v['type'] == 'twitter') {
+      elseif ($v['type'] == 'twitter') {
         $visitor->setProp('twitter', $v, $prop_options);
         if ($v['bio']) {
           $bio = $v['bio'];
         }
       }
-      else if ($v['type'] == 'vimeo') {
+      elseif ($v['type'] == 'vimeo') {
         $visitor->setProp('vimeo', $v, $prop_options);
       }
-      else if ($v['type'] == 'yahoo') {
+      elseif ($v['type'] == 'yahoo') {
         $visitor->setProp('yahoo', $v, $prop_options);
       }
-      else if ($v['type'] == 'youtube') {
+      elseif ($v['type'] == 'youtube') {
         $visitor->setProp('youtube', $v, $prop_options);
       }
     }

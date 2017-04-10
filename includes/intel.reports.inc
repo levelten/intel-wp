@@ -227,7 +227,7 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
         $vars['title'] .= ' (' . $a[0] . ')';
       }
     }
-    else if ($vars['report_type'] == 'event') {
+    elseif ($vars['report_type'] == 'event') {
       $vars['report_subfilter_type'] = 'event';
       $a = explode(':', $vars['report_subfilter']);
       $a[1] = rawurldecode($a[1]);
@@ -237,7 +237,7 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
       $vars['filters']['event'][] = $vars['report_subfilter'];
       $vars['title'] = Intel_Df::t('Events') . ': ' . $a[1];
     }
-    else if ($vars['report_type'] == 'visitor') {
+    elseif ($vars['report_type'] == 'visitor') {
       $vars['report_subfilter_type'] = 'visitor';
       if (empty($vars['entity']->id)) {
         $v = explode(':', $vars['report_subfilter']);
@@ -348,7 +348,7 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
         if ($attr_info[$attr_key]['type'] == 'flag') {
           //$vars['related_reports'][] = 'ga:dimension1=@&' . $attr_key . '&';
         }
-        else if (in_array($attr_info[$attr_key]['type'], array('value', 'scalar', 'item'))) {
+        elseif (in_array($attr_info[$attr_key]['type'], array('value', 'scalar', 'item'))) {
           $attr_option_info = intel_get_attribute_option_info('page', $attr_key, $value);
           $params['_filter_add'] .= ':' . rawurlencode(!empty($attr_option_info['filter_value']) ? $attr_option_info['filter_value'] : $value);
 
@@ -357,7 +357,7 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
             $vars['related_reports'][] = Intel_Df::l($attr_info[$attr_key]['title'] . ': ' . $attr_option_info['title'], intel_build_report_path($vars['report_type'], $params, $vars['report_subtype']));
           }
         }
-        else if ($attr_info[$attr_key]['type'] == 'list') {
+        elseif ($attr_info[$attr_key]['type'] == 'list') {
           if (is_array($value)) {
             foreach ($value AS $k => $v) {
               $attr_option_info = intel_get_attribute_option_info('page', $attr_key, $k);
@@ -660,7 +660,7 @@ function intel_parse_report_filter_arg($str) {
   elseif ($b[0] == 'ts') {
     $fd['type'] = 'trafficsource';
   }
-  else if (isset($types[$fd['key']])) {
+  elseif (isset($types[$fd['key']])) {
     $fd['type'] = $types[$fd['key']];
   }
   else {
@@ -1068,10 +1068,10 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
     if ($fd['type'] == 'trafficsource') {
       $item .= ': ' . (isset($trafficsource_types[$fd['key']]) ? $trafficsource_types[$fd['key']] : $fd['key']) . ": " . $fd['value'];
     }
-    else if ($fd['type'] == 'page') {
+    elseif ($fd['type'] == 'page') {
       $item .= ': ' . $fd['value'];
     }
-    else if ($fd['type'] == 'page-attr') {
+    elseif ($fd['type'] == 'page-attr') {
       $pa_info = intel_get_page_attribute_info($fd['key']);
       if (isset($pa_info['title'])) {
         $item .= ': ' . $pa_info['title'];
@@ -1082,7 +1082,7 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
         $item .= ': ' . $fd['key'] . ": " . $fd['value'];
       }
     }
-    else if ($fd['type'] == 'event') {
+    elseif ($fd['type'] == 'event') {
       $pa_info = intel_get_page_attribute_info($fd['key']);
       if (isset($pa_info['title'])) {
         $item .= ': ' . $pa_info['title'];
@@ -1093,7 +1093,7 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
         $item .= ': ' . str_replace('->', ' > ', $fd['value']);
       }
     }
-    else if ($fd['type'] == 'visitor') {
+    elseif ($fd['type'] == 'visitor') {
       if (isset($vars['entities']['intel_visitor'][$fd['value']])) {
         $item .= ': ' . $vars['entities']['intel_visitor'][$fd['value']]->label();
       }

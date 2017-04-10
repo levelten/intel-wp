@@ -35,7 +35,7 @@ function intel_get_itemprop_context($prop_name) {
     if (is_object($pi)) {
       $a = get_object_vars($pi);
     }
-    else if (is_array($pi)) {
+    elseif (is_array($pi)) {
       $a = $pi;
     }
     if (!empty($a)) {

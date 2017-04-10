@@ -33,7 +33,7 @@ function intel_visitor_list_report($vars) {
   $output = '';
 
   $vars['indexBy'] = $vars['report_modes'][0];
-
+intel_d($vars['report_modes']);
   $timeops = 'l30d';
   if ($vars['report_modes'][1] == 'recent') {
     $vars['timeops'] = 'l30dfn';
@@ -137,19 +137,11 @@ function intel_visitor_list_report($vars) {
   //$visitors = intel_visitor_load_multiple($vtkids, array(), FALSE, 'vtkid');
   //dsm($visitors);
   foreach ($d[$vars['indexBy']] AS $index => $de) {
-    $visitor = intel_visitor_load($index, TRUE, 'vtkid');
-    if (!empty($visitor->name)) {
-      $d[$vars['indexBy']][$index]['info'] = array(
-        'title' => $visitor->name,
-        'uri' => '/visitor/' . $index,
-      );
-    }
-    else {
-      $d[$vars['indexBy']][$index]['info'] = array(
-        'title' => Intel_Df::t('anon') . ' (' . substr($index, 0, 10) . ')',
-        'uri' => '/visitor/' . $index . '/clickstream',
-      );
-    }
+    $visitor = intel_visitor_load_or_create($index, TRUE, 'vtkid');
+    $d[$vars['indexBy']][$index]['info'] = array(
+      'title' => $visitor->name(),
+      'uri' => Intel_Df::url('/visitor/' . $index),
+    );
   }
 
 //dsm($d);

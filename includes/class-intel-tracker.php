@@ -120,7 +120,7 @@ class Intel_Tracker {
 		if (!$prop) {
 			return $this->config;
 		}
-		else if (exists($this->config[$prop])) {
+		elseif (exists($this->config[$prop])) {
 			return $this->config[$prop];
 		}
 		else {
@@ -142,7 +142,7 @@ class Intel_Tracker {
 			$index = $push[0];
 			$value = $push[1];
 		}
-		else if ($method == 'event') {
+		elseif ($method == 'event') {
 			$index = count($this->pushes[$method]);
 			$value = $push[0];
 		}

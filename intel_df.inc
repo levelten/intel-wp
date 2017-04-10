@@ -384,7 +384,7 @@ function intel_url_urn_resovler($vars) {
       $vars['path'] = '';
       $vars['options']['query']['p'] = $urn_elms[2];
     }
-    else if ($urn_elms[1] == 'wp_comment' && !empty($urn_elms[3])) {
+    elseif ($urn_elms[1] == 'wp_comment' && !empty($urn_elms[3])) {
       $vars['path'] = '';
       if (empty($urn_elms[2])) {
         $commentdata = get_comment( $urn_elms[3] );

@@ -48,6 +48,23 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 		//return $this->idKey;
 	}
 
+	public static function determineIdType($id) {
+		$idType = 'vid';
+		if (!$id || ($id == 'user')) {
+			$idType = 'vtk';
+		}
+		elseif (is_string($id) && strlen($id) >= 20) {
+			if (strlen($id) == 20) {
+				$idType = 'vtkid';
+			}
+			else {
+				$idType = 'vtk';
+			}
+		}
+		return $idType;
+	}
+
+
 	/**
 	 * Create and return a new intel_visitor entity.
 	 */
@@ -70,9 +87,10 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 					$values['identifiers']['uid'][] = $uid;
 				}
 			}
-			else if (is_string($values['id']) && strlen($values['id']) >= 20) {
+			elseif (is_string($values['id']) && strlen($values['id']) >= 20) {
 				$vtk = $values['id'];
 			}
+
 			if ($vtk) {
 				$values['vtk'] = $vtk;
 				$values['identifiers']['vtk'] = array();
@@ -138,7 +156,7 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 				$idType = 'vtk';
 			}
 			// check if id is vtk or vtkid
-			else if (is_string($id) && (strlen($id) >= 20)) {
+			elseif (is_string($id) && (strlen($id) >= 20)) {
 				if (strlen($id) == 20) {
 					$idType = 'vtkid';
 				}
@@ -162,13 +180,13 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 			$sql .= "WHERE {$this->key_id} IN ( $ids_query )";
 			$data = $ids;
 		}
-		else if ($idType == 'vtk') {
+		elseif ($idType == 'vtk') {
 			//$ids_query = "'" . implode("', ", $ids) . "'";
 			$sql .= "INNER JOIN {$wpdb->prefix}intel_visitor_identifier AS i ON e.vid = i.vid\n";
 			$sql .= "WHERE i.type = 'vtk' AND i.value IN ( $ids_query )";
 			$data = $ids;
 		}
-		else if ($idType == 'vtkid') {
+		elseif ($idType == 'vtkid') {
 			$sql .= "INNER JOIN {$wpdb->prefix}intel_visitor_identifier AS i ON e.vid = i.vid\n";
 			$sql .= "WHERE i.type = 'vtk' AND ( ";
 			$cnt = 0;

@@ -79,7 +79,7 @@ function intel_visitor_admin_settings_form($form, $form_state) {
         );
       }
     }
-    else if ($fb['type'] == 'text') {
+    elseif ($fb['type'] == 'text') {
       $options = array();
       $options['email'] = t('Email');
       $options['telephone'] = t('Telephone');
@@ -469,23 +469,30 @@ function intel_visitor_page($entity) {
     intel_d($entity->ext_data);//
   }
 
-  $synced = $entity->getSynced();
-  if (empty($synced)) {
-    $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
-    $msg = Intel_Df::t('Visitor data has not yet been synced. !link.', array(
-      '!link' => Intel_Df::l(Intel_Df::t('Click here to sync'), "visitor/{$entity->vid}/sync", $l_options),
-    ));
-    Intel_Df::drupal_set_message($msg, 'warning');
+  if (!empty($entity->vid)) {
+    $synced = $entity->getSynced();
+    if (empty($synced)) {
+      $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
+      $msg = Intel_Df::t('Visitor data has not yet been synced. !link.', array(
+        '!link' => Intel_Df::l(Intel_Df::t('Click here to sync'), "visitor/{$entity->vid}/sync", $l_options),
+      ));
+      Intel_Df::drupal_set_message($msg, 'warning');
+    }
+    elseif (
+      !empty($entity->data['analytics_visits']['_lasthit'])
+      && (($synced - $entity->data['analytics_visits']['_lasthit']) < 1800)
+      && ((time() - $entity->data['analytics_visits']['_lasthit']) > 1800)
+    ) {
+      $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
+      $msg = Intel_Df::t('Google Analytics data may be incomplete. !link.', array(
+        '!link' => Intel_Df::l(Intel_Df::t('Click here to fetch the latest Google Analytics data'), "visitor/{$entity->vid}/sync", $l_options),
+      ));
+      Intel_Df::drupal_set_message($msg, 'warning');
+    }
   }
-  else if (
-    !empty($entity->data['analytics_visits']['_lasthit'])
-    && (($synced - $entity->data['analytics_visits']['_lasthit']) < 1800)
-    && ((time() - $entity->data['analytics_visits']['_lasthit']) > 1800)
-  ) {
-    $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
-    $msg = Intel_Df::t('Google Analytics data may be incomplete. !link.', array(
-      '!link' => Intel_Df::l(Intel_Df::t('Click here to fetch the latest Google Analytics data'), "visitor/{$entity->vid}/sync", $l_options),
-    ));
+  else {
+    $msg = Intel_Df::t('Visitor is anonymous.');
+    $msg .= ' ' . Intel_Df::t('Once the visitor has submitted a form they will become a known contact.');
     Intel_Df::drupal_set_message($msg, 'warning');
   }
 

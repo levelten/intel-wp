@@ -1014,19 +1014,19 @@ class Intel_Df  {
 		if (strpos($path, 'admin/intel') === 0) {
 			$admin_page = 'intel_index';
 		}
-		else if (strpos($path, 'admin/config/intel') === 0) {
+		elseif (strpos($path, 'admin/config/intel') === 0) {
 			$admin_page = 'intel_config';
 		}
-		else if (strpos($path, 'admin/reports/intel') === 0) {
+		elseif (strpos($path, 'admin/reports/intel') === 0) {
 			$admin_page = 'intel_reports';
 		}
-		else if (strpos($path, 'admin/util') === 0) {
+		elseif (strpos($path, 'admin/util') === 0) {
 			$admin_page = 'intel_util';
 		}
-		else if (strpos($path, 'admin/people/contacts') === 0) {
+		elseif (strpos($path, 'admin/people/contacts') === 0) {
 			$admin_page = 'intel_visitor';
 		}
-		else if (strpos($path, 'visitor/') === 0) {
+		elseif (strpos($path, 'visitor/') === 0) {
 			$admin_page = 'intel_visitor';
 		}
 		if ($admin_page) {
@@ -1193,7 +1193,7 @@ class Intel_Df  {
 				$output = self::process_template($file, $variables);
 			}
 		}
-		else if (!empty($theme_info[$hook]['callback'])) {
+		elseif (!empty($theme_info[$hook]['callback'])) {
 			$func = $theme_info[$hook]['callback'];
 			if (is_string($func) && is_callable($func)) {
 				//$output = $func($variables);

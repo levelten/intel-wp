@@ -241,11 +241,24 @@ class Intel_Admin {
 						$info = $menu_info[$qt];
 						if (!empty($path_args[1])) {
 							$entity_type = substr($a[1], 1);
+
+							// load entity using arg(1);
 							$entity = $intel->get_entity_controller($entity_type)->loadOne($path_args[1]);
+
+							// visitor entities can be passed by vtk or vtkid, if entity not found
+							// using vid, try creating one using vtk/vtkid
+							if (empty($entity) && $path_args[0] == 'visitor' && strlen($path_args[1]) >= 20) {
+								$ev = array(
+									'id' => $path_args[1],
+								);
+								$entity = $intel->get_entity_controller($entity_type)->create($ev);
+							}
+
 							if (empty($entity)) {
 								$vars = array(
 									'title' => __('404 Error', 'intel'),
 									'markup' => __('Entity not found', 'intel'),
+									'messages' => Intel_Df::drupal_get_messages(),
 								);
 								print Intel_Df::theme('intel_page', $vars);
 								return;
@@ -267,6 +280,7 @@ class Intel_Admin {
 			$vars = array(
 				'title' => __('404 Error', 'intel'),
 				'markup' => __('Page not found', 'intel'),
+				'messages' => Intel_Df::drupal_get_messages(),
 			);
 			print Intel_Df::theme('intel_page', $vars);
 			return;
@@ -327,9 +341,10 @@ class Intel_Admin {
 			$vars = array(
 				'title' => __('401 Error', 'intel'),
 				'markup' => __('Not authorized', 'intel'),
+				'messages' => Intel_Df::drupal_get_messages(),
 			);
-			//print Intel_Df::theme('intel_page', $vars);
-			//return;
+			print Intel_Df::theme('intel_page', $vars);
+			return;
 		}
 
 		// process page arguments
@@ -457,7 +472,7 @@ class Intel_Admin {
 						);
 					}
 				}
-				else if (count($qt_end_arr) == 2) {
+				elseif (count($qt_end_arr) == 2) {
 					if (!isset($tree[$qt_end_arr[0]])) {
 						$tree[$qt_end_arr[0]] = array();
 					}

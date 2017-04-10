@@ -115,7 +115,7 @@ $ga_data->setDebug(0);
     if (in_array($attr_info['type'], array('value', 'scalar', 'item'))) {
       $optionInfo = intel_get_attribute_option_info('page', $attr_key, $de['i'], $data_options);
     }
-    else if (in_array($attr_info['type'], array('list', 'vector'))) {
+    elseif (in_array($attr_info['type'], array('list', 'vector'))) {
       $optionInfo = intel_get_attribute_option_info('page', $attr_key, $de['i'], $data_options);
     }
     if (!empty($optionInfo['title'])) {

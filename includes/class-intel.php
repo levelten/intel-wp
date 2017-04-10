@@ -508,14 +508,14 @@ class Intel {
 		if ($options['type'] == 'file') {
 			wp_enqueue_script($options['name'], $data);
 		}
-		else if ($options['type'] == 'external') {
+		elseif ($options['type'] == 'external') {
 			wp_enqueue_script($options['name'], $data);
 		}
-		else if ($options['type'] == 'inline') {
+		elseif ($options['type'] == 'inline') {
 			$this->js_inline[] = $options;
 			//wp_add_inline_script($options['name'], $options['data']);
 		}
-		else if ($options['type'] == 'setting') {
+		elseif ($options['type'] == 'setting') {
 			$this->js_settings = array_merge_recursive ( $data , $this->js_settings);
 			$script_count--;
 		}
@@ -555,7 +555,7 @@ class Intel {
 		if ($name == 'levelten') {
 			return INTEL_DIR . 'vendor/levelten/';
 		}
-		else if ($name == 'timeline') {
+		elseif ($name == 'timeline') {
 			return INTEL_DIR . 'vendor/TimelineJS/';
 		}
 	}

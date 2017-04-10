@@ -216,7 +216,7 @@ class Intel_Entity {
 		if (!$process) {
 			return $this->$this->data['syncStatus']['error'];
 		}
-		else if (!empty($this->data['syncStatus']['error'][$process])) {
+		elseif (!empty($this->data['syncStatus']['error'][$process])) {
 			return $this->data['syncStatus']['error'][$process];
 		}
 		return array();

@@ -186,10 +186,10 @@ class Intel_Visitor extends Intel_Entity  {
 		if (!empty($this->vid)) {
 			return $this->vid;
 		}
-		else if (!empty($this->vtkid)) {
+		elseif (!empty($this->vtkid)) {
 			return $this->vtkid;
 		}
-		else if (!empty($this->vtk)) {
+		elseif (!empty($this->vtk)) {
 			return $this->vtk;
 		}
 		return '';
@@ -364,7 +364,7 @@ class Intel_Visitor extends Intel_Entity  {
           if (is_object($func[0])) {
             $func[0]->{$func[1]}($var, $prop_info, $this);
           }
-          else if (is_string($func[0]) && class_exists($func[0])) {
+          elseif (is_string($func[0]) && class_exists($func[0])) {
             call_user_func("{$func[0]}::{$func[1]}", $var, $prop_info, $this);
             //call_user_func_array("{$func[0]}::{$func[1]}", array($var, $prop_info, $this));
           }
@@ -401,7 +401,7 @@ class Intel_Visitor extends Intel_Entity  {
 				}
 			}
 		}
-		else if ($prop_name == 'phone' || $prop_name == 'telephone' ) {
+		elseif ($prop_name == 'phone' || $prop_name == 'telephone' ) {
 			if (empty($this->phone)) {
 				$this->setIdentifier('phone', $values['@value']);
 				if (empty($this->contact_created)) {
@@ -409,7 +409,7 @@ class Intel_Visitor extends Intel_Entity  {
 				}
 			}
 		}
-		else if ($prop_name == 'name') {
+		elseif ($prop_name == 'name') {
 			if (empty($this->name)) {
 				$this->setName($values['@value']);
 			}
@@ -521,7 +521,7 @@ class Intel_Visitor extends Intel_Entity  {
 					if ($merge_dir == 'into_this') {
 						intel_visitor_delete($dup_vid);
 					}
-					else if ($merge_dir == 'into_dup') {
+					elseif ($merge_dir == 'into_dup') {
 						intel_visitor_delete($this_vid);
 					}
 					$this->save();
@@ -545,7 +545,7 @@ class Intel_Visitor extends Intel_Entity  {
 			$this->$type = $value;
 		}
 		// if not primary and id does not already exists, add to end
-		else if ($existing_i === FALSE) {
+		elseif ($existing_i === FALSE) {
 			$this->identifiers[$type][] = $value;
 		}
 	}
@@ -668,7 +668,7 @@ class Intel_Visitor extends Intel_Entity  {
 			$out .= ', ' . !empty($location['region']) ? $location['region'] : t('(not set)');
 			$out .= ', ' . !empty($location['country']) ? $location['country'] : t('(not set)');
 		}
-		else if ($format == 'map') {
+		elseif ($format == 'map') {
 			$out = !empty($location['city']) ? $location['city'] : '(not set)';
 			$out .= ', ' . (!empty($location['region']) ? $location['region'] : t('(not set)'));
 			if (isset($location['metro']) && ($location['metro'] != '(not set)')) {
@@ -1026,9 +1026,10 @@ class Intel_Visitor extends Intel_Entity  {
           }
         }
 				*/
-        $ops[] = Intel_Df::l(__('data', 'intel'), 'node/' . $row->fid . '/submission/' . $row->fsid);
+        //$ops[] = Intel_Df::l(__('data', 'intel'), 'node/' . $row->fid . '/submission/' . $row->fsid);
+				$ops[] = Intel_Df::l(__('data', 'intel'), ':gravityform:' . $row->fid . ':' . $row->fsid);
       }
-      else if ($row->type == 'disqus_comment') {
+      elseif ($row->type == 'disqus_comment') {
         $title = t('Comment');
         $a = explode('#', substr($row->details_url, 1));
         $options = array(
@@ -1036,7 +1037,7 @@ class Intel_Visitor extends Intel_Entity  {
         );
         $ops[] = l(t('data'), $a[0], $options);
       }
-      else if ($row->type == 'hubspot') {
+      elseif ($row->type == 'hubspot') {
         $form_name = intel_hubspot_get_form_name($row->fid);
         if ($form_name) {
           $title = $form_name;
@@ -1050,7 +1051,7 @@ class Intel_Visitor extends Intel_Entity  {
       );
     }
 
-    if (count($rows)) {
+    if (!empty($rows) && count($rows)) {
       $tvars = array();
       $tvars['rows'] = $rows;
       $form_submissions = count($rows);

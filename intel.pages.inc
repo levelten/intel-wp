@@ -103,6 +103,7 @@ function template_process_intel_shortcode(&$variables) {
   if (!isset($variables['messages'])) {
     $variables['messages'] = Intel_Df::drupal_get_messages();
   }
+
 }
 
 function template_process_intel_visitor_profile(&$variables) {
@@ -335,7 +336,7 @@ function intel_format_location_name($location, $format = 'country') {
     $out .= ', ' . !empty($location['region']) ? $location['region'] : t('(not set)');
     $out .= ', ' . !empty($location['country']) ? $location['country'] : t('(not set)');
   }
-  else if ($format == 'map') {
+  elseif ($format == 'map') {
     $out = !empty($location['city']) ? $location['city'] : '(not set)';
     $out .= ', ' . (!empty($location['region']) ? $location['region'] : t('(not set)'));
     if (isset($location['metro']) && ($location['metro'] != '(not set)')) {
@@ -356,7 +357,7 @@ function theme_intel_location(&$variables) {
     $entity = $variables['entity'];
     $location = $entity->getVar('data', 'location');
   }
-  else if (!empty($variables['location'])) {
+  elseif (!empty($variables['location'])) {
     $location = $variables['location'];
   }
 
@@ -401,7 +402,7 @@ function x_template_process_intel_visitor_location(&$variables) {
     $entity = $variables['entity'];
     $location = $entity->getVar('data', 'location');
   }
-  else if (!empty($variables['location'])) {
+  elseif (!empty($variables['location'])) {
     $location = $variables['location'];
   }
 
@@ -565,12 +566,12 @@ function theme_intel_visit_steps_table(&$variables) {
       );
       $last_page_ts = $ts;
     }
-    else if ($step['type'] == 'event') {
+    elseif ($step['type'] == 'event') {
       $class = 'event';
       if (substr($step['category'], -1) == '!') {
         $class .= ' valued-event';
       }
-      else if (substr($step['category'], -1) == '+') {
+      elseif (substr($step['category'], -1) == '+') {
         $class .= ' goal-event';
       }
       $rows[] = array(
@@ -645,7 +646,7 @@ function theme_intel_property_browser_environment($variables) {
   if (!empty($variables['entity'])) {
     $entity = $variables['entity'];
     $env = $entity->getVar('data', 'environment');
-  } else if (!empty($variables['environment'])) {
+  } elseif (!empty($variables['environment'])) {
     $env = $variables['environment'];
   }
 
@@ -693,7 +694,7 @@ function theme_intel_property_trafficsource($variables) {
     }
     d($source);
   }
-  else if (!empty($variables['trafficsource'])) {
+  elseif (!empty($variables['trafficsource'])) {
     $source = $variables['trafficsource'];
   }
 

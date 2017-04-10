@@ -1245,18 +1245,20 @@ function intel_reports() {
     'default' => 1,
     //'intel_api_access' => 'pro',
   );
-  $reports['visitor']['recentvisits'] = array(
-    'key' => 'visit.recent',
-    'timeframe' => 'l30dfn',
-    'title' => Intel_Df::t('Recent visits'),
-    //'intel_api_access' => 'pro',
-  );
-  $reports['visitor']['geo'] = array(
-    'key' => 'address.top',
-    'title' => Intel_Df::t('Geo'),
-    'page callback' => 'intel_audience_list_report_page',
-    'file' => 'reports/intel.report_audience_list.inc',
-  );
+  if (intel_is_extended()) {
+    $reports['visitor']['recentvisits'] = array(
+      'key' => 'visit.recent',
+      'timeframe' => 'l30dfn',
+      'title' => Intel_Df::t('Recent visits'),
+      //'intel_api_access' => 'pro',
+    );
+    $reports['visitor']['geo'] = array(
+      'key' => 'address.top',
+      'title' => Intel_Df::t('Geo'),
+      'page callback' => 'intel_audience_list_report_page',
+      'file' => 'reports/intel.report_audience_list.inc',
+    );
+  }
   $reports['visitor']['clickstream'] = array(
     'key' => 'visitor.clickstream',
     'timeframe' => 'l90dfn',
@@ -1355,7 +1357,7 @@ function intel_api_access_error($vars = array()) {
   }
 
   $msg .= ' ' . l(t('Learn more about API versions'), INTEL_HELP_APIVERS, array('attributes' => array('target' => '_blank'))) . '.';
-  drupal_set_message($msg, 'warning');
+  Intel_Df::drupal_set_message($msg, 'warning');
   return '';
 }
 
@@ -2592,7 +2594,7 @@ function intel_determine_entity_attr_value_type($value, $value_type = null) {
     if ($value_type == 'vsid') {
       return 'vsid';
     }
-    else if ($value_type == 'num') {
+    elseif ($value_type == 'num') {
       return 'num';
     }
     else {
@@ -2774,7 +2776,7 @@ function intel_value_str_load($id) {
       $value_str = $id->value_str;
     }
   }
-  else if (is_string($id)) {
+  elseif (is_string($id)) {
     $value_str = $id;
   }
   else {
@@ -3394,10 +3396,10 @@ if ( !function_exists( 'intel_d' ) ) {
     }
     else {
       if (intel()->is_intel_admin_page()) {
-        Intel_Df::drupal_set_message(print_r($_, 1));
+        Intel_Df::drupal_set_message(json_encode($_[0]));
       }
       else {
-        print_r($_);
+        print json_encode($_[0]);
       }
     }
   }

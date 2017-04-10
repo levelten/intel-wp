@@ -763,7 +763,7 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
       $index = $push[0];
       $value = $push[1];
     }
-    else if ($method == 'event') {
+    elseif ($method == 'event') {
       $index = count($_SESSION['intel']['page_pushes'][$method]);
       $value = $push[0];
     }
@@ -1085,7 +1085,7 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
       $api_hostpath = INTEL_L10IAPI_URL;
     }
     // if api_hostpathe is relative (begins with '/'), install is local
-    else if (substr($api_hostpath, 0 ,1) == '/') {
+    elseif (substr($api_hostpath, 0 ,1) == '/') {
       $api_hostpath = $_SERVER['HTTP_HOST'] . $api_hostpath;
       $api_local = 1;
     }
@@ -1238,7 +1238,7 @@ function intel_js_alter(&$javascript) {
     if (substr($javascript[$i]['data'], 0, 10) == 'var _l10iq') {
       $intel_i = $i;
     }
-    else if (substr($javascript[$i]['data'], 0, 32) == '(function(w,d,o,u,b,i,r,a,s,c,t)') {
+    elseif (substr($javascript[$i]['data'], 0, 32) == '(function(w,d,o,u,b,i,r,a,s,c,t)') {
       $intel_i = $i;
     }
     //if (substr($javascript[$i]['data'], 0, 8) == 'var _gaq') {
@@ -1536,10 +1536,9 @@ function intel_process_form_submission($vars) {
     'source' => 'form',
   );
   if(!empty($visitor_properties) && is_array($visitor_properties)) {
-
     // if name not set, but givenName is, construct name from givenName & familyName
     if (empty($visitor_properties['data.name']) && !empty($visitor_properties['data.givenName'])) {
-      $props['data.name'] = $visitor_properties['data.givenName'];
+      $visitor_properties['data.name'] = $visitor_properties['data.givenName'];
       if (!empty($visitor_properties['data.familyName'])) {
         $visitor_properties['data.name'] .= ' ' . $visitor_properties['data.familyName'];
       }
@@ -1852,7 +1851,7 @@ function intel_process_form_submission($vars) {
     $track['category'] = $intel_events['submission_' . $track['category_id']]['category'];
     $track['value'] = ($track['value'] != '') ? $track['value'] : $scorings[$track['category_id']];
   }
-  else if (empty($track['category'])) {
+  elseif (empty($track['category'])) {
     $track['category'] = __('Form submission', 'intel') . '!';
     $track['value'] = ($track['value'] != '') ? $track['value'] : $scorings['form_submission'];
   }

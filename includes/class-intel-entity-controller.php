@@ -93,10 +93,10 @@ class Intel_Entity_Controller {
 			if (is_array($v) || is_object($v)) {
 				$data[$k] = serialize($data[$k]);
 			}
-			else if(is_integer($v)) {
+			elseif(is_integer($v)) {
 				$format[$i] = '%d';
 			}
-			else if (is_float($v)) {
+			elseif (is_float($v)) {
 				$format[$i] = '%f';
 			}
 			$i++;
@@ -187,7 +187,7 @@ class Intel_Entity_Controller {
 						  $data[] = $v[1];
 						}
 					}
-					else if (count($v) == 2) {
+					elseif (count($v) == 2) {
 						$sql .= $v[0] . ' = ' . ((is_string($v[1])) ? '%s' : '%d') . "\n";
 						$data[] = $v[1];
 					}

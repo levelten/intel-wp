@@ -69,10 +69,10 @@ intel_d($vars);
     if ($vars['report_modes'][3] == 'valued') {
       $value_type = '_valued';
     }
-    else if ($vars['report_modes'][3] == 'nonvalued') {
+    elseif ($vars['report_modes'][3] == 'nonvalued') {
       $value_type = '_nonvalued';
     }
-    else if ($vars['report_modes'][3] == 'goal') {
+    elseif ($vars['report_modes'][3] == 'goal') {
       $value_type = '_goal';
     }
   }

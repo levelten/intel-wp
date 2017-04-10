@@ -111,10 +111,10 @@ class IntelVisitor extends Entity {
     if (!empty($this->vid)) {
       return $this->vid;
     }
-    else if (!empty($this->vtkid)) {
+    elseif (!empty($this->vtkid)) {
       return $this->vtkid;
     }
-    else if (!empty($this->vtk)) {
+    elseif (!empty($this->vtk)) {
       return $this->vtk;
     }
     return '';
@@ -298,7 +298,7 @@ class IntelVisitor extends Entity {
         }
       }
     }
-    else if ($prop_name == 'phone') {
+    elseif ($prop_name == 'phone') {
       if (empty($this->email)) {
         $this->setIdentifier('phone', $values['phone']);
         if (empty($this->contact_created)) {
@@ -306,13 +306,13 @@ class IntelVisitor extends Entity {
         }
       }
     }
-    else if ($prop_name == 'name') {
+    elseif ($prop_name == 'name') {
       if (empty($this->name)) {
         $name = '';
         if (isset($values['full'])) {
           $name = $values['full'];
         }
-        else if (isset($values['first'])) {
+        elseif (isset($values['first'])) {
           $name = $values['first'];
           if (isset($values['last'])) {
             $name .= ' ' . $values['last'];
@@ -410,7 +410,7 @@ class IntelVisitor extends Entity {
           if ($merge_dir == 'into_this') {
             intel_visitor_delete($dup_vid);
           }
-          else if ($merge_dir == 'into_dup') {
+          elseif ($merge_dir == 'into_dup') {
             intel_visitor_delete($this_vid);
           }
           $this->save();
@@ -434,7 +434,7 @@ class IntelVisitor extends Entity {
       $this->$type = $value;
     }
     // if not primary and id does not already exists, add to end
-    else if ($existing_i === FALSE) {
+    elseif ($existing_i === FALSE) {
       $this->identifiers[$type][] = $value;
     }
   }
@@ -538,7 +538,7 @@ class IntelVisitor extends Entity {
       $out .= ', ' . !empty($location['region']) ? $location['region'] : t('(not set)');
       $out .= ', ' . !empty($location['country']) ? $location['country'] : t('(not set)');
     }
-    else if ($format == 'map') {
+    elseif ($format == 'map') {
       $out = !empty($location['city']) ? $location['city'] : '(not set)';
       $out .= ', ' . (!empty($location['region']) ? $location['region'] : t('(not set)'));
       if (isset($location['metro']) && ($location['metro'] != '(not set)')) {
@@ -669,7 +669,7 @@ class IntelVisitorController extends EntityAPIControllerExportable {
           $values['identifiers']['uid'][] = $user->uid;
         }
       }
-      else if (is_string($values['id']) && strlen($values['id']) >= 20) {
+      elseif (is_string($values['id']) && strlen($values['id']) >= 20) {
         $vtk = $values['id'];
       }
       if ($vtk) {
@@ -729,7 +729,7 @@ class IntelVisitorController extends EntityAPIControllerExportable {
       $ids = array($vtk);
     } 
     // check if id is vtk or vtkid
-    else if (is_string($id) && (strlen($id) >= 20)) {
+    elseif (is_string($id) && (strlen($id) >= 20)) {
       if (strlen($id) == 20) {
         $this->setIdType('vtkid');
       }
@@ -1117,7 +1117,7 @@ function intel_visitor_build_profile_content_elements($entity) {
       }
       $ops[] = l(t('data'), 'node/' . $row->fid . '/submission/' . $row->fsid);
     }
-    else if ($row->type == 'disqus_comment') {
+    elseif ($row->type == 'disqus_comment') {
       $title = t('Comment');
       $a = explode('#', substr($row->details_url, 1));
       $options = array(
@@ -1125,7 +1125,7 @@ function intel_visitor_build_profile_content_elements($entity) {
       );
       $ops[] = l(t('data'), $a[0], $options);
     }
-    else if ($row->type == 'hubspot') {
+    elseif ($row->type == 'hubspot') {
       $form_name = intel_hubspot_get_form_name($row->fid);
       if ($form_name) {
         $title = $form_name;

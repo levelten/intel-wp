@@ -997,7 +997,7 @@ function intel_admin_setup_submit_5($form, &$form_state) {
       if (!empty($goals0[$id]['value'])) {
         $value = $goals0[$id]['value'];
       }
-      else if (!empty($goals_defalt[$name]['value'])) {
+      elseif (!empty($goals_defalt[$name]['value'])) {
         $value = $goals_defalt[$name]['value'];
       }
       else {
