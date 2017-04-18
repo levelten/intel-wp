@@ -268,7 +268,7 @@ function intel_admin_setup_primary_ga_plugin($form, &$form_state) {
 
   $items = array();
   $items[] = '<p>';
-  $items[] = Intel_Df::t('Intelligence requires a compatible Google Analytics plugin.');
+  $items[] = Intel_Df::t('Intelligence requires a compatible Google Analytics Data API plugin.');
   $l_options = Intel_Df::l_options_add_target('gadwp');
   $l_options_2 = Intel_Df::l_options_add_target('plugin_admin');
   $items[] = Intel_Df::t('Please install and activate the !plugin_summary using the !plugin_admin.',
@@ -856,7 +856,7 @@ function intel_admin_setup_addon_settings($form, &$form_state) {
   $items[] = ' ' . Intel_Df::t('Use the inputs below to setup your add-ons as needed.');
   $items[] = '</p><p>';
 
-  $items[] = '<h3>' . Intel_Df::t('Available Addons') . '</h3>';
+  $items[] = '<h3>' . Intel_Df::t('Settings') . '</h3>';
 
   $f['instructions'] = array(
     '#type' => 'markup',
@@ -1593,8 +1593,8 @@ function intel_admin_setup_form_settings($form, &$form_state) {
   $items[] = '<p>';
   $items[] = Intel_Df::t('Intelligence integrates with various types of forms to trigger tracking events and to create contacts upon submission.');
   $items[] = Intel_Df::t('Below is a list of forms we found in your site you should setup to work with Intelligence.');
-  $items[] = Intel_Df::t('Click on the Title link for for each form to configure Intelligence settings for each form.');
-  $items[] = Intel_Df::t('If you do not want to track a form, click the ignore checkbox to bypass checks.');
+  $items[] = Intel_Df::t('Click on the Title link for for each form to configure Intelligence settings.');
+  $items[] = Intel_Df::t('If you do not want to track a form, click the Ignore checkbox to bypass checks.');
   $items[] = '</p>';
 
   $items[] .= '<h3>' . Intel_Df::t('Forms List') . '</h3>';
@@ -1874,7 +1874,7 @@ function intel_admin_setup_finish($form, &$form_state) {
   $items = array();
 
   $items[] = '<p>';
-  $items[] = Intel_Df::t('Congratulations. Intelligence setup is complete.');
+  $items[] = Intel_Df::t('Congratulations. Your Intelligence setup is complete.');
   $items[] = '</p><br />';
 
   $f['instructions'] = array(
