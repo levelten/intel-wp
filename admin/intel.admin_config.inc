@@ -17,16 +17,6 @@ function intel_admin_settings($form, &$form_state) {
 
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $sys_meta = get_option('intel_system_meta', array());
-  if (empty($sys_meta['setup_step']) || $sys_meta['setup_step'] < 100) {
-    $msg = Intel_Df::t('Intelligence has not yet been setup. !link.', array(
-      '!link' => Intel_Df::l(Intel_Df::t('Click here to run the setup wizard'), 'admin/config/intel/settings/setup'),
-    ));
-    Intel_Df::drupal_set_message($msg, 'warning');
-
-    return '';
-  }
-
   // check dependencies
   // verify if gadwp exists
   $ga_data_source = intel_ga_data_source();
@@ -263,9 +253,9 @@ function intel_admin_settings($form, &$form_state) {
     '#description' => $desc,
   );
 
-  $form['extensions'] = array(
+  $form['intl_scripts'] = array(
     '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Extensions'),
+    '#title' => Intel_Df::t('Intl Scripts'),
     '#collapsible' => TRUE,
   );
 
@@ -281,7 +271,7 @@ function intel_admin_settings($form, &$form_state) {
   $enabled = get_option('intel_intel_scripts_enabled', array());
   $enabled += $defaults;
 
-  $form['extensions']['intel_intel_scripts_enabled'] = array(
+  $form['intl_scripts']['intel_intel_scripts_enabled'] = array(
     '#type' => 'checkboxes',
     '#title' => Intel_Df::t('Intel scripts'),
     '#options' => $options,

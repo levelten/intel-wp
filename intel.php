@@ -14,7 +14,7 @@
  *
  * @wordpress-plugin
  * Plugin Name:       Intelligence
- * Plugin URI:        intl.getlevelten.com
+ * Plugin URI:        http://intelligencewp.com
  * Description:       Provides behavior and visitor intelligence.
  * Version:           1.0.0
  * Author:            LevelTen
@@ -23,6 +23,7 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       intel
  * Domain Path:       /languages
+ * GitHub Plugin URI: https://github.com/levelten/intelligence-wp
  */
 
 

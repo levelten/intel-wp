@@ -1659,6 +1659,7 @@ function intel_verify_apikey(&$message = '', &$property = array(), $options = ar
   catch (Exception $e) {
     $message = $e->getMessage();
   }
+
   if (!empty($ret['property'])) {
     $property = (array) $ret['property'];
     $api_level = $property['level'];
@@ -2863,25 +2864,104 @@ function _intel_intel_script_info($info = array()) {
   return $info;
 }
 
+add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
+function intel_intel_plugin_path_info($info) {
+  $info['gadwp'] = array(
+    'directory' => array(
+      'google-analytics-dashboard-for-wp'
+    ),
+    'filename' => array(
+      'gadwp.php'
+    )
+  );
+  $info['gravityforms'] = array(
+    'directory' => array(
+      'gravityforms'
+    ),
+    'filename' => array(
+      'gravityforms.php'
+    )
+  );
+  $info['gravityforms_intel'] = array(
+    'directory' => array(
+      'gravityforms-intelligence',
+      'gravityformsintel',
+    ),
+    'filename' => array(
+      'gf-intel.php'
+    )
+  );
+  $info['wpcf7'] = array(
+    'directory' => array(
+      'contact-form-7'
+    ),
+    'filename' => array(
+      'wp-contact-form-7.php'
+    )
+  );
+  $info['wpcf7_intel'] = array(
+    'directory' => array(
+      'contact-form-7-intelligence'
+    ),
+    'filename' => array(
+      'wpcf7-intel.php'
+    )
+  );
+
+  return $info;
+}
+
+function intel_is_plugin_active($name) {
+  $plugin_path_info = intel()->plugin_path_info($name);
+
+  // if info does not exist, return false
+  if (!$plugin_path_info) {
+    return FALSE;
+  }
+
+  $info = $plugin_path_info;
+  if (!is_array($info['directory'])) {
+    $info['directory'] = array($info['directory']);
+  }
+  if (!is_array($info['filename'])) {
+    $info['filename'] = array($info['filename']);
+  }
+  foreach ($info['directory'] as $directory) {
+    foreach ($info['filename'] as $filename) {
+      if (is_plugin_active( "$directory/$filename" )) {
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}
+
 // add _intel_intel_script_info to hook_intel_script_info
 add_filter('intel_addon_info', '_intel_addon_info');
 /**
  * Implements hook_intel_intel_script
  */
 function _intel_addon_info($info = array()) {
-  $info['addthis'] = array(
-    'title' => Intel_Df::t('AddThis'),
-    'description' => Intel_Df::t('Tracks AddThis shares, clickbacks and follows.'),
-    'enabled' => 0,
-    'enabled_default' => 0,
-    'enable_callback' => 'intel_addthis_addon_enable',
+  $info['gravityforms_intel'] = array(
+    'title' => Intel_Df::t('Gravity Forms Intelligence'),
+    'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Gravity Form is submitted.'),
+    'group' => 'forms',
+    'description_url' => 'http://intelligencewp.com/plugin/gravityforms-intelligence',
+    'show_callback' => 'intel_is_plugin_active',
+    'show_arguments' => array('gravityforms'),
+    'is_active_callback' => 'intel_is_plugin_active',
+    'is_active_arguments' => array('gravityforms_intel'),
   );
-  $info['youtube'] = array(
-    'title' => Intel_Df::t('YouTube'),
-    'description' => Intel_Df::t('Tracks video play events on site embedded YouTube videos.'),
-    'enabled' => 0,
-    'enabled_default' => 0,
-    'enable_callback' => 'intel_youtube_addon_enable',
+
+  $info['wpcf7_intel'] = array(
+    'title' => Intel_Df::t('Contact Form 7 Intelligence'),
+    'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Contact Form 7 form is submitted.'),
+    'group' => 'forms',
+    'description_url' => 'http://intelligencewp.com/plugin/contact-form-7-intelligence',
+    'show_callback' => 'intel_is_plugin_active',
+    'show_arguments' => array('wpcf7'),
+    'is_active_callback' => 'intel_is_plugin_active',
+    'is_active_arguments' => array('wpcf7_intel'),
   );
 
   return $info;
@@ -3360,10 +3440,8 @@ function intel_print_var($var, $console = FALSE) {
     $json = json_encode($var);
     print "<script> console.log($json); </script>";
   }
-  if (function_exists('d')) {
-    if ( !Kint::enabled() ) return '';
-    $_ = func_get_args();
-    return call_user_func_array( array( 'Kint', 'dump' ), $_ );
+  else {
+    intel_d($var);
   }
 }
 
@@ -3381,6 +3459,7 @@ if ( !function_exists( 'intel_d' ) ) {
       if (empty($kint_aliases)) {
         $kint_aliases = Kint::$aliases;
         $kint_aliases['functions'][] = 'intel_d';
+        $kint_aliases['functions'][] = 'intel_print_var';
         Kint::$aliases = $kint_aliases;
       }
 
@@ -3786,49 +3865,3 @@ function intel_form_shortcode($vars) {
   }
 }
 
-add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
-function intel_intel_plugin_path_info($info) {
-  $info['gravityforms'] = array(
-    'directory' => array(
-      'gravityforms'
-    ),
-    'filename' => array(
-      'gravityforms.php'
-    )
-  );
-  $info['gravityforms_intel'] = array(
-    'directory' => array(
-      'gravityforms-intelligence',
-      'gravityformsintel',
-    ),
-    'filename' => array(
-      'gf-intel.php'
-    )
-  );
-  return $info;
-}
-
-function intel_is_plugin_active($name) {
-  $plugin_path_info = intel()->plugin_path_info($name);
-
-  // if info does not exist, return false
-  if (!$plugin_path_info) {
-    return FALSE;
-  }
-
-  $info = $plugin_path_info;
-  if (!is_array($info['directory'])) {
-    $info['directory'] = array($info['directory']);
-  }
-  if (!is_array($info['filename'])) {
-    $info['filename'] = array($info['filename']);
-  }
-  foreach ($info['directory'] as $directory) {
-    foreach ($info['filename'] as $filename) {
-      if (is_plugin_active( "$directory/$filename" )) {
-        return TRUE;
-      }
-    }
-  }
-  return FALSE;
-}

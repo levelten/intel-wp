@@ -381,6 +381,12 @@ function intel_util_reset_site() {
   if ($flags == '_' || $flags == 'installtest') {
     $mode = $flags;
     $flags = 'c,v,f';
+    $sys_meta = get_option('intel_system_meta', array());
+
+    // clear setup status/data
+    unset($sys_meta['setup_successes']);
+    unset($sys_meta['setup_step']);
+    update_option('intel_system_meta', $sys_meta);
   }
   $flags = explode(',', $flags);
   global $wpdb;

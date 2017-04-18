@@ -83,6 +83,8 @@ class Intel_Admin {
 
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/intel-admin.css', array(), $this->version, 'all' );
 
+		wp_enqueue_style( 'intel_bootstrap', plugin_dir_url( __FILE__ ) . 'css/intel-bootstrap.min.css', array(), $this->version, 'all' );
+
 	}
 
 	/**
@@ -106,7 +108,7 @@ class Intel_Admin {
 
 		wp_enqueue_script( $this->plugin_name, INTEL_URL . 'admin/js/intel-admin.js', array( 'jquery' ), $this->version, false );
 
-		wp_enqueue_script('intel_admin_js_bootstrap_hack', INTEL_URL . 'admin/js/intel-bootstrap-hack.js', false, $this->version, false);
+		//wp_enqueue_script('intel_admin_js_bootstrap_hack', INTEL_URL . 'admin/js/intel-bootstrap-hack.js', false, $this->version, false);
 
 		wp_enqueue_script('intel_admin_bootstrap', INTEL_URL . 'vendor/bootstrap/js/bootstrap.min.js', false, $this->version, false);
 
@@ -134,12 +136,23 @@ class Intel_Admin {
 	public function session_start() {
 		// need to start session for messages to queue across pages
 		if(!session_id()) {
-			session_start();
+			try {
+				$success = session_start();
+			}
+			catch (Exception $e) {
+				Intel_Df::drupal_set_message($e->getMessage() . '[' , $e->getCode());
+			}
 		}
 	}
 
 	public function session_end() {
-		session_destroy();
+		try {
+			session_destroy();
+		}
+		catch (Exception $e) {
+			Intel_Df::drupal_set_message($e->getMessage() . '[' , $e->getCode());
+		}
+
   }
 
 	public function site_menu() {
@@ -214,8 +227,8 @@ class Intel_Admin {
 		else {
 			$_GET['q'] = &$q;
 		}
+		$q = stripslashes($q);
 		$intel->q = $q;
-
 		// set translated path
 		$qt = $q;
 
@@ -347,6 +360,8 @@ class Intel_Admin {
 			return;
 		}
 
+
+
 		// process page arguments
 		$page_args = !empty($info['page arguments']) ? $info['page arguments'] : array();
 
@@ -370,12 +385,25 @@ class Intel_Admin {
 			include_once $fn;
 		}
 
-		$page_func = $info['page callback'];
-		if ($page_func == 'drupal_get_form') {
-			include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
-			$page_func = 'Intel_Form::drupal_get_form';
+		// check if setup is complete
+		$sys_meta = get_option('intel_system_meta', array());
+		if ($q != 'admin/config/intel/settings/setup'
+			&& empty($sys_meta['setup_complete'])) {
+			$msg = Intel_Df::t('Intelligence setup must be complete before accessing this page. !link.', array(
+				'!link' => Intel_Df::l(Intel_Df::t('Click here to run the setup wizard'), 'admin/config/intel/settings/setup'),
+			));
+			Intel_Df::drupal_set_message($msg, 'warning');
+			$vars['markup'] = '';
 		}
-		$vars['markup'] = call_user_func_array($page_func, $page_args);
+		else {
+			$page_func = $info['page callback'];
+			if ($page_func == 'drupal_get_form') {
+				include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
+				$page_func = 'Intel_Form::drupal_get_form';
+			}
+			$vars['markup'] = call_user_func_array($page_func, $page_args);
+		}
+
 
 		$base_q = $q;
 		$base_qt = $qt;

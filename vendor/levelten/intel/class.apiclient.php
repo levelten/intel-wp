@@ -11,9 +11,11 @@
  */
 namespace LevelTen\Intel;
 require_once 'class.exception.php';
-
+\Intel_Df::watchdog('apiclient.php', 'l.14');
+\Intel_Df::watchdog('apiclient.php', print_r($_GET, 1));
 if (!empty($_GET['debug'])) {
-  require_once 'libs/class.debug.php'; 
+  \Intel_Df::watchdog('apiclient.php', 'l.16');
+  require_once 'libs/class.debug.php';
 }
 
 class ApiClient {

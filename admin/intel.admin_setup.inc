@@ -6,102 +6,115 @@
 
 include_once INTEL_DIR . 'includes/class-intel-form.php';
 
+function intel_admin_setup_info($items = array()) {
+  $items = array();
+  $items['start'] = array(
+    'text' => Intel_Df::t('Start'),
+    'submit_button_text' => Intel_Df::t('Start'),
+  );
+  $items['primary_ga_plugin'] = array(
+    'text' => Intel_Df::t('Primary GA plugin'),
+  );
+  $items['primary_ga_profile'] = array(
+    'text' => Intel_Df::t('Primary GA profile'),
+  );
+  $items['intel_ga_profile'] = array(
+    'text' => Intel_Df::t('Intelligence GA profile'),
+  );
+  $items['intel_api_key'] = array(
+    'text' => Intel_Df::t('Intelligence API key'),
+  );
+  $items['addon_install'] = array(
+    'text' => Intel_Df::t('Add-on installation'),
+  );
+  $items['addon_settings'] = array(
+    'text' => Intel_Df::t('Add-on settings'),
+  );
+  $items['goals'] = array(
+    'text' => Intel_Df::t('Goals'),
+  );
+  $items['scoring'] = array(
+    'text' => Intel_Df::t('Scoring'),
+  );
+  $items['form_settings'] = array(
+    'text' => Intel_Df::t('Form settings'),
+  );
+  $items['finish'] = array(
+    'text' => Intel_Df::t('Finish'),
+    'submit_button_text' => '',
+  );
+
+  return $items;
+}
+
 function intel_admin_setup($form, &$form_state) {
   $form['markup_start'] = array(
     '#type' => 'markup',
     '#markup' => '<div class="row"><div class="col-md-3">',
   );
 
-  $sys_meta = get_option('intel_system_meta', array());
-  if (!isset($sys_meta['setup_step'])) {
-    $sys_meta['setup_step'] = 0;
-  }
+  $setup_info = intel_admin_setup_info();
 
-
-  $setup_step = -1;
+  $setup_step = '';
+  $last_step = '';
+  $first_step = '';
+  $setup_successes = array();
   $statuses = array();
-  for ($i = 0; $i < 20; $i++) {
-    $func = 'intel_admin_setup_check_' . $i;
-    if (function_exists($func)) {
-      $statuses[$i] = $func($form, $form_state);
+  foreach ($setup_info as $k => $v) {
+    if (!$setup_step) {
+      $func = 'intel_admin_setup_check_' . $k;
+      if (function_exists($func)) {
+        $statuses[$k] = $func($form, $form_state);
+      }
+      if (!empty($statuses[$k]['success'])) {
+        $setup_successes[] = $k;
+      }
+      elseif (!$setup_step) {
+        $setup_step = $k;
+      }
     }
-    if (empty($statuses[$i]['success'])) {
-      $setup_step = $i;
-      break;
+
+    if (!$first_step) {
+      $first_step = $k;
     }
+    $last_step = $k;
   }
-  if ($setup_step == -1) {
-    $setup_step = count($statuses);
+  if (!$setup_step) {
+    $setup_step = $last_step;
   }
+
+  $sys_meta = get_option('intel_system_meta', array());
+  $sys_meta['setup_successes'] = $setup_successes;
+  $sys_meta['setup_step'] = $setup_step;
 
   if (!empty($_GET['step'])) {
-    $setup_step = (int) $_GET['step'];
+    $setup_step = $_GET['step'];
   }
-
-  if ($setup_step > $sys_meta['setup_step']) {
-    $sys_meta['setup_step'] = $setup_step;
+  else {
     update_option('intel_system_meta', $sys_meta);
   }
 
-
-
-/*
-  //d($statuses);
-  foreach ($statuses as $i => $status) {
-    if (empty($status['success'])) {
-      $setup_step = $i;
-      break;
-    }
-  }
-*/
-
-  $items = array();
-  $items[] = array(
-    'text' => Intel_Df::t('Primary GA plugin'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('Primary GA profile'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('Intelligence GA profile'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('Intelligence API key'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('AddOns'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('Goals'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('Scoring'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('Form settings'),
-  );
-  $items[] = array(
-    'text' => Intel_Df::t('Complete'),
-  );
-
   $checklist = '';
   $checklist .= '<ul class="list-group checked-list-box wizard-list-group">';
-  foreach ($items as $i => $item) {
+  foreach ($setup_info as $k => $item) {
     $tag = array(
       'tag' => 'li',
-      'value' => Intel_Df::l($item['text'], Intel_Df::current_path(), array('query' => array('step' => $i))),
+      'value' => Intel_Df::l($item['text'], Intel_Df::current_path(), array('query' => array('step' => $k))),
       'attributes' => array(
         'class' => array(
           'list-group-item',
         )
       )
     );
-    if ($setup_step > $i) {
+    if (in_array($k, $setup_successes)) {
       $tag['attributes']['class'][] = 'list-group-item-success';
+      if ($setup_step == $k) {
+        $tag['attributes']['class'][] = 'active';
+      }
       $tag['value'] = '<span class="glyphicon glyphicon-check" aria-hidden="true"></span> ' . $tag['value'];
     }
     else {
-      if ($setup_step == $i) {
+      if ($setup_step == $k) {
         $tag['attributes']['class'][] = 'active';
       }
       $tag['value'] = '<span class="glyphicon glyphicon-unchecked" aria-hidden="true"></span> ' . $tag['value'];
@@ -118,7 +131,6 @@ function intel_admin_setup($form, &$form_state) {
     '#markup' => $checklist,
   );
 
-
   $form['markup_mid'] = array(
     '#type' => 'markup',
     '#markup' => '</div><div class="col-md-9"><div class="card"><div class="card-block">',
@@ -130,11 +142,13 @@ function intel_admin_setup($form, &$form_state) {
     $form = Intel_Df::drupal_array_merge_deep($form, $f);
   }
 
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => Intel_Df::t('Completed'),
-    '#prefix' => '<br><br>',
-  );
+  if (!isset($setup_info[$setup_step]['submit_button_text']) || !empty($setup_info[$setup_step]['submit_button_text'])) {
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => !empty($setup_info[$setup_step]['submit_button_text']) ? $setup_info[$setup_step]['submit_button_text'] : Intel_Df::t('Completed'),
+      '#prefix' => '<br>',
+    );
+  }
 
   $form['markup_end'] = array(
     '#type' => 'markup',
@@ -181,9 +195,21 @@ function intel_admin_setup_submit($form, &$form_state) {
   }
 
   if (!empty($_GET['step'])) {
+    // determine next step
+    $setup_info = intel_admin_setup_info();
+    $next_step = 0;
+    foreach ($setup_info as $k => $v) {
+      if ($next_step) {
+        $next_step = $k;
+        break;
+      }
+      if ($k == $_GET['step']) {
+        $next_step = 1;
+      }
+    }
     $l_options = array(
       'query' => array(
-        'step' => ((int)$_GET['step']) + 1,
+        'step' => $next_step,
       )
     );
     $msg = Intel_Df::t('Form was submitted. !link', array(
@@ -191,22 +217,22 @@ function intel_admin_setup_submit($form, &$form_state) {
     ));
     Intel_Df::drupal_set_message($msg, 'success');
   }
+  else {
+    Intel_Df::drupal_goto(Intel_Df::current_path());
+  }
 }
 
-function intel_admin_setup_0($form, &$form_state) {
+function intel_admin_setup_start($form, &$form_state) {
   $f = array();
 
   $items = array();
-  $items[] = Intel_Df::t('Intelligence requires a compatible Google Analytics plugin.');
-  $l_options = array(
-    'attributes' => array(
-      'target' => 'gadwp',
-    ),
-  );
-  $items[] = Intel_Df::t('Please install and activate the !plugin.',
-    array(
-      '!plugin' => Intel_Df::l(Intel_Df::t('Google Analytics Dashboard for WP plugin'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options),
-    ));
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('The Intelligence setup wizard will walk you through the steps for setting up a results oriented Google Analytics measurment plan.');
+  $items[] = '</p>';
+
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Click the start button to begin.');
+  $items[] = '</p>';
 
   $f['instructions'] = array(
     '#type' => 'markup',
@@ -216,7 +242,55 @@ function intel_admin_setup_0($form, &$form_state) {
   return $f;
 }
 
-function intel_admin_setup_check_0($form, &$form_state) {
+function intel_admin_setup_check_start($form, &$form_state) {
+  $status = array();
+
+  $sys_meta = get_option('intel_system_meta', array());
+  if (isset($sys_meta['setup_successes']) && in_array('start', $sys_meta['setup_successes'])) {
+    $status['success'] = 1;
+  }
+
+  return $status;
+}
+
+function intel_admin_setup_submit_start($form, &$form_state) {
+  $values = $form_state['values'];
+
+  $sys_meta = get_option('intel_system_meta', array());
+  if (!in_array('start', $sys_meta['setup_successes'])) {
+    $sys_meta['setup_successes'][] = 'start';
+    update_option('intel_system_meta', $sys_meta);
+  }
+}
+
+function intel_admin_setup_primary_ga_plugin($form, &$form_state) {
+  $f = array();
+
+  $items = array();
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Intelligence requires a compatible Google Analytics plugin.');
+  $l_options = Intel_Df::l_options_add_target('gadwp');
+  $l_options_2 = Intel_Df::l_options_add_target('plugin_admin');
+  $items[] = Intel_Df::t('Please install and activate the !plugin_summary using the !plugin_admin.',
+    array(
+      '!plugin_summary' => Intel_Df::l(Intel_Df::t('Google Analytics Dashboard for WP plugin'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options),
+      '!plugin_admin' => Intel_Df::l(Intel_Df::t('WordPress plugin admin'), 'wp-admin/plugins.php'), $l_options_2,
+    ));
+  $items[] = '</p>';
+
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Once the plugin is active, click Completed to proceed.');
+  $items[] = '</p>';
+
+  $f['instructions'] = array(
+    '#type' => 'markup',
+    '#markup' => implode(' ', $items),
+  );
+
+  return $f;
+}
+
+function intel_admin_setup_check_primary_ga_plugin($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
@@ -228,19 +302,30 @@ function intel_admin_setup_check_0($form, &$form_state) {
     $status['success'] = 1;
   }
   else {
-    if (is_plugin_active( 'google-analytics-dashboard-for-wp/gadwp.php' ) ) {
+    if (intel_is_plugin_active( 'gadwp' ) ) {
       update_option('intel_ga_data_source', 'gadwp');
       $status['success'] = 1;
+    }
+    else {
+      $status['error_msg'] = Intel_Df::t('Google Analytics Dashboard for WP has not been activated.');
+      $status['error_msg'] .= ' ' . Intel_Df::t('Please install and activate before proceeding.');
     }
   }
 
   return $status;
 }
 
-function intel_admin_setup_1($form, &$form_state) {
+function intel_admin_setup_validate_primary_ga_plugin($form, &$form_state, $status) {
+  if (!empty($status['error_msg'])) {
+    Intel_Form::form_set_error('none', $status['error_msg']);
+  }
+}
+
+function intel_admin_setup_primary_ga_profile($form, &$form_state) {
   $f = array();
 
   $items = array();
+  $items[] = '<p>';
   $l_options = array(
     'attributes' => array(
       'target' => 'gadwp',
@@ -250,6 +335,11 @@ function intel_admin_setup_1($form, &$form_state) {
     '!link' => Intel_Df::l(Intel_Df::t('plugin settings page'), 'wp-admin/admin.php?page=gadash_settings', $l_options),
   ));
   $items[] = Intel_Df::t('Be sure to complete the Plugin Authorization and Select View configuration.');
+  $items[] = '</p>';
+
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Once you have set the primary GA profile, click Completed to proceed.');
+  $items[] = '</p>';
 
   $f['instructions'] = array(
     '#type' => 'markup',
@@ -259,7 +349,7 @@ function intel_admin_setup_1($form, &$form_state) {
   return $f;
 }
 
-function intel_admin_setup_check_1($form, &$form_state) {
+function intel_admin_setup_check_primary_ga_profile($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
   //include_once INTEL_DIR . 'includes/class-intel-gapi.php';
 
@@ -290,7 +380,7 @@ function intel_admin_setup_check_1($form, &$form_state) {
   return $status;
 }
 
-function intel_admin_setup_2($form, &$form_state) {
+function intel_admin_setup_intel_ga_profile($form, &$form_state) {
   $f = array();
 
   $items = array();
@@ -339,7 +429,7 @@ function intel_admin_setup_2($form, &$form_state) {
   return $f;
 }
 
-function intel_admin_setup_check_2($form, &$form_state) {
+function intel_admin_setup_check_intel_ga_profile($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
@@ -357,6 +447,7 @@ function intel_admin_setup_check_2($form, &$form_state) {
 
   if (empty($intel_ga_view)) {
     $status['error_msg'] = Intel_Df::t('Intelligence Google Analytics property / view not set.');
+    $status['error_msg'] .= ' ' . Intel_Df::t('Please select a property and view for your Intelligence data before proceeding.');
     return $status;
   }
 
@@ -376,13 +467,13 @@ function intel_admin_setup_check_2($form, &$form_state) {
   return $status;
 }
 
-function intel_admin_setup_validate_2($form, &$form_state, $status) {
+function intel_admin_setup_validate_intel_ga_profile($form, &$form_state, $status) {
   if (!empty($status['error_msg'])) {
     Intel_Form::form_set_error('intel_ga_view', $status['error_msg']);
   }
 }
 
-function intel_admin_setup_submit_2($form, &$form_state) {
+function intel_admin_setup_submit_intel_ga_profile($form, &$form_state) {
   $values = $form_state['values'];
 
   $profile = $form_state['intel_ga_profiles'][$values['intel_ga_view']];
@@ -393,9 +484,9 @@ function intel_admin_setup_submit_2($form, &$form_state) {
 
 }
 
-function intel_admin_setup_3($form, &$form_state) {
+function intel_admin_setup_intel_api_key($form, &$form_state) {
   $f = array();
-  $status = $form_state['intel_statuses'][3];
+  $status = $form_state['intel_statuses']['intel_api_key'];
   if (!empty($status['error_type']) && ($status['error_type'] = 'property_not_configured')) {
     Intel_Df::drupal_set_message($status['error_msg'], 'error');
   }
@@ -443,7 +534,7 @@ function intel_admin_setup_3($form, &$form_state) {
   return $f;
 }
 
-function intel_admin_setup_check_3($form, &$form_state) {
+function intel_admin_setup_check_intel_api_key($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
@@ -485,21 +576,24 @@ function intel_admin_setup_check_3($form, &$form_state) {
   return $status;
 }
 
-function intel_admin_setup_validate_3($form, &$form_state, $status) {
+function intel_admin_setup_validate_intel_api_key($form, &$form_state, $status) {
   if (!empty($status['error_msg'])) {
     Intel_Form::form_set_error('intel_apikey', $status['error_msg']);
   }
 }
 
-function intel_admin_setup_submit_3($form, &$form_state) {
+function intel_admin_setup_submit_intel_api_key($form, &$form_state) {
   $values = $form_state['values'];
   update_option('intel_apikey', trim($values['intel_apikey']));
 }
 
-function intel_admin_setup_4($form, &$form_state) {
+function intel_admin_setup_addon_install($form, &$form_state) {
   $f = array();
 
-  $form_state['intel_addon_info'] = $addon_info = intel()->addon_info();
+  $status = $form_state['intel_statuses']['addon_install'];
+  $addon_info = $status['addon_info'];
+  $ignore = $status['ignore'];
+  //$addon_info = $form_state['intel_addon_info'];
 
   $items = array();
   $l_options = array(
@@ -508,7 +602,258 @@ function intel_admin_setup_4($form, &$form_state) {
     ),
   );
   $items[] = '<p>';
-  $items[] = Intel_Df::t('Intelligence automates tracking of exteneded events in Google Analytics such as social sharing, video playback and commenting.');
+  $items[] = Intel_Df::t('Add-ons are plugins that extend Intelligence.');
+  $items[] = ' ' . Intel_Df::t('Most add-ons integrate with other plugins or services to offer additional tracking and data gathering.');
+  $items[] = '</p><p>';
+
+  $items[] = Intel_Df::t('The table below contains a list of recommended add-ons based on your site\'s setup.');
+  $l_options = Intel_Df::l_options_add_target('plugins');
+  $items[] = ' ' . Intel_Df::t('You can use the Name links to view the plugin summary page for each addon.');
+  $items[] = ' ' . Intel_Df::t('To install, follow the download instructions on the summary page and install it via the !link.', array(
+      '!link' => Intel_Df::l(Intel_Df::t('WordPress plugin admin'), 'wp-admin/plugins.php', $l_options),
+    ));
+  $items[] = ' ' . Intel_Df::t('For any add-on you don\'t want to install check the Ignore box to continue.');
+  $items[] = '</p>';
+
+  $items[] = '<h3>' . Intel_Df::t('Add-ons list') . '</h3>';
+
+  $f['instructions'] = array(
+    '#type' => 'markup',
+    '#markup' => implode(' ', $items),
+  );
+
+  $cells = array();
+  $cells[] = Intel_Df::t('Name');
+  $cells[] = Intel_Df::t('Description');
+  $cells[] = Intel_Df::t('Ops');
+
+  $col_classes = array();
+  $markup = '';
+  $markup .= '<style>
+    th.col-name { width: 25%; }
+    th.col-description { width: 60%; }
+    th.col-ops { width: 15%; }
+    td.col-ops div { display: inline-block; }
+    td.col-ops div.checkbox {display: inline-block;}
+</style>';
+  $cell_markup = '';
+  foreach ($cells as $i => $cell) {
+    $col_classes[$i] = 'col-' . Intel_Df::drupal_clean_css_identifier(strtolower($cell));
+    $cell_markup .= '<th class="' . $col_classes[$i] . '">' . $cell . '</th>';
+  }
+  $markup .= '<table class="table table-striped form-table"><thead><tr>' . $cell_markup . '</tr></thead><tbody>';
+  $f['table_forms_0'] = array(
+    '#type' => 'markup',
+    '#markup' => $markup,
+  );
+
+  foreach ($addon_info as $addon_mn => $info) {
+
+    // if there is a show_callback, check if it resolves to true. If not,
+    // don't show Add-On.
+    if (empty($info['is_show'])) {
+      continue;
+    }
+
+    $row_class = $info['row_class'];
+
+    $f["row_{$addon_mn}_0"] = array(
+      '#type' => 'markup',
+      '#markup' => "<tr class=\"$row_class\">",
+    );
+
+    $ops = '';
+    if (!empty($data['settings_url'])) {
+      $l_options = Intel_Df::l_options_add_target('form_type');
+      $ops .= Intel_Df::l(Intel_Df::t('settings'), $data['settings_url'], $l_options);
+    }
+
+    $l_options = Intel_Df::l_options_add_target($addon_mn);
+    $f["addon_{$addon_mn}_title"] = array(
+      '#type' => 'item',
+      '#prefix' => '<td class="' . $col_classes[0] . '">',
+      '#suffix' => '</td>',
+      '#markup' => Intel_Df::l($info['title'], $info['description_url'], $l_options),
+    );
+    $f["addon_{$addon_mn}_description"] = array(
+      '#type' => 'item',
+      '#prefix' => '<td class="' . $col_classes[1] . '">',
+      '#suffix' => '</td>',
+      '#markup' => $info['description'],
+    );
+
+
+    /*
+    $f["form_{$data['type']}-{$data['id']}_ops"] = array(
+      '#type' => 'item',
+      '#prefix' => '<td class="' . $col_classes[1] . '">',
+      //'#suffix' => '</td>',
+      '#markup' => $ops,
+    );
+    */
+    if ($info['is_active']) {
+      $key = "addon__{$addon_mn}__active";
+      $f[$key] = array(
+        '#type' => 'checkbox',
+        '#title' => 'Active',
+        '#prefix' => '<td class="' . $col_classes[2] . '">' . $ops,
+        '#suffix' => '</td>',
+        '#default_value' => 1,
+        '#disabled' => 1,
+      );
+    }
+    else {
+      $key = "addon__{$addon_mn}__ignore";
+      $f[$key] = array(
+        '#type' => 'checkbox',
+        '#title' => 'Ignore',
+        '#prefix' => '<td class="' . $col_classes[2] . '">' . $ops,
+        '#suffix' => '</td>',
+        '#default_value' => !empty($ignore[$addon_mn]) ? 1 : 0,
+      );
+    }
+
+
+    $f["row_{$addon_mn}_1"] = array(
+      '#type' => 'markup',
+      '#markup' => "</tr>",
+    );
+  }
+
+
+  $f['table_forms_1'] = array(
+    '#type' => 'markup',
+    '#markup' => '</tbody></table>'
+  );
+
+
+  return $f;
+}
+
+function intel_admin_setup_check_addon_install($form, &$form_state) {
+  $status = array();
+
+  $status = array();
+  $status['success'] = 1;
+  $sys_meta = get_option('intel_system_meta', array());
+
+  if (!empty($sys_meta['setup_addon_ignore'])) {
+    $ignore = $sys_meta['setup_addon_ignore'];
+  }
+  else {
+    $ignore = array();
+  }
+
+  // use 'input' instead of 'values' b/c 'input' is available during form build
+  if (!empty($form_state['input'])) {
+    foreach ($form_state['input'] as $k => $v) {
+      if (substr($k, 0, 7) != 'addon__') {
+        continue;
+      }
+      $elms = explode('__', $k);
+      if (count($elms) == 3 && $elms[0] == 'addon' && $elms[2] == 'ignore') {
+        $ignore[$elms[1]] = !empty($v) ? 1 : 0;
+      }
+    }
+  }
+
+  $status['success'] = 1;
+  //$form_type_forms_info = intel()->form_type_forms_info();
+  $addon_info = intel()->addon_info();
+  foreach ($addon_info as $addon_mn => $info) {
+
+    $addon_info[$addon_mn]['is_show'] = 1;
+    if (!empty($info['show_callback'])) {
+      if (empty($info['show_arguments'])) {
+        $info['show_arguments'] = array();
+      }
+      $addon_info[$addon_mn]['is_show'] = call_user_func_array($info['show_callback'], $info['show_arguments']);
+      if (!$addon_info[$addon_mn]['is_show']) {
+        continue;
+      }
+    }
+
+    $addon_info[$addon_mn]['row_class'] = 'success';
+    $is_active = $addon_info[$addon_mn]['is_active'] = 1;
+    if (empty($info['is_active_callback'])) {
+      $is_active = $addon_info[$addon_mn]['is_active'] = 0;
+    }
+    else {
+      if (empty($info['is_active_arguments'])) {
+        $info['is_active_arguments'] = array();
+      }
+      $is_active = $addon_info[$addon_mn]['is_active'] = call_user_func_array($info['is_active_callback'], $info['is_active_arguments']);
+    }
+    if (!$is_active) {
+      if (!empty($ignore[$addon_mn])) {
+        $addon_info[$addon_mn]['row_class'] = 'warning';
+      }
+      else {
+        $addon_info[$addon_mn]['row_class'] = 'danger';
+        $status['success'] = 0;
+      }
+    }
+
+  }
+
+  if (empty($status['success'])) {
+    $status['error_msg'] = Intel_Df::t('Not all add-ons have been activated or set to ignore. Please either activate or check Ignore for each add-on with a red background.');
+  }
+
+  $form_state['intel_addon_info'] = $status['addon_info'] = $addon_info;
+  $status['ignore'] = $ignore;
+
+  return $status;
+}
+
+function intel_admin_setup_validate_addon_install($form, &$form_state, $status) {
+  if (!empty($status['error_msg'])) {
+    Intel_Form::form_set_error('none', $status['error_msg']);
+  }
+}
+
+function intel_admin_setup_submit_addon_install($form, &$form_state) {
+  $values = $form_state['values'];
+
+  $sys_meta = get_option('intel_system_meta', array());
+
+  if (!empty($sys_meta['setup_addon_ignore'])) {
+    $ignore = $sys_meta['setup_addon_ignore'];
+  }
+  else {
+    $ignore = array();
+  }
+
+  if (!empty($form_state['values'])) {
+    foreach ($form_state['values'] as $k => $v) {
+      $elms = explode('__', $k);
+      $ignore[$elms[1]] = !empty($v) ? 1 : 0;
+    }
+  }
+
+  $sys_meta['setup_addon_ignore'] = $ignore;
+
+  update_option('intel_system_meta', $sys_meta);
+}
+
+/*
+ * Tracking scripts setup
+ *
+ */
+function intel_admin_setup_addon_settings($form, &$form_state) {
+  $f = array();
+
+  $intel_scripts_enabled = $form_state['intel_intel_scripts_enabled'];
+
+  $items = array();
+  $l_options = array(
+    'attributes' => array(
+      'target' => 'intl',
+    ),
+  );
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Many add-ons are configurable.');
+  $items[] = ' ' . Intel_Df::t('Use the inputs below to setup your add-ons as needed.');
   $items[] = '</p><p>';
 
   $items[] = '<h3>' . Intel_Df::t('Available Addons') . '</h3>';
@@ -518,64 +863,81 @@ function intel_admin_setup_4($form, &$form_state) {
     '#markup' => implode(' ', $items),
   );
 
+  $f['intl_scripts'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Intl Scripts'),
+    '#description' => Intel_Df::t('Intl Scripts add JavaScript to your site to provide additional tracking and data integration.')
+      . ' ' . Intel_Df::t('Check any script you would like added to your site.'),
+  );
+
+  $intel_scripts = intel()->intel_script_info();
+  $options = array();
+  $defaults = array();
+  foreach ($intel_scripts AS $k => $v) {
+    if (!empty($v['selectable'])) {
+      $options[$k] = $v['title'] . ' - ' . $v['description'];
+      $defaults[$k] = !empty($v['enabled']) ? $k : '';
+    }
+  }
+  $enabled = get_option('intel_intel_scripts_enabled', array());
+  $enabled += $defaults;
+
+  $f['intl_scripts']['intel_intel_scripts_enabled'] = array(
+    '#type' => 'checkboxes',
+    //'#title' => Intel_Df::t('Intel scripts'),
+    '#options' => $options,
+    '#default_value' => $enabled,
+    //'#description' => Intel_Df::t('Select any intel integration scripts you want to include on your site.'),
+  );
+
   $field_default = array(
     '#type' => 'checkbox'
   );
 
-  $addon_enabled = get_option('intel_addons_enabled', array());
-
-  foreach ($addon_info as $k => $info) {
-    $default = isset($info['enable_default']) ? $info['enable_default'] : 0;
-    if (isset($addon_enabled[$k])) {
-      $default = $addon_enabled[$k];
-    }
-
-    $f['addon_' . $k] = array(
-      '#type' => 'checkbox',
-      '#title' => $info['title'],
-      '#description' => $info['description'],
-      '#default_value' => $default,
-    );
-  }
-
   return $f;
 }
 
-function intel_admin_setup_check_4($form, &$form_state) {
+/*
+ * Tracking scripts setup check
+ *
+ */
+function intel_admin_setup_check_addon_settings($form, &$form_state) {
   $status = array();
 
-  $form_state['intel_addons_enabled'] = get_option('intel_addons_enabled', array());
+  $intel_intel_scripts_enabled = $form_state['intel_intel_scripts_enabled'] = get_option('intel_intel_scripts_enabled', '');
+  if (!empty($form_state['input'])) {
+    if (!empty($form_state['input']['intel_intel_scripts_enabled'])) {
+      $intel_intel_scripts_enabled = $form_state['input']['intel_intel_scripts_enabled'];
+    }
+  }
 
-  if (!empty($form_state['intel_addons_enabled'])) {
+  if (is_array($intel_intel_scripts_enabled) ) {
     $status['success'] = 1;
   }
 
   return $status;
 }
 
-function intel_admin_setup_validate_4($form, &$form_state, $status) {
+/*
+ * Tracking scripts setup validate
+ *
+ */
+function intel_admin_setup_validate_addon_settings($form, &$form_state, $status) {
   if (!empty($status['error_msg'])) {
-    Intel_Form::form_set_error('intel_apikey', $status['error_msg']);
+    Intel_Form::form_set_error('none', $status['error_msg']);
   }
 }
 
-function intel_admin_setup_submit_4($form, &$form_state) {
+/*
+ * Tracking scripts setup submit
+ *
+ */
+function intel_admin_setup_submit_addon_settings($form, &$form_state) {
   $values = $form_state['values'];
-  $addon_info = $form_state['intel_addon_info'];
 
-  $enabled = array();
-  foreach ($values as $k => $v) {
-    if (substr($k, 0, 6) == 'addon_') {
-      $name = substr($k, 6);
-      $enabled[$name] = !empty($v) ? 1 : 0;
-      if (!empty($addon_info[$name]['enable_callback'])) {
-        if (function_exists($addon_info[$name]['enable_callback'])) {
-          $addon_info[$name]['enable_callback']($enabled[$name]);
-        }
-      }
-    }
+  if (isset($values['intel_intel_scripts_enabled'])) {
+    update_option('intel_intel_scripts_enabled', $values['intel_intel_scripts_enabled']);
   }
-  update_option('intel_addons_enabled', $enabled);
 }
 
 
@@ -583,11 +945,14 @@ function intel_admin_setup_submit_4($form, &$form_state) {
 
 
 
-
-function intel_admin_setup_5($form, &$form_state) {
+/*
+ * Goals setup form
+ *
+ */
+function intel_admin_setup_goals($form, &$form_state) {
   $f = array();
 
-  $status = $form_state['intel_statuses'][4];
+  $status = $form_state['intel_statuses']['goals'];
 
   $ga_goals = $form_state['intel_ga_goals'];
   $goals = get_option('intel_goals', array());
@@ -595,32 +960,25 @@ function intel_admin_setup_5($form, &$form_state) {
   $goals_default = intel_get_intel_goals_default();
 
   $items = array();
-  $l_options = array(
-    'attributes' => array(
-      'target' => 'intl',
-    ),
-  );
+  $l_options = Intel_Df::l_options_add_target('ga');
   $items[] = '<p>';
   $items[] = Intel_Df::t('A vital component of results oriented analytics is measuring when visitors convert by reaching an organizational goal.');
   $items[] = Intel_Df::t('Google Analytics enables you to track custom goals specific to your site\'s objectives.');
-  $items[] = '</p><p>';
+  $items[] = '</p>';
+  $items[] = '<p>';
   $url = intel_get_ga_admin_goals_url();
   $items[] = Intel_Df::t('Intelligence can work with a mix of traditional Google Analytics Goals setup in !link and Intl Goals managed directly within WordPress.', array(
     '!link' => Intel_Df::l(Intel_Df::t('Google Analytics Goals Admin'), $url, $l_options),
   ));
   $items[] = Intel_Df::t('Intl Goals are more configurable, easier to manage and provide rich context. Therefore, it is recommended to primarly use Intl Goals.');
-  $items[] = '</p><p>';
+  $items[] = '</p>';
+  $items[] = '<p>';
   // TODO WP - post and link to articles
-  $l_options = array(
-    'query' => array(
-      'name' => 'test',
-      'tid' => 'UA-1'
-    ),
-  );
+  $l_options = Intel_Df::l_options_add_target('intelligencewp');
   $items[] = Intel_Df::t('To learn more about strategies for setting up your goals see the article !link.', array(
-    '!link' => Intel_Df::l(Intel_Df::t('Creating Results Oriented Analytics Goals'), 'http://intl.getlevelten.com', $l_options),
+    '!link' => Intel_Df::l(Intel_Df::t('Creating Results Oriented Analytics Goals'), '//intelligencewp.com/blog/results-oriented-google-analytics-goals', $l_options),
   ));
-  $items[] = '</p><p>';
+  $items[] = '</p>';
 
   //$items[] = '<h3>' . Intel_Df::t('Intl Goal Presents') . '</h3>';
 
@@ -833,7 +1191,11 @@ function intel_admin_setup_5($form, &$form_state) {
   return $f;
 }
 
-function intel_admin_setup_check_5($form, &$form_state) {
+/*
+ * Goals setup check
+ *
+ */
+function intel_admin_setup_check_goals($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.imapi.inc';
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
@@ -867,8 +1229,8 @@ function intel_admin_setup_check_5($form, &$form_state) {
   $form_state['intel_goals'] = $goals = get_option('intel_goals', array());
 
   // if form submitted, process form_state values
-  if (!empty($form_state['values'])) {
-    $values = $form_state['values'];
+  if (!empty($form_state['input'])) {
+    $values = $form_state['input'];
     $has_intl_goal = 0;
     for ($i = 1; $i <= 20; $i++) {
       if (!empty($values["goal_{$i}_name"])) {
@@ -889,7 +1251,7 @@ function intel_admin_setup_check_5($form, &$form_state) {
   }
 
   if (!$has_intl_goal) {
-    $status['error_msg'] = Intel_Df::t('No Intl Goals have been set. Please set at least one Intl Goal.');
+    $status['error_msg'] = Intel_Df::t('No Intl Goals have been set. Please set at least one Intl Goal to proceed.');
   }
   else {
     $status['success'] = 1;
@@ -898,7 +1260,11 @@ function intel_admin_setup_check_5($form, &$form_state) {
   return $status;
 }
 
-function intel_admin_setup_validate_5($form, &$form_state, $status) {
+/*
+ * Goals setup validate
+ *
+ */
+function intel_admin_setup_validate_goals($form, &$form_state, $status) {
   $values = &$form_state['values'];
   $goals = $form_state['intel_goals'];
 
@@ -920,7 +1286,11 @@ function intel_admin_setup_validate_5($form, &$form_state, $status) {
   }
 }
 
-function intel_admin_setup_submit_5($form, &$form_state) {
+/*
+ * Goals setup submit
+ *
+ */
+function intel_admin_setup_submit_goals($form, &$form_state) {
   $values = $form_state['values'];
 
   $ga_goals = $form_state['intel_ga_goals'];
@@ -1044,17 +1414,21 @@ function intel_admin_setup_submit_5($form, &$form_state) {
   update_option('intel_goals', $goals);
 }
 
-function intel_admin_setup_6($form, &$form_state) {
+/*
+ * Scoring setup form
+ *
+ */
+function intel_admin_setup_scoring($form, &$form_state) {
   $f = array();
 
-  $status = $form_state['intel_statuses'][5];
+  $status = $form_state['intel_statuses']['scoring'];
 
   $items = array();
 
   $items[] = '<p>';
   $items[] = Intel_Df::t('Intelligence enables you to score a variety of items such as traffic metrics, valued events and goals.');
   $items[] = Intel_Df::t('Use the fields below to set value scores.');
-  $items[] = '</p><br />';
+  $items[] = '</p>';
 
   $items[] = '<h3>' . Intel_Df::t('Scores') . '</h3>';
 
@@ -1138,9 +1512,11 @@ function intel_admin_setup_6($form, &$form_state) {
   return $f;
 }
 
-
-
-function intel_admin_setup_check_6($form, &$form_state) {
+/*
+ * Scoring setup check
+ *
+ */
+function intel_admin_setup_check_scoring($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
@@ -1157,7 +1533,11 @@ function intel_admin_setup_check_6($form, &$form_state) {
   return $status;
 }
 
-function intel_admin_setup_validate_6($form, &$form_state, $status) {
+/*
+ * Scoring setup form validate
+ *
+ */
+function intel_admin_setup_validate_scoring($form, &$form_state, $status) {
   if (!empty($status['dimension_errors'])) {
     foreach ($status['dimension_errors'] as $i => $err) {
       Intel_Form::form_set_error('dim_' . $i . '_name', $err['message']);
@@ -1166,7 +1546,11 @@ function intel_admin_setup_validate_6($form, &$form_state, $status) {
   }
 }
 
-function intel_admin_setup_submit_6($form, &$form_state) {
+/*
+ * Scoring setup form submit
+ *
+ */
+function intel_admin_setup_submit_scoring($form, &$form_state) {
   $values = $form_state['values'];
 
   $scores = array();
@@ -1185,10 +1569,14 @@ function intel_admin_setup_submit_6($form, &$form_state) {
   update_option('intel_scorings', $scores);
 }
 
-function intel_admin_setup_7($form, &$form_state) {
+/*
+ * Form settings setup form
+ *
+ */
+function intel_admin_setup_form_settings($form, &$form_state) {
   $f = array();
 
-  $status = $form_state['intel_statuses'][7];
+  $status = $form_state['intel_statuses']['form_settings'];
   $form_data = $status['form_data'];
 
   $sys_meta = get_option('intel_system_meta', array());
@@ -1204,10 +1592,10 @@ function intel_admin_setup_7($form, &$form_state) {
 
   $items[] = '<p>';
   $items[] = Intel_Df::t('Intelligence integrates with various types of forms to trigger tracking events and to create contacts upon submission.');
-  $items[] = Intel_Df::t('Below is a list of forms you should setup to work with Intelligence.');
-  $items[] = Intel_Df::t('You can use the <em>settings</em> link to configure form level Intelligence settings.');
+  $items[] = Intel_Df::t('Below is a list of forms we found in your site you should setup to work with Intelligence.');
+  $items[] = Intel_Df::t('Click on the Title link for for each form to configure Intelligence settings for each form.');
   $items[] = Intel_Df::t('If you do not want to track a form, click the ignore checkbox to bypass checks.');
-  $items[] = '</p><br />';
+  $items[] = '</p>';
 
   $items[] .= '<h3>' . Intel_Df::t('Forms List') . '</h3>';
 
@@ -1217,8 +1605,8 @@ function intel_admin_setup_7($form, &$form_state) {
   );
 
   $cells = array();
-  $cells[] = Intel_Df::t('Type');
   $cells[] = Intel_Df::t('Title');
+  $cells[] = Intel_Df::t('Type');
   $cells[] = Intel_Df::t('Tracking event');
   $cells[] = Intel_Df::t('Field map');
   //$cells[] = Intel_Df::t('Ignore');
@@ -1227,13 +1615,12 @@ function intel_admin_setup_7($form, &$form_state) {
   $col_classes = array();
   $markup = '';
   $markup .= '<style>
-    th.col-type { width: 10%; }
     th.col-title { width: 20%; }
+    th.col-type { width: 10%; }
     th.col-tracking-event { width: 20%; }
     th.col-field-map { width: 35%; }
     th.col-ops { width: 15%; }
-    td.col-ops div { display: inline-block; }
-    td.col-ops div.checkbox {display: inline-block;}
+
 </style>';
   $cell_markup = '';
   foreach ($cells as $i => $cell) {
@@ -1266,18 +1653,25 @@ function intel_admin_setup_7($form, &$form_state) {
         $ops .= Intel_Df::l(Intel_Df::t('settings'), $data['settings_url'], $l_options);
       }
 
+
+      $title = !empty($data['title']) ? $data['title'] : '(' . Intel_Df::t('not set') . ')';
+      if (!empty($data['settings_url'])) {
+        $l_options = Intel_Df::l_options_add_target('form_type');
+        $title = Intel_Df::l($title, $data['settings_url'], $l_options);
+      }
+      $f["form_{$data['type']}-{$data['id']}_title"] = array(
+        '#type' => 'item',
+        '#prefix' => '<td class="' . $col_classes[1] . '">',
+        '#suffix' => '</td>',
+        '#markup' => $title,
+      );
       $f["form_{$data['type']}-{$data['id']}_type"] = array(
         '#type' => 'item',
         '#prefix' => '<td class="' . $col_classes[0] . '">',
         '#suffix' => '</td>',
         '#markup' => $data['type'],
       );
-      $f["form_{$data['type']}-{$data['id']}_title"] = array(
-        '#type' => 'item',
-        '#prefix' => '<td class="' . $col_classes[1] . '">',
-        '#suffix' => '</td>',
-        '#markup' => !empty($data['title']) ? $data['title'] : '(' . Intel_Df::t('not set') . ')',
-      );
+
       $f["form_{$data['type']}-{$data['id']}_tracking_event"] = array(
         '#type' => 'item',
         '#prefix' => '<td class="' . $col_classes[2] . '">',
@@ -1301,14 +1695,27 @@ function intel_admin_setup_7($form, &$form_state) {
         '#markup' => $ops,
       );
       */
-      $key = "form_{$data['type']}-{$data['id']}_ignore";
-      $f[$key] = array(
-        '#type' => 'checkbox',
-        '#title' => 'Ignore',
-        '#prefix' => '<td class="' . $col_classes[4] . '">' . $ops,
-        '#suffix' => '</td>',
-        '#default_value' => !empty($ignore[$data['type']][$data['id']]) ? 1 : 0,
-      );
+      if (!empty($data['is_success'])) {
+        $key = "form__{$data['type']}-{$data['id']}__success";
+        $f[$key] = array(
+          '#type' => 'checkbox',
+          '#title' => 'Complete',
+          '#prefix' => '<td class="' . $col_classes[4] . '">',
+          '#suffix' => '</td>',
+          '#default_value' => 1,
+          '#disabled' => 1,
+        );
+      }
+      else {
+        $key = "form__{$data['type']}-{$data['id']}__ignore";
+        $f[$key] = array(
+          '#type' => 'checkbox',
+          '#title' => 'Ignore',
+          '#prefix' => '<td class="' . $col_classes[4] . '">',
+          '#suffix' => '</td>',
+          '#default_value' => !empty($ignore[$data['type']][$data['id']]) ? 1 : 0,
+        );
+      }
 
       $f["row_{$data['type']}-{$data['id']}_1"] = array(
         '#type' => 'markup',
@@ -1327,8 +1734,11 @@ function intel_admin_setup_7($form, &$form_state) {
 }
 
 
-
-function intel_admin_setup_check_7($form, &$form_state) {
+/*
+ * Form settings setup check
+ *
+ */
+function intel_admin_setup_check_form_settings($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
@@ -1343,9 +1753,13 @@ function intel_admin_setup_check_7($form, &$form_state) {
     $ignore = array();
   }
 
-  if (!empty($form_state['values'])) {
-    foreach ($form_state['values'] as $k => $v) {
-      $elms = explode('_', $k);
+  // use 'input' instead of 'values' b/c 'input' is available during form build
+  if (!empty($form_state['input'])) {
+    foreach ($form_state['input'] as $k => $v) {
+      if (substr($k, 0, 6) != 'form__') {
+        continue;
+      }
+      $elms = explode('__', $k);
       if (count($elms) == 3 && $elms[0] == 'form' && $elms[2] == 'ignore') {
         list($type, $id) = explode('-', $elms[1]);
         if (!isset($ignore[$type])) {
@@ -1384,6 +1798,7 @@ function intel_admin_setup_check_7($form, &$form_state) {
       }
       else {
         $data['row_class'] = 'success';
+        $data['is_success'] = 1;
       }
       if (empty($ignore[$form_type][$form_id]) && empty($data['tracking_event']) && empty($data['field_map'])) {
         $data['class'] = 'warning';
@@ -1401,7 +1816,11 @@ function intel_admin_setup_check_7($form, &$form_state) {
   return $status;
 }
 
-function intel_admin_setup_validate_7($form, &$form_state, $status) {
+/*
+ * Form settings setup form validate
+ *
+ */
+function intel_admin_setup_validate_form_settings($form, &$form_state, $status) {
   if (empty($status['success'])) {
     $msg = Intel_Df::t('Not all forms have been configured.');
     $msg .= ' ' . Intel_Df::t('Either configure the Inteligence tracking or check the Ignore checkbox for each form.');
@@ -1409,7 +1828,11 @@ function intel_admin_setup_validate_7($form, &$form_state, $status) {
   }
 }
 
-function intel_admin_setup_submit_7($form, &$form_state) {
+/*
+ * Form settings setup form
+ *
+ */
+function intel_admin_setup_submit_form_settings($form, &$form_state) {
   $values = $form_state['values'];
 
   $sys_meta = get_option('intel_system_meta', array());
@@ -1423,7 +1846,7 @@ function intel_admin_setup_submit_7($form, &$form_state) {
 
   if (!empty($form_state['values'])) {
     foreach ($form_state['values'] as $k => $v) {
-      $elms = explode('_', $k);
+      $elms = explode('__', $k);
       if (count($elms) == 3 && $elms[0] == 'form' && $elms[2] == 'ignore') {
         list($type, $id) = explode('-', $elms[1]);
         if (!isset($ignore[$type])) {
@@ -1439,10 +1862,14 @@ function intel_admin_setup_submit_7($form, &$form_state) {
   update_option('intel_system_meta', $sys_meta);
 }
 
-function intel_admin_setup_8($form, &$form_state) {
+/*
+ * Complete setup form
+ *
+ */
+function intel_admin_setup_finish($form, &$form_state) {
   $f = array();
 
-  $status = $form_state['intel_statuses'][5];
+  $status = $form_state['intel_statuses']['finish'];
 
   $items = array();
 
@@ -1466,16 +1893,18 @@ function intel_admin_setup_8($form, &$form_state) {
   return $f;
 }
 
-
-
-function intel_admin_setup_check_8($form, &$form_state) {
+/*
+ * Complete setup form
+ *
+ */
+function intel_admin_setup_check_finish($form, &$form_state) {
 
   $status = array();
 
   return $status;
 }
 
-function intel_admin_setup_validate_8($form, &$form_state, $status) {
+function intel_admin_setup_validate_9($form, &$form_state, $status) {
   if (!empty($status['dimension_errors'])) {
     foreach ($status['dimension_errors'] as $i => $err) {
       Intel_Form::form_set_error('dim_' . $i . '_name', $err['message']);
@@ -1484,7 +1913,7 @@ function intel_admin_setup_validate_8($form, &$form_state, $status) {
   }
 }
 
-function intel_admin_setup_submit_8($form, &$form_state) {
+function intel_admin_setup_submit_finish($form, &$form_state) {
 
 }
 
