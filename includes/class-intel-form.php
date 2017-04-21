@@ -3681,9 +3681,14 @@ class Intel_Form  {
 		$element['#attributes']['type'] = 'submit';
 		Intel_Df::element_set_attributes($element, array('id', 'name', 'value'));
 
+		$has_btn_class = !empty($element['#attributes']['class']) && in_array('btn', $element['#attributes']['class']);
+
 		$element['#attributes']['class'][] = 'form-' . $element['#button_type'];
-		$element['#attributes']['class'][] = 'btn';
-		$element['#attributes']['class'][] = 'btn-info';
+		if (!$has_btn_class) {
+			$element['#attributes']['class'][] = 'btn';
+			$element['#attributes']['class'][] = 'btn-info';
+		}
+
 		if (!empty($element['#attributes']['disabled'])) {
 			$element['#attributes']['class'][] = 'form-button-disabled';
 		}

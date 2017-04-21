@@ -1082,6 +1082,20 @@ class Intel_Df  {
 		return '<a href="' . self::check_plain(self::url($path, $options)) . '"' . self::drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $text : self::check_plain($text)) . '</a>';
 	}
 
+	public static function l_options_add_class ($class, $l_options = array()) {
+		if (is_string($class)) {
+			$class = array($class);
+		}
+		if (!isset($l_options['attributes'])) {
+			$l_options['attributes'] = array();
+		}
+		if (!isset($l_options['attributes']['class'])) {
+			$l_options['attributes']['class'] = array();
+		}
+		$l_options['attributes']['class'] = array_merge($l_options['attributes']['class'], $class);
+		return $l_options;
+	}
+
 	public static function l_options_add_destination ($destination, $l_options = array()) {
 		$query = array(
 			'destination' => $destination,

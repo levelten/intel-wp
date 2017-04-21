@@ -527,7 +527,7 @@ function intel_build_report($vars) {
   $error = '';
   $emsgs = array(
     'page-attr' => Intel_Df::t('Page attribute and content segment reporting features are not available with the free version of Intelligence.'),
-    'visitor'  => Intel_Df::t('Visitor data and reporting features are not available with the free or basic versions of Intelligence.'),
+    'visitor'  => Intel_Df::t('Visitor data and reporting features are not available with the free version of Intelligence.'),
   );
   // Page attribute report api access
   if ($vars['filter_type'] == 'page-attr' || (substr($vars['report_subtype'], 0, 3) == 'pa-')) {
@@ -555,7 +555,7 @@ function intel_build_report($vars) {
   }
 
   if ($error) {
-    drupal_set_message($error, 'error');
+    Intel_Df::drupal_set_message($error, 'error');
   }
   elseif (empty($_GET['return_type']) && empty($vars['return_type'])) {
     $output .= intel_get_report_ajax_container($vars);

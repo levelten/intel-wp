@@ -2843,7 +2843,7 @@ function _intel_intel_script_info($info = array()) {
     'title' => Intel_Df::t('YouTube'),
     'description' => Intel_Df::t('Tracks YouTube video play events.'),
     'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_youtube.js',
-    'enabled' => 0,
+    'enabled' => 1,
     'selectable' => 1,
   );
   $info['dyn'] = array(
