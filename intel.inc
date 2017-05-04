@@ -822,10 +822,10 @@ function intel_menu($items = array()) {
       'file' => 'admin/intel.admin_util.inc',
     );
 
-    $items['admin/util/test/url_parsing'] = array(
-      'title' => 'URL parsing',
+    $items['admin/util/test/form'] = array(
+      'title' => 'Form',
       //'description' => 'Analyze and optimize node content.',
-      'page callback' => 'intel_util_test_url_parsing',
+      'page callback' => 'intel_util_test_form_page',
       'access callback' => 'user_access',
       'access arguments' => array('admin intel'),
       'type' => Intel_Df::MENU_LOCAL_TASK,
@@ -836,6 +836,16 @@ function intel_menu($items = array()) {
       'title' => 'Webform',
       //'description' => 'Analyze and optimize node content.',
       'page callback' => 'intel_util_test_webform_page',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
+    $items['admin/util/test/url_parsing'] = array(
+      'title' => 'URL parsing',
+      //'description' => 'Analyze and optimize node content.',
+      'page callback' => 'intel_util_test_url_parsing',
       'access callback' => 'user_access',
       'access arguments' => array('admin intel'),
       'type' => Intel_Df::MENU_LOCAL_TASK,

@@ -1174,7 +1174,7 @@ class Intel_Form  {
 				// An unchecked checkbox has a #value of integer 0, different than string
 				// '0', which could be a valid value.
 				$is_empty_multiple = (!count($elements['#value']));
-				$is_empty_string = (is_string($elements['#value']) && drupal_strlen(trim($elements['#value'])) == 0);
+				$is_empty_string = (is_string($elements['#value']) && strlen(trim($elements['#value'])) == 0);
 				$is_empty_value = ($elements['#value'] === 0);
 				if ($is_empty_multiple || $is_empty_string || $is_empty_value) {
 					// Although discouraged, a #title is not mandatory for form elements. In
@@ -1198,7 +1198,10 @@ class Intel_Form  {
 			// #value data.
 			elseif (isset($elements['#element_validate'])) {
 				foreach ($elements['#element_validate'] as $function) {
-					$function($elements, $form_state, $form_state['complete form']);
+					//$function($elements, $form_state, $form_state['complete form']);
+					if (is_callable($function)) {
+						call_user_func_array($function, array($elements, $form_state, $form_state['complete form']));
+					}
 				}
 			}
 			$elements['#validated'] = TRUE;
@@ -2318,7 +2321,13 @@ class Intel_Form  {
 		if ($input !== FALSE && $input !== NULL) {
 			// This should be a string, but allow other scalars since they might be
 			// valid input in programmatic form submissions.
-			return is_scalar($input) ? (string) $input : '';
+			// WP sanitization
+			$input = is_scalar($input) ? (string) $input : '';
+			if (!isset($element['#sanitize']) || $element['#sanitize']) {
+				$input = sanitize_text_field($input);
+			}
+			return $input;
+			//return is_scalar($input) ? (string) $input : ''; // Drupal version
 		}
 	}
 
@@ -2342,7 +2351,12 @@ class Intel_Form  {
 			if (!is_scalar($input)) {
 				$input = '';
 			}
-			return str_replace(array("\r", "\n"), '', (string) $input);
+			$input = (string) $input;
+			if (!isset($element['#sanitize']) || $element['#sanitize']) {
+				$input = sanitize_text_field($input);
+			}
+			return str_replace(array("\r", "\n"), '', $input);
+			//return str_replace(array("\r", "\n"), '', (string) $input); // Drupal version
 		}
 	}
 
@@ -2461,7 +2475,10 @@ class Intel_Form  {
 		// add form-control to some elements. Breaks checkbox
 		$exclude = array(
 			'checkbox' => 1,
+			'checkboxes' => 1,
 			'fieldset' => 1,
+			'radio' => 1,
+			'radios' => 1,
 		);
 		if (empty($exclude[$element['#type']])) {
 			$element['#attributes']['class'][] = 'form-control';
@@ -2872,7 +2889,7 @@ class Intel_Form  {
 		}
 		$attributes['class'][] = 'container-inline';
 
-		return '<div' . drupal_attributes($attributes) . '>' . drupal_render_children($element) . '</div>';
+		return '<div' . Intel_Df::drupal_attributes($attributes) . '>' . Intel_Df::drupal_render_children($element) . '</div>';
 	}
 
 	/**
@@ -2882,16 +2899,16 @@ class Intel_Form  {
 		// Default to current date
 		if (empty($element['#value'])) {
 			$element['#value'] = array(
-				'day' => format_date(REQUEST_TIME, 'custom', 'j'),
-				'month' => format_date(REQUEST_TIME, 'custom', 'n'),
-				'year' => format_date(REQUEST_TIME, 'custom', 'Y'),
+				'day' => Intel_Df::format_date(REQUEST_TIME, 'custom', 'j'),
+				'month' => Intel_Df::format_date(REQUEST_TIME, 'custom', 'n'),
+				'year' => Intel_Df::format_date(REQUEST_TIME, 'custom', 'Y'),
 			);
 		}
 
 		$element['#tree'] = TRUE;
 
 		// Determine the order of day, month, year in the site's chosen date format.
-		$format = variable_get('date_format_short', 'm/d/Y - H:i');
+		$format = get_option('intel_date_format_short', 'm/d/Y - H:i');
 		$sort = array();
 		$sort['day'] = max(strpos($format, 'd'), strpos($format, 'j'));
 		$sort['month'] = max(strpos($format, 'm'), strpos($format, 'M'));
@@ -2903,17 +2920,17 @@ class Intel_Form  {
 		foreach ($order as $type) {
 			switch ($type) {
 				case 'day':
-					$options = drupal_map_assoc(range(1, 31));
+					$options = Intel_Df::drupal_map_assoc(range(1, 31));
 					$title = Intel_Df::t('Day');
 					break;
 
 				case 'month':
-					$options = drupal_map_assoc(range(1, 12), 'map_month');
+					$options = Intel_Df::drupal_map_assoc(range(1, 12), 'map_month');
 					$title = Intel_Df::t('Month');
 					break;
 
 				case 'year':
-					$options = drupal_map_assoc(range(1900, 2050));
+					$options = Intel_Df::drupal_map_assoc(range(1900, 2050));
 					$title = Intel_Df::t('Year');
 					break;
 			}
@@ -3000,7 +3017,7 @@ class Intel_Form  {
 					'#default_value' => isset($element['#default_value']) ? $element['#default_value'] : FALSE,
 					'#attributes' => $element['#attributes'],
 					'#parents' => $element['#parents'],
-					'#id' => drupal_html_id('edit-' . implode('-', $parents_for_id)),
+					'#id' => Intel_Df::drupal_html_id('edit-' . implode('-', $parents_for_id)),
 					'#ajax' => isset($element['#ajax']) ? $element['#ajax'] : NULL,
 					'#weight' => $weight,
 				);
@@ -3065,7 +3082,8 @@ class Intel_Form  {
 	 * This is used as a pre render function for checkboxes and radios.
 	 */
 	public static function form_pre_render_conditional_form_element($element) {
-		$t = get_t();
+		//$t = get_t();
+		$t = 'Intel_Df::t';
 		// Set the element's title attribute to show #title as a tooltip, if needed.
 		if (isset($element['#title']) && $element['#title_display'] == 'attribute') {
 			$element['#attributes']['title'] = $element['#title'];

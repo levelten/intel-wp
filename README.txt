@@ -21,6 +21,10 @@ to better inspect and adapt to optimzed returns.
 
 The visitor intelligence side integrates data about site visitors to drive deeper engagement and accelerate sales cycles.
 
+The Intelligence for WordPress plugin integrates the LevelTen Intelligence API service (http://intl.getlevelten.com)
+into WordPress. The Intelligence API provides a SAAS platform to integrate and extend Google Analytics and other
+3rd party services. To review the Intelligence API Terms of Use visit: http://intl.getlevelten.com/legal
+
 To learn more about Intelligence for WordPress visit http://www.intelligencewp.com
 
 == Installation ==

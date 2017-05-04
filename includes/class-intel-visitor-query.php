@@ -253,7 +253,7 @@ class Intel_Visitor_Query {
       $qv['fields'] = array_unique( $qv['fields'] );
       $this->query_fields = array();
       foreach ( $qv['fields'] as $field ) {
-        $field = 'ID' === $field ? 'ID' : sanitize_key( $field );
+        $field = 'vid' === $field ? 'vid' : sanitize_key( $field );
         $this->query_fields[] = "$this->table_name.$field";
       }
       $this->query_fields = implode( ',', $this->query_fields );
@@ -276,6 +276,7 @@ class Intel_Visitor_Query {
       $include = false;
     }
 
+    /*
     $blog_id = 0;
     if ( isset( $qv['blog_id'] ) ) {
       $blog_id = absint( $qv['blog_id'] );
@@ -295,24 +296,26 @@ class Intel_Visitor_Query {
       $posts_table = $wpdb->get_blog_prefix( $blog_id ) . 'posts';
       $this->query_where .= " AND $this->table_name.ID IN ( SELECT DISTINCT $posts_table.post_author FROM $posts_table WHERE $posts_table.post_status = 'publish' AND $posts_table.post_type IN ( " . join( ", ", $post_types ) . " ) )";
     }
+    */
 
-    // nicename
-    if ( '' !== $qv['nicename']) {
-      $this->query_where .= $wpdb->prepare( ' AND user_nicename = %s', $qv['nicename'] );
+    // name
+    if ( !empty($qv['name'])) {
+      $this->query_where .= $wpdb->prepare( ' AND name = %s', $qv['name'] );
     }
 
-    if ( ! empty( $qv['nicename__in'] ) ) {
-      $sanitized_nicename__in = array_map( 'esc_sql', $qv['nicename__in'] );
-      $nicename__in = implode( "','", $sanitized_nicename__in );
-      $this->query_where .= " AND user_nicename IN ( '$nicename__in' )";
+    if ( ! empty( $qv['name__in'] ) ) {
+      $sanitized_name__in = array_map( 'esc_sql', $qv['name__in'] );
+      $name__in = implode( "','", $sanitized_name__in );
+      $this->query_where .= " AND name IN ( '$name__in' )";
     }
 
-    if ( ! empty( $qv['nicename__not_in'] ) ) {
-      $sanitized_nicename__not_in = array_map( 'esc_sql', $qv['nicename__not_in'] );
-      $nicename__not_in = implode( "','", $sanitized_nicename__not_in );
-      $this->query_where .= " AND user_nicename NOT IN ( '$nicename__not_in' )";
+    if ( ! empty( $qv['name__not_in'] ) ) {
+      $sanitized_name__not_in = array_map( 'esc_sql', $qv['name__not_in'] );
+      $name__not_in = implode( "','", $sanitized_name__not_in );
+      $this->query_where .= " AND name NOT IN ( '$name__not_in' )";
     }
 
+    /*
     // login
     if ( '' !== $qv['login']) {
       $this->query_where .= $wpdb->prepare( ' AND login = %s', $qv['login'] );
@@ -329,11 +332,13 @@ class Intel_Visitor_Query {
       $login__not_in = implode( "','", $sanitized_login__not_in );
       $this->query_where .= " AND user_login NOT IN ( '$login__not_in' )";
     }
+    */
 
     // Meta query.
     $this->meta_query = new WP_Meta_Query();
     $this->meta_query->parse_query_vars( $qv );
 
+    /*
     if ( isset( $qv['who'] ) && 'authors' == $qv['who'] && $blog_id ) {
       $who_query = array(
         'key' => $wpdb->get_blog_prefix( $blog_id ) . 'user_level',
@@ -356,7 +361,9 @@ class Intel_Visitor_Query {
 
       $this->meta_query->parse_query_vars( $this->meta_query->queries );
     }
+    */
 
+    /*
     $roles = array();
     if ( isset( $qv['role'] ) ) {
       if ( is_array( $qv['role'] ) ) {
@@ -441,9 +448,10 @@ class Intel_Visitor_Query {
 
       $this->meta_query->parse_query_vars( $this->meta_query->queries );
     }
+    */
 
     if ( ! empty( $this->meta_query->queries ) ) {
-      $clauses = $this->meta_query->get_sql( 'user', $this->table_name, 'vid', $this );
+      $clauses = $this->meta_query->get_sql( 'intel_visitor', $this->table_name, 'vid', $this );
       $this->query_from .= $clauses['join'];
       $this->query_where .= $clauses['where'];
 
@@ -488,7 +496,7 @@ class Intel_Visitor_Query {
         continue;
       }
 
-      if ( 'nicename__in' === $_orderby || 'login__in' === $_orderby ) {
+      if ( 'name__in' === $_orderby || 'login__in' === $_orderby ) {
         $orderby_array[] = $parsed;
       } else {
         $orderby_array[] = $parsed . ' ' . $this->parse_order( $_order );
@@ -514,7 +522,6 @@ class Intel_Visitor_Query {
     $search = '';
     if ( isset( $qv['search'] ) )
       $search = trim( $qv['search'] );
-
     if ( $search ) {
       $leading_wild = ( ltrim($search, '*') != $search );
       $trailing_wild = ( rtrim($search, '*') != $search );
@@ -530,17 +537,26 @@ class Intel_Visitor_Query {
         $search = trim($search, '*');
 
       $search_columns = array();
-      if ( $qv['search_columns'] )
-        $search_columns = array_intersect( $qv['search_columns'], array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename' ) );
-      if ( ! $search_columns ) {
+      if ( $qv['search_columns'] ) {
+        //$search_columns = array_intersect( $qv['search_columns'], array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename' ) );
+        $search_columns = array_intersect($qv['search_columns'], array(
+          'vid',
+          'name',
+          'email',
+          'created',
+          'updated',
+          'last_activity'
+        ));
+      }
+      if ( empty( $search_columns ) ) {
         if ( false !== strpos( $search, '@') )
-          $search_columns = array('user_email');
+          $search_columns = array('email');
         elseif ( is_numeric($search) )
-          $search_columns = array('user_login', 'ID');
-        elseif ( preg_match('|^https?://|', $search) && ! ( is_multisite() && wp_is_large_network( 'users' ) ) )
-          $search_columns = array('user_url');
+          $search_columns = array('vid');
+        //elseif ( preg_match('|^https?://|', $search) && ! ( is_multisite() && wp_is_large_network( 'users' ) ) )
+        //  $search_columns = array('user_url');
         else
-          $search_columns = array('user_login', 'user_url', 'user_email', 'user_nicename', 'name');
+          $search_columns = array('name');
       }
 
       /**
@@ -555,7 +571,7 @@ class Intel_Visitor_Query {
        * @param string        $search         Text being searched.
        * @param WP_User_Query $this           The current WP_User_Query instance.
        */
-      $search_columns = apply_filters( 'user_search_columns', $search_columns, $search, $this );
+      $search_columns = apply_filters( 'intel_visitor_search_columns', $search_columns, $search, $this );
 
       $this->query_where .= $this->get_search_sql( $search, $search_columns, $wild );
     }
@@ -563,15 +579,15 @@ class Intel_Visitor_Query {
     if ( ! empty( $include ) ) {
       // Sanitized earlier.
       $ids = implode( ',', $include );
-      $this->query_where .= " AND $this->table_name.ID IN ($ids)";
+      $this->query_where .= " AND $this->table_name.vid IN ($ids)";
     } elseif ( ! empty( $qv['exclude'] ) ) {
       $ids = implode( ',', wp_parse_id_list( $qv['exclude'] ) );
-      $this->query_where .= " AND $this->table_name.ID NOT IN ($ids)";
+      $this->query_where .= " AND $this->table_name.vid NOT IN ($ids)";
     }
 
     // Date queries are allowed for the user_registered field.
     if ( ! empty( $qv['date_query'] ) && is_array( $qv['date_query'] ) ) {
-      $date_query = new WP_Date_Query( $qv['date_query'], 'user_registered' );
+      $date_query = new WP_Date_Query( $qv['date_query'], 'created' );
       $this->query_where .= $date_query->get_sql();
     }
 
@@ -626,7 +642,9 @@ class Intel_Visitor_Query {
 
     if ( 'all_with_meta' == $qv['fields'] ) {
       //cache_users( $this->results );
-      $r = intel()->get_entity_controller('intel_visitor')->load($this->results);
+      foreach ($this->results as $vid) {
+        $r[ $vid ] = intel()->get_entity_controller('intel_visitor')->loadOne($vid);
+      }
       $this->results = $r;
 
       /*
@@ -636,7 +654,6 @@ class Intel_Visitor_Query {
       d($r);
       */
 
-      $this->results = $r;
     } elseif ( 'all' == $qv['fields'] ) {
       foreach ( $this->results as $key => $user ) {
         $this->results[ $key ] = new WP_User( $user, '', $qv['blog_id'] );
@@ -747,8 +764,21 @@ class Intel_Visitor_Query {
     $meta_query_clauses = $this->meta_query->get_clauses();
 
     $_orderby = '';
-    if ( in_array( $orderby, array( 'login', 'nicename', 'email', 'url', 'registered' ) ) ) {
-      $_orderby = 'user_' . $orderby;
+    if ( in_array( $orderby, array( 'name', 'created', 'updated', 'last_activity', 'contact_created' ) ) ) {
+      $_orderby = $orderby;
+    // orderby identifiers
+    } elseif ( in_array( $orderby, array('email')) ) {
+      $_orderby = "i.value";
+      $this->query_from .= " LEFT OUTER JOIN {$wpdb->prefix}intel_visitor_identifier AS i ON {$wpdb->intel_visitor}.vid = i.vid AND i.type = '$orderby'";
+      /*
+      $this->query_from .= " LEFT OUTER JOIN (
+				SELECT value AS {$orderby}_value
+				FROM {$wpdb->prefix}intel_visitor_identifier
+				WHERE type = '$orderby'
+				GROUP BY vid
+			) AS i ON ({$wpdb->intel_visitor}.vid = {$wpdb->prefix}intel_visitor_identifier.vid)
+			";
+      */
     } elseif ( in_array( $orderby, array( 'user_login', 'user_nicename', 'user_email', 'user_url', 'user_registered' ) ) ) {
       $_orderby = $orderby;
     } elseif ( 'name' == $orderby ) {
@@ -766,8 +796,8 @@ class Intel_Visitor_Query {
 			) p ON ({$wpdb->intel_visitor}.ID = p.post_author)
 			";
       $_orderby = 'post_count';
-    } elseif ( 'ID' == $orderby || 'id' == $orderby ) {
-      $_orderby = 'ID';
+    } elseif ( 'vid' == $orderby || 'ID' == $orderby || 'id' == $orderby ) {
+      $_orderby = 'vid';
     } elseif ( 'meta_value' == $orderby || $this->get( 'meta_key' ) == $orderby ) {
       $_orderby = "$wpdb->usermeta.meta_value";
     } elseif ( 'meta_value_num' == $orderby ) {
@@ -776,10 +806,10 @@ class Intel_Visitor_Query {
       $include = wp_parse_id_list( $this->query_vars['include'] );
       $include_sql = implode( ',', $include );
       $_orderby = "FIELD( $this->table_name.ID, $include_sql )";
-    } elseif ( 'nicename__in' === $orderby ) {
-      $sanitized_nicename__in = array_map( 'esc_sql', $this->query_vars['nicename__in'] );
-      $nicename__in = implode( "','", $sanitized_nicename__in );
-      $_orderby = "FIELD( user_nicename, '$nicename__in' )";
+    } elseif ( 'name__in' === $orderby ) {
+      $sanitized_name__in = array_map( 'esc_sql', $this->query_vars['name__in'] );
+      $name__in = implode( "','", $sanitized_name__in );
+      $_orderby = "FIELD( name, '$name__in' )";
     } elseif ( 'login__in' === $orderby ) {
       $sanitized_login__in = array_map( 'esc_sql', $this->query_vars['login__in'] );
       $login__in = implode( "','", $sanitized_login__in );

@@ -1,31 +1,15 @@
 <?php
 
 /**
- * The file drupal functionality
+ * Drupal wrapper class.
  *
- * A class definition that includes attributes and functions used across both the
- * public-facing side of the site and the admin area.
+ * This class is used as a wrapper to shim Drupal functions to be compatible
+ * with WordPress.
  *
- * @link       getlevelten.com/blog/tom
- * @since      1.0.0
+ * The original source for this code from Drupal 7, created by a community
+ * core contributors. All original code is Copyright by the original authors
+ * and licensed under GNU General Public License v2 or later.
  *
- * @package    Intl
- * @subpackage Intl/includes
- */
-
-/**
- * The core plugin class.
- *
- * This is used to define internationalization, admin-specific hooks, and
- * public-facing site hooks.
- *
- * Also maintains the unique identifier of this plugin as well as the current
- * version of the plugin.
- *
- * @since      1.0.0
- * @package    Intl
- * @subpackage Intl/includes
- * @author     Tom McCracken <tomm@getlevelten.com>
  */
 class Intel_Df  {
 
@@ -159,7 +143,8 @@ class Intel_Df  {
 	}
 
 	public static function check_plain($text) {
-		return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+		return esc_html( $text );
+		//return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 	}
 
 	/**
@@ -751,6 +736,19 @@ class Intel_Df  {
 		return $elements;
 	}
 
+	public static function drupal_render_children(&$element, $children_keys = NULL) {
+		if ($children_keys === NULL) {
+			$children_keys = self::element_children($element);
+		}
+		$output = '';
+		foreach ($children_keys as $key) {
+			if (!empty($element[$key])) {
+				$output .= self::drupal_render($element[$key]);
+			}
+		}
+		return $output;
+	}
+
 	public static function &drupal_static($name, $default_value = NULL, $reset = FALSE) {
 		static $data = array(), $default = array();
 		// First check if dealing with a previously defined static variable.
@@ -1067,7 +1065,7 @@ class Intel_Df  {
 			}
 			$query = $query ? ('?' . self::drupal_http_build_query($query)) : '';
 			$script = isset($options['script']) ? $options['script'] : '';
-			return $base . $script . $query . $options['fragment'];
+			return esc_url($base . $script . $query . $options['fragment']);
 		}
 	}
 
@@ -1130,7 +1128,7 @@ class Intel_Df  {
 					$v = self::check_plain($v);
 				}
 				if (substr($k, 1, 0) == '%' ) {
-					$v = '<em class="placeholder">' . $v . '</em>';
+					$v = '<em class="placeholder">' . self::check_plain($v) . '</em>';
 				}
 				$wp_args[] = $v;
 				$replace = '%' . count($wp_args) . '$s' ;
@@ -1138,11 +1136,11 @@ class Intel_Df  {
 			}
 		}
 		if (!empty($wp_args)) {
-			array_unshift($wp_args, __($string, 'intel'));
+			array_unshift($wp_args, esc_html__($string, 'intel'));
 			return call_user_func_array('sprintf', $wp_args);
 		}
 		else {
-			return __($string, 'intel');
+			return esc_html__($string, 'intel');
 		}
 	}
 

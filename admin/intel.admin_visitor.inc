@@ -641,12 +641,20 @@ function intel_admin_people_contacts() {
     exit;
   }
 
+  $search_string = '';
+  if (!empty($_REQUEST['s'])) {
+    $_REQUEST['s'] = sanitize_text_field($_REQUEST['s']);
+    $search_string = Intel_Df::t('Search results for &#8220;@s&#8221;', array(
+      '@s' => $_REQUEST['s'],
+    ));
+  }
   $vars = array(
     'list_table' => $wp_list_table,
     'search_box' => array(
-      __( 'Search Users' ),
-      'user'
+      __( 'Search Contacts' ),
+      'intel_visitor'
     ),
+    'search_string' => esc_html($search_string),
     'view' => 1,
   );
   $output = Intel_Df::theme('list_table', $vars);

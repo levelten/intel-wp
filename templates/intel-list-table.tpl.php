@@ -22,6 +22,10 @@
  * @see template_preprocess_user_profile_item()
  */
 ?>
+<?php if (!empty($search_string)) {
+  print '<span class="subtitle">' . $search_string . '</span>';
+}
+?>
 <?php if (!empty($view)) { $list_table->view();  } ?>
 <form method="get">
 <?php if (!empty($search_box)) { $list_table->search_box($search_box[0], $search_box[1]);  } ?>

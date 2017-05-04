@@ -71,10 +71,10 @@ function intel_df_theme($themes = array()) {
     'fieldset' => array(
       'render element' => 'element',
     ),
-    'radio' => array(
+    'checkbox' => array(
       'render element' => 'element',
     ),
-    'radios' => array(
+    'checkboxes' => array(
       'render element' => 'element',
     ),
     'date' => array(
@@ -82,12 +82,6 @@ function intel_df_theme($themes = array()) {
     ),
     'exposed_filters' => array(
       'render element' => 'form',
-    ),
-    'checkbox' => array(
-      'render element' => 'element',
-    ),
-    'checkboxes' => array(
-      'render element' => 'element',
     ),
     'button' => array(
       'render element' => 'element',
@@ -111,6 +105,12 @@ function intel_df_theme($themes = array()) {
       'render element' => 'element',
     ),
     'file' => array(
+      'render element' => 'element',
+    ),
+    'radio' => array(
+      'render element' => 'element',
+    ),
+    'radios' => array(
       'render element' => 'element',
     ),
     'tableselect' => array(
@@ -258,9 +258,9 @@ function intel_df_element_info($types) {
   );
   $types['radios'] = array(
     '#input' => TRUE,
-    '#process' => array('form_process_radios'),
+    '#process' => array('Intel_Form::form_process_radios'),
     '#theme_wrappers' => array('radios'),
-    '#pre_render' => array('form_pre_render_conditional_form_element'),
+    '#pre_render' => array('Intel_Form::form_pre_render_conditional_form_element'),
   );
   $types['radio'] = array(
     '#input' => TRUE,
@@ -274,7 +274,7 @@ function intel_df_element_info($types) {
     '#input' => TRUE,
     '#process' => array('Intel_Form::form_process_checkboxes'),
     '#theme_wrappers' => array('checkboxes'),
-    '#pre_render' => array('form_pre_render_conditional_form_element'),
+    '#pre_render' => array('Intel_Form::form_pre_render_conditional_form_element'),
   );
   $types['checkbox'] = array(
     '#input' => TRUE,
@@ -299,8 +299,8 @@ function intel_df_element_info($types) {
   );
   $types['date'] = array(
     '#input' => TRUE,
-    '#element_validate' => array('date_validate'),
-    '#process' => array('form_process_date'),
+    '#element_validate' => array('Intel_Form::date_validate'),
+    '#process' => array('Intel_Form::form_process_date'),
     '#theme' => 'date',
     '#theme_wrappers' => array('form_element'),
   );
@@ -314,7 +314,7 @@ function intel_df_element_info($types) {
     '#input' => TRUE,
     '#js_select' => TRUE,
     '#multiple' => TRUE,
-    '#process' => array('form_process_tableselect'),
+    '#process' => array('Intel_Form::form_process_tableselect'),
     '#options' => array(),
     '#empty' => '',
     '#theme' => 'tableselect',

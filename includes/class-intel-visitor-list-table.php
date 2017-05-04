@@ -608,4 +608,16 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 		return apply_filters( 'get_role_list', $role_list, $user_object );
 	}
 
+	public function search_box( $text, $input_id ) {
+	  // need to maintain intel nav elements to correctly redirect search box
+	  // submission
+	  if (!empty($_REQUEST['q'])) {
+      echo '<input type="hidden" name="q" value="' . esc_attr( $_REQUEST['q'] ) . '" />';
+	  }
+	  if (!empty($_REQUEST['page'])) {
+      echo '<input type="hidden" name="page" value="' . esc_attr( $_REQUEST['page'] ) . '" />';
+	  }
+	  return parent::search_box( $text, $input_id );
+	}
+
 }

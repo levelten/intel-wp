@@ -46,8 +46,7 @@ class Intel_Tracker {
 	 */
 	private function __construct() {
 
-		// TODO change this
-		$api_level = 'pro';
+		$api_level = intel_api_level();
 
 		$a = explode('//', WP_SITEURL);
 		$systemHost = $a[1];
@@ -60,7 +59,7 @@ class Intel_Tracker {
 			// cmsHostpath, modulePath & apiPath are not standard io settings. They are used
 			// exclusivly by intel module js.
 			'cmsHostpath' => $cmsHostpath,
-			'modulePath' => "wp-content/plugins/intl/",
+			'modulePath' => INTEL_URL,
 			'libPath' => 'TODO',
 			'systemPath' => 'TODO',
 			'systemHost' => $systemHost,
@@ -120,7 +119,7 @@ class Intel_Tracker {
 		if (!$prop) {
 			return $this->config;
 		}
-		elseif (exists($this->config[$prop])) {
+		elseif (!empty($this->config[$prop])) {
 			return $this->config[$prop];
 		}
 		else {

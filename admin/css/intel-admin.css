@@ -14,12 +14,12 @@
     margin-bottom: 0;
 }
 
-.intel-content h1,
-.intel-content h2,
-.intel-content h3,
-.intel-content h4,
-.intel-content h5,
-.intel-content h6 {
+.bootstrap-wrapper .intel-content h1,
+.bootstrap-wrapper .intel-content h2,
+.bootstrap-wrapper .intel-content h3,
+.bootstrap-wrapper .intel-content h4,
+.bootstrap-wrapper .intel-content h5,
+.bootstrap-wrapper .intel-content h6 {
     margin-top: 0;
 }
 
@@ -64,7 +64,7 @@
 }
 
 .intel-content .summary {
-    margin-bottom: 10px;
+    /* margin-bottom: 10px; */
 }
 
 .intel-content .summary-item {

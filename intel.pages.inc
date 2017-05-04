@@ -19,6 +19,7 @@ function template_process_intel_page(&$variables) {
   if (empty($variables['title'])) {
     $variables['title'] = intel()->get_page_title();
   }
+  $variables['title'] = sanitize_title($variables['title']);
 }
 
 function template_process_intel_navbar(&$variables) {
@@ -265,8 +266,8 @@ function template_preprocess_intel_visitor_picture(&$variables) {
 
 function intel_visitor_format_profile_item($title, $value, $attributes = array()) {
   $item = array(
-    'title' => $title,
-    'value' => $value,
+    'title' => esc_html($title),
+    'value' => esc_html($value),
   );
   if (!empty($attributes)) {
     $item['attributes'] = $attributes;
@@ -333,19 +334,19 @@ function intel_format_location_name($location, $format = 'country') {
   $out = '';
   if ($format == 'city, state, country') {
     $out = !empty($location['city']) ? $location['city'] : t('(not set)') . ', ';
-    $out .= ', ' . !empty($location['region']) ? $location['region'] : t('(not set)');
-    $out .= ', ' . !empty($location['country']) ? $location['country'] : t('(not set)');
+    $out .= ', ' . !empty($location['region']) ? esc_html($location['region']) : t('(not set)');
+    $out .= ', ' . !empty($location['country']) ? esc_html($location['country']) : t('(not set)');
   }
   elseif ($format == 'map') {
-    $out = !empty($location['city']) ? $location['city'] : '(not set)';
-    $out .= ', ' . (!empty($location['region']) ? $location['region'] : t('(not set)'));
+    $out = !empty($location['city']) ? esc_html($location['city']) : '(not set)';
+    $out .= ', ' . (!empty($location['region']) ? esc_html($location['region']) : t('(not set)'));
     if (isset($location['metro']) && ($location['metro'] != '(not set)')) {
       $out .= ' (' . $location['metro'] . ')';
     }
-    $out .= "<br />\n" . (!empty($location['country']) ? $location['country'] : t('(not set)'));
+    $out .= "<br />\n" . (!empty($location['country']) ? esc_html($location['country']) : t('(not set)'));
   }
   else {
-    $out = !empty($location['country']) ? $location['country'] : t('(not set)');
+    $out = !empty($location['country']) ? esc_html($location['country']) : t('(not set)');
   }
   return $out;
 }
@@ -366,6 +367,7 @@ function theme_intel_location(&$variables) {
   }
 
   $location['name'] = $location['city'] . ', ' . $location['region']  . ', ' . $location['country'];
+  $location['name'] = esc_html(esc_html($location['name']));
   $vars = array(
     'locations' => array($location),
   );
@@ -457,9 +459,9 @@ function template_preprocess_intel_map(&$variables) {
       $loc['lon'] = $loc['longitude'];
     }
     $variables['locations'][] = array(
-      'lat' => $loc['lat'],
-      'lon' => $loc['lon'],
-      'title' => $loc['name'],
+      'lat' => esc_html($loc['lat']),
+      'lon' => esc_html($loc['lon']),
+      'title' => esc_html($loc['name']),
     );
     //$vars['locations_json'] .= "[" . $loc['lat'] . ", " . $loc['lon'] . ", " . "'" . (isset($loc['name']) ? $loc['name'] : '') . "'],\n";
     $variables['map_options']['center']['lat'] = $loc['lat']; 
@@ -496,11 +498,13 @@ function template_preprocess_intel_visitor_browser_environment(&$variables) {
 function template_preprocess_intel_visitor_bio(&$variables) {
   //$variables['markup'] = $variables['entity']->getVar('data', 'bio', 'summary');
   $variables['markup'] = $variables['entity']->getVar('data', 'description', '@value');
+
   if (strlen($variables['markup']) > 260) {
     $variables['markup'] = substr($variables['markup'], 0, 260);
     $variables['markup'] = preg_replace('/\W\w+\s*(\W*)$/', '$1', $variables['markup']) . ' ...';
 
   }
+  $variables['markup'] = esc_html($variables['markup']);
   //$variables['markup'] = '<span class="lead">' . $variables['markup'] . '</span>';
 }
 
@@ -614,8 +618,8 @@ function template_preprocess_intel_visitor_visits_table(&$variables) {
       if (substr($i, 0, 1) == '_') {
         continue;
       }
-      $medium = isset($visit['trafficsource']['medium']) ? $visit['trafficsource']['medium'] : Intel_Df::t('(not set)');
-      $source = isset($visit['trafficsource']['source']) ? $visit['trafficsource']['source'] : Intel_Df::t('(not set)');
+      $medium = isset($visit['trafficsource']['medium']) ? esc_html($visit['trafficsource']['medium']) : Intel_Df::t('(not set)');
+      $source = isset($visit['trafficsource']['source']) ? esc_html($visit['trafficsource']['source']) : Intel_Df::t('(not set)');
       $score = !empty($visit['score']) ? $visit['score'] : 0;
       $rows[] = array(
         isset($visit['time']) ? Intel_Df::format_date($visit['time'], 'medium') : Intel_Df::t('(not set)'),
@@ -654,13 +658,13 @@ function theme_intel_property_browser_environment($variables) {
     return;
   }
   $items = array();
-  $items[] = intel_visitor_format_profile_item(Intel_Df::t('Browser'), $env['browser'] . " v" . $env['browserVersion']);
-  $items[] = intel_visitor_format_profile_item(Intel_Df::t('OS'), $env['operatingSystem'] . " " . $env['operatingSystemVersion']);
+  $items[] = intel_visitor_format_profile_item(Intel_Df::t('Browser'), Intel_Df::check_plain($env['browser']) . " v" . Intel_Df::check_plain($env['browserVersion']));
+  $items[] = intel_visitor_format_profile_item(Intel_Df::t('OS'), Intel_Df::check_plain($env['operatingSystem']) . " " . Intel_Df::check_plain($env['operatingSystemVersion']));
   if (!empty($env['mobileDeviceInfo'])) {
-    $items[] = intel_visitor_format_profile_item(Intel_Df::t('Mobile device'), $env['mobileDeviceInfo']);
+    $items[] = intel_visitor_format_profile_item(Intel_Df::t('Mobile device'), Intel_Df::check_plain($env['mobileDeviceInfo']));
   }
-  $items[] = intel_visitor_format_profile_item(Intel_Df::t('Screen'), $env['screenResolution']);
-  $items[] = intel_visitor_format_profile_item(Intel_Df::t('Language'), $env['language']);
+  $items[] = intel_visitor_format_profile_item(Intel_Df::t('Screen'), Intel_Df::check_plain($env['screenResolution']));
+  $items[] = intel_visitor_format_profile_item(Intel_Df::t('Language'), Intel_Df::check_plain($env['language']));
 
   $output = Intel_Df::theme('intel_visitor_profile_item_list', array('items' => $items));
   return $output;
@@ -692,7 +696,6 @@ function theme_intel_property_trafficsource($variables) {
     if (isset($source[0])) {
       $source = $source[0];
     }
-    d($source);
   }
   elseif (!empty($variables['trafficsource'])) {
     $source = $variables['trafficsource'];
