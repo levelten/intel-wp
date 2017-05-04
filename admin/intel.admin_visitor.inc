@@ -607,15 +607,15 @@ function intel_admin_people_contacts() {
 
   $wp_list_table = new Intel_Visitor_List_Table();
   $pagenum = $wp_list_table->get_pagenum();
-  $title = __('Users');
+  $title = esc_html__('Users');
   //$parent_file = 'users.php';
 
   add_screen_option( 'per_page' );
 
   get_current_screen()->set_screen_reader_content( array(
-    'heading_views'      => __( 'Filter users list' ),
-    'heading_pagination' => __( 'Users list navigation' ),
-    'heading_list'       => __( 'Users list' ),
+    'heading_views'      => esc_html__( 'Filter users list' ),
+    'heading_pagination' => esc_html__( 'Users list navigation' ),
+    'heading_list'       => esc_html__( 'Users list' ),
   ) );
 
   if ( !empty($_GET['_wp_http_referer']) ) {
@@ -651,7 +651,7 @@ function intel_admin_people_contacts() {
   $vars = array(
     'list_table' => $wp_list_table,
     'search_box' => array(
-      __( 'Search Contacts' ),
+      esc_html__( 'Search Contacts', 'intel' ),
       'intel_visitor'
     ),
     'search_string' => esc_html($search_string),

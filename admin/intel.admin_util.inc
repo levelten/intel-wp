@@ -9,6 +9,7 @@
 
 function intel_util() {
   $output = '';
+
   $l_options = array(
     'attributes' => array(
       'class' => array(
@@ -28,14 +29,8 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  //get_next_sub_seq( 1 );
-  $form = Ninja_Forms()->form( 1 );
-
-  $seq_num = NF_Database_Models_Form::get_next_sub_seq( 1 );
-
-  intel_d($form);
-
-  intel_d($seq_num);
+  $dir = wp_upload_dir();
+  intel_d($dir);
 
   return '';
 
@@ -558,10 +553,10 @@ function intel_util_dev() {
 
 function intel_util_reset_site() {
   if (empty($_GET['pw']) || $_GET['pw'] != 'please') {
-    return __('What is the password?', 'intel');
+    return esc_html__('What is the password?', 'intel');
   }
   if (empty($_GET['flags'])) {
-    return __('No flags set', 'intel');
+    return esc_html__('No flags set', 'intel');
   }
 
   $flags = $_GET['flags'];

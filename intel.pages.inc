@@ -308,8 +308,10 @@ function template_preprocess_intel_visitor_social_links (&$variables) {
         '@source' => !empty($prop['_source']) ? $prop['_source'] : Intel_Df::t('(not set)'),
       )
     );
+    $upload_dir = wp_upload_dir();
+    $upload_basedir = $upload_dir['basedir'] . '/';
     $iv = array(
-      'path' => '/wp-content/uploads/' . $info['icon'],
+      'path' => $upload_basedir . $info['icon'],
       'alt' => $alt,
       'title' => $alt,
     );

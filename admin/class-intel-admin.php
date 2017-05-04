@@ -158,13 +158,13 @@ class Intel_Admin {
 	public function site_menu() {
 		global $wp_version;
 		if ( current_user_can( 'manage_options' ) ) {
-			add_menu_page( __( "Intelligence", 'intel' ), __( "Intelligence", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
-			add_submenu_page( 'intel_reports', __( "Reports", 'intel' ), __( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_reports', __( "Contacts", 'intel' ), __( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_reports', __( "Settings", 'intel' ), __( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
-			//add_submenu_page( 'intel_settings', __( "General Settings", 'intel' ), __( "Settings", 'intel' ), 'manage_options', 'intel_settings', array( 'Intel_Settings', 'general_settings' ) );
+			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
+			add_submenu_page( 'intel_reports', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_reports', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_reports', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
+			//add_submenu_page( 'intel_settings', esc_html__( "General Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_settings', array( 'Intel_Settings', 'general_settings' ) );
 			//if (intel_is_debug()) {
-				add_submenu_page( 'intel_reports', __( "Utilities", 'intel' ), __( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
+				add_submenu_page( 'intel_reports', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
 			//}
   	}
 	}
@@ -180,7 +180,7 @@ class Intel_Admin {
 		$tree = array();
 		$breadcrumbs = array();
 		$breadcrumbs[] = array(
-			'text' => __('Intelligence', 'intel'),
+			'text' => esc_html__('Intelligence', 'intel'),
 			//'path' => Intel_Df::url('admin/intel'),
 		);
 		$navbar_exclude = array();
@@ -192,7 +192,7 @@ class Intel_Admin {
 		if ($_GET['page'] == 'intel_visitor') {
 			$q = 'admin/people/contacts';
 			$breadcrumbs[] = array(
-				'text' => __('Contacts', 'intel'),
+				'text' => esc_html__('Contacts', 'intel'),
 				'path' => Intel_Df::url($q),
 			);
 		}
@@ -200,7 +200,7 @@ class Intel_Admin {
 			$q = 'admin/reports/intel';
 			//$navbar_exclude[$q] = 1;
 			$breadcrumbs[] = array(
-				'text' => __('Reports', 'intel'),
+				'text' => esc_html__('Reports', 'intel'),
 				'path' => Intel_Df::url($q),
 			);
 			$navbar_base_q = $navbar_base_qt = $q;
@@ -209,14 +209,14 @@ class Intel_Admin {
 		if ($_GET['page'] == 'intel_config') {
 			$q = 'admin/config/intel/settings';
 			$breadcrumbs[] = array(
-				'text' => __('Settings', 'intel'),
+				'text' => esc_html__('Settings', 'intel'),
 				'path' => Intel_Df::url($q),
 			);
 		}
 		if ($_GET['page'] == 'intel_util') {
 			$q = 'admin/util';
 			$breadcrumbs[] = array(
-				'text' => __('Utilities', 'intel'),
+				'text' => esc_html__('Utilities', 'intel'),
 				'path' => Intel_Df::url($q),
 			);
 			$navbar_base_q = $navbar_base_qt = $q;
@@ -269,8 +269,8 @@ class Intel_Admin {
 
 							if (empty($entity)) {
 								$vars = array(
-									'title' => __('404 Error', 'intel'),
-									'markup' => __('Entity not found', 'intel'),
+									'title' => esc_html__('404 Error', 'intel'),
+									'markup' => esc_html__('Entity not found', 'intel'),
 									'messages' => Intel_Df::drupal_get_messages(),
 								);
 								print Intel_Df::theme('intel_page', $vars);
@@ -291,8 +291,8 @@ class Intel_Admin {
 
 		if (empty($info)) {
 			$vars = array(
-				'title' => __('404 Error', 'intel'),
-				'markup' => __('Page not found', 'intel'),
+				'title' => esc_html__('404 Error', 'intel'),
+				'markup' => esc_html__('Page not found', 'intel'),
 				'messages' => Intel_Df::drupal_get_messages(),
 			);
 			print Intel_Df::theme('intel_page', $vars);
@@ -352,8 +352,8 @@ class Intel_Admin {
 		$args = !empty($info['access arguments']) ? $info['access arguments'] : array();
 		if (!call_user_func_array($func, $args)) {
 			$vars = array(
-				'title' => __('401 Error', 'intel'),
-				'markup' => __('Not authorized', 'intel'),
+				'title' => esc_html__('401 Error', 'intel'),
+				'markup' => esc_html__('Not authorized', 'intel'),
 				'messages' => Intel_Df::drupal_get_messages(),
 			);
 			print Intel_Df::theme('intel_page', $vars);
@@ -375,7 +375,7 @@ class Intel_Admin {
 
 		// set page title using menu info
 		if (!empty($info['title'])) {
-			$title = __($info['title'], 'intel');
+			$title = esc_html__($info['title'], 'intel');
 			$intel->set_page_title($title);
 		}
 
@@ -537,14 +537,14 @@ class Intel_Admin {
 	public function contacts_column_headers() {
 		$ch = array(
 			'cb' => '<input type="checkbox" />',
-			'name' => __('Name', 'intel'),
-			'email' => __('Email', 'intel'),
-			'contact_created' => __('Created', 'intel'),
-			'last_activity' => __('Last activity', 'intel'),
-			'score' => __('Score', 'intel'),
-			//'entrances' => __('Visits', 'intel'),
-			//'pageviews' => __('Pageviews', 'intel'),
-			//'timeOnSite' => __('Time on site', 'intel'),
+			'name' => esc_html__('Name', 'intel'),
+			'email' => esc_html__('Email', 'intel'),
+			'contact_created' => esc_html__('Created', 'intel'),
+			'last_activity' => esc_html__('Last activity', 'intel'),
+			'score' => esc_html__('Score', 'intel'),
+			//'entrances' => esc_html__('Visits', 'intel'),
+			//'pageviews' => esc_html__('Pageviews', 'intel'),
+			//'timeOnSite' => esc_html__('Time on site', 'intel'),
 		);
 		return $ch;
 	}
