@@ -10,35 +10,50 @@ function intel_admin_setup_info($items = array()) {
   $items = array();
   $items['start'] = array(
     'text' => Intel_Df::t('Start'),
-    //'submit_button_text' => Intel_Df::t('Start'),
+    'submit_button_text' => Intel_Df::t('Start setup'),
     'submit_button_pre_text' => Intel_Df::t('when ready, click'),
+    'action_img_src' => INTEL_URL . '/images/setup_start_action.png',
   );
   $items['primary_ga_plugin'] = array(
     'text' => Intel_Df::t('Base GA plugin'),
+    'action_img_src' => INTEL_URL . '/images/setup_base_ga_action.png',
   );
   $items['primary_ga_profile'] = array(
     'text' => Intel_Df::t('Base GA profile'),
+    'action_img_src' => INTEL_URL . '/images/setup_base_ga_action.png',
+    'progress_msg' => Intel_Df::t('Base analytics are good to go!'),
   );
   $items['intel_ga_profile'] = array(
     'text' => Intel_Df::t('Intelligence GA profile'),
+    'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
   );
   $items['intel_api_key'] = array(
     'text' => Intel_Df::t('Intelligence API key'),
+    'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
   );
   $items['addon_install'] = array(
     'text' => Intel_Df::t('Add-on installation'),
+    'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
+    'progress_msg' => Intel_Df::t('Now we are tracking!'),
   );
   $items['addon_settings'] = array(
     'text' => Intel_Df::t('Add-on settings'),
+    'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
   );
   $items['goals'] = array(
     'text' => Intel_Df::t('Goals'),
+    'action_img_src' => INTEL_URL . '/images/setup_goals_action.png',
+    'progress_msg' => Intel_Df::t('The hard parts over!'),
   );
   $items['scoring'] = array(
     'text' => Intel_Df::t('Scoring'),
+    'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
+    'progress_msg' => Intel_Df::t('The hard parts over!'),
   );
   $items['form_settings'] = array(
     'text' => Intel_Df::t('Form settings'),
+    'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
+    'progress_msg' => Intel_Df::t('Only one more!'),
   );
   $items['finish'] = array(
     'text' => Intel_Df::t('Finish'),
@@ -49,12 +64,13 @@ function intel_admin_setup_info($items = array()) {
 }
 
 function intel_admin_setup($form, &$form_state) {
-  $form['markup_start'] = array(
-    '#type' => 'markup',
-    '#markup' => '<div class="row"><div class="col-md-3">',
-  );
+
+  add_thickbox();
 
   intel()->set_page_title(Intel_Df::t('Setup Wizard'));
+
+  wp_enqueue_script('intel-admin-setup', INTEL_URL . 'admin/js/intel-admin-setup.js', array( 'jquery' ));
+  wp_enqueue_style('intel-admin-setup', INTEL_URL . 'admin/css/intel-admin-setup.css');
 
   $setup_info = intel_admin_setup_info();
 
@@ -98,6 +114,7 @@ function intel_admin_setup($form, &$form_state) {
   }
 
   $sys_meta = get_option('intel_system_meta', array());
+  $setup_step_completed = !empty($sys_meta['setup_step']) ? $sys_meta['setup_step'] : '';
   $sys_meta['setup_successes'] = $setup_successes;
   $sys_meta['setup_step'] = $setup_step;
 
@@ -107,6 +124,59 @@ function intel_admin_setup($form, &$form_state) {
   else {
     update_option('intel_system_meta', $sys_meta);
   }
+
+  $wrapper = '<div class="intel-admin-setup intel-admin-setup-' . $setup_step . '">';
+  $form['wrapper_0'] = array(
+    '#type' => 'markup',
+    '#markup' => $wrapper,
+  );
+
+  if ($setup_step_completed > 99) {
+    $progressper = 100;
+  }
+  else {
+    $progressper = round(100 * count($setup_successes) /  (count($setup_info) - 1));
+  }
+
+  //intel_d($setup_step_completed);
+  //intel_d($progressper);
+
+  $progressbar = '';
+  $progressbar .= '<style>.bootstrap-wrapper .progress {background-color: #BBB; } </style>';
+  $progressbar .= <<<EOT
+  <script>
+  jQuery(document).ready(function(){
+  });
+  </script>
+EOT;
+
+  //$progressbar .= '<div class="card">';
+  $progressbar .= '<div class="clearfix text-uppercase">';
+  $progressbar .= '<div class="pull-left">' . Intel_Df::t('Start') . '</div>';
+  //$progressbar .= '<div class="pull-left" id="progress-bar-status" style="margin-left: ' . $progressper . '%;">' . 'Almost there!' . '</div>';
+  $progressbar .= '<div class="pull-right">' . Intel_Df::t('Finish') . '</div>';
+  $progressbar .= '</div>';
+  //$progressbar .= '<div class="progress" style="margin-left: 1.2em; margin-right: 1.5em;">';
+  $progressbar .= '<div class="progress">';
+  $progressbar .= '<div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="' . $progressper . '" aria-valuemin="0" aria-valuemax="100" style="width: ' . ($progressper ? $progressper : 2) . '%;">';
+  $progressbar .= $progressper . '%';
+  $progressbar .= '</div>';
+  //$progressbar .= '<div class="progress-bar text-left" style="width: ' . (100 - $progressper) . '%;">';
+  $progressbar .= '<div id="progress-bar-mark">';
+  //$progressbar .= 'Almost there';
+  $progressbar .= '</div>';
+  $progressbar .= '</div>';
+  //$progressbar .= '</div>';
+
+  $form['progressbar'] = array(
+    '#type' => 'markup',
+    '#markup' => $progressbar,
+  );
+
+  $form['markup_start'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="row"><div class="col-md-3">',
+  );
 
   $checklist = '';
   $checklist .= '<ul class="list-group checked-list-box wizard-list-group">';
@@ -172,23 +242,28 @@ function intel_admin_setup($form, &$form_state) {
 
   $form['markup_mid3'] = array(
     '#type' => 'markup',
-    '#markup' => '</div><div class="card-footer text-right">',
+    '#markup' => '</div><div class="card-footer text-right text-middle clearfix">',
   );
 
-  $form['setup_step'] = array(
-    '#type' => 'hidden',
-    '#value' => $setup_step,
-  );
+
+
+  if (!empty($setup_info[$setup_step]['action_img_src'])) {
+    $form['action_img'] = array(
+      '#type' => 'markup',
+      '#markup' => '<img src="' . $setup_info[$setup_step]['action_img_src'] . '" class="pull-left">',
+    );
+  }
 
   if (!isset($setup_info[$setup_step]['submit_button_text']) || !empty($setup_info[$setup_step]['submit_button_text'])) {
     $form['submit'] = array(
       '#type' => 'submit',
-      '#value' => !empty($setup_info[$setup_step]['submit_button_text']) ? $setup_info[$setup_step]['submit_button_text'] : Intel_Df::t('Next'),
+      '#value' => !empty($setup_info[$setup_step]['submit_button_text']) ? $setup_info[$setup_step]['submit_button_text'] : Intel_Df::t('Next step'),
       '#prefix' => (!empty($setup_info[$setup_step]['submit_button_pre_text']) ? $setup_info[$setup_step]['submit_button_pre_text'] : Intel_Df::t('when complete, click')) . ' &nbsp; ',
       '#attributes' => array(
         'class' => array(
           'btn',
           'btn-success',
+          'text-uppercase',
         )
       ),
     );
@@ -196,8 +271,14 @@ function intel_admin_setup($form, &$form_state) {
 
   $form['markup_end'] = array(
     '#type' => 'markup',
-    '#markup' => '</div></div></div></div>',
+    '#markup' => '</div></div></div></div></div>',
   );
+
+  $form['setup_step'] = array(
+    '#type' => 'hidden',
+    '#value' => $setup_step,
+  );
+
   $form_state['intel_setup_step'] = $setup_step;
   return $form;
 }
@@ -270,25 +351,49 @@ function intel_admin_setup_submit($form, &$form_state) {
 function intel_admin_setup_start($form, &$form_state) {
   $f = array();
 
+  $markup = '';
+  $markup .= '<div class="row">';
+  $markup .= '<div class="col-xs-7">';
+  $f['markup_0'] = array(
+    '#type' => 'markup',
+    '#markup' => $markup,
+  );
+
   $items = array();
+  $items[] = '<div class="text-center">';
+  $items[] = '<h3>' . Intel_Df::t('Results oriented Google Analytics made easy.') . '</h3>';
+  $items[] = '<h4 class="lead text-muted">' . Intel_Df::t('measure what matters!') . '</h4>';
   $items[] = '<p>';
-  $items[] = Intel_Df::t('The Intelligence setup wizard will walk you through the steps for setting up enhanced, results oriented Google Analytics.');
+  $items[] = Intel_Df::t('The Intelligence setup wizard will walk you through the steps for setting up enhanced Google Analytics.');
   $items[] = '</p>';
 
-  $items[] = '<p>';
-  $items[] = Intel_Df::t('Intelligence extends standard Google Analytics to enable you to measure what really matters such as conversions and engagement.');
-  $items[] = Intel_Df::t('Our goal is to help you understand the true value (ROI) of your website and its components, empowering more insightful marketing, content, UX, and features.');
-  $items[] = '</p>';
+  //$items[] = '<p>';
+  //$items[] = Intel_Df::t('Intelligence extends standard Google Analytics to enable you to measure what really matters such as conversions and engagement.');
+  //$items[] = Intel_Df::t('Our goal is to help you understand the true value (ROI) of your website and its components, empowering more insightful marketing, content, UX, and features.');
+  //$items[] = '</p>';
 
   $items[] = '<p>';
-  $items[] = Intel_Df::t('After completing each step, click the <em>Next</em> button to proceed.');
+  $items[] = Intel_Df::t('After completing each step, click the <em>Next step</em> button to proceed.', array(), array('html' => 1));
   $items[] = Intel_Df::t('The wizard will save your progress so you can leave and come back at anytime right to where you left off.');
-  $items[] = Intel_Df::t('Click the <em>Next</em> button to begin.');
+  //$items[] = Intel_Df::t('Click the <em>Next</em> button to begin.');
   $items[] = '</p>';
+  $items[] = '</div>';
 
   $f['instructions'] = array(
     '#type' => 'markup',
     '#markup' => implode(' ', $items),
+  );
+
+
+  $markup = '';
+  $markup .= '</div>';
+  $markup .= '<div class="col-xs-5">';
+  $markup .= '<image src="' . INTEL_URL . '/images/setup_start_right.png" class="img-responsive" >';
+  $markup .= '</div>';
+  $markup .= '</div>';
+  $f['markup_1'] = array(
+    '#type' => 'markup',
+    '#markup' => $markup,
   );
 
   return $f;
@@ -335,16 +440,19 @@ function intel_admin_setup_primary_ga_plugin($form, &$form_state) {
   $items[] = Intel_Df::t('Once the plugin is active, click Completed to proceed.');
   $items[] = '</p>';
   */
-
+  header('X-Frame-Options: GOFORIT');
+  header_remove('X-Frame-Options');
   $items[] = '<p>';
   $items[] = Intel_Df::t('Intelligence requires a compatible Google Analytics Data API plugin.');
   $items[] = Intel_Df::t('Please install and activate the Google Analytics Dashboard for WP plugin using the buttons below:');
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $l_options = Intel_Df::l_options_add_target('gadwp', $l_options);
-  $items[] = '<br><br>' . Intel_Df::l(Intel_Df::t('1. Download Google Analytics Dashboard for WP plugin'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options);
+  $items[] = '<br><br><label>' . Intel_Df::t('First') . '</label><br>';
+  $items[] = Intel_Df::l(Intel_Df::t('Download Google Analytics Dashboard for WP plugin'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options);
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $l_options = Intel_Df::l_options_add_target('plugin-admin', $l_options);
-  $items[] = '<br><br>' . Intel_Df::l(Intel_Df::t('2. Activate plugin using WP plugin admin'), 'wp-admin/plugins.php', $l_options);
+  $items[] = '<br><br><label>' . Intel_Df::t('Then') . '</label><br>';
+  $items[] = Intel_Df::l(Intel_Df::t('Activate plugin using WP plugin admin'), 'wp-admin/plugins.php', $l_options);
   $items[] = '</p>';
 
   $f['instructions'] = array(
@@ -402,7 +510,8 @@ function intel_admin_setup_primary_ga_profile($form, &$form_state) {
 
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $l_options = Intel_Df::l_options_add_target('gadwp-admin', $l_options);
-  $items[] = '<br>' . Intel_Df::l(Intel_Df::t('1. Complete Google Analytics Dashboard For WP setup'), 'wp-admin/admin.php?page=gadash_settings', $l_options);
+  $items[] = '<br><label>' . Intel_Df::t('First') . '</label><br>';
+  $items[] = Intel_Df::l(Intel_Df::t('Complete Google Analytics Dashboard For WP setup'), 'wp-admin/admin.php?page=gadash_settings', $l_options);
 
   //$items[] = '<p>';
   //$items[] = Intel_Df::t('Once you have set the primary GA profile, click Completed to proceed.');
@@ -425,7 +534,8 @@ function intel_admin_setup_check_primary_ga_profile($form, &$form_state) {
   // check if gadwp ga authorization is complete
   $gadwp = GADWP();
   if (empty($gadwp->config->options['ga_dash_token'])) {
-    $status['error_msg'] = Intel_Df::t('Plugin Authorization is not complete.');
+    $status['error_msg'] = Intel_Df::t('Plugin Google Analytics API authorization is not complete.');
+    $status['error_msg'] .= Intel_Df::t('Please complete the Google Analytics Dashboard For WP setup.');
     return $status;
   }
 
@@ -436,6 +546,7 @@ function intel_admin_setup_check_primary_ga_profile($form, &$form_state) {
   $ga_profiles = intel_fetch_ga_profiles();
   if (empty($ga_profiles)) {
     $status['error_msg'] = Intel_Df::t('Unable to retrieve profile list from Google Analytics.');
+    $status['error_msg'] .= Intel_Df::t('Please complete the Google Analytics Dashboard For WP setup.');
   }
   else {
     $status['success'] = 1;
@@ -445,6 +556,12 @@ function intel_admin_setup_check_primary_ga_profile($form, &$form_state) {
   $form_state['intel_ga_profiles'] = $ga_profiles;
 
   return $status;
+}
+
+function intel_admin_setup_validate_primary_ga_profile($form, &$form_state, $status) {
+  if (!empty($status['error_msg'])) {
+    Intel_Form::form_set_error('none', $status['error_msg']);
+  }
 }
 
 function intel_admin_setup_intel_ga_profile($form, &$form_state) {
@@ -462,9 +579,11 @@ function intel_admin_setup_intel_ga_profile($form, &$form_state) {
   $items[] = Intel_Df::t('Next we need to create a second Google Analytics property for storing enhanced Intelligence data in the Google Analytics admin using the button below.');
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $l_options = Intel_Df::l_options_add_target('ga-admin', $l_options);
-  $items[] = '<br><br>' . Intel_Df::l(Intel_Df::t('1. Use the Google Analytics admin to setup a seperate property for Intelligence data'), 'https://analytics.google.com/analytics/web/#management/Settings', $l_options);
-  $items[] = '<br><br>';
   $items[] = '</p>';
+  $items[] = '<label>' . Intel_Df::t('First') . '</label><br>';
+  $items[] = Intel_Df::l(Intel_Df::t('Use the Google Analytics admin to setup a seperate property for Intelligence data'), 'https://analytics.google.com/analytics/web/#management/Settings', $l_options);
+  $items[] = '<br><br><br>';
+
 
   $items[] = '<p>';
   $items[] = Intel_Df::t('Once the the second Google Analytics property has been created, select the property and view you want to use to track Intelligence data below.');
@@ -489,7 +608,7 @@ function intel_admin_setup_intel_ga_profile($form, &$form_state) {
 
   $f['intel_ga_view'] = array(
     '#type' => 'select',
-    '#title' => '2. ' . Intel_Df::t('Intelligence Google Analytics profile / view'),
+    '#title' => Intel_Df::t('Next, select a Google Analytics profile / view to use for your Intelligence data'),
     '#default_value' => get_option('intel_ga_view', ''),
     '#options' => $gap_options,
     //'#description' => $desc,
@@ -582,9 +701,11 @@ function intel_admin_setup_intel_api_key($form, &$form_state) {
   $l_options['query'] = array(
     'gaviewid' => $form_state['intel_ga_profile']['viewId'],
   );
-  $items[] = '<br><br>' . Intel_Df::l(Intel_Df::t('1. Login to the Intelligence admin'), "http://$imapi_domain", $l_options);
+  $items[] = '<br><br><label>' . Intel_Df::t('First') . '</label><br>';
+  $items[] = Intel_Df::l(Intel_Df::t('Login to the Intelligence admin'), "http://$imapi_domain", $l_options);
 
-  $items[] = '<br><br>' . Intel_Df::l(Intel_Df::t('2. Setup a new property with your GA tracking id: @tid', array(
+  $items[] = '<br><br><label>' . Intel_Df::t('Then') . '</label><br>';
+  $items[] = Intel_Df::l(Intel_Df::t('Setup a new property with your GA tracking id: @tid', array(
       '@tid' => $form_state['intel_ga_profile']['propertyId'],
     )), "http://$imapi_domain/property/add", $l_options);
 
@@ -602,7 +723,7 @@ function intel_admin_setup_intel_api_key($form, &$form_state) {
 
   $f['intel_apikey'] = array(
     '#type' => 'textfield',
-    '#title' => '3. ' . Intel_Df::t('API key'),
+    '#title' =>  Intel_Df::t('Finally, input your Intelligence API key'),
     '#default_value' => get_option('intel_apikey', ''),
     //'#description' => $desc,
     '#size' => 40,
@@ -1063,6 +1184,10 @@ function intel_admin_setup_goals($form, &$form_state) {
   $items[] = Intel_Df::t('Intl Goals are more configurable, easier to manage and provide rich context. Therefore, it is recommended to primarly use Intl Goals.');
   $items[] = '</p>';
   $items[] = '<p>';
+  $items[] = Intel_Df::t('You can create and edit up to 20 Intl Goals using the fields below.');
+  $items[] = Intel_Df::t('Use the "+ Add Custom Goal" to display additional rows for inputting goals.');
+  $items[] = '</p>';
+  $items[] = '<p>';
   // TODO WP - post and link to articles
   $l_options = Intel_Df::l_options_add_target('intelligencewp');
   $items[] = Intel_Df::t('To learn more about strategies for setting up your goals see the article !link.', array(
@@ -1163,7 +1288,7 @@ function intel_admin_setup_goals($form, &$form_state) {
     $col_classes[$i] = 'col-' . Intel_Df::drupal_clean_css_identifier(strtolower($cell));
     $cell_markup .= '<th class="' . $col_classes[$i] . '">' . $cell . '</th>';
   }
-  $markup .= '<table class="table table-striped form-table"><thead><tr>' . $cell_markup . '</tr></thead><tbody>';
+  $markup .= '<table id="goal-list-table" class="table table-striped form-table goal-list"><thead><tr>' . $cell_markup . '</tr></thead><tbody>';
   $f['table_goals_0'] = array(
     '#type' => 'markup',
     '#markup' => $markup,
@@ -1199,6 +1324,15 @@ function intel_admin_setup_goals($form, &$form_state) {
       */
     }
 
+    $row_class .= ' row-' . $i;
+
+    if ($i == 1 || !empty($ga_goal)) {
+      $row_class .= ' row-show';
+    }
+    else {
+      $row_class .= ' row-hide';
+    }
+
     $f["row_{$i}_a"] = array(
       '#type' => 'markup',
       '#markup' => "<tr class=\"$row_class\"><td class=\"{$col_classes[0]}\">$i</td>",
@@ -1230,6 +1364,11 @@ function intel_admin_setup_goals($form, &$form_state) {
         '#prefix' => '<td class="' . $col_classes[1] . '">',
         '#suffix' => '</td>',
         '#default_value' => !empty($ga_goal['name']) ? $ga_goal['name'] : '',
+        '#attributes' => array(
+          'class' => array(
+            'goal-name'
+          ),
+        )
       );
 
     }
@@ -1275,6 +1414,11 @@ function intel_admin_setup_goals($form, &$form_state) {
   $f['table_goals_1'] = array(
     '#type' => 'markup',
     '#markup' => '</tbody></table>'
+  );
+
+  $f['goal_add_button'] = array(
+    '#type' => 'markup',
+    '#markup' => '<a href="javascript:void(0)" id="goal-add-btn" class="btn btn-info">+ ' . Intel_Df::t('Add Custom Goal') . '</a>',
   );
 
 
@@ -1960,16 +2104,28 @@ function intel_admin_setup_finish($form, &$form_state) {
 
   $status = $form_state['intel_statuses']['finish'];
 
+  $markup = '';
+  $markup .= '<div class="row">';
+  $markup .= '<div class="col-xs-7">';
+  $f['markup_0'] = array(
+    '#type' => 'markup',
+    '#markup' => $markup,
+  );
+
   $items = array();
 
+  $items[] = '<div class="text-center">';
+  $items[] = '<h3>' . Intel_Df::t('Congratulations!') . '</h3>';
+
   $items[] = '<p>';
-  $items[] = Intel_Df::t('Congratulations. Your Intelligence setup is complete.');
+  $items[] = Intel_Df::t('The Intelligence plugin was setup successfully.');
   $items[] = '</p>';
 
   $items[] = '<p>';
   $items[] = Intel_Df::t('Report timeframes use the last 30 full days.');
   $items[] = Intel_Df::t('Look for reports to start populating tomorrow.');
   $items[] = '</p>';
+  $items[] = '</div>';
 
   $f['instructions'] = array(
     '#type' => 'markup',
@@ -1982,6 +2138,17 @@ function intel_admin_setup_finish($form, &$form_state) {
     $sys_meta['setup_complete'] = time();
     $sys_meta = update_option('intel_system_meta', $sys_meta);
   }
+
+  $markup = '';
+  $markup .= '</div>';
+  $markup .= '<div class="col-xs-5">';
+  $markup .= '<image src="' . INTEL_URL . '/images/setup_finish_right.png" class="img-responsive" >';
+  $markup .= '</div>';
+  $markup .= '</div>';
+  $f['markup_1'] = array(
+    '#type' => 'markup',
+    '#markup' => $markup,
+  );
 
 
   return $f;

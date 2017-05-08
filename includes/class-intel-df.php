@@ -1135,12 +1135,18 @@ class Intel_Df  {
 				$string = str_replace($k, $replace, $string);
 			}
 		}
+		if (!empty($options['html'])) {
+			$string = __($string, 'intel');
+		}
+		else {
+			$string = esc_html__($string, 'intel');
+		}
 		if (!empty($wp_args)) {
-			array_unshift($wp_args, esc_html__($string, 'intel'));
+			array_unshift($wp_args, $string);
 			return call_user_func_array('sprintf', $wp_args);
 		}
 		else {
-			return esc_html__($string, 'intel');
+			return $string;
 		}
 	}
 

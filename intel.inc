@@ -2849,6 +2849,15 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 0,
     'selectable' => 1,
   );
+  if (intel_is_extended()) {
+    $info['abr'] = array(
+      'title' => Intel_Df::t('Adjusted bounce rate'),
+      'description' => Intel_Df::t('Enables GA bounce rate adjustments and page time and scroll tracking.'),
+      'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_abr.js',
+      'enabled' => 1,
+      'selectable' => 1,
+    );
+  }
   $info['youtube'] = array(
     'title' => Intel_Df::t('YouTube'),
     'description' => Intel_Df::t('Tracks YouTube video play events.'),

@@ -2323,7 +2323,7 @@ class Intel_Form  {
 			// valid input in programmatic form submissions.
 			// WP sanitization
 			$input = is_scalar($input) ? (string) $input : '';
-			if (!isset($element['#sanitize']) || $element['#sanitize']) {
+			if (empty($element['#html'])) {
 				$input = sanitize_text_field($input);
 			}
 			return $input;
@@ -2352,7 +2352,7 @@ class Intel_Form  {
 				$input = '';
 			}
 			$input = (string) $input;
-			if (!isset($element['#sanitize']) || $element['#sanitize']) {
+			if (empty($element['#html'])) {
 				$input = sanitize_text_field($input);
 			}
 			return str_replace(array("\r", "\n"), '', $input);

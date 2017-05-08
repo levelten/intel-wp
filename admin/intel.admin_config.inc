@@ -230,7 +230,7 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('JavaScript monitoring script'),
     '#default_value' => get_option('intel_js_monitor_script', ''),
     '#description' => Intel_Df::t('Use to place any JavaScript monitoring code snippet at the top of the header section.'), // . Intel_Df::t('Do not include &lt;script&gt; tags.'),
-    '#sanitize' => FALSE,
+    '#html' => TRUE,
     '#rows' => 4,
   );
   $form['l10iapi']['advanced']['intel_custom_embed_script'] = array(
@@ -238,7 +238,7 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Custom embed JavaScript'),
     '#default_value' => get_option('intel_custom_embed_script', ''),
     '#description' => Intel_Df::t('Use to place any JavaScript monitoring code snippet at the top of the header section.'), // . Intel_Df::t('Do not include &lt;script&gt; tags.'),
-    '#sanitize' => FALSE,
+    '#html' => TRUE,
     '#rows' => 4,
   );
 

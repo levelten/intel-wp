@@ -19,7 +19,7 @@ function template_process_intel_page(&$variables) {
   if (empty($variables['title'])) {
     $variables['title'] = intel()->get_page_title();
   }
-  $variables['title'] = sanitize_title($variables['title']);
+  $variables['title'] = $variables['title'];
 }
 
 function template_process_intel_navbar(&$variables) {
