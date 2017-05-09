@@ -114,7 +114,7 @@ class Intel {
 		$this->created = microtime(TRUE);
 
 		$this->plugin_name = 'intel';
-		$this->version = '1.0.0';
+		$this->version = INTEL_VER;
 		$this->includedLibraryFiles = array();
 		$this->time_delta = get_option('intel_time_delta', 0);
 		$this->request_time = $this->time();

@@ -8,7 +8,6 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.pag
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
 
-define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
 define('INTEL_L10IAPI_JS_VER', '0.2.2');

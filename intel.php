@@ -32,6 +32,9 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+define('INTEL_PLATFORM', 'wp');
+define('INTEL_VER', '1.0.1');
+
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-intel-activator.php
