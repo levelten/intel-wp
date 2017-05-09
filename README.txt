@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,7 @@ Integrates results oriented analytics and visitor intelligence gathering into Wo
 Intelligence's goal is to provide impactful and actionable data. It focuses on two areas, analytics and visitor data.
 
 The analytics side is designed to enable smarter, empirical web development and content strategy. Intelligence streamlines
-creation and management of a results oriented analytics measurment plan focused on goals and valued events. WordPress
+creation and management of a results oriented analytics measurement plan focused on goals and valued events. WordPress
 integrated reports provide insight into the value a website and its various components are generating enabling teams
 to better inspect and adapt to optimzed returns.
 
