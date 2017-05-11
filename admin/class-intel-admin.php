@@ -572,9 +572,9 @@ class Intel_Admin {
 		?>
 		<div id="message" class="bootstrap-wrapper wrap">
 			<div class="panel panel-info m-t-1">
-				<h2 class="panel-heading m-t-0"><?php _e( 'Get Intelligence!', 'intel' ); ?></h2>
+				<h2 class="panel-heading m-t-0"><?php print __( 'Get Intelligence!', 'intel' ); ?></h2>
 				<div class="panel-body">
-					<p><?php _e( 'To complete the installation of Intelligence launch the setup wizard using the button below.', 'intel' ); ?></p>
+					<p><?php print __( 'To complete the installation of Intelligence launch the setup wizard using the button below.', 'intel' ); ?></p>
 					<p>
 						<a href="<?php print Intel_Df::url('admin/config/intel/settings/setup'); ?>" class="btn btn-info">Launch Setup Wizard</a>
 					</p>

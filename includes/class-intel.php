@@ -288,6 +288,8 @@ class Intel {
 
 		// on intel admin pages, buffer page output and create sessions
 		if (self::is_intel_admin_page()) {
+			// note there is no admin_enqueue_styles hook, so this is a hack to
+			// enqueue_styles
 			$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 			$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 

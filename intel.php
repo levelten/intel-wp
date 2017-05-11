@@ -23,7 +23,7 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       intel
  * Domain Path:       /languages
- * GitHub Plugin URI: https://github.com/levelten/intelligence-wp
+ * GitHub Plugin URI: https://github.com/levelten/wp-intelligence
  */
 
 
@@ -32,8 +32,8 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define('INTEL_PLATFORM', 'wp');
-define('INTEL_VER', '1.0.1');
+define('INTEL_VER', '1.0.2');
+
 
 /**
  * The code that runs during plugin activation.

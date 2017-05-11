@@ -283,6 +283,7 @@ function _intel_intel_visitor_property_info($prop) {
 
   $prop['data.name'] = array(
     'title' => Intel_Df::t('Name'),
+    //'description' => Intel_Df::t('Name'),
     'category' => 'identity',
     'variables' => array(
       '@value' => NULL,

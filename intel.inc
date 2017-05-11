@@ -8,6 +8,7 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.pag
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
 
+define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
 define('INTEL_L10IAPI_JS_VER', '0.2.2');
@@ -2909,6 +2910,16 @@ function intel_intel_plugin_path_info($info) {
       'gf-intel.php'
     )
   );
+  $info['intel'] = array(
+    'directory' => array(
+      'intelligence', // wordpress.org
+      'intelligence-wp', // github 0
+      'wp-intelligence', // github 1
+    ),
+    'filename' => array(
+      'intel.php'
+    )
+  );
   $info['wpcf7'] = array(
     'directory' => array(
       'contact-form-7'
@@ -2919,7 +2930,8 @@ function intel_intel_plugin_path_info($info) {
   );
   $info['wpcf7_intel'] = array(
     'directory' => array(
-      'contact-form-7-intelligence'
+      'wp-cf7-intelligence', // github
+      'cf7-intelligence', // wordpress.org
     ),
     'filename' => array(
       'wpcf7-intel.php'
@@ -2975,7 +2987,7 @@ function _intel_addon_info($info = array()) {
     'title' => Intel_Df::t('Contact Form 7 Intelligence'),
     'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Contact Form 7 form is submitted.'),
     'group' => 'forms',
-    'description_url' => 'http://intelligencewp.com/plugin/contact-form-7-intelligence',
+    'description_url' => 'http://intelligencewp.com/plugin/cf7-intelligence',
     'show_callback' => 'intel_is_plugin_active',
     'show_arguments' => array('wpcf7'),
     'is_active_callback' => 'intel_is_plugin_active',

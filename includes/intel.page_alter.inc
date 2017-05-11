@@ -1777,6 +1777,16 @@ function intel_process_form_submission($vars) {
     $intel_event = $intel_events[$track['name']];
   }
 
+  // verify value is numeric, cast to int or unset value
+  if (isset($track['value'])) {
+    if (is_numeric($track['value'])) {
+      $track['value'] = intval($track['value']);
+    }
+    else {
+      unset($track['value']);
+    }
+  }
+
   // if value is not set in track, enable scorings value to override
   if (!isset($track['value']) && isset($track['name'])) {
     $k = $track['name'];

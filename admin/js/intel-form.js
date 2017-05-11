@@ -7,7 +7,7 @@
 
 	function init() {
 		var id, $this;
-		$(".fieldset-panel").each(function(index) {
+		$(".bootstrap-wrapper .fieldset-panel").each(function(index) {
 			$this = $(this);
 
 			id = $this.attr('id');
@@ -31,6 +31,17 @@
 				event.stopPropagation();
 				$('.collapsible-fieldset-icon-' + i).addClass('glyphicon-triangle-right').removeClass('glyphicon-triangle-bottom');
 			});
+		});
+
+		// transform field descriptions into tooltips
+		var $description, $label;
+		$('.bootstrap-wrapper .form-item').each(function (index, value) {
+			$description = $('.description', this);
+			if ($description.length) {
+				$label = $('.control-label', this);
+				$label.after(' <a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="' + $description.text() + '"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span></a>');
+				$description.hide();
+			}
 		});
 
 		/*
