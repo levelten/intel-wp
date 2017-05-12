@@ -2901,19 +2901,22 @@ function intel_intel_plugin_path_info($info) {
       'gravityforms.php'
     )
   );
+  // use both gf_intel since that is its wp.o name & gravityforms_intel b/c
+  // gravityforms is GFs plugin name
   $info['gravityforms_intel'] = array(
     'directory' => array(
+      'gf-intelligence',
+      'wp-gf-intelligence',
       'gravityforms-intelligence',
-      'gravityformsintel',
     ),
     'filename' => array(
       'gf-intel.php'
     )
   );
+  $info['gf_intel'] = $info['gravityforms_intel'];
   $info['intel'] = array(
     'directory' => array(
       'intelligence', // wordpress.org
-      'intelligence-wp', // github 0
       'wp-intelligence', // github 1
     ),
     'filename' => array(
@@ -2930,8 +2933,8 @@ function intel_intel_plugin_path_info($info) {
   );
   $info['wpcf7_intel'] = array(
     'directory' => array(
-      'wp-cf7-intelligence', // github
       'cf7-intelligence', // wordpress.org
+      'wp-cf7-intelligence', // github
     ),
     'filename' => array(
       'wpcf7-intel.php'
@@ -2976,7 +2979,8 @@ function _intel_addon_info($info = array()) {
     'title' => Intel_Df::t('Gravity Forms Intelligence'),
     'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Gravity Form is submitted.'),
     'group' => 'forms',
-    'description_url' => 'http://intelligencewp.com/plugin/gravityforms-intelligence',
+    'description_url' => '//wordpress.org/plugins/gf-intelligence',
+    //'description_url' => 'http://intelligencewp.com/plugin/gf-intelligence',
     'show_callback' => 'intel_is_plugin_active',
     'show_arguments' => array('gravityforms'),
     'is_active_callback' => 'intel_is_plugin_active',
@@ -2987,7 +2991,8 @@ function _intel_addon_info($info = array()) {
     'title' => Intel_Df::t('Contact Form 7 Intelligence'),
     'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Contact Form 7 form is submitted.'),
     'group' => 'forms',
-    'description_url' => 'http://intelligencewp.com/plugin/cf7-intelligence',
+    'description_url' => '//wordpress.org/plugins/cf7-intelligence',
+    //'description_url' => 'http://intelligencewp.com/plugin/cf7-intelligence',
     'show_callback' => 'intel_is_plugin_active',
     'show_arguments' => array('wpcf7'),
     'is_active_callback' => 'intel_is_plugin_active',
