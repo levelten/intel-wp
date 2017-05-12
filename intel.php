@@ -16,7 +16,7 @@
  * Plugin Name:       Intelligence
  * Plugin URI:        http://intelligencewp.com
  * Description:       Provides behavior and visitor intelligence.
- * Version:           1.0.0
+ * Version:           1.0.2
  * Author:            LevelTen
  * Author URI:        http://getlevelten.com
  * License:           GPL-2.0+
