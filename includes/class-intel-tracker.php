@@ -73,6 +73,7 @@ class Intel_Tracker {
 			'trackRealtime' => 0,
 			'isLandingpage' => 0,
 			'scorings' => array(),
+			'gaGoals' => array(),
 			//'scorings' => intel_get_scorings('js_setting'), //TODO
 			'storage' => array(
 				'page' => array(
@@ -101,11 +102,18 @@ class Intel_Tracker {
 		return intel_get_flush_page_intel_pushes();
 	}
 
-	public function get_pushes_script() {
+	public function get_pushes_script($options = array()) {
 	  $pushes = self::get_intel_pushes();
+		$out = '';
 		$out = '<script>' . "\n";
+		if (!empty($options['prefix'])) {
+			$out .= $options['prefix'];
+		}
 		foreach ($pushes as $key => $value) {
 			$out .= "  io('$key', " . json_encode($value) . ");\n";
+		}
+		if (!empty($options['suffix'])) {
+			$out .= $options['suffix'];
 		}
 		$out .= '</script>' . "\n";
 		return $out;
@@ -166,18 +174,16 @@ class Intel_Tracker {
 	 */
 	public function tracking_code() {
 		require_once INTEL_DIR . 'includes/intel.page_alter.inc';
+
 		$page = array();
 		intel_page_alter($page);
 
 		$js_settings = intel()->get_js_settings();
 
-		if (intel_is_debug()) {
-			intel_d($js_settings);
-		}
-
 		$io_name = 'io';
 
-		$script = "var intel_settings = " . json_encode($js_settings) . ";\n";
+		$script = '';
+		$script .= "var intel_settings = " . json_encode($js_settings) . ";\n";
 		$script .= intel_get_js_embed('l10i', 'local');
 		$script .= "$io_name('set', 'config', intel_settings.intel.config);\n";
 		if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
@@ -195,7 +201,7 @@ class Intel_Tracker {
 		}
 
 
-		//$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
+		$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
 		//if (!empty($js_settings['intel']['pushes']['events'])) {
 		//	$script .= "$io_name('event', intel_settings.intel.pushes.event);\n";
 		//}

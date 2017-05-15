@@ -29,8 +29,11 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $dir = wp_upload_dir();
-  intel_d($dir);
+  $ga_goals = get_option('intel_ga_goals', array());
+  intel_d($ga_goals);
+
+  $goals = get_option('intel_goals', array());
+  intel_d($goals);
 
   return '';
 

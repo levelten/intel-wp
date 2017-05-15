@@ -55,7 +55,16 @@ function intel_page_alter(&$page) {
 	      'analytics' => array(),
 	    ),
     ),
+    'gaGoals' => array(),
   );
+
+  $ga_goals = get_option('intel_goals', array());
+  foreach ($ga_goals as $goal) {
+    $config['gaGoals'][] = array(
+      'ga_id' => $goal['ga_id'],
+      'title' => $goal['title'],
+    );
+  }
 
   if ($a = get_option('intel_domain_name', '')) {
     $config['cookieDomain'] = $a;
@@ -1894,8 +1903,10 @@ function intel_process_form_submission($vars) {
     }
   }
 
-  $track['oa']['3rk'] = $submission->sid;
-  $track['oa']['3ri'] = ':intel_submission:' . $submission->sid;
+  if ($submission->sid) {
+    $track['oa']['3rk'] = $submission->sid;
+    $track['oa']['3ri'] = ':intel_submission:' . $submission->sid;
+  }
 
   // process any saved visitor attributes acquired from the form submission
   $va1 = $visitor->getVar('visitor', 'attributes', '', array());

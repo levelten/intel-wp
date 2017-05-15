@@ -10,6 +10,7 @@
  * @package    Intl
  * @subpackage Intl/public/partials
  */
+return;
 ?>
 <!-- intel_settings -->
 <script>
