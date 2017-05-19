@@ -1139,7 +1139,7 @@ function intel_reports() {
       if (empty($info['ga_id']) || in_array($key, $conversion_events)) {
         $reports['event']['ec-' . $key] = array(
           'key' => 'event:' . $key . '.top.pageview',
-          'title' => $info['category'],
+          'title' => $info['eventCategory'],
           //'title' => ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
           'page callback' => 'intel_event_list_report_page',
           'file' => 'reports/intel.report_event_list.inc'

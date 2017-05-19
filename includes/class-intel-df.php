@@ -675,11 +675,11 @@ class Intel_Df  {
 		return array();
 	}
 
-	public function drupal_set_title($title) {
+	public static function drupal_set_title($title) {
 		intel()->set_page_title($title);
 	}
 
-	public function drupal_get_title() {
+	public static function drupal_get_title() {
 		return intel()->get_page_title();
 	}
 

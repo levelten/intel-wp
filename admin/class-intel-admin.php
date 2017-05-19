@@ -240,7 +240,6 @@ class Intel_Admin {
 
 		$path_args_t = array();
 
-
 		if (empty($info)) {
 			if (!empty($menu_info[$q])) {
 				$info = $menu_info[$q];
@@ -285,6 +284,43 @@ class Intel_Admin {
 							);
 						}
 					}
+				}
+				elseif ($path_args[0] == 'admin') {
+					// deal with menu paths that need to load objects
+					$load_index = 0;
+					$load_type = '';
+					$load_title = '';
+					if ($path_args[1] == 'config') {
+						if ($path_args[4] == 'intel_event') {
+							$load_index = 5;
+							$load_type = 'intel_intel_event';
+							$load_title = Intel_Df::t('Intl Event');
+						}
+						if ($load_index) {
+							$func = $load_type . '_load';
+							$path_args_t[$load_index] = $func($path_args[$load_index]);
+						  if(empty($path_args_t[$load_index])) {
+								$vars = array(
+									'title' => esc_html__('404 Error', 'intel'),
+									'markup' => Intel_Df::t('@load_title not found', array(
+										'@load_title' => $load_title,
+									)),
+									//'markup' => esc_html__('@load_title not found', 'intel'),
+									'messages' => Intel_Df::drupal_get_messages(),
+								);
+								print Intel_Df::theme('intel_page', $vars);
+								return;
+							}
+							$a = $path_args;
+							$a[$load_index] = '%' . $load_type;
+							$qt = implode('/', $a);
+							if (!empty($menu_info[$qt])) {
+								$info = $menu_info[$qt];
+							}
+						}
+					}
+
+
 				}
 			}
 		}

@@ -163,12 +163,13 @@ function intel_get_event_goal_info($filter = '') {
         }
         $ekey = $ckey . '__' . $goal['name'];
         $event[$ekey] = $goal;
+        $event[$ekey]['mode'] = 'goal';
         $event[$ekey]['goal_name'] = $event[$ekey]['name'];
         $event[$ekey]['goal_title'] = $event[$ekey]['title'];
         $event[$ekey]['goal_description'] = $event[$ekey]['description'];
         $event[$ekey]['name'] = $ekey;
-        $event[$ekey]['title'] = $event[$ekey]['category'] = $cat . ': ' . $goal['title'];
-        $event[$ekey]['category'] .= '+';
+        $event[$ekey]['title'] = $cat . ': ' . $goal['title'];
+        $event[$ekey]['category'] = $cat;
         $event[$ekey]['selectable'] = 1;
         if (empty($event[$ekey]['description'])) {
           $event[$ekey]['description'] = Intel_Df::t('Goal');
@@ -180,7 +181,7 @@ function intel_get_event_goal_info($filter = '') {
   }
   return $event;
 
-
+/*
   foreach ($goals AS $key => $goal) {
     $ekey = 'goal_' . $key;
     $event[$ekey] = $goal;
@@ -208,9 +209,22 @@ function intel_get_event_goal_info($filter = '') {
     $event[$ekey]['category'] .= '+';
     $event[$ekey]['event'] = 'phonecall';
   }
-
-  d($event);
   return $event;
+*/
+}
+
+function intel_format_intel_event_eventcategory($event, $goal_info) {
+  $str = '';
+
+  $str = !empty($event['category']) ? $event['category'] : $event['title'];
+  if (!empty($event['goal_event']) || (!empty($event['mode']) && $event['mode'] == 'goal')) {
+    $str .= ': ' . $goal_info[$event['ga_id']]['title'] . '+';
+  }
+  elseif (!empty($event['valued_event']) || (!empty($event['mode']) && $event['mode'] == 'valued')) {
+    $str .= '!';
+  }
+
+  return $str;
 }
 
 function intel_get_intel_event_info($name = NULL, $options = array()) {
@@ -227,14 +241,31 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
   }
   $events = intel_get_intel_event_info_default();
   $events = array_merge($events, intel_get_event_goal_info());
+  $goal_info = get_option('intel_goals', array());
 
   foreach ($events AS $k => $v) {
+    if (!isset($v['overridable'])) {
+      $v['overridable'] = 1;
+    }
+    if (!is_array($v['overridable'])) {
+      $events[$k]['overridable'] = array(
+        'mode' => 1,
+        //'description' => 1,
+      );
+    }
     if (isset($v['static_options'])) {
       $events[$k]['options'] = $v['static_options'];
     }
-    if (empty($v['category'])) {
-      $events[$k]['category'] = $v['title'];
+
+    if (!empty($v['valued_event']) && empty($v['ga_id'])) {
+      $events[$k]['mode'] = 'valued';
     }
+
+    // construct eventCategory
+    if (empty($v['eventCategory'])) {
+      $events[$k]['eventCategory'] = intel_format_intel_event_eventcategory($v, $goal_info);
+    }
+
     $events[$k]['module']  = 'intel';
     $events[$k]['key']  = $k;
   }
@@ -252,8 +283,8 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
       $custom[$k]['module']  = 'intel';
       $custom[$k]['custom'] = 1;
       $events[$k] = $custom[$k];
-      if (empty($v['category'])) {
-        $events[$k]['category'] = $v['title'];
+      if (empty($v['eventCategory'])) {
+        $events[$k]['eventCategory'] = intel_format_intel_event_eventcategory($v, $goal_info);
       }
     }
     if (!empty($custom[$k]['custom_options'])) {
@@ -286,7 +317,7 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
   END TODO WP */
 
 
-  uasort($events, '_intel_sort_by_category');
+  uasort($events, '_intel_sort_by_eventcategory');
 
   if (isset($name)) {
     if (isset($events[$name])) {
@@ -1337,6 +1368,10 @@ function _intel_sort_by_title($a, $b) {
 
 function _intel_sort_by_category($a, $b) {
   return ($a['category'] > $b['category']) ? 1 : -1;
+}
+
+function _intel_sort_by_eventcategory($a, $b) {
+  return ($a['eventCategory'] > $b['eventCategory']) ? 1 : -1;
 }
 
 function _intel_sort_by_rtime($a, $b) {

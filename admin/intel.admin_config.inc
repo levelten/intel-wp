@@ -697,8 +697,10 @@ function intel_admin_intel_event_list_page() {
 
   $events = intel_get_intel_event_info();
 
+  intel_d($events);
+
   $header = array(
-    Intel_Df::t('Category'),
+    Intel_Df::t('Event Category'),
     Intel_Df::t('Title'),
     Intel_Df::t('Description'),
     //t('Type'),
@@ -723,7 +725,7 @@ function intel_admin_intel_event_list_page() {
       $ops[] = Intel_Df::t('NA');
     }
     $rows[] = array(
-      $event['category'],
+      $event['eventCategory'],
       $event['title'],
       $event['description'],
       //$attr['type'],
@@ -745,12 +747,14 @@ function intel_admin_intel_event_list_page() {
 function intel_admin_intel_event_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_form', array());
+  return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_intel_event_edit_page($event) {
-  intel()->set_title(Intel_Df::t('Edit @title event', array('@title' => $event['title'])));
+  Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $event['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_form', $event);
+  return $form;
   return Intel_Df::render($form);
 }
 
@@ -760,6 +764,8 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   if (!is_array($event)) {
     $event = array();
   }
+
+  intel_d($event);
 
   $form_state['event'] = $event;
   $add = empty($event['key']);
@@ -801,29 +807,93 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     '#collapsed' => FALSE,
     '#description' => Intel_Df::t('The parameters sent to Google Analtyics when the event is triggered.'),
   );
+  $options = array(
+    '_' => Intel_Df::t('-- None --'),
+    '' => Intel_Df::t('Standard event'),
+    'valued' => Intel_Df::t('Valued event'),
+    'goal' => Intel_Df::t('Goal event'),
+  );
+  $form['ga_event_values']['mode'] = array(
+    '#type' => ($custom) ? 'select' : 'item',
+    '#title' => Intel_Df::t('Mode'),
+    '#options' => $options,
+    '#default_value' => !empty($event['mode']) ? $event['mode'] : '',
+    '#description' => Intel_Df::t('Select the style of event you would like to send to Google Analytics. Goal events are used to trigger a GA goal. Select "Valued event" for events adding business value to the site. Use "Standard event" for all others.'),
+  );
+  $form['ga_event_values']['mode']['#markup'] = $form['ga_event_values']['mode']['#default_value'];
+
+  $options = array();
+  //$goals = intel_get_event_goal_info('general');
+  $goals = get_option('intel_goals', array());
+  intel_d($goals);
+  foreach ($goals AS $key => $goal) {
+    if (empty($goal['context']['general'])) {
+      return;
+    }
+    $options[$goal['ga_id']] = $goal['title'];
+  }
+  $form['ga_event_values']['ga_id'] = array(
+    '#type' => ($custom) ? 'select' : 'item',
+    '#title' => Intel_Df::t('Goal'),
+    '#options' => $options,
+    '#default_value' => !empty($event['ga_id']) ? $event['ga_id'] : '',
+    '#description' => Intel_Df::t('TODO'),
+  );
+  $form['ga_event_values']['ga_id']['#markup'] = '(not set)';
+  if ($form['ga_event_values']['ga_id']['#default_value']) {
+    $form['ga_event_values']['ga_id']['#markup'] = $goals[$form['ga_event_values']['ga_id']['#default_value']]['title'];
+  }
+
+
+  //$form['ga_event_values']['inline_wrapper_0'] = array(
+  //  '#type' => 'markup',
+  //  '#markup' => '<div class="pull-left">',
+  //);
+
+
   $form['ga_event_values']['category'] = array(
     '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('Event category'),
+    '#title' => Intel_Df::t('Category (Event Title)'),
     '#default_value' => !empty($event['category']) ? $event['category'] : '',
-    '#description' => Intel_Df::t('Input Google Analytics event category value. If left blank the event title will be used.'),
+    '#description' => Intel_Df::t('Input Google Analytics event category. If left blank the Title from above will be used. It is recommended to leave this field blank and use the event title default.'),
     '#size' => 64,
+    '#attributes' => array(
+      'class' => array(
+        'pull-left',
+      ),
+    ),
   );
   $form['ga_event_values']['category']['#markup'] = $form['ga_event_values']['category']['#default_value'];
 
+  //$form['ga_event_values']['inline_wrapper_1'] = array(
+  //  '#type' => 'markup',
+  //  '#markup' => '</div>',
+  //);
+
+
+
+
+  /*
+  $form['ga_event_values']['inline_wrapper_1'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div>',
+  );
+  */
+
   $form['ga_event_values']['action'] = array(
     '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('Event action'),
+    '#title' => Intel_Df::t('Action (Object Title)'),
     '#default_value' => !empty($event['action']) ? $event['action'] : '',
-    '#description' => Intel_Df::t('Input Google Analytics event action value. Tokens can be used. If left blank the current page\'s page title will be used'),
+    '#description' => Intel_Df::t('Input Google Analytics event action. Tokens can be used. If left blank the the title of the object that triggering the will be used.'),
     '#size' => 64,
   );
   $form['ga_event_values']['action']['#markup'] = $form['ga_event_values']['action']['#default_value'];
 
   $form['ga_event_values']['label'] = array(
     '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('Event label'),
+    '#title' => Intel_Df::t('Label (Object URI)'),
     '#default_value' => !empty($event['label']) ? $event['label'] : '',
-    '#description' => Intel_Df::t('Input Google Analytics event label value. Tokens can be used. If left blank the current pages url path will be used.'),
+    '#description' => Intel_Df::t('Input Google Analytics event label value. Tokens can be used. If left blank the id (uri) of the object that triggered the event will be used.'),
     '#size' => 64,
   );
   $form['ga_event_values']['action']['#markup'] = $form['ga_event_values']['action']['#default_value'];
@@ -969,6 +1039,7 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
   $indexes = array(
     'title',
     'description',
+    'mode',
     'category',
     'action',
     'label',
@@ -980,7 +1051,9 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     'selectable',
     'enable_all_pages',
     'noninteraction',
-    'valued_event',
+    'ga_id'
+    //'valued_event',
+    //'goal_event',
   );
   foreach ($indexes AS $index) {
     if (isset($values[$index])) {
@@ -988,8 +1061,21 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     }
   }
 
+  intel_d($values['ga_id']);
+
+  if (!empty($values['mode'])) {
+    if ($values['mode'] == 'valued') {
+      $event['valued_event'] = 1;
+    }
+    elseif ($values['mode'] == 'goal') {
+      $event['goal_event'] = 1;
+    }
+  }
+intel_d($event);
+
   $events = get_option('intel_intel_events_custom', array());
   $events[$key] = $event;
+intel_d($events);
   update_option('intel_intel_events_custom', $events);
 
   if ($add) {
@@ -1003,7 +1089,7 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     ));
   }
   Intel_Df::drupal_set_message($msg);
-  drupal_goto('admin/config/intel/settings/intel_event');
+  Intel_Df::drupal_goto('admin/config/intel/settings/intel_event');
 }
 
 function intel_admin_intel_event_delete_page($event) {

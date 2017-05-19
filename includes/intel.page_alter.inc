@@ -252,10 +252,10 @@ function intel_page_alter(&$page) {
   if (isset($pushes['event']) && is_array($pushes['event'])) {
     foreach ($pushes['event'] AS $i => $push) {
       if (empty($push['action']) && empty($push['eventAction']) ) {
-        $pushes['event'][$i]['eventAction'] = $config['pageTitle'];
+        //$pushes['event'][$i]['eventAction'] = $config['pageTitle'];
       }
       if (empty($push['label']) && empty($push['eventLabel'])) {
-        $pushes['event'][$i]['eventLabel'] = $_GET['q'];
+        //$pushes['event'][$i]['eventLabel'] = $_GET['q'];
       }
     }
   }
@@ -854,7 +854,7 @@ function intel_filter_event_for_push($event) {
 
   // translate from classic format to UA format
   $trans = array(
-    'category' => 'eventCategory',
+    //'category' => 'eventCategory',
     'action' => 'eventAction',
     'label' => 'eventLabel',
     'value' => 'eventValue',

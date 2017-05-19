@@ -29,11 +29,8 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $ga_goals = get_option('intel_ga_goals', array());
-  intel_d($ga_goals);
-
-  $goals = get_option('intel_goals', array());
-  intel_d($goals);
+  $event_info = intel_get_intel_event_info();
+  intel_d($event_info);
 
   return '';
 

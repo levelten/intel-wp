@@ -181,9 +181,15 @@ EOT;
   $checklist = '';
   $checklist .= '<ul class="list-group checked-list-box wizard-list-group">';
   foreach ($setup_info as $k => $item) {
+    $value = $item['text'];
+    // enable checklist item links if setup has been completed to enable people
+    // to go back to a prior step.
+    if (!empty($sys_meta['setup_complete'])) {
+      $value = Intel_Df::l($item['text'], Intel_Df::current_path(), array('query' => array('step' => $k)));
+    }
     $tag = array(
       'tag' => 'li',
-      'value' => Intel_Df::l($item['text'], Intel_Df::current_path(), array('query' => array('step' => $k))),
+      'value' => $value,
       'attributes' => array(
         'class' => array(
           'list-group-item',

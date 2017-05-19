@@ -722,6 +722,14 @@ class Intel {
 		return !empty($info[$name]) ? $info[$name] : NULL;
 	}
 
+	public function intel_event_info($name = NULL, $options = array()) {
+		$info = self::build_info('intel_event');
+		if (!isset($name)) {
+			return $info;
+		}
+		return !empty($info[$name]) ? $info[$name] : NULL;
+	}
+
 	public function form_type_forms_info($name = NULL) {
 		$info = self::build_info('form_type_forms');
 		if (!isset($name)) {
