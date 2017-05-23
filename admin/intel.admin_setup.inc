@@ -679,6 +679,8 @@ function intel_admin_setup_submit_intel_ga_profile($form, &$form_state) {
 }
 
 function intel_admin_setup_intel_api_key($form, &$form_state) {
+$err = get_option('intel_err', '');
+intel_d($err);
   $f = array();
   $status = $form_state['intel_statuses']['intel_api_key'];
   if (!empty($status['error_type']) && ($status['error_type'] = 'property_not_configured')) {
@@ -741,6 +743,8 @@ function intel_admin_setup_intel_api_key($form, &$form_state) {
 function intel_admin_setup_check_intel_api_key($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
+$err = array();
+
   $status = array();
 
   $intel_apikey = get_option('intel_apikey', '');
@@ -756,17 +760,22 @@ function intel_admin_setup_check_intel_api_key($form, &$form_state) {
     'apikey' => $intel_apikey,
   );
   $api_level = intel_verify_apikey($message, $property, $options);
+$err['api_level'] = $api_level;
+$err['message'] = $message;
+update_option('intel_err', $err);
   if (!empty($api_level)) {
     $status['success'] = 1;
   }
   else {
-    $status['error_msg'] = Intel_Df::t('Intelligence API not connected.');
+    $status['error_msg'] = Intel_Df::t('Intelligence API not connected. Please verify that your tracking id and apikey are correct.');
   }
   $form_state['intel_api_level'] = $api_level;
 
   // check custom dimensions setup correctly
   if ($api_level) {
     $dims = intel_fetch_ga_custom_dimensions();
+$err['dims'] = $dims;
+update_option('intel_err', $err);
     if (empty($dims)) {
       $status['success'] = 0;
       $status['error_type'] = 'property_not_configured';
@@ -1332,7 +1341,7 @@ function intel_admin_setup_goals($form, &$form_state) {
 
     $row_class .= ' row-' . $i;
 
-    if ($i == 1 || !empty($ga_goal)) {
+    if ($i == 1 || !empty($ga_goal) || !empty($goal)) {
       $row_class .= ' row-show';
     }
     else {
@@ -1361,7 +1370,12 @@ function intel_admin_setup_goals($form, &$form_state) {
       }
       $intl_goal_cnt++;
 
-
+      $default = !empty($ga_goal['name']) ? $ga_goal['name'] : '';
+      // in case there are goals set in the CMS but not in GA, use the CMS data
+      // this happens when someone changes GA profiles after goals have been set
+      if (!$default && !empty($goal['title']) && !empty($goal['type']) && $goal['type'] == 'INTL') {
+        $default = $goal['title'];
+      }
       $f["goal_{$i}_name"] = array(
         '#type' => 'textfield',
         //'#attributes' => array(
@@ -1369,7 +1383,7 @@ function intel_admin_setup_goals($form, &$form_state) {
         //),
         '#prefix' => '<td class="' . $col_classes[1] . '">',
         '#suffix' => '</td>',
-        '#default_value' => !empty($ga_goal['name']) ? $ga_goal['name'] : '',
+        '#default_value' => $default,
         '#attributes' => array(
           'class' => array(
             'goal-name'

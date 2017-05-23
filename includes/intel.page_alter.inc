@@ -61,8 +61,8 @@ function intel_page_alter(&$page) {
   $ga_goals = get_option('intel_goals', array());
   foreach ($ga_goals as $goal) {
     $config['gaGoals'][] = array(
-      'ga_id' => $goal['ga_id'],
-      'title' => $goal['title'],
+      'id' => $goal['ga_id'],
+      'name' => $goal['title'],
     );
   }
 

@@ -1588,7 +1588,7 @@ function intel_verify_library(&$message = '') {
     $message = Intel_Df::t('LevelTen Intelligence library not found!');
     $message .= ' ' . Intel_Df::t('Download the latest library version from the !link and place it in the libraries directory following the pattern [your libraries dir]/LevelTen/Intel/intel.info.yml (typically: sites/all/libraries/LevelTen/Intel/intel.info.yml).',
         array(
-          '!link' => l( t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
+          '!link' => Intel_Df::l( Intel_Df::t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
         )
       );
     return FALSE;
@@ -1623,7 +1623,7 @@ function intel_verify_library(&$message = '') {
     );
     $message .= ' ' . Intel_Df::t('Download the latest library version from the !link and place it in the libraries directory following the pattern [your libraries dir]/LevelTen/Intel/intel.info.yml',
         array(
-          '!link' => l( t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
+          '!link' => Intel_Df::l( Intel_Df::t('API site'), 'http://api.getlevelten.com/site/?q=downloads', array('attributes' => array('target' => '_blank'))),
         )
       );
     return FALSE;

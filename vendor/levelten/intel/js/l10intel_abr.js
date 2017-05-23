@@ -46,9 +46,14 @@ function L10iAbr(_ioq, config) {
         else if (td < 600) {
             inc = 60;
         }
+        if (inc && td < inc) {
 
-        if (inc) {
+        }
+        else if (inc) {
             td0 = tdr - inc;
+            if (td0 < 0) {
+                td0 = 0;
+            }
             m = Math.floor(td0 / 60);
             s = td0 % 60;
             si = (inc * Math.floor(s / inc));
@@ -73,9 +78,12 @@ function L10iAbr(_ioq, config) {
             eventAction: ts,
             eventLabel: toString(tdr),
             eventValue: tdr,
-            nonInteraction: true
+            nonInteraction: true,
+            metric8: tdr,
+            metric9: 1
         };
         io('event', evtDef);
+        // send timing event
         io('ga.send', 'timing', 'Page visibility', 'visible', Math.round(1000 * td));
     };
 
