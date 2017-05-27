@@ -38,8 +38,8 @@ function intel_page_alter(&$page) {
     //'lib_path' => intel_get_library_path(),
     'pageTitle' => '(not set)',
     'trackAnalytics' => 1, // this is set in intel_js_alter if ga script exists
-    'trackAdhocCtas' => ($api_level == 'pro') ? 'track-cta' : '',
-    'trackAdhocEvents' => 'track-event',
+    //'trackAdhocCtas' => ($api_level == 'pro') ? 'track-cta' : '',
+    //'trackAdhocEvents' => 'track-event',
     'trackForms' => array(),
     'trackRealtime' => get_option('intel_track_realtime', INTEL_TRACK_REALTIME_DEFAULT),
     'isLandingpage' => 0,

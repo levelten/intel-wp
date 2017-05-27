@@ -29,19 +29,13 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $out = '';
+  $info = intel()->intel_event_info();
+  intel_d($info);
 
-  $message = '';
-  $property = array();
-  $options = array(
-    'tid' => $_GET['tid'],
-    'apikey' => $_GET['apikey'],
-  );
-  $api_level = intel_verify_apikey($message, $property, $options);
+  $info = intel_get_intel_event_info();
+  intel_d($info);
 
-  $out .= 'message = ' . $message . "\n";
-
-  return $out;
+  return '';
 
   $scorings = intel_get_scorings();
   intel_d($scorings);

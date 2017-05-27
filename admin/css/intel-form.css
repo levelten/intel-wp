@@ -6,3 +6,24 @@
 .collapsible-fieldset-icon {
     font-size: 70%;
 }
+
+.form-textarea-format-group {
+    margin-bottom: 15px;
+}
+
+.form-textarea-format-group .form-textarea-format-group-container {
+    display: inline-block;
+}
+
+.form-textarea-format-group .form-type-textarea {
+    margin-bottom: 0;
+}
+
+.form-textarea-format-group .form-type-select {
+    margin-bottom: 0;
+    border-right: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    background-color: #f5f5f5;
+    padding: 0 0 5px 8px;
+}

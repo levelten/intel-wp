@@ -3,6 +3,10 @@
  * included in this file.
  */
 
+.intel-content {
+    font-size: 110%;
+}
+
 .intel-content .card {
     margin-top: 0;
     padding: 0;

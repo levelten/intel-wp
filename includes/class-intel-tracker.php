@@ -45,7 +45,8 @@ class Intel_Tracker {
 	 * @since    1.0.0
 	 */
 	private function __construct() {
-
+		$this->pushes = array();
+		/*
 		$api_level = intel_api_level();
 
 		$a = explode('//', WP_SITEURL);
@@ -87,8 +88,7 @@ class Intel_Tracker {
 				),
 			),
 		);
-
-		$this->pushes = array();
+		*/
 	}
 
 	public static function getInstance() {

@@ -85,6 +85,7 @@ function L10iAbr(_ioq, config) {
         io('event', evtDef);
         // send timing event
         io('ga.send', 'timing', 'Page visibility', 'visible', Math.round(1000 * td));
+
     };
 
 

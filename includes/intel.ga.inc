@@ -9,42 +9,112 @@
 /**
  * types = flag, list, scalar, vector
  */
-function intel_get_intel_event_info_default() {
-  $event = array();
+add_filter('intel_intel_event_info', 'intel_get_intel_event_info_default');
+function intel_get_intel_event_info_default($event = array()) {
   $scripts_enabled = get_option('intel_intel_scripts_enabled', array());
 
-  $event['landing_page_view'] = array(
-    'title' => Intel_Df::t('Landing page view'),
-    'description' => Intel_Df::t('Landing page pageview'),
-    //'event' => 'pageshow',
-  );
-  $event['landing_page_conversion'] = array(
-    'title' => Intel_Df::t('Landing page conversion'),
-    'description' => Intel_Df::t('Form submission from a landing page'),
-    'valued_event' => 1,
-    'value' => 0,
-  );
-  $event['cta_view'] = array(
-    'title' => Intel_Df::t('CTA view'),
-    'description' => Intel_Df::t('Call to action impression'),
-  );
+  if (intel_is_extended()) {
+    $event['landing_page_view'] = array(
+      'title' => Intel_Df::t('Landing page view'),
+      'description' => Intel_Df::t('Landing page pageview'),
+      //'event' => 'pageshow',
+    );
+    $event['landing_page_conversion'] = array(
+      'title' => Intel_Df::t('Landing page conversion'),
+      'description' => Intel_Df::t('Form submission from a landing page'),
+      'valued_event' => 1,
+      'value' => 0,
+    );
+    $event['cta_view'] = array(
+      'title' => Intel_Df::t('CTA view'),
+      'description' => Intel_Df::t('Call to action impression'),
+    );
+    $event['cta_click'] = array(
+      'title' => Intel_Df::t('CTA click'),
+      'description' => Intel_Df::t('Call to action is clicked'),
+      'valued_event' => 1,
+      'value' => 0,
+    );
+    $event['cta_conversion'] = array(
+      'title' => Intel_Df::t('CTA conversion'),
+      'description' => Intel_Df::t('Conversion after CTA is clicked'),
+      'valued_event' => 1,
+      'value' => 0,
+    );
+  }
+
   $event['cta_click'] = array(
     'title' => Intel_Df::t('CTA click'),
     'description' => Intel_Df::t('Call to action is clicked'),
-    'valued_event' => 1,
+    'mode' => 'valued',
+    //'valued_event' => 1,
     'value' => 0,
+    'selector' => '.track-cta-click',
+    'on_event' => 'click',
   );
-  $event['cta_conversion'] = array(
-    'title' => Intel_Df::t('CTA conversion'),
-    'description' => Intel_Df::t('Conversion after CTA is clicked'),
-    'valued_event' => 1,
+
+  $event['download_link_click_'] = array(
+    'title' => Intel_Df::t('Download click'),
+    'description' => Intel_Df::t('File download is clicked'),
+    'mode' => '',
+    //'valued_event' => 1,
     'value' => 0,
+    'selector' => 'a:download',
+    'on_event' => 'click',
   );
+
+  $event['download_link_click'] = $event['download_link_click_'];
+  $event['download_link_click']['selector'] = 'a:download.track-valued-click';
+  $event['download_link_click']['mode'] = 'valued';
+
+  $event['external_link_click_'] = array(
+    'title' => Intel_Df::t('External link click'),
+    'description' => Intel_Df::t('Link to external URL is clicked'),
+    'mode' => '',
+    'value' => 0,
+    'selector' => 'a:external',
+    'on_event' => 'click',
+  );
+  $event['external_link_click'] = $event['external_link_click_'];
+  $event['external_link_click']['selector'] = 'a:external.track-valued-click';
+  $event['external_link_click']['mode'] = 'valued';
+
+  $event['social_share_click'] = array(
+    'title' => Intel_Df::t('Social share click'),
+    //'category' => Intel_Df::t('Social share'),
+    'description' => Intel_Df::t('Click on social sharing button'),
+    'mode' => 'valued',
+    'valued_event' => 1,
+    'value' => 5,
+    'selector' => '.track-social-share-click',
+    'on_event' => 'click',
+    'js_setting' => 1,
+  );
+
+  $event['social_profile_click'] = array(
+    'title' => Intel_Df::t('Social profile click'),
+    //'category' => Intel_Df::t('Social profile'),
+    'description' => Intel_Df::t('Click on social profile button'),
+    'mode' => 'valued',
+    'valued_event' => 1,
+    'value' => 5,
+    'selector' => '.track-social-profile-click',
+    'on_event' => 'click',
+    'js_setting' => 1,
+  );
+
   $event['form_submission'] = array(
     'title' => Intel_Df::t('Form submission'),
     'description' => Intel_Df::t('General form submission'),
     'valued_event' => 1,
     'value' => 25,
+    'overridable' => 0,
+    'ga_event_auto' => array(
+      'description' => Intel_Df::t('GA event values are automatically generated based on form level settings.'),
+    ),
+    'trigger_auto' => array(
+      'description' => Intel_Df::t('Event is triggered automatically upon form submission if the relevant form support add-on plugin is installed and configured for each type of form.'),
+    ),
   );
   $event['phone_call'] = array(
     'title' => Intel_Df::t('Phone call'),
@@ -133,6 +203,11 @@ function intel_get_goal_info() {
   return $goal_info;
 }
 
+add_filter('intel_intel_event_info', 'intel_get_goal_event_info');
+function intel_get_goal_event_info($info = array()) {
+  $info = array_merge($info, intel_get_event_goal_info());
+  return $info;
+}
 function intel_get_event_goal_info($filter = '') {
   $event = array();
   //$goals = get_option('intel_event_goals', array());
@@ -243,15 +318,20 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
   $events = array_merge($events, intel_get_event_goal_info());
   $goal_info = get_option('intel_goals', array());
 
+  $overridable_defaults = array(
+    'mode' => 1,
+    'ga_id' => 1,
+  );
+
   foreach ($events AS $k => $v) {
-    if (!isset($v['overridable'])) {
-      $v['overridable'] = 1;
-    }
-    if (!is_array($v['overridable'])) {
-      $events[$k]['overridable'] = array(
-        'mode' => 1,
-        //'description' => 1,
-      );
+
+    if (isset($event['overridable'])) {
+      if (is_array($event['overridable'])) {
+        $event['overridable'] = Intel_Df::drupal_array_merge_deep($overridable_defaults, $event['overridable']);
+      }
+      if (empty($event['overridable'])) {
+        $event['overridable'] = array();
+      }
     }
     if (isset($v['static_options'])) {
       $events[$k]['options'] = $v['static_options'];
@@ -2844,7 +2924,9 @@ function intel_fetch_ga_custom_dimensions($save = 0) {
     $gadwp->gapi_controller = new GADWP_GAPI_Controller();
   }
 
-  intel_gapi_attach_management_custom_dimension($gadwp);
+  if (!class_exists('Google_Service_Analytics_CustomDimension')) {
+    intel_gapi_attach_management_custom_dimension($gadwp);
+  }
 
   $result = $gadwp->gapi_controller->service->management_customDimensions->listManagementCustomDimensions($ga_profile['accountId'], $ga_profile['propertyId']);
 
@@ -2876,30 +2958,6 @@ function intel_fetch_ga_custom_dimensions($save = 0) {
   return $ga_dimensions;
 }
 
-function intel_ga_update_custom_dimension() {
-  $ga_dimensions = &Intel_Df::drupal_static(__FUNCTION__, array());
-
-  if (!empty($ga_dimensions)) {
-    return $ga_dimensions;
-  }
-
-  $ga_profile = get_option('intel_ga_profile', array());
-
-  $gadwp = GADWP();
-  if ( null === $gadwp->gapi_controller ) {
-    $gadwp->gapi_controller = new GADWP_GAPI_Controller();
-  }
-
-  intel_gapi_attach_management_custom_dimension($gadwp);
-  $gadwp->gapi_controller->client->setScopes( 'https://www.googleapis.com/auth/analytics.edit' );
-
-  $dimension = new Google_Service_Analytics_CustomDimension();
-  $dimension->setName('Test update');
-
-  $result = $gadwp->gapi_controller->service->management_customDimensions->patch($ga_profile['accountId'], $ga_profile['propertyId'], 'ga:dimension11', $dimension);
-
-}
-
 function intel_gapi_attach_management_custom_dimension(&$gadwp) {
   /*
    * GADWP's GA library is too old to support custom dimensions.
@@ -2908,7 +2966,6 @@ function intel_gapi_attach_management_custom_dimension(&$gadwp) {
   include_once INTEL_DIR . 'vendor/google/apiclient-services/src/Google/Service/Analytics/Resource/ManagementCustomDimensions.php';
   include_once INTEL_DIR . 'vendor/google/apiclient-services/src/Google/Service/Analytics/CustomDimension.php';
   include_once INTEL_DIR . 'vendor/google/apiclient-services/src/Google/Service/Analytics/CustomDimensionParentLink.php';
-  include_once INTEL_DIR . 'vendor/google/apiclient-services/src/Google/Service/Analytics/CustomDimensions.php';
 
   $gadwp->gapi_controller->service->management_customDimensions = new Google_Service_Analytics_Resource_ManagementCustomDimensions(
     $gadwp->gapi_controller->service,

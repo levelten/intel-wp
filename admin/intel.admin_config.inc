@@ -25,7 +25,7 @@ function intel_admin_settings($form, &$form_state) {
   if (count($form_state['input']) == 0) { // hack to assure check and messages are only done once when form is submitted
     $account_level = intel_verify_apikey($message);
     if ($account_level) {
-      Intel_Df::drupal_set_message( Intel_Df::t('LevelTen Intelligence API connected.'), 'success');
+      Intel_Df::drupal_set_message( Intel_Df::t('Intelligence API connected.'), 'success');
     }
     else {
       $msg = Intel_Df::t('Intelligence API not connected.');
@@ -37,7 +37,7 @@ function intel_admin_settings($form, &$form_state) {
 
   $form['l10iapi'] = array(
     '#type' => 'fieldset',
-    '#title' => Intel_Df::t('LevelTen Intel API'),
+    '#title' => Intel_Df::t('Intelligence API'),
     '#collapsible' => TRUE,
   );
   $desc = Intel_Df::t('Enter the Google Analytics property (view) would want the use for your reports.');
@@ -704,7 +704,7 @@ function intel_admin_intel_event_list_page() {
     Intel_Df::t('Title'),
     Intel_Df::t('Description'),
     //t('Type'),
-    Intel_Df::t('Module'),
+    //Intel_Df::t('Module'),
     Intel_Df::t('Ops'),
   );
   $rows = array();
@@ -717,19 +717,19 @@ function intel_admin_intel_event_list_page() {
   $link_options = array();
   foreach ($events AS $key => $event) {
     $ops = array();
+    $ops[] = Intel_Df::l(Intel_Df::t('edit'), 'admin/config/intel/settings/intel_event/' . $key . '/edit', $link_options);
     if (!empty($event['custom'])) {
-      $ops[] = Intel_Df::l(Intel_Df::t('edit'), 'admin/config/intel/settings/intel_event/' . $key . '/edit', $link_options);
       $ops[] = Intel_Df::l(Intel_Df::t('delete'), 'admin/config/intel/settings/intel_event/' . $key . '/delete', $link_options);
     }
     else {
-      $ops[] = Intel_Df::t('NA');
+      //$ops[] = Intel_Df::t('NA');
     }
     $rows[] = array(
       $event['eventCategory'],
       $event['title'],
       $event['description'],
       //$attr['type'],
-      $event['module'],
+      //$event['module'],
       implode(' ', $ops),
     );
   }
@@ -742,6 +742,13 @@ function intel_admin_intel_event_list_page() {
   $output = Intel_Df::theme('table', $vars);
 
   return $output;
+}
+
+function intel_admin_intel_event_view_page($event) {
+  intel_d($event);
+  $push = intel_filter_event_for_push($event);
+  intel_d($push);
+  return 'hi';
 }
 
 function intel_admin_intel_event_add_page() {
@@ -761,15 +768,24 @@ function intel_admin_intel_event_edit_page($event) {
 
 
 function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
+  wp_enqueue_script('intel-admin-config-intel-event-edit', INTEL_URL . 'admin/js/intel-admin-config-intel-event-edit.js');
+
   if (!is_array($event)) {
     $event = array();
   }
 
   intel_d($event);
 
+
+
   $form_state['event'] = $event;
   $add = empty($event['key']);
   $custom = (!$event || !empty($event['custom'])) ? 1 : 0;
+
+  $overridable = $event['overridable'];
+  intel_d($overridable);
+
+  $form_state['intel_overridable'] = $overridable;
 
   $form['key'] = array(
     '#type' => ($custom && $add) ? 'textfield' : 'item',
@@ -781,24 +797,28 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   );
   $form['key']['#markup'] = $form['key']['#default_value'];
 
-  $form['title'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
+  $key = 'title';
+  $form[$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
     '#title' => Intel_Df::t('Title'),
-    '#default_value' => !empty($event['title']) ? $event['title'] : '',
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
     '#description' => Intel_Df::t('Human friendly title to displayed to site administrators.'),
     '#size' => 32,
     '#required' => 1,
+    '#disabled' => !($custom || !empty($overridable[$key])),
   );
-  $form['title']['#markup'] = $form['title']['#default_value'];
+  $form[$key]['#markup'] = $form[$key]['#default_value'];
 
-  $form['description'] = array(
-    '#type' => ($custom) ? 'textarea' : 'item',
+  $key = 'description';
+  $form[$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textarea' : 'item',
     '#title' => Intel_Df::t('Description'),
-    '#default_value' => !empty($event['description']) ? $event['description'] : '',
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
     '#description' => Intel_Df::t('Description of the attribute.'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
     '#rows' => 2,
   );
-  $form['description']['#markup'] = $form['description']['#default_value'];
+  $form[$key]['#markup'] = $form[$key]['#default_value'];
 
   $form['ga_event_values'] = array(
     '#type' => 'fieldset',
@@ -807,97 +827,120 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     '#collapsed' => FALSE,
     '#description' => Intel_Df::t('The parameters sent to Google Analtyics when the event is triggered.'),
   );
+
   $options = array(
     '_' => Intel_Df::t('-- None --'),
     '' => Intel_Df::t('Standard event'),
     'valued' => Intel_Df::t('Valued event'),
     'goal' => Intel_Df::t('Goal event'),
   );
-  $form['ga_event_values']['mode'] = array(
-    '#type' => ($custom) ? 'select' : 'item',
+  $key = 'mode';
+  $form['ga_event_values'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'select' : 'item',
     '#title' => Intel_Df::t('Mode'),
     '#options' => $options,
-    '#default_value' => !empty($event['mode']) ? $event['mode'] : '',
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
     '#description' => Intel_Df::t('Select the style of event you would like to send to Google Analytics. Goal events are used to trigger a GA goal. Select "Valued event" for events adding business value to the site. Use "Standard event" for all others.'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
   );
-  $form['ga_event_values']['mode']['#markup'] = $form['ga_event_values']['mode']['#default_value'];
+  $form['ga_event_values'][$key]['#markup'] = $form['ga_event_values'][$key]['#default_value'];
+
+
+
+
+  $form['ga_event_values']['inline_wrapper_0'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="clearfix"><div class="pull-left ">',
+  );
+
+  $key = 'category';
+  $form['ga_event_values'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
+    '#title' => Intel_Df::t('Category (Event Title)'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('Input Google Analytics event category. If left blank the Title from above will be used. It is recommended to leave this field blank and use the event title default.'),
+    '#size' => 64,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#attributes' => array(
+      'class' => array(
+        'pull-left',
+        //'clearfix'
+      ),
+    ),
+  );
+  $form['ga_event_values'][$key]['#markup'] = $form['ga_event_values'][$key]['#default_value'];
+  if (empty($form['ga_event_values'][$key]['#markup'])) {
+    $form['ga_event_values'][$key]['#markup'] = Intel_Df::t('(not set)');
+  }
+
+
+  $form['ga_event_values']['inline_wrapper_1'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div><div class="pull-left" style="padding-left: 15px;">',
+  );
 
   $options = array();
   //$goals = intel_get_event_goal_info('general');
   $goals = get_option('intel_goals', array());
-  intel_d($goals);
   foreach ($goals AS $key => $goal) {
     if (empty($goal['context']['general'])) {
       return;
     }
     $options[$goal['ga_id']] = $goal['title'];
   }
-  $form['ga_event_values']['ga_id'] = array(
-    '#type' => ($custom) ? 'select' : 'item',
+  $key = 'ga_id';
+  $form['ga_event_values'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'select' : 'item',
     '#title' => Intel_Df::t('Goal'),
     '#options' => $options,
     '#default_value' => !empty($event['ga_id']) ? $event['ga_id'] : '',
-    '#description' => Intel_Df::t('TODO'),
-  );
-  $form['ga_event_values']['ga_id']['#markup'] = '(not set)';
-  if ($form['ga_event_values']['ga_id']['#default_value']) {
-    $form['ga_event_values']['ga_id']['#markup'] = $goals[$form['ga_event_values']['ga_id']['#default_value']]['title'];
-  }
-
-
-  //$form['ga_event_values']['inline_wrapper_0'] = array(
-  //  '#type' => 'markup',
-  //  '#markup' => '<div class="pull-left">',
-  //);
-
-
-  $form['ga_event_values']['category'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('Category (Event Title)'),
-    '#default_value' => !empty($event['category']) ? $event['category'] : '',
-    '#description' => Intel_Df::t('Input Google Analytics event category. If left blank the Title from above will be used. It is recommended to leave this field blank and use the event title default.'),
-    '#size' => 64,
+    '#description' => Intel_Df::t('Select the goal to be triggered with the event.'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
     '#attributes' => array(
       'class' => array(
         'pull-left',
+        //'clearfix'
       ),
     ),
   );
-  $form['ga_event_values']['category']['#markup'] = $form['ga_event_values']['category']['#default_value'];
+  $form['ga_event_values'][$key]['#markup'] = '(not set)';
+  if ($form['ga_event_values'][$key]['#default_value']) {
+    $form['ga_event_values'][$key]['#markup'] = $goals[$form['ga_event_values'][$key]['#default_value']]['title'];
+  }
 
-  //$form['ga_event_values']['inline_wrapper_1'] = array(
-  //  '#type' => 'markup',
-  //  '#markup' => '</div>',
-  //);
-
-
-
-
-  /*
-  $form['ga_event_values']['inline_wrapper_1'] = array(
+  $form['ga_event_values']['inline_wrapper_2'] = array(
     '#type' => 'markup',
-    '#markup' => '</div>',
+    '#markup' => '</div></div>',
   );
-  */
 
-  $form['ga_event_values']['action'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
+  $key = 'action';
+  $form['ga_event_values'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
     '#title' => Intel_Df::t('Action (Object Title)'),
-    '#default_value' => !empty($event['action']) ? $event['action'] : '',
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
     '#description' => Intel_Df::t('Input Google Analytics event action. Tokens can be used. If left blank the the title of the object that triggering the will be used.'),
     '#size' => 64,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#attributes' => array(
+      'class' => array(
+        'clearfix'
+      )
+    ),
   );
-  $form['ga_event_values']['action']['#markup'] = $form['ga_event_values']['action']['#default_value'];
+  $form['ga_event_values'][$key]['#markup'] = $form['ga_event_values'][$key]['#default_value'];
 
-  $form['ga_event_values']['label'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
+  $key = 'label';
+  $form['ga_event_values'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
     '#title' => Intel_Df::t('Label (Object URI)'),
-    '#default_value' => !empty($event['label']) ? $event['label'] : '',
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
     '#description' => Intel_Df::t('Input Google Analytics event label value. Tokens can be used. If left blank the id (uri) of the object that triggered the event will be used.'),
     '#size' => 64,
+    '#disabled' => !($custom || !empty($overridable[$key])),
   );
-  $form['ga_event_values']['action']['#markup'] = $form['ga_event_values']['action']['#default_value'];
+  $form['ga_event_values'][$key]['#markup'] = $form['ga_event_values'][$key]['#default_value'];
 
+  /*
   $form['ga_event_values']['valued_event'] = array(
     '#type' => ($custom) ? 'checkbox' : 'item',
     '#title' => Intel_Df::t('Is valued event'),
@@ -905,23 +948,34 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     '#description' => Intel_Df::t('If checked, values for this event will be counted in scoring.'),
   );
   $form['ga_event_values']['valued_event']['#markup'] = ($form['ga_event_values']['valued_event']['#default_value']) ? 'Yes' : 'No';
+  */
 
-  $form['ga_event_values']['value'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
+  $key = 'value';
+  $form['ga_event_values'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
     '#title' => Intel_Df::t('Event value'),
-    '#default_value' => !empty($event['value']) ? $event['value'] : '',
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
     '#description' => Intel_Df::t('Input Google Analytics event value. This value can be overridden per node using the intel events value field.'),
     '#size' => 12,
+    '#disabled' => !($custom || !empty($overridable[$key])),
   );
-  $form['ga_event_values']['value']['#markup'] = $form['ga_event_values']['value']['#default_value'];
+  $form['ga_event_values'][$key]['#markup'] = $form['ga_event_values'][$key]['#default_value'];
 
-  $form['ga_event_values']['noninteraction'] = array(
-    '#type' => ($custom) ? 'checkbox' : 'item',
-    '#title' => Intel_Df::t('Non interaction'),
-    '#default_value' => !empty($event['noninteraction']) ? $event['noninteraction'] : 0,
-    '#description' => Intel_Df::t('If checked, the event will not be counted as a hit for bounce tracking.'),
+  $options = array(
+    '' => Intel_Df::t('Auto'),
+    '0' => Intel_Df::t('No'),
+    '1' => Intel_Df::t('Yes'),
   );
-  $form['ga_event_values']['noninteraction']['#markup'] = ($form['ga_event_values']['noninteraction']['#default_value']) ? 'Yes' : 'No';
+  $key = 'non_interaction';
+  $form['ga_event_values'][$key] = array(
+    '#type' => (1 || $custom) ? 'select' : 'item',
+    '#title' => Intel_Df::t('Non interaction'),
+    '#default_value' => !empty($event['non_interaction']) ? $event['non_interaction'] : '',
+    '#description' => Intel_Df::t('If set to Yes, the event will not be counted as a hit for bounce tracking. The auto default for standard events is Yes and No for valued events and goal events.'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#options' => $options,
+  );
+  $form['ga_event_values']['non_interaction']['#markup'] = ($form['ga_event_values']['non_interaction']['#default_value']) ? 'Yes' : 'No';
 
   $form['trigger'] = array(
     '#type' => 'fieldset',
@@ -930,26 +984,109 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     '#collapsed' => FALSE,
     '#description' => Intel_Df::t('Used to set the conditions for triggering the event.'),
   );
-  $form['trigger']['event'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('jQuery event'),
-    '#default_value' => !empty($event['event']) ? $event['event'] : '',
-    '#description' => Intel_Df::t('Input a jQuery event to trigger this event. If left blank the even will trigger on showpage.'),
+
+  $key = 'selector';
+  $form['trigger'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
+    '#title' => Intel_Df::t('Selector'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('Input jQuery selector to bind the event to. Executed as jQuery(\'selector\').'),
+    '#size' => 64,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+  );
+
+  $key = 'on_event';
+  $form['trigger'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
+    '#title' => Intel_Df::t('On event'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('Input a jQuery event to trigger this event. If left blank the even will trigger on showpage. Executed as jQuery(\'selector\').on(\'on event\').'),
+    '#size' => 64,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+  );
+
+  $form['trigger']['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Advanced'),
+    '#collapsible' => TRUE,
+    '#collapsed' => empty($event['on_selector']) && empty($event['on_data']) && empty($event['on_function']) && empty($event['selector_filter']),
+    //'#description' => Intel_Df::t(''),
+  );
+
+  $key = 'on_selector';
+  $form['trigger']['advanced'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
+    '#title' => Intel_Df::t('On selector'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('Input a jQuery child selector to be used with the on method. If left blank no child selector will be used. Executed as jQuery(\'selector\').on(\'on event\',  \'[on selector]\').'),
+    '#size' => 64,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+  );
+
+  $key = 'on_data';
+  $form['trigger']['advanced'][$key ] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textarea' : 'item',
+    '#title' => Intel_Df::t('On data'),
+    '#default_value' => !empty($event[$key ]) ? $event[$key ] : '',
+    '#description' => Intel_Df::t('Input a data to pass to the event handler. If left blank no data will be set. Executed as jQuery(\'selector\').on(\'on event\',  \'[on selector]\',  \'[on data]\').'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#prefix' => '<div class="form-textarea-format-group"><div class="form-textarea-format-group-container">',
+  );
+  $format_options = array(
+    '' => Intel_Df::t('String'),
+    'value' => Intel_Df::t('Value'),
+  );
+  $form['trigger']['advanced'][$key . '_format'] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'select' : 'item',
+    '#title' => Intel_Df::t('Format'),
+    '#default_value' => !empty($event[$key . '_format']) ? $event[$key . '_format'] : '',
+    '#description' => Intel_Df::t('Select how to format the on data field. If String is selected, quotes will be put around the value. If value, no quotes will be added. Use value for numbers, objects, arrays and functions.'),
+    '#options' => $format_options,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#suffix' => '</div></div>',
+  );
+
+  $key = 'on_function';
+  $form['trigger']['advanced']['on_function'] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textarea' : 'item',
+    '#title' => Intel_Df::t('On function'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('Input a jQuery child selector to be used with the on method. If left blank default event handler will be called. Executed as jQuery(\'selector\').on(\'on event\',  \'[on selector]\',  \'[on data]\',  \'[on function]\').'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#prefix' => '<div class="form-textarea-format-group"><div class="form-textarea-format-group-container">',
+  );
+  $form['trigger']['advanced'][$key . '_format'] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'select' : 'item',
+    '#title' => Intel_Df::t('Format'),
+    '#default_value' => !empty($event[$key . '_format']) ? $event[$key . '_format'] : '',
+    '#description' => Intel_Df::t('Select how to format the on function field. If String is selected, quotes will be put around the value. If value, no quotes will be added. Use value for numbers, objects, arrays and functions.'),
+    '#options' => $format_options,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#suffix' => '</div></div>',
+  );
+
+  $key = 'selector_filter';
+  $form['trigger']['advanced'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
+    '#title' => Intel_Df::t('Selector filter'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('Input a jQuery child selector to be used a filter method. If left blank filter method will not be applyed. Executed as jQuery(\'selector\').filter(\'[filter selector]\').on(\'on event\').'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
     '#size' => 64,
   );
-  $form['trigger']['selector'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('jQuery selector'),
-    '#default_value' => !empty($event['selector']) ? $event['selector'] : '',
-    '#description' => Intel_Df::t('Input a jQuery selector to bind the event to.'),
-    '#size' => 64,
-  );
-  $form['trigger']['refresh_force'] = array(
-    '#type' => ($custom) ? 'checkbox' : 'item',
+
+  $key = 'refresh_force';
+  $form['trigger']['advanced'][$key] = array(
+    '#type' => (1 || $custom || !empty($overridable[$key])) ? 'checkbox' : 'item',
     '#title' => Intel_Df::t('Forced event to be triggered on page refresh'),
-    '#default_value' => !empty($event['refresh_force']) ? $event['refresh_force'] : 0,
+    '#default_value' => !empty($event[$key]) ? $event[$key] : 0,
+    '#disabled' => !($custom || !empty($overridable[$key])),
     '#description' => Intel_Df::t('By default, events triggered on pageshow will not trigger when a page is refreshed. Check this box to force the event to be triggered even on refresh.'),
   );
+
+
+
+
 
   $form['availability'] = array(
     '#type' => 'fieldset',
@@ -1044,14 +1181,20 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     'action',
     'label',
     'value',
-    'event',
     'selector',
+    'on_event',
+    'on_selector',
+    'on_data',
+    'on_data_format',
+    'on_function',
+    'on_function_format',
+    'selector_filter',
     'callback',
     'refresh_force',
     'selectable',
     'enable_all_pages',
-    'noninteraction',
-    'ga_id'
+    'non_interaction',
+    'ga_id',
     //'valued_event',
     //'goal_event',
   );

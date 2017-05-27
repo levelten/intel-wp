@@ -114,8 +114,8 @@ function intel_menu($items = array()) {
     'title' => 'Events',
     'description' => 'Intel events configuration.',
     'page callback' => 'intel_admin_intel_event_list_page',
-    //'access callback' => 'user_access',
-    'access callback' => '_intel_user_access_extended',
+    'access callback' => 'user_access',
+    //'access callback' => '_intel_user_access_extended',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_TASK,
     'weight' => $w++,
@@ -152,6 +152,15 @@ function intel_menu($items = array()) {
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_TASK,
     'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/intel_event/%intel_intel_event'] = array(
+    'title' => 'View event',
+    'page callback' => 'intel_admin_intel_event_view_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
     'file' => 'admin/intel.admin_config.inc',
   );
   $items['admin/config/intel/settings/intel_event/add'] = array(
@@ -2849,15 +2858,20 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 0,
     'selectable' => 1,
   );
-  if (intel_is_extended()) {
-    $info['abr'] = array(
-      'title' => Intel_Df::t('Adjusted bounce rate'),
-      'description' => Intel_Df::t('Enables GA bounce rate adjustments and page time and scroll tracking.'),
-      'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_abr.js',
-      'enabled' => 1,
-      'selectable' => 1,
-    );
-  }
+  $info['abr'] = array(
+    'title' => Intel_Df::t('Adjusted bounce rate (EXPERIMENTAL)'),
+    'description' => Intel_Df::t('Enables corrections to GA bounce rate and time on page.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_abr.js',
+    'enabled' => 0,
+    'selectable' => 1,
+  );
+  $info['linktracker'] = array(
+    'title' => Intel_Df::t('Link Tracker'),
+    'description' => Intel_Df::t('Enables link tracking.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_linktracker.js',
+    'enabled' => 1,
+    'selectable' => 1,
+  );
   $info['youtube'] = array(
     'title' => Intel_Df::t('YouTube'),
     'description' => Intel_Df::t('Tracks YouTube video play events.'),
@@ -2867,14 +2881,14 @@ function _intel_intel_script_info($info = array()) {
   );
   $info['dyn'] = array(
     'title' => Intel_Df::t('Dynamics'),
-    'description' => Intel_Df::t('Dynamic content support. (under development)'),
+    'description' => Intel_Df::t('Dynamic content support. (EXPERIMENTAL)'),
     'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_dyn.js',
     'enabled' => 0,
     'selectable' => 1,
   );
   $info['geo'] = array(
     'title' => Intel_Df::t('Geo'),
-    'description' => Intel_Df::t('Geo location data support. (under development)'),
+    'description' => Intel_Df::t('Geo location data support. (EXPERIMENTAL)'),
     'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_geo.js',
     'enabled' => 0,
     'selectable' => 1,

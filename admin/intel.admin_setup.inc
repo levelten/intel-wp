@@ -679,8 +679,6 @@ function intel_admin_setup_submit_intel_ga_profile($form, &$form_state) {
 }
 
 function intel_admin_setup_intel_api_key($form, &$form_state) {
-$err = get_option('intel_err', '');
-intel_d($err);
   $f = array();
   $status = $form_state['intel_statuses']['intel_api_key'];
   if (!empty($status['error_type']) && ($status['error_type'] = 'property_not_configured')) {
@@ -743,8 +741,6 @@ intel_d($err);
 function intel_admin_setup_check_intel_api_key($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-$err = array();
-
   $status = array();
 
   $intel_apikey = get_option('intel_apikey', '');
@@ -760,9 +756,7 @@ $err = array();
     'apikey' => $intel_apikey,
   );
   $api_level = intel_verify_apikey($message, $property, $options);
-$err['api_level'] = $api_level;
-$err['message'] = $message;
-update_option('intel_err', $err);
+
   if (!empty($api_level)) {
     $status['success'] = 1;
   }
@@ -774,8 +768,6 @@ update_option('intel_err', $err);
   // check custom dimensions setup correctly
   if ($api_level) {
     $dims = intel_fetch_ga_custom_dimensions();
-$err['dims'] = $dims;
-update_option('intel_err', $err);
     if (empty($dims)) {
       $status['success'] = 0;
       $status['error_type'] = 'property_not_configured';
@@ -797,6 +789,7 @@ function intel_admin_setup_validate_intel_api_key($form, &$form_state, $status) 
 
 function intel_admin_setup_submit_intel_api_key($form, &$form_state) {
   $values = $form_state['values'];
+intel_d("update_option intel_apikey = " + $values['intel_apikey']);
   update_option('intel_apikey', trim($values['intel_apikey']));
 }
 
