@@ -43,7 +43,11 @@ function intel_page_alter(&$page) {
     'trackForms' => array(),
     'trackRealtime' => get_option('intel_track_realtime', INTEL_TRACK_REALTIME_DEFAULT),
     'isLandingpage' => 0,
-    'scorings' => intel_get_scorings('js_setting'),
+    //'scorings' => intel_get_scorings('js_setting'),
+    'scorings' => array(
+      'events' => array(),
+      'goals' => array(),
+    ),
     'storage' => array(
       'page' => array(
 	      'analytics' => array(),
@@ -56,13 +60,32 @@ function intel_page_alter(&$page) {
 	    ),
     ),
     'gaGoals' => array(),
+    'eventDefs' => array(),
   );
+
+  // set scorings
+  $scorings = intel_get_scorings('js_setting');
+  foreach ($scorings as $k => $v) {
+    if (substr($k, 0, 6) == 'event_') {
+      $key = substr($k, 6);
+      $config['scorings']['events'][$key] = $v;
+    }
+    else if (substr($k, 0, 5) == 'goal_') {
+      $key = substr($k, 5);
+      $config['scorings']['goals'][$key] = $v;
+    }
+    else {
+      $config['scorings'][$k] = $v;
+    }
+  }
+
 
   $ga_goals = get_option('intel_goals', array());
   foreach ($ga_goals as $goal) {
     $config['gaGoals'][] = array(
       'id' => $goal['ga_id'],
       'name' => $goal['title'],
+      //'value' => !empty($scorings['goal_' + $goal['ga_id']]) ? $scorings['goal_' + $goal['ga_id']] : 0
     );
   }
 
@@ -198,16 +221,13 @@ function intel_page_alter(&$page) {
   $page_events = array_merge($page_events, $all_page_events);
 
   foreach ($page_events AS $key => $value) {
-    $l10i_event_action = $value;
-    //$l10i_event_action['method'] = '_addIntelEvent';
-    //$l10i_event_action['method'] = 'event';
-
-    if (!empty($l10i_event_action['valued_event'])) {
-      $l10i_event_action['category'] .= '!';
+    $l10i_event_action = intel_filter_event_for_push($value);
+    if (!empty($value['js_settings'])) {
+      $config['eventDefs'][] = $l10i_event_action;
     }
-
-    $l10i_event_action = intel_filter_event_for_push($l10i_event_action);
-    intel_add_page_intel_push(array('event', $l10i_event_action));
+    else {
+      intel_add_page_intel_push(array('event', $l10i_event_action));
+    }
   }
 
 
@@ -858,10 +878,14 @@ function intel_filter_event_for_push($event) {
     'action' => 'eventAction',
     'label' => 'eventLabel',
     'value' => 'eventValue',
+    'noninteraction' => 'nonInteraction',
     'selector' => 1,
     'selector_filter' => 'selectorFilter',
+    'on_event' => 'onEvent',
     'event' => 'onEvent',
-    'noninteraction' => 'nonInteraction',
+    'on_selector' => 'onSelector',
+    'on_data' => 'onData',
+    'on_handler' => 'onHandler',
     'callback' => 'triggerCallback',
     'refresh_force' => 'refreshForce',
     'method' => 1,
@@ -871,9 +895,12 @@ function intel_filter_event_for_push($event) {
     'nonInteraction' => 1,
     'onEvent' => 1,
     'onSelector' => 1,
+    'onData' => 1,
+    'onHandler' => 1,
     'selectorFilter' => 1,
     'refreshForce' => 1,
   );
+
   foreach ($event as $k => $v) {
     if (isset($trans[$k])) {
       $t = $trans[$k];
@@ -903,6 +930,10 @@ function intel_filter_event_for_push($event) {
     else {
       unset($event[$k]);
     }
+
+  }
+
+  if (!empty($event['on_handler'])) {
 
   }
 

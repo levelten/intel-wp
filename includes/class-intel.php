@@ -723,10 +723,8 @@ class Intel {
 	}
 
 	public function intel_event_info($name = NULL, $options = array()) {
-		$info = self::build_info('intel_event');
-		if (!isset($name)) {
-			return $info;
-		}
+		// requires additional processing, so standard build_info not used
+		$info = intel_get_intel_event_info();
 		return !empty($info[$name]) ? $info[$name] : NULL;
 	}
 

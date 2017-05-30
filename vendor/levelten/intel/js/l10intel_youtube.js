@@ -93,7 +93,8 @@ function L10iYouTube(_ioq) {
         var ga_event = {
             'eventCategory': "Video event",
             'eventAction': "YouTube: " + title,
-            'eventLabel': "::youtube:" + id,
+            //'eventLabel': "::youtube:" + id,
+            'eventLabel': ":youtube:" + id,
             'eventValue': 0,
             'nonInteraction': false
         };
@@ -106,7 +107,7 @@ function L10iYouTube(_ioq) {
         var positionPer = Math.round(100 * player.getCurrentTime() / player.getDuration());
         if (event.data == YT.PlayerState.PLAYING){
             ga_event.eventCategory = 'Video play';
-            var value = io('get', 'config.scorings.youtube_video_play', 0);
+            var value = io('get', 'config.scorings.events.youtube_video_play', 0);
             if (value > 0) {
                 ga_event.eventCategory += '!';
             }

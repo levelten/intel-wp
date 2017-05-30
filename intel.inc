@@ -11,7 +11,7 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.2');
+define('INTEL_L10IAPI_JS_VER', '0.2.3');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -74,6 +74,19 @@ function intel_menu($items = array()) {
     'weight' => -1,
     'file' => 'admin/intel.admin_config.inc',
   );
+  if (intel_is_extended() && intel_is_intel_script_enabled('linktracker')) {
+    $items['admin/config/intel/settings/general/linktracker'] = array(
+      'title' => 'Link tracker',
+      'description' => 'Link tracker setup',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('intel_admin_settings_linktracker'),
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'weight' => -1,
+      'file' => 'admin/intel.admin_config_linktracker.inc',
+    );
+  }
   $w = 0;
   $items['admin/config/intel/settings/setup'] = array(
     'title' => 'Setup',
@@ -160,7 +173,7 @@ function intel_menu($items = array()) {
     'page arguments' => array(5),
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'type' => Intel_Df::MENU_CALLBACK,
     'file' => 'admin/intel.admin_config.inc',
   );
   $items['admin/config/intel/settings/intel_event/add'] = array(
@@ -2858,17 +2871,17 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 0,
     'selectable' => 1,
   );
-  $info['abr'] = array(
-    'title' => Intel_Df::t('Adjusted bounce rate (EXPERIMENTAL)'),
-    'description' => Intel_Df::t('Enables corrections to GA bounce rate and time on page.'),
-    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_abr.js',
-    'enabled' => 0,
-    'selectable' => 1,
-  );
   $info['linktracker'] = array(
     'title' => Intel_Df::t('Link Tracker'),
-    'description' => Intel_Df::t('Enables link tracking.'),
+    'description' => Intel_Df::t('Tracks link clicks by type such as mailto, download, external and custom links.'),
     'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_linktracker.js',
+    'enabled' => 1,
+    'selectable' => 1,
+  );
+  $info['timetracker'] = array(
+    'title' => Intel_Df::t('Time tracker'),
+    'description' => Intel_Df::t('Tracks actual time on page using page unload events.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_timetracker.js',
     'enabled' => 1,
     'selectable' => 1,
   );
@@ -2895,6 +2908,11 @@ function _intel_intel_script_info($info = array()) {
   );
 
   return $info;
+}
+
+function intel_is_intel_script_enabled($name) {
+  $scripts_enabled = get_option('intel_intel_scripts_enabled', array());
+  return !empty($scripts_enabled[$name]);
 }
 
 add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
@@ -3913,4 +3931,44 @@ function intel_form_shortcode($vars) {
     print Intel_Df::theme('intel_shortcode', $tvars);
   }
 }
+
+spl_autoload_register('intel_class_autoload');
+function intel_class_autoload($className) {
+  // list of classes intel needs to specify autoloading.
+  $autoload =  array();
+
+  // autoload classes not included in gadwp GA files
+  $autoload['Google_Service_Analytics_CustomDimension'] = 1;
+  $autoload['Google_Service_Analytics_CustomDimensions'] = 1;
+  $autoload['Google_Service_Analytics_CustomDimensionParentLink'] = 1;
+  $autoload['Google_Service_Analytics_Resource_ManagementCustomDimensions'] = 1;
+
+  if (empty($autoload[$className])) {
+    return;
+  }
+
+  $classPath = explode('_', $className);
+  if ($classPath[0] == 'Google') {
+    $filePath = INTEL_DIR . 'vendor/';
+    $filePath .= 'google/';
+    if ($classPath[1] == 'Service') {
+      $filePath .= "apiclient-services/src/Google/Service/{$classPath[2]}/";
+      if ($classPath[3] == 'Resource') {
+        $filePath .= "resource/{$classPath[4]}.php";
+      }
+      else {
+        $filePath .= "{$classPath[3]}.php";
+      }
+
+    }
+    else {
+      $filePath .= 'apiclient/src/Google/';
+    }
+  }
+
+  if (!empty($filePath) && file_exists($filePath)) {
+    require_once ($filePath);
+  }
+}
+
 

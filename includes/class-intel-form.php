@@ -1441,7 +1441,7 @@ class Intel_Form  {
 	 * Flags an element as having an error.
 	 */
 	public static function form_error(&$element, $message = '') {
-		form_set_error(implode('][', $element['#parents']), $message);
+		self::form_set_error(implode('][', $element['#parents']), $message);
 	}
 
 	/**

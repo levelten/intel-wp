@@ -19,7 +19,7 @@ function L10iDisqus(_ioq) {
 	  'eventCategory': "Comment!",
 	  'eventAction': action,
       'eventLabel': window.location.pathname.substring(1) + "#comment-" + comment.id,
-      'eventValue': io('get', 'config.scorings.disqus_comment', 0),
+      'eventValue': io('get', 'config.scorings.events.disqus_comment', 0),
   	  'nonInteraction': false
     };
     io('event', ga_event);

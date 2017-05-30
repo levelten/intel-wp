@@ -106,7 +106,7 @@ function L10iAddthis(_ioq, config) {
             'eventCategory': "Social share!",
             'eventAction': (typeof addthis.util.getServiceName(evt.data.service) != 'undefined') ? addthis.util.getServiceName(evt.data.service) : evt.data.service,
             'eventLabel': "[[systemAlias]]",
-            'eventValue': io('get', 'config.scorings.addthis_social_share', 0),
+            'eventValue': io('get', 'config.scorings.events.addthis_social_share', 0),
             'nonInteraction': false,
             'eid': 'socialShare'
         };
@@ -118,7 +118,7 @@ function L10iAddthis(_ioq, config) {
             'eventCategory': "Social share clickback!",
             'eventAction': (typeof addthis.util.getServiceName(evt.data.service) != 'undefined') ? addthis.util.getServiceName(evt.data.service) : evt.data.service,
             'eventLabel': "[[systemAlias]]",
-            'eventValue': io('get', 'config.scorings.addthis_social_share_clickback', 0),
+            'eventValue': io('get', 'config.scorings.events.addthis_social_share_clickback', 0),
             'nonInteraction': false,
             'eid': 'socialShareClickback'
         };
@@ -130,7 +130,7 @@ function L10iAddthis(_ioq, config) {
             'eventCategory': "Social profile click!",
             'eventAction': (typeof addthis.util.getServiceName(evt.data.service) != 'undefined') ? addthis.util.getServiceName(evt.data.service) : evt.data.service,
             'eventLabel': (evt.data.url) ? evt.data.url : "(not set)",
-            'eventValue': io('get', 'config.scorings.addthis_social_follow', 0),
+            'eventValue': io('get', 'config.scorings.events.addthis_social_follow', 0),
             'nonInteraction': false,
             'eid': 'socialProfileClick'
         };

@@ -55,7 +55,7 @@ function L10iMailChimp(_ioq) {
         'eventCategory': "Email click!",
         'eventAction': 'MailChimp: ' + campaignname + ' (' + listname + ')',
         'eventLabel': 'MailChimp:' + listid + ':' + campaignid,
-        'eventValue': io('get', 'config.scorings.email_click', 0),
+        'eventValue': io('get', 'config.scorings.events.email_click', 0),
         'nonInteraction': false
     };
     _l10iq.push(['event', ga_event]);

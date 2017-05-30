@@ -1683,8 +1683,11 @@ function intel_admin_setup_scoring($form, &$form_state) {
     '#markup' => implode(' ', $items),
   );
 
+  include_once INTEL_DIR . '/admin/intel.admin_config.inc';
+  $f2 = intel_admin_scoring_scores_subform($form, $form_state);
+  $f = Intel_Df::drupal_array_merge_deep($f, $f2);
 
-
+  /*
   $scorings = intel_get_scorings();
   $scorings = get_option('intel_scorings', array());
   $f['base'] = array(
@@ -1754,6 +1757,7 @@ function intel_admin_setup_scoring($form, &$form_state) {
     }
 
   }
+  */
 
   return $f;
 }
@@ -1784,12 +1788,7 @@ function intel_admin_setup_check_scoring($form, &$form_state) {
  *
  */
 function intel_admin_setup_validate_scoring($form, &$form_state, $status) {
-  if (!empty($status['dimension_errors'])) {
-    foreach ($status['dimension_errors'] as $i => $err) {
-      Intel_Form::form_set_error('dim_' . $i . '_name', $err['message']);
-    }
 
-  }
 }
 
 /*
@@ -1797,6 +1796,12 @@ function intel_admin_setup_validate_scoring($form, &$form_state, $status) {
  *
  */
 function intel_admin_setup_submit_scoring($form, &$form_state) {
+  // no processing needed since intel_admin_scoring_scores_subform includes
+  // submit call back to process score values;
+  return;
+
+
+  /*
   $values = $form_state['values'];
 
   $scores = array();
@@ -1813,6 +1818,7 @@ function intel_admin_setup_submit_scoring($form, &$form_state) {
   }
 
   update_option('intel_scorings', $scores);
+  */
 }
 
 /*

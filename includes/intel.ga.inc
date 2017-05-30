@@ -43,6 +43,7 @@ function intel_get_intel_event_info_default($event = array()) {
     );
   }
 
+  /*
   $event['cta_click'] = array(
     'title' => Intel_Df::t('CTA click'),
     'description' => Intel_Df::t('Call to action is clicked'),
@@ -51,33 +52,110 @@ function intel_get_intel_event_info_default($event = array()) {
     'value' => 0,
     'selector' => '.track-cta-click',
     'on_event' => 'click',
+    'enable_all_pages' => 1,
+    'js_settings' => 1,
   );
+  */
 
-  $event['download_link_click_'] = array(
-    'title' => Intel_Df::t('Download click'),
-    'description' => Intel_Df::t('File download is clicked'),
-    'mode' => '',
-    //'valued_event' => 1,
-    'value' => 0,
-    'selector' => 'a:download',
-    'on_event' => 'click',
-  );
+  if (intel_is_intel_script_enabled('linktracker')) {
+    $event['mailto_link_click'] = array(
+      'title' => Intel_Df::t('Mailto link click'),
+      'description' => Intel_Df::t('Link to mailto: is clicked'),
+      'category' => Intel_Df::t('Mailto link click'),
+      'mode' => '',
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered when link href starting with mailto: is clicked.'),
+      ),
+      //'selector' => 'a:track-link-mailto',
+      //'on_event' => 'click',
+      'js_setting' => 0, // processed via _linktracker.js
+      'overridable' => 0,
+    );
 
-  $event['download_link_click'] = $event['download_link_click_'];
-  $event['download_link_click']['selector'] = 'a:download.track-valued-click';
-  $event['download_link_click']['mode'] = 'valued';
+    $event['tel_link_click'] = array(
+      'title' => Intel_Df::t('Tel link click'),
+      'description' => Intel_Df::t('Link to tel: is clicked'),
+      'mode' => '',
+      'category' => Intel_Df::t('Tel link click'),
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered when link href starting with tel: is clicked.'),
+      ),
+      //'selector' => 'a:track-link-tel',
+      //'on_event' => 'click',
+      'js_setting' => 0, // processed via _linktracker.js
+    );
 
-  $event['external_link_click_'] = array(
-    'title' => Intel_Df::t('External link click'),
-    'description' => Intel_Df::t('Link to external URL is clicked'),
-    'mode' => '',
-    'value' => 0,
-    'selector' => 'a:external',
-    'on_event' => 'click',
-  );
-  $event['external_link_click'] = $event['external_link_click_'];
-  $event['external_link_click']['selector'] = 'a:external.track-valued-click';
-  $event['external_link_click']['mode'] = 'valued';
+    $event['download_link_click'] = array(
+      'title' => Intel_Df::t('Download link click'),
+      'description' => Intel_Df::t('Link to file download link is clicked'),
+      'mode' => '',
+      'category' => Intel_Df::t('Download link click'),
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered when link href ending in file download extensions is clicked.'),
+      ),
+      //'selector' => 'a:track-link-download',
+      //'on_event' => 'click',
+      'js_setting' => 0, // processed via _linktracker.js
+    );
+
+    $event['external_link_click'] = array(
+      'title' => Intel_Df::t('External link click'),
+      'description' => Intel_Df::t('Link to external URL is clicked'),
+      'mode' => '',
+      'category' => Intel_Df::t('External link click'),
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Triggered when a link to an external website is clicked.'),
+      ),
+    );
+
+    $event['internal_link_click'] = array(
+      'title' => Intel_Df::t('Internal link click'),
+      'description' => Intel_Df::t('Link to internal URL is clicked'),
+      'mode' => '',
+      'category' => Intel_Df::t('Internal link click'),
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Triggered when a link with the class track-link-internal is clicked.'),
+      ),
+    );
+  }
+
+  if (intel_is_intel_script_enabled('timetracker')) {
+    $event['page_time'] = array(
+      'title' => Intel_Df::t('Page time'),
+      'description' => Intel_Df::t('Sends time on page values when page unloads'),
+      'mode' => '',
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically set by Time Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggers on page unload set in Time Tracker script.'),
+      ),
+      'js_setting' => 0, // processed via _linktracker.js
+      'overridable' => 0,
+    );
+  }
+
 
   $event['social_share_click'] = array(
     'title' => Intel_Df::t('Social share click'),
@@ -110,18 +188,22 @@ function intel_get_intel_event_info_default($event = array()) {
     'value' => 25,
     'overridable' => 0,
     'ga_event_auto' => array(
-      'description' => Intel_Df::t('GA event values are automatically generated based on form level settings.'),
+      'description' => Intel_Df::t('Automatically generated by form support add-ons.'),
     ),
     'trigger_auto' => array(
-      'description' => Intel_Df::t('Event is triggered automatically upon form submission if the relevant form support add-on plugin is installed and configured for each type of form.'),
+      'description' => Intel_Df::t('Automatically triggered after form submission by form support add-ons.'),
     ),
+    'overridable' => 0,
   );
+  /*
   $event['phone_call'] = array(
     'title' => Intel_Df::t('Phone call'),
     'description' => Intel_Df::t('General phone call'),
     'valued_event' => 1,
     'value' => 25,
+    'overridable' => 0,
   );
+  */
 
   if (!empty($scripts_enabled['addthis'])) {
     $event['addthis_social_share'] = array(
@@ -156,6 +238,9 @@ function intel_get_intel_event_info_default($event = array()) {
       'description' => Intel_Df::t('When a video is played'),
       'valued_event' => 1,
       'value' => 0,
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered by the YouTube script when the play button of the YouTube player is pressed.'),
+      ),
       'js_setting' => 1,
     );
     $event['youtube_video_stop'] = array(
@@ -164,6 +249,9 @@ function intel_get_intel_event_info_default($event = array()) {
       'description' => Intel_Df::t('When a video is paused or stopped'),
       'valued_event' => 0,
       'value' => 0,
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered by the YouTube script when the stop button of the YouTube player is pressed.'),
+      ),
       'js_setting' => 1,
     );
     $event['youtube_video_watch'] = array(
@@ -172,7 +260,14 @@ function intel_get_intel_event_info_default($event = array()) {
       'description' => Intel_Df::t('When a video has been watched. Value is the % that was watched.'),
       'valued_event' => 0,
       'value' => 0,
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically set by the YouTube script. The event value is the percentage the video was watched.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered by the YouTube script when a YouTube video stops playing.'),
+      ),
       'js_setting' => 1,
+      'overridable' => 0,
     );
   }
 
@@ -182,6 +277,9 @@ function intel_get_intel_event_info_default($event = array()) {
     'description' => Intel_Df::t('Comment submitted via WordPress'),
     'valued_event' => 1,
     'value' => 5,
+    'trigger_auto' => array(
+      'description' => Intel_Df::t('Triggered automatically when a WP comment is submitted.')
+    ),
     'js_setting' => 1,
   );
 
@@ -203,7 +301,7 @@ function intel_get_goal_info() {
   return $goal_info;
 }
 
-add_filter('intel_intel_event_info', 'intel_get_goal_event_info');
+//add_filter('intel_intel_event_info', 'intel_get_goal_event_info');
 function intel_get_goal_event_info($info = array()) {
   $info = array_merge($info, intel_get_event_goal_info());
   return $info;
@@ -221,6 +319,9 @@ function intel_get_event_goal_info($filter = '') {
     foreach ($goal['context'] as $c => $v) {
       if ($v) {
         if ($filter && $filter != $c) {
+          continue;
+        }
+        if ($c == 'general' || $c == 'phonecall') {
           continue;
         }
         $cat = 'Goal';
@@ -246,10 +347,30 @@ function intel_get_event_goal_info($filter = '') {
         $event[$ekey]['title'] = $cat . ': ' . $goal['title'];
         $event[$ekey]['category'] = $cat;
         $event[$ekey]['selectable'] = 1;
+        $event[$ekey]['overridable'] = 1;
         if (empty($event[$ekey]['description'])) {
           $event[$ekey]['description'] = Intel_Df::t('Goal');
         }
-        $event[$ekey]['description'] .= ' ' . Intel_Df::t('triggered by') . " $trig_by";
+        $event[$ekey]['description'] = $goal['title'] . ' ' . Intel_Df::t('goal triggered by') . " $trig_by";
+
+        if ($ckey == 'form_submission') {
+          $event[$ekey]['ga_event_auto'] = array(
+            'description' => Intel_Df::t('Automatically generated by form support add-ons.'),
+          );
+          $event[$ekey]['trigger_auto'] = array(
+            'description' => Intel_Df::t('Automatically triggered after form submission by form support add-ons.'),
+          );
+        }
+        elseif ($ckey == 'phonecall') {
+          $event[$ekey]['ga_event_auto'] = array(
+            'description' => Intel_Df::t('Automatically generated by phone call support add-ons.'),
+          );
+          $event[$ekey]['trigger_auto'] = array(
+            'description' => Intel_Df::t('Automatically triggered after phone call by phone call support add-ons.'),
+          );
+        }
+
+        //$event[$ekey]['description'] .= ' ' . Intel_Df::t('triggered by') . " $trig_by";
       }
     }
 
@@ -314,31 +435,50 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
       return $events;
     }
   }
-  $events = intel_get_intel_event_info_default();
+  //$events = intel_get_intel_event_info_default();
+  $events = array();
+  // get event info provided by hook_intel_intel_event_info;
+  $events = apply_filters('intel_intel_event_info', $events);
+
   $events = array_merge($events, intel_get_event_goal_info());
   $goal_info = get_option('intel_goals', array());
 
   $overridable_defaults = array(
     'mode' => 1,
     'ga_id' => 1,
+    'value' => 1,
   );
 
   foreach ($events AS $k => $v) {
-
-    if (isset($event['overridable'])) {
-      if (is_array($event['overridable'])) {
-        $event['overridable'] = Intel_Df::drupal_array_merge_deep($overridable_defaults, $event['overridable']);
+    if (isset($v['overridable'])) {
+      // if array, used to override defaults
+      if (is_array($v['overridable'])) {
+        $events[$k]['overridable'] = Intel_Df::drupal_array_merge_deep($overridable_defaults, $v['overridable']);
       }
-      if (empty($event['overridable'])) {
-        $event['overridable'] = array();
+      // if override set to false, set to empty array
+      if (empty($v['overridable'])) {
+        $events[$k]['overridable'] = array();
       }
     }
+    // if overridable field not set, initialize with defaults
+    else {
+      $events[$k]['overridable'] = $overridable_defaults;
+    }
+
     if (isset($v['static_options'])) {
       $events[$k]['options'] = $v['static_options'];
     }
 
     if (!empty($v['valued_event']) && empty($v['ga_id'])) {
-      $events[$k]['mode'] = 'valued';
+      $events[$k]['mode'] = $v['mode'] = 'valued';
+    }
+    if (!empty($v['mode'])) {
+      if ($v['mode'] == 'valued') {
+        $events[$k]['valued_event'] = 1;
+      }
+    }
+    else {
+      $events[$k]['mode'] = '';
     }
 
     // construct eventCategory
@@ -396,8 +536,12 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
   drupal_alter('intel_intel_event_info', $events);
   END TODO WP */
 
+  // allow plugins to alter events
+  $events = apply_filters('intel_intel_event_info_alter', $events);
 
   uasort($events, '_intel_sort_by_eventcategory');
+
+  // allow plugins to alter theme_info
 
   if (isset($name)) {
     if (isset($events[$name])) {
@@ -1772,7 +1916,8 @@ function intel_get_scorings($filter = '') {
     if (($filter == 'js_setting') && (empty($m['js_setting']))) {
       continue;
     }
-    if (!empty($m['valued_event'])) {
+    if ($m['mode'] == 'valued') {
+      $i = 'event_' . $i;
       $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : $m['value'];
     }
   }
@@ -1781,7 +1926,7 @@ function intel_get_scorings($filter = '') {
   //$goals = array_merge($goals, get_option('intel_submission_goals', intel_get_submission_goals_default()));
   //$goals = array_merge($goals, get_option('intel_phonecall_goals', intel_get_phonecall_goals_default()));
   foreach ($goals AS $i => $m) {
-    $i = 'goal_' . $m['name'];
+    $i = 'goal_' . $i;
     $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : (isset($m['value']) ? $m['value'] : 0);
   }
 
@@ -2924,9 +3069,7 @@ function intel_fetch_ga_custom_dimensions($save = 0) {
     $gadwp->gapi_controller = new GADWP_GAPI_Controller();
   }
 
-  if (!class_exists('Google_Service_Analytics_CustomDimension')) {
-    intel_gapi_attach_management_custom_dimension($gadwp);
-  }
+  intel_gapi_attach_management_custom_dimension($gadwp);
 
   $result = $gadwp->gapi_controller->service->management_customDimensions->listManagementCustomDimensions($ga_profile['accountId'], $ga_profile['propertyId']);
 
@@ -2963,9 +3106,6 @@ function intel_gapi_attach_management_custom_dimension(&$gadwp) {
    * GADWP's GA library is too old to support custom dimensions.
    * So this is a hack to integrate custom dimension support.
    */
-  include_once INTEL_DIR . 'vendor/google/apiclient-services/src/Google/Service/Analytics/Resource/ManagementCustomDimensions.php';
-  include_once INTEL_DIR . 'vendor/google/apiclient-services/src/Google/Service/Analytics/CustomDimension.php';
-  include_once INTEL_DIR . 'vendor/google/apiclient-services/src/Google/Service/Analytics/CustomDimensionParentLink.php';
 
   $gadwp->gapi_controller->service->management_customDimensions = new Google_Service_Analytics_Resource_ManagementCustomDimensions(
     $gadwp->gapi_controller->service,

@@ -20,8 +20,7 @@
 if (! defined('ABSPATH'))
   exit();
 
-function intel_class_autoload($className)
-{
+function intel_class_autoload($className) {
   $classPath = explode('_', $className);
   if ($classPath[0] != 'Google') {
     return;
@@ -31,6 +30,7 @@ function intel_class_autoload($className)
     $classPath = array_slice($classPath, 0, 3);
   }
   $filePath = INTEL_DIR . 'vendor/google/google-api-php/src/' . implode('/', $classPath) . '.php';
+  print $filePath;
   if (file_exists($filePath)) {
     require_once ($filePath);
   }

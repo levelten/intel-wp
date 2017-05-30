@@ -317,6 +317,11 @@ class Intel_Admin {
 							if (!empty($menu_info[$qt])) {
 								$info = $menu_info[$qt];
 							}
+							$a = array_slice($path_args, 0, 5);
+							$breadcrumbs[] = array(
+								'text' => esc_html__('Events', 'intel'),
+								'path' => Intel_Df::url(implode('/', $a)),
+							);
 						}
 					}
 
