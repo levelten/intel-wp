@@ -1182,7 +1182,15 @@ class Intel_Form  {
 					// Instead of setting no #title, form constructors are encouraged to set
 					// #title_display to 'invisible' to improve accessibility.
 					if (isset($elements['#title'])) {
-						self::form_error($elements, $t('!name field is required.', array('!name' => $elements['#title'])));
+						$vars = array(
+							'!name field is required.',
+							array(
+								'!name' => $elements['#title'],
+							),
+						);
+						$msg = call_user_func_array($t, $vars);
+						self::form_error($elements, $msg);
+						//self::form_error($elements, $t('!name field is required.', array('!name' => $elements['#title'])));
 					}
 					else {
 						self::form_error($elements);
@@ -3197,9 +3205,44 @@ class Intel_Form  {
 	public static function form_process_container($element, &$form_state) {
 		// Generate the ID of the element if it's not explicitly given.
 		if (!isset($element['#id'])) {
-			$element['#id'] = drupal_html_id(implode('-', $element['#parents']) . '-wrapper');
+			$element['#id'] = Intel_Df::drupal_html_id(implode('-', $element['#parents']) . '-wrapper');
 		}
 		return $element;
+	}
+
+	/**
+	 * Returns HTML to wrap child elements in a container.
+	 *
+	 * Used for grouped form items. Can also be used as a theme wrapper for any
+	 * renderable element, to surround it with a <div> and add attributes such as
+	 * classes or an HTML ID.
+	 *
+	 * See the @link forms_api_reference.html Form API reference @endlink for more
+	 * information on the #theme_wrappers render array property.
+	 *
+	 * @param $variables
+	 *   An associative array containing:
+	 *   - element: An associative array containing the properties of the element.
+	 *     Properties used: #id, #attributes, #children.
+	 *
+	 * @ingroup themeable
+	 */
+	public static function theme_container($variables) {
+		$element = $variables['element'];
+		// Ensure #attributes is set.
+		$element += array('#attributes' => array());
+
+		// Special handling for form elements.
+		if (isset($element['#array_parents'])) {
+			// Assign an html ID.
+			if (!isset($element['#attributes']['id'])) {
+				$element['#attributes']['id'] = $element['#id'];
+			}
+			// Add the 'form-wrapper' class.
+			$element['#attributes']['class'][] = 'form-wrapper';
+		}
+
+		return '<div' . Intel_Df::drupal_attributes($element['#attributes']) . '>' . $element['#children'] . '</div>';
 	}
 
 	/**
@@ -4150,6 +4193,58 @@ class Intel_Form  {
 
 		// The leading whitespace helps visually separate fields from inline labels.
 		return ' <label' . Intel_Df::drupal_attributes($attributes) . '>' . call_user_func($t, '!title !required', array('!title' => $title, '!required' => $required)) . "</label>\n";
+	}
+
+	public static function confirm_form($form, $question, $path, $description = NULL, $yes = NULL, $no = NULL, $name = 'confirm') {
+		$description = isset($description) ? $description : Intel_Df::t('This action cannot be undone.');
+
+		// Prepare cancel link.
+		if (isset($_GET['destination'])) {
+			$options = Intel_Df::drupal_parse_url($_GET['destination']);
+		}
+		elseif (is_array($path)) {
+			$options = $path;
+		}
+		else {
+			$options = array('path' => $path);
+		}
+
+		//Intel_Df::drupal_set_title($question);
+		Intel_Df::drupal_set_title(Intel_Df::t('Confirm'));
+
+		$form['#attributes']['class'][] = 'confirmation';
+		$form['question'] = array(
+			'#type' => 'markup',
+			'#markup' => '<div class="alert alert-warning">' . $question . '</div>',
+		);
+		$form['description'] = array('#markup' => $description);
+		$form[$name] = array('#type' => 'hidden', '#value' => 1);
+
+		$form['actions'] = array('#type' => 'actions');
+
+		$form['actions']['submit'] = array(
+			'#type' => 'submit',
+			'#value' => $yes ? $yes : Intel_Df::t('Confirm'),
+		);
+		$form['actions']['cancel'] = array(
+			'#type' => 'link',
+			'#title' => $no ? $no : Intel_Df::t('Cancel'),
+			'#href' => $options['path'],
+			'#options' => $options,
+			'#attributes' => array(
+				'class' => array(
+					'btn',
+					'btn-link'
+				)
+			)
+		);
+
+
+		// By default, render the form using theme_confirm_form().
+		if (!isset($form['#theme'])) {
+			$form['#theme'] = 'confirm_form';
+		}
+		return $form;
 	}
 
 

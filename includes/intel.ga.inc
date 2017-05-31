@@ -516,6 +516,7 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
         $events[$k]['options'] += $custom[$k]['custom_options'];
       }
     }
+    $events[$k]['overridable'] = 1;
     $events[$k]['key']  = $k;
   }
 

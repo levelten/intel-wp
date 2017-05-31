@@ -92,7 +92,7 @@ function L10iLinkTracker(_ioq, config) {
             }
         }
 
-        if (!hrefTypeEnabled[hrefType] && !hrefTypeTitles[hrefType]) {
+        if (!hrefTypeEnabled[hrefType] || !hrefTypeTitles[hrefType]) {
             return;
         }
 

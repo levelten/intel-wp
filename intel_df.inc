@@ -357,7 +357,7 @@ function intel_df_element_info($types) {
 
   $types['container'] = array(
     '#theme_wrappers' => array('container'),
-    '#process' => array('form_process_container'),
+    '#process' => array('Intel_Form::form_process_container'),
   );
   $types['actions'] = array(
     '#theme_wrappers' => array('container'),

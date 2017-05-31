@@ -578,8 +578,8 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
   $scorings = intel_get_scorings();
   $scorings_option = get_option('intel_scorings', array());
   if (!empty($_GET['debug'])) {
-    intel_d($scorings_option);
-    intel_d($scorings);
+    intel_d($scorings_option);//
+    intel_d($scorings);//
   }
   $scorings = get_option('intel_scorings', array());
   $f['base'] = array(
@@ -889,16 +889,11 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     $event = array();
   }
 
-  intel_d($event);
-
-
-
   $form_state['event'] = $event;
   $add = empty($event['key']);
   $custom = (!$event || !empty($event['custom'])) ? 1 : 0;
 
-  $overridable = $event['overridable'];
-  intel_d($overridable);
+  $overridable = isset($event['overridable']) ? $event['overridable'] : array();
 
   $form_state['intel_overridable'] = $overridable;
 
@@ -1146,6 +1141,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
       '#description' => Intel_Df::t('Input jQuery selector to bind the event to. Executed as jQuery(\'selector\').'),
       '#size' => 64,
       '#disabled' => !($custom || !empty($overridable[$key])),
+      '#html' => 1, // enable admin to pass quotes in selector
     );
 
     $key = 'on_event';
@@ -1302,7 +1298,13 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
 function intel_admin_intel_event_form_validate(&$form, &$form_state) {
   $values = $form_state['values'];
   $event = $form_state['event'];
-  $key = !empty($values['key']) ? $values['key'] : $event['key'];
+  $key = '';
+  if (!empty($values['key'])) {
+    $key = $values['key'];
+  }
+  elseif (!empty($event['key'])) {
+    $key = $event['key'];
+  }
 
   $events = intel_get_intel_event_info();
 
@@ -1360,7 +1362,10 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     }
   }
 
-  intel_d($values['ga_id']);
+  // strip backslashes of selector
+  if (!empty($event['selector'])) {
+    $event['selector'] = stripcslashes($event['selector']);
+  }
 
   if (!empty($values['mode'])) {
     if ($values['mode'] == 'valued') {
@@ -1370,11 +1375,11 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
       $event['goal_event'] = 1;
     }
   }
-intel_d($event);
+
 
   $events = get_option('intel_intel_events_custom', array());
   $events[$key] = $event;
-intel_d($events);
+
   update_option('intel_intel_events_custom', $events);
 
   if ($add) {
@@ -1392,8 +1397,9 @@ intel_d($events);
 }
 
 function intel_admin_intel_event_delete_page($event) {
-  drupal_set_title(t('Are you sure you want to delete @title?', array('@title' => $event['title'])));
-  $form = drupal_get_form('intel_admin_intel_event_delete_form', $event);
+  Intel_Df::drupal_set_title(Intel_DF::t('Are you sure you want to delete @title?', array('@title' => $event['title'])));
+  $form = Intel_Form::drupal_get_form('intel_admin_intel_event_delete_form', $event);
+  return $form;
   return render($form);
 }
 
@@ -1401,17 +1407,19 @@ function intel_admin_intel_event_delete_form($form, &$form_state, $event) {
   $form_state['event'] = $event;
   $form['operation'] = array('#type' => 'hidden', '#value' => 'delete');
   $form['#submit'][] = 'intel_admin_intel_event_delete_form_submit';
-  $confirm_question = Intel_Df::t('Are you sure you want to delete @title?', array('@title' => $event['title']));
-  return confirm_form($form,
+  $confirm_question = Intel_Df::t('Are you sure you want to delete the event %title?', array('%title' => $event['title']));
+  return Intel_Form::confirm_form($form,
     $confirm_question,
-    'admin/content',
+    'admin/config/intel/settings/intel_event/' . $event['key'] . '/edit',
     Intel_Df::t('This action cannot be undone.'),
     Intel_Df::t('Delete'),
     Intel_Df::t('Cancel'));
 }
 
 function intel_admin_intel_event_delete_form_submit($form, &$form_state) {
-  $key = $form_state['event']['key'];
+  $event = $form_state['event'];
+  $key = $event['key'];
+
 
   $events = get_option('intel_intel_events_custom', array());
   unset($events[$key]);
@@ -1421,7 +1429,7 @@ function intel_admin_intel_event_delete_form_submit($form, &$form_state) {
     '%title' => $event['title'],
   ));
   Intel_Df::drupal_set_message($msg);
-  drupal_goto('admin/config/intel/settings/intel_event');
+  Intel_Df::drupal_goto('admin/config/intel/settings/intel_event');
 }
 
 
