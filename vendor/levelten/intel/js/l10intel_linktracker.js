@@ -8,7 +8,7 @@ function L10iLinkTracker(_ioq, config) {
 
     this.init = function init() {
         var ths = this;
-        $('a').on('click', ths.eventHandler);
+        $('a').not('.linktracker-0').on('click', ths.eventHandler);
         //$('a').on('mouseover', {eventType: 'click'}, ths.eventHandler); // for testing event sends
     };
 

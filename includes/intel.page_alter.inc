@@ -122,7 +122,9 @@ function intel_page_alter(&$page) {
     $entity = $post;
     $entity_type = 'post';
     $config['pageTitle'] = get_the_title( $post );
+    $config['pageUri'] = ':post:' . $post->ID;
   }
+
   /*
   if (arg(0) == 'node') {
     $entity = menu_get_object();
@@ -222,13 +224,19 @@ function intel_page_alter(&$page) {
   }
 
   // add events set to be applied to all pages
-  $all_page_events = intel_intel_event_all_pages_load();
+  $context = array(
+    'parsed_url' => $parsed_url
+  );
+  $all_page_events = intel_get_enabled_intel_events($context);
+  intel_d($all_page_events);
   $page_events = array_merge($page_events, $all_page_events);
-
+intel_d($page_events);
   foreach ($page_events AS $key => $value) {
     $l10i_event_action = intel_filter_event_for_push($value);
-    if (!empty($value['js_settings'])) {
+    if (!empty($value['js_setting'])) {
+      $l10i_event_action['id'] = $value['key'];
       $config['eventDefs'][] = $l10i_event_action;
+      intel_d($config['eventDefs']);
     }
     else {
       intel_add_page_intel_push(array('event', $l10i_event_action));

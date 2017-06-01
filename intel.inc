@@ -2878,6 +2878,13 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 1,
     'selectable' => 1,
   );
+  $info['socialtracker'] = array(
+    'title' => Intel_Df::t('Social tracker'),
+    'description' => Intel_Df::t('Tracks social media shares and profile widgets.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_socialtracker.js',
+    'enabled' => 1,
+    'selectable' => 1,
+  );
   $info['timetracker'] = array(
     'title' => Intel_Df::t('Time tracker'),
     'description' => Intel_Df::t('Tracks actual time on page using page unload events.'),

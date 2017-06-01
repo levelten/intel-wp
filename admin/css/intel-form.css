@@ -27,3 +27,17 @@
     background-color: #f5f5f5;
     padding: 0 0 5px 8px;
 }
+
+/* transforms radios labels to normal weight */
+.bootstrap-wrapper label.option {
+    display: inline;
+    font-weight: normal;
+}
+
+.bootstrap-wrapper .form-group .form-type-radio {
+    margin-bottom: 4px;
+}
+
+.bootstrap-wrapper .form-type-radio input[type="radio"] {
+    margin-top: 0px;
+}

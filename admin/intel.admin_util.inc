@@ -85,21 +85,46 @@ function intel_util_temp() {
  */
 function intel_util_temp_form($form, &$form_state) {
 
-  $defaults = get_option('intel_test_form', array());
+  $settings = get_option('intel_test_form', array());
 
-  $form['fs'] = array(
+  /*
+  $form['enable_all'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Fieldset'),
     '#description' => Intel_Df::t('Fieldset description'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
+  */
 
-  $form['fs']['textfield'] = array(
+intel_d($settings);
+
+  $page_match = Intel_Df::drupal_match_path($settings['uri'], $settings['enable_pages']);
+
+  intel_d($page_match);
+
+  $form['uri'] = array(
     '#type' => 'textfield',
-    '#title' => Intel_Df::t('Textfield'),
-    '#default_value' => !empty($defaults['test']) ? $defaults['test'] : '',
-    '#description' => Intel_Df::t('Textfield description.'),
+    '#title' => Intel_Df::t('URI to match'),
+    '#default_value' => !empty($settings['uri']) ? $settings['uri'] : '',
+  );
+
+  $options = array(
+    1 => 'Yes',
+    0 => 'No',
+  );
+  $form['enable_all'] = array(
+    '#type' => 'radios',
+    '#title' => Intel_Df::t('Enabled'),
+    '#default_value' => !empty($settings['enable_all']) ? $settings['enable_all'] : '',
+    '#options' => $options,
+  );
+
+  $form['enable_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => Intel_Df::t('URIs'),
+    '#default_value' => !empty($settings['enable_pages']) ? $settings['enable_pages'] : '',
+    '#html' => 1,
   );
 
   $form['submit'] = array(
@@ -123,6 +148,8 @@ function intel_util_temp_form_validate($form, &$form_state) {
  */
 function intel_util_temp_form_submit($form, &$form_state) {
   $values = $form_state['values'];
+
+  $defaults = update_option('intel_test_form', $values);
 }
 
 function intel_util_clear_gapi_cache() {

@@ -893,7 +893,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   $add = empty($event['key']);
   $custom = (!$event || !empty($event['custom'])) ? 1 : 0;
 
-  $overridable = isset($event['overridable']) ? $event['overridable'] : array();
+  $overridable = intel_get_intel_events_overridable_fields($event);
 
   $form_state['intel_overridable'] = $overridable;
 
@@ -1234,26 +1234,61 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     );
   }
 
-
-
-
-
+  // Availability fieldset
 
 
   $form['availability'] = array(
     '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Availablity'),
+    '#title' => Intel_Df::t('Availability'),
     '#collapsible' => TRUE,
-    '#collapsed' => empty($event['type']) && empty($event['callback']),
-    '#description' => Intel_Df::t('Hooks to enable JavaScript to customize this event. Be careful using these settings as improper use may cause JavaScript errors.'),
+    '#collapsed' => FALSE,
+    '#description' => Intel_Df::t('Specifies where the event is applied.'),
   );
-  $form['availability']['enable_all_pages'] = array(
-    '#type' => ($custom) ? 'checkbox' : 'item',
-    '#title' => Intel_Df::t('Enable on all pages'),
-    '#default_value' => !empty($event['enable_all_pages']) ? $event['enable_all_pages'] : 0,
-    '#description' => Intel_Df::t('Check to add the event to every page on the site.'),
-  );
-  $form['availability']['enable_all_pages']['#markup'] = ($form['availability']['enable_all_pages']['#default_value']) ? 'Yes' : 'No';
+
+  if (!empty($event['availability_auto'])) {
+    if (!empty($event['availability_auto']['description'])) {
+      $msg = $event['availability_auto']['description'];
+    }
+    else {
+      $msg = Intel_Df::t('GA event is programmatically available on all relevant pages.');
+    }
+    $form['availability']['alert'] = array(
+      '#type' => 'markup',
+      '#markup' => '<div class="alert alert-info">' . $msg . '</div>',
+    );
+  }
+  else {
+    $options = array(
+      1 => Intel_Df::t('All pages except those in the Page list below'),
+      0 => Intel_Df::t('None except pages in the Page list below'),
+    );
+    $key = 'enable';
+    $form['availability'][$key] = array(
+      '#type' => (1 || $custom || !empty($overridable[$key])) ? 'radios' : 'item',
+      '#title' => Intel_Df::t('Enable event on'),
+      '#default_value' => !empty($event[$key]) ? 1 : 0,
+      //'#default_value' => 1,
+      '#disabled' => !($custom || !empty($overridable[$key])),
+      '#options' => $options,
+      //'#description' => Intel_Df::t('Check to add the event to every page on the site.'),
+    );
+    intel_d($event);
+    intel_d($form['availability'][$key]);
+    $form['availability'][$key]['#markup'] = ($form['availability'][$key]['#default_value']) ? 'Yes' : 'No';
+
+    $key = 'enable_pages';
+    $form['availability'][$key] = array(
+      '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textarea' : 'item',
+      '#title' => Intel_Df::t('Page list'),
+      '#default_value' => !empty($event[$key]) ? $event[$key] : 0,
+      '#disabled' => !($custom || !empty($overridable[$key])),
+      '#description' => Intel_Df::t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. For example, if all blog pages are Example paths are blog for the blog page and blog/* for every personal blog. <home> is the front page."),
+      '#html' => 1,
+    );
+    $form['availability'][$key]['#markup'] = ($form['availability'][$key]['#default_value']) ? 'Yes' : 'No';
+  }
+
+  /*
   $form['availability'] ['selectable'] = array(
     '#type' => ($custom) ? 'checkbox' : 'item',
     '#title' => Intel_Df::t('Selectable on entities'),
@@ -1261,29 +1296,32 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     '#description' => Intel_Df::t('Check to make this event an available option for the track events field on nodes and entities.'),
   );
   $form['availability']['selectable']['#markup'] = ($form['availability']['selectable']['#default_value']) ? 'Yes' : 'No';
+*/
+   if (intel_is_extended()) {
+     $form['advanced'] = array(
+       '#type' => 'fieldset',
+       '#title' => Intel_Df::t('Advanced settings'),
+       '#collapsible' => TRUE,
+       '#collapsed' => empty($event['type']) && empty($event['callback']),
+       '#description' => Intel_Df::t('Hooks to enable JavaScript to customize this event. Be careful using these settings as improper use may cause JavaScript errors.'),
+     );
 
-  $form['advanced'] = array(
-    '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Advanced settings'),
-    '#collapsible' => TRUE,
-    '#collapsed' => empty($event['type']) && empty($event['callback']),
-    '#description' => Intel_Df::t('Hooks to enable JavaScript to customize this event. Be careful using these settings as improper use may cause JavaScript errors.'),
-  );
+     $form['advanced']['type'] = array(
+       '#type' => ($custom) ? 'textfield' : 'item',
+       '#title' => Intel_Df::t('Event type'),
+       '#default_value' => !empty($event['type']) ? $event['type'] : '',
+       '#description' => Intel_Df::t('The type enables custom event configuration before event processing executes. If type is set, a method in the form of trackIntelEvent[type] will be called.'),
+       '#size' => 64,
+     );
+     $form['advanced']['callback'] = array(
+       '#type' => ($custom) ? 'textfield' : 'item',
+       '#title' => Intel_Df::t('Callback'),
+       '#default_value' => !empty($event['callback']) ? $event['callback'] : '',
+       '#description' => Intel_Df::t('Declares a function to execute after the intel event data has been processed but before it is sent to Google Analytics. Must be set to the name of an avaialble JavaScript function.'),
+       '#size' => 64,
+     );
+   }
 
-  $form['advanced']['type'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('Event type'),
-    '#default_value' => !empty($event['type']) ? $event['type'] : '',
-    '#description' => Intel_Df::t('The type enables custom event configuration before event processing executes. If type is set, a method in the form of trackIntelEvent[type] will be called.'),
-    '#size' => 64,
-  );
-  $form['advanced']['callback'] = array(
-    '#type' => ($custom) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('Callback'),
-    '#default_value' => !empty($event['callback']) ? $event['callback'] : '',
-    '#description' => Intel_Df::t('Declares a function to execute after the intel event data has been processed but before it is sent to Google Analytics. Must be set to the name of an avaialble JavaScript function.'),
-    '#size' => 64,
-  );
   //$form['ga_event_values']['value']['#markup'] = $form['ga_event_values']['value']['#default_value'];
 
 
@@ -1331,34 +1369,12 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
   else {
     $key = $form_state['event']['key'];
   }
-  $indexes = array(
-    'title',
-    'description',
-    'mode',
-    'category',
-    'action',
-    'label',
-    'value',
-    'selector',
-    'on_event',
-    'on_selector',
-    'on_data',
-    'on_data_format',
-    'on_function',
-    'on_function_format',
-    'selector_filter',
-    'callback',
-    'refresh_force',
-    'selectable',
-    'enable_all_pages',
-    'non_interaction',
-    'ga_id',
-    //'valued_event',
-    //'goal_event',
-  );
-  foreach ($indexes AS $index) {
-    if (isset($values[$index])) {
-      $event[$index] = trim($values[$index]);
+
+  $overridable = $form_state['intel_overridable'];
+
+  foreach ($overridable AS $k => $v) {
+    if (isset($values[$k])) {
+      $event[$k] = is_string($values[$k]) ? trim($values[$k]) : $values[$k];
     }
   }
 
@@ -1367,6 +1383,11 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     $event['selector'] = stripcslashes($event['selector']);
   }
 
+  if (isset($event['enable']) && is_string($event['enable'])) {
+    $event['enable'] = $event['enable'] == '1' ? 1 : 0;
+  }
+
+  /*
   if (!empty($values['mode'])) {
     if ($values['mode'] == 'valued') {
       $event['valued_event'] = 1;
@@ -1375,11 +1396,12 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
       $event['goal_event'] = 1;
     }
   }
+  */
 
 
   $events = get_option('intel_intel_events_custom', array());
   $events[$key] = $event;
-
+intel_d($event);
   update_option('intel_intel_events_custom', $events);
 
   if ($add) {

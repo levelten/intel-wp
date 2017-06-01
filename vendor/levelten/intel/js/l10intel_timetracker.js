@@ -69,7 +69,7 @@ function L10iTimeTracker(_ioq, config) {
         var evtDef = {
             eventCategory: 'Page time',
             eventAction: ts,
-            eventLabel: toString(tdr),
+            eventLabel: '' + tdr,
             eventValue: tdr,
             nonInteraction: true,
             metric8: tdr,
