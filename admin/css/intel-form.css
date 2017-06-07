@@ -41,3 +41,7 @@
 .bootstrap-wrapper .form-type-radio input[type="radio"] {
     margin-top: 0px;
 }
+
+.marker, .form-required {
+    color: #f00;
+}

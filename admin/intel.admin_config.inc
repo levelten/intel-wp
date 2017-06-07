@@ -905,16 +905,6 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     //'#description' => Intel_Df::t('The parameters sent to Google Analtyics when the event is triggered.'),
   );
 
-  $form['general']['key'] = array(
-    '#type' => ($custom && $add) ? 'textfield' : 'item',
-    '#title' => Intel_Df::t('Key'),
-    '#default_value' => !empty($event['key']) ? $event['key'] : '',
-    '#description' => Intel_Df::t('A unique identifier for the event.'),
-    '#size' => 32,
-    '#required' => 1,
-  );
-  $form['general']['key']['#markup'] = $form['general']['key']['#default_value'];
-
   $key = 'title';
   $form['general'][$key] = array(
     '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
@@ -926,6 +916,16 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     '#disabled' => !($custom || !empty($overridable[$key])),
   );
   $form['general'][$key]['#markup'] = $form['general'][$key]['#default_value'];
+
+  $form['general']['key'] = array(
+    '#type' => ($custom && $add) ? 'textfield' : 'item',
+    '#title' => Intel_Df::t('Id'),
+    '#default_value' => !empty($event['key']) ? $event['key'] : '',
+    '#description' => Intel_Df::t('A unique identifier (machine name) for the event. Should only include letters, numbers and underscores.'),
+    '#size' => 32,
+    '#required' => 1,
+  );
+  $form['general']['key']['#markup'] = $form['general']['key']['#default_value'];
 
   $key = 'description';
   $form['general'][$key] = array(

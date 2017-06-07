@@ -4132,6 +4132,10 @@ class Intel_Form  {
 		return $output;
 	}
 
+	public static function theme_form_required_marker($variables) {
+		return '<span class="form-required" title="' . Intel_Df::t('This field is required.') . '">*</span>';
+	}
+
 	/**
 	 * Returns HTML for a form element label and required marker.
 	 *

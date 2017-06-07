@@ -8,6 +8,24 @@ function L10iLinkTracker(_ioq, config) {
 
     this.init = function init() {
         var ths = this;
+        var evtDef = {
+            selector: 'a',
+            selectorNot: '.linktracker-0',
+            onEvent: 'click',
+            onHandler: ths.eventHandler,
+            transport: 'beacon'
+        };
+        io('event', evtDef);
+
+        return;
+
+        var $target = $('a.temp').not('.linktracker-0');
+        var evtDef = {
+            onHandler: function (ed, $t, e) {
+                var e2 = {};
+                return ths.eventHandler({});
+            }
+        };
         $('a').not('.linktracker-0').on('click', ths.eventHandler);
         //$('a').on('mouseover', {eventType: 'click'}, ths.eventHandler); // for testing event sends
         if (_ioq.location.params['io-admin']) {
@@ -21,22 +39,21 @@ function L10iLinkTracker(_ioq, config) {
             };
             var ret = ths.eventHandler(event, $target, options);
             if (!_ioq.isEmpty(ret)) {
-              $target.addClass('io-event-binded io-event-binded-linktracker');
+              //$target.addClass('io-event-binded io-event-binded-linktracker');
             }
           });
         }
     };
 
-    this.eventHandler = function eventHandler(event, $target, options) {
+    this.eventHandler = function eventHandler(event) {
         var i, v;
-        var $obj = $target || $(this);
-        options = options || {};
-        var evtDef = {
-          transport: 'beacon',
-        };
+
+        v = _ioq.getEventArgsFromEvent(event);
+        var evtDef = v[0], $obj = v[1], options = v[3];
+
         var eventType = event.type;
-        if (_ioq.isObject(event.data) && event.data.eventType) {
-          event.type = eventType = event.data.eventType;
+        if (!eventType && evtDef.onEvent) {
+            eventType = evtDef.onEvent;
         }
 
         var href = $obj.attr('href');
@@ -83,7 +100,6 @@ function L10iLinkTracker(_ioq, config) {
             }
         }
 
-
         if (!hrefType) {
             var downloadPattern = /\.(zip|exe|dmg|pdf|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav)$/i;
 
@@ -114,12 +130,10 @@ function L10iLinkTracker(_ioq, config) {
 
 
         evtDef.eventCategory = hrefTypeTitles[hrefType] + ' link ' + eventType;
+        // force re-construct
+        delete(evtDef.const);
 
-        if (options.test) {
-          return evtDef;
-        }
-        _ioq.push(['defEventHandler', evtDef, $obj, event]);
-
+        return _ioq.defEventHandler(evtDef, $obj, event, options);
     };
 
     this.init();

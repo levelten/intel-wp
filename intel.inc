@@ -32,18 +32,7 @@ define('INTEL_STATUS_FORBIDDEN', 403);
 define('INTEL_STATUS_NOT_FOUND', 404);
 define('INTEL_STATUS_SERVER_ERROR', 500);
 
-// add hooks to support env option overrides
-if (!empty($GLOBALS['intel_wp_config_options'])) {
-  foreach ($GLOBALS['intel_wp_config_options'] as $k => $v) {
-    if ($k == 'gadash_options' && function_exists('gadwp') && !empty(gadwp()->config->options)) {
-      // gadwp may have already loaded its config options, if so, update them with the overrides.
-      gadwp()->config->options = Intel_Df::drupal_array_merge_deep(gadwp()->config->options, $GLOBALS['intel_wp_config_options'][$k]);
-    }
-    else {
-      add_filter( 'pre_option_' . $k , 'intel_wp_config_option', -10, 2 );
-    }
-  }
-}
+
 
 // add intel_menu to hook_intel_menu_info
 add_filter('intel_menu_info', 'intel_menu');
@@ -2024,8 +2013,6 @@ function intel_visitor_load_by_identifiers($identifiers, $reset = FALSE) {
   return FALSE;
 }
 
-
-
 /**
  * Provides a wrapper on the edit form to add a new entity.
  */
@@ -2896,6 +2883,13 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 0,
     'selectable' => 1,
   );
+  $info['admin'] = array(
+    'title' => Intel_Df::t('Admin'),
+    'description' => Intel_Df::t('Provides visual tools for configuring events.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_admin.js',
+    'enabled' => 0,
+    'selectable' => 1,
+  );
   $info['linktracker'] = array(
     'title' => Intel_Df::t('Link Tracker'),
     'description' => Intel_Df::t('Tracks link clicks by type such as mailto, download, external and custom links.'),
@@ -2942,9 +2936,19 @@ function _intel_intel_script_info($info = array()) {
   return $info;
 }
 
+/**
+ * Determins if a specific intel script is enabled
+ *
+ * @param $name: script name
+ * @return bool
+ */
 function intel_is_intel_script_enabled($name) {
   $scripts_enabled = get_option('intel_intel_scripts_enabled', array());
-  return !empty($scripts_enabled[$name]);
+  if (isset($scripts_enabled[$name])) {
+    return !empty($scripts_enabled[$name]) ? 1 : 0;
+  }
+  $info = intel()->intel_script_info($name);
+  return !empty($info['enabled']) ? 1 : 0;
 }
 
 add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
@@ -3558,6 +3562,7 @@ if ( !function_exists( 'intel_d' ) ) {
       if (empty($kint_aliases)) {
         $kint_aliases = Kint::$aliases;
         $kint_aliases['functions'][] = 'intel_d';
+        $kint_aliases['functions'][] = 'intel_dd';
         $kint_aliases['functions'][] = 'intel_print_var';
         Kint::$aliases = $kint_aliases;
       }
@@ -4000,6 +4005,45 @@ function intel_class_autoload($className) {
 
   if (!empty($filePath) && file_exists($filePath)) {
     require_once ($filePath);
+  }
+}
+
+/**
+ * Overrides WordPress options set in $intel_wp_config_options global.
+ *
+ * @param $value
+ * @param $name
+ * @return array|mixed|object|string|void
+ */
+function intel_wp_config_option($value, $name) {
+  global $intel_wp_config_options;
+
+  if ($name == 'gadash_options') {
+    // decode json into assoc array
+    $value = json_decode($value, true);
+    $value = Intel_Df::drupal_array_merge_deep($value, $intel_wp_config_options[$name]);
+    // re-encode json for return value
+    $value = json_encode($value);
+  }
+  elseif (!empty($intel_wp_config_options[$name])) {
+    $value = $intel_wp_config_options[$name];
+  }
+  return $value;
+}
+
+/**
+ * Detects if $intel_wp_config_options overrides exist and adds callbacks
+ * to alter WP options.
+ */
+if (!empty($GLOBALS['intel_wp_config_options'])) {
+  foreach ($GLOBALS['intel_wp_config_options'] as $k => $v) {
+    if ($k == 'gadash_options' && function_exists('gadwp') && !empty(gadwp()->config->options)) {
+      // gadwp may have already loaded its config options, if so, update them with the overrides.
+      gadwp()->config->options = Intel_Df::drupal_array_merge_deep(gadwp()->config->options, $GLOBALS['intel_wp_config_options'][$k]);
+    }
+    else {
+      add_filter( 'pre_option_' . $k , 'intel_wp_config_option', -10, 2 );
+    }
   }
 }
 

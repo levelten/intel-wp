@@ -32,8 +32,8 @@ function intel_get_intel_event_info_default($event = array()) {
   );
 
   // event mode should be admin configurable
-  $event['wp_comment'] = array(
-    'title' => Intel_Df::t('WP comment'),
+  $event['wp_comment_submission'] = array(
+    'title' => Intel_Df::t('WP comment submission'),
     'category' => Intel_Df::t('Comment submission'),
     'description' => Intel_Df::t('Comment submitted via WordPress'),
     'mode' => 'valued',
@@ -546,7 +546,8 @@ function intel_get_event_goal_info($filter = '') {
 function intel_format_intel_event_eventcategory($event, $goal_info) {
   $str = '';
 
-  $str = !empty($event['category']) ? $event['category'] : $event['title'];
+  $str = !empty($event['title']) ? $event['title'] : '';
+  $str = !empty($event['category']) ? $event['category'] : $str;
   if (!empty($event['goal_event']) || (!empty($event['mode']) && $event['mode'] == 'goal')) {
     $str .= ': ' . $goal_info[$event['ga_id']]['title'] . '+';
   }
@@ -745,13 +746,27 @@ function intel_get_enabled_intel_events($context) {
     return $events;
   }
 
-  $parsed_url = $context['parsed_url'];
-
   $events = array();
   // allow other plugins to alter enabled events
   $events = apply_filters('intel_intel_events_enabled', $events, $context);
 
   $e = intel_get_intel_event_info();
+
+  // determine alias path
+  $parsed_url = $context['parsed_url'];
+  $to_match = array();
+  $alias = add_query_arg(NULL, NULL);
+  $alias = substr($alias, strlen($parsed_url['base_path']));
+  $to_match[] = $alias;
+  $a = explode('?', $alias);
+  // check for search query and create to match without it
+  if (count($a) == 2) {
+    $to_match[] = $alias = $a[0];
+  }
+  // check if alias ends in / and create to match without it
+  if (substr($alias, -1) == '/') {
+    $to_match[] = substr($alias, 0, -1);
+  }
 
   foreach ($e AS $key => $event) {
     if (!empty($event['enable_all_pages'])) {
@@ -760,13 +775,11 @@ function intel_get_enabled_intel_events($context) {
     else if (isset($event['enable'])) {
       $page_match = 0;
       if (!empty($event['enable_pages'])) {
-        $alias = add_query_arg(NULL, NULL);
-        $alias = substr($alias, strlen($parsed_url['base_path']));
-
-        $page_match = Intel_Df::drupal_match_path($alias, $event['enable_pages']);
-        // check if there is a trailing slash and try match without it
-        if (!$page_match && substr($alias, -1) == '/') {
-          $page_match = Intel_Df::drupal_match_path(substr($alias, 0, -1), $event['enable_pages']);
+        foreach ($to_match as $alias) {
+          if (Intel_Df::drupal_match_path($alias, $event['enable_pages'])) {
+            $page_match = 1;
+            break;
+          }
         }
       }
       if (
