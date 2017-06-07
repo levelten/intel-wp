@@ -1,4 +1,4 @@
-var _l10iq = _l10iq || [];
+var _ioq = _ioq || [];
 
 function L10iLinkTracker(_ioq, config) {
     var ioq = _ioq;
@@ -10,11 +10,27 @@ function L10iLinkTracker(_ioq, config) {
         var ths = this;
         $('a').not('.linktracker-0').on('click', ths.eventHandler);
         //$('a').on('mouseover', {eventType: 'click'}, ths.eventHandler); // for testing event sends
+        if (_ioq.location.params['io-admin']) {
+          $('a').not('.linktracker-0').each(function (index, value) {
+            var event = {
+              type: 'click'
+            };
+            var $target = $(this);
+            var options = {
+              test: 1
+            };
+            var ret = ths.eventHandler(event, $target, options);
+            if (!_ioq.isEmpty(ret)) {
+              $target.addClass('io-event-binded io-event-binded-linktracker');
+            }
+          });
+        }
     };
 
-    this.eventHandler = function eventHandler(event) {
+    this.eventHandler = function eventHandler(event, $target, options) {
         var i, v;
-        var $obj = $(this);
+        var $obj = $target || $(this);
+        options = options || {};
         var evtDef = {
           transport: 'beacon',
         };
@@ -96,8 +112,12 @@ function L10iLinkTracker(_ioq, config) {
             return;
         }
 
+
         evtDef.eventCategory = hrefTypeTitles[hrefType] + ' link ' + eventType;
 
+        if (options.test) {
+          return evtDef;
+        }
         _ioq.push(['defEventHandler', evtDef, $obj, event]);
 
     };
@@ -105,4 +125,4 @@ function L10iLinkTracker(_ioq, config) {
     this.init();
 }
 
-_l10iq.push(['providePlugin', 'linktracker', L10iLinkTracker, {}]);
+_ioq.push(['providePlugin', 'linktracker', L10iLinkTracker, {}]);

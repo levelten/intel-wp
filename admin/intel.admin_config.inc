@@ -860,9 +860,9 @@ function intel_admin_intel_event_list_page() {
 }
 
 function intel_admin_intel_event_view_page($event) {
-  intel_d($event);
+  intel_d($event);//
   $push = intel_filter_event_for_push($event);
-  intel_d($push);
+  intel_d($push);//
   return 'hi';
 }
 
@@ -1272,8 +1272,6 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
       '#options' => $options,
       //'#description' => Intel_Df::t('Check to add the event to every page on the site.'),
     );
-    intel_d($event);
-    intel_d($form['availability'][$key]);
     $form['availability'][$key]['#markup'] = ($form['availability'][$key]['#default_value']) ? 'Yes' : 'No';
 
     $key = 'enable_pages';
@@ -1401,7 +1399,7 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
 
   $events = get_option('intel_intel_events_custom', array());
   $events[$key] = $event;
-intel_d($event);
+
   update_option('intel_intel_events_custom', $events);
 
   if ($add) {

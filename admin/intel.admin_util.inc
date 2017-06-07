@@ -29,53 +29,17 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $info = intel()->intel_event_info();
-  intel_d($info);
+  $gadash_options = get_option('gadash_options', array());
+  $ops = json_decode($gadash_options, true);
+  intel_d($gadash_options);
+  intel_d($ops);
 
-  $info = intel_get_intel_event_info();
-  intel_d($info);
+  $gadash_options = get_option('gadash_network_options', array());
+  $ops = json_decode($gadash_options, true);
+  intel_d($gadash_options);
+  intel_d($ops);
 
-  return '';
 
-  $scorings = intel_get_scorings();
-  intel_d($scorings);
-  return '';
-
-  include_once INTEL_DIR . 'includes/intel.ga.inc';
-
-  $status = array();
-
-  $ga_dimensions = intel_fetch_ga_custom_dimensions(TRUE);
-
-  return '';
-
-  include_once INTEL_DIR . 'includes/intel.imapi.inc';
-
-  $response = intel_imapi_ga_goal_get();
-
-  if (empty($response['1'])) {
-    return 'goal not found';
-  }
-
-  $goal = $response['1'];
-  $goal['name'] = 'Contact 4';
-  $goal['details']['conditions'][0]['expression'] = $goal['name'] . '\+$';
-  $response = intel_imapi_ga_goal_save($goal);
-
-  $response = intel_imapi_ga_goal_get();
-
-  return '';
-
-  $ga_goal = array(
-    'name'
-  );
-  $options = array();
-  try {
-    $response = intel_imapi_ga_goal_save($ga_goal, $options);
-  }
-  catch (Exception $e) {
-    Intel_Df::drupal_set_message($e->getMessage());
-  }
 
   return '';
 }
@@ -150,6 +114,10 @@ function intel_util_temp_form_submit($form, &$form_state) {
   $values = $form_state['values'];
 
   $defaults = update_option('intel_test_form', $values);
+}
+
+function intel_util_env_settings_form($form, &$form_state) {
+
 }
 
 function intel_util_clear_gapi_cache() {

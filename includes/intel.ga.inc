@@ -36,7 +36,7 @@ function intel_get_intel_event_info_default($event = array()) {
     'title' => Intel_Df::t('WP comment'),
     'category' => Intel_Df::t('Comment submission'),
     'description' => Intel_Df::t('Comment submitted via WordPress'),
-    'valued_event' => 1,
+    'mode' => 'valued',
     'value' => 5,
     'trigger_auto' => array(
       'description' => Intel_Df::t('Triggered automatically when a WP comment is submitted.')
@@ -47,6 +47,49 @@ function intel_get_intel_event_info_default($event = array()) {
     'enable' => 1,
     'js_setting' => 1,
   );
+
+  if (intel_is_extended()) {
+    $event['wp_search_form_submission'] = array(
+      'title' => Intel_Df::t('WP Search form submission'),
+      'description' => Intel_Df::t('Triggered on site search submission'),
+      'category' => Intel_Df::t('Search form submission'),
+      'value' => 0,
+      'overridable' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically generated upon site search submission.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered after upon site search submission.'),
+      ),
+      'availability_auto' => array(
+        'description' => Intel_Df::t('Automatically available on site search results page.'),
+      ),
+      'overridable' => 0,
+    );
+
+    $event['wp_search_result_click'] = array(
+      'title' => Intel_Df::t('WP Search result click'),
+      'description' => Intel_Df::t('Triggered by click on site search results link'),
+      'category' => Intel_Df::t('Search result click'),
+      'value' => 0,
+      'selector' => 'article a',
+      'selector_not' => '.post-edit-link',
+      'on_event' => 'click',
+      'transport' => 'beacon',
+      'overridable' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically generated on site search results links.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically bound to trigger when site search results links are clicked.'),
+      ),
+      'availability_auto' => array(
+        'description' => Intel_Df::t('Automatically available on site search results page.'),
+      ),
+      'overridable' => 0,
+    );
+  }
+
 
   if (intel_is_extended()) {
     $event['landing_page_view'] = array(
@@ -192,10 +235,11 @@ function intel_get_intel_event_info_default($event = array()) {
   }
 
   if (intel_is_intel_script_enabled('socialtracker')) {
+
     $event['socialtracker_social_share_click'] = array(
       'title' => Intel_Df::t('Social share click'),
       //'category' => Intel_Df::t('Social share'),
-      'description' => Intel_Df::t('Click on social sharing button'),
+      'description' => Intel_Df::t('Click on social share button'),
       'mode' => 'valued',
       'valued_event' => 1,
       'value' => 5,
@@ -205,13 +249,54 @@ function intel_get_intel_event_info_default($event = array()) {
       'overridable' => array(
         'selector' => 1,
       ),
+      'social_action' => 'share',
+      'trigger_alter_callback' => 'socialtracker:eventHandlerAlter',
+      'trigger_callback' => 'socialtracker:eventHandler',
+      //'js_setting' => 1,
+    );
+
+    $event['socialtracker_social_like_click'] = array(
+      'title' => Intel_Df::t('Social like click'),
+      //'category' => Intel_Df::t('Social share'),
+      'description' => Intel_Df::t('Click on social like button'),
+      'mode' => 'valued',
+      'valued_event' => 1,
+      'value' => 5,
+      'selector' => '.track-social-like-click',
+      'on_event' => 'click',
+      'enable' => 1,
+      'overridable' => array(
+        'selector' => 1,
+      ),
+      'social_action' => 'like',
+      'trigger_alter_callback' => 'socialtracker:eventHandlerAlter',
+      'trigger_callback' => 'socialtracker:eventHandler',
+      //'js_setting' => 1,
+    );
+
+    $event['socialtracker_social_follow_click'] = array(
+      'title' => Intel_Df::t('Social follow click'),
+      //'category' => Intel_Df::t('Social share'),
+      'description' => Intel_Df::t('Click on social follow button'),
+      'mode' => 'valued',
+      'valued_event' => 1,
+      'value' => 5,
+      'selector' => '.track-social-follow-click',
+      'on_event' => 'mouseover',
+      'enable' => 1,
+      'overridable' => array(
+        'selector' => 1,
+      ),
+      'social_action' => 'follow',
+      'trigger_alter_callback' => 'socialtracker:eventHandlerAlter',
+      'trigger_callback' => 'socialtracker:eventHandler',
       //'js_setting' => 1,
     );
 
     $event['socialtracker_social_profile_click'] = array(
       'title' => Intel_Df::t('Social profile click'),
       //'category' => Intel_Df::t('Social profile'),
-      'description' => Intel_Df::t('Click on social profile button'),
+      'description' => Intel_Df::t('Click on button to visit social profile'),
       'mode' => 'valued',
       'valued_event' => 1,
       'value' => 5,
@@ -222,8 +307,12 @@ function intel_get_intel_event_info_default($event = array()) {
       'overridable' => array(
         'selector' => 1,
       ),
+      'social_action' => 'profile visit',
+      'trigger_alter_callback' => 'socialtracker:eventHandlerAlter',
+      'trigger_callback' => 'socialtracker:eventHandler',
       //'js_setting' => 1,
     );
+
   }
 
   if (intel_is_intel_script_enabled('timetracker')) {
@@ -680,20 +769,18 @@ function intel_get_enabled_intel_events($context) {
           $page_match = Intel_Df::drupal_match_path(substr($alias, 0, -1), $event['enable_pages']);
         }
       }
-      intel_d($event);
-      intel_d($page_match);
       if (
         ($event['enable'] && !$page_match)
         || (!$event['enable'] && $page_match)
       ) {
-        intel_d('ADD');
         $events[$key] = $event;
       }
     }
   }
-intel_d($events);
+
   // allow other plugins to alter enabled events
   $events = apply_filters('intel_intel_events_enabled_alter', $events, $context);
+
   return $events;
 }
 

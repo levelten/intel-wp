@@ -68,6 +68,8 @@ function intel_page_alter(&$page) {
     $config['admin'] = 1;
   }
 
+  Intel_Df::watchdog('request', print_r($_REQUEST, 1));
+
   // set scorings
   $scorings = intel_get_scorings('js_setting');
   foreach ($scorings as $k => $v) {
@@ -228,15 +230,13 @@ function intel_page_alter(&$page) {
     'parsed_url' => $parsed_url
   );
   $all_page_events = intel_get_enabled_intel_events($context);
-  intel_d($all_page_events);
   $page_events = array_merge($page_events, $all_page_events);
-intel_d($page_events);
+
   foreach ($page_events AS $key => $value) {
     $l10i_event_action = intel_filter_event_for_push($value);
     if (!empty($value['js_setting'])) {
       $l10i_event_action['id'] = $value['key'];
       $config['eventDefs'][] = $l10i_event_action;
-      intel_d($config['eventDefs']);
     }
     else {
       intel_add_page_intel_push(array('event', $l10i_event_action));
@@ -885,22 +885,38 @@ function intel_filter_event_for_push($event) {
   }
   */
 
+  if (empty($event) || !is_array($event)) {
+    return FALSE;
+  }
+
   // translate from classic format to UA format
   $trans = array(
-    //'category' => 'eventCategory',
+    //'category' => 'eventCategory', // automatically constructed
+    'key' => 'id',
+    'event_id' => 'eventId',
     'action' => 'eventAction',
     'label' => 'eventLabel',
     'value' => 'eventValue',
     'noninteraction' => 'nonInteraction',
     'selector' => 1,
     'selector_filter' => 'selectorFilter',
+    'selector_not' => 'selectorNot',
     'on_event' => 'onEvent',
     'event' => 'onEvent',
     'on_selector' => 'onSelector',
     'on_data' => 'onData',
     'on_handler' => 'onHandler',
     'callback' => 'triggerCallback',
+    'add_callback' => 'addCallback',
+    'bind_callback' => 'bindCallback',
+    'trigger_callback' => 'triggerCallback',
+    'trigger_alter_callback' => 'triggerAlterCallback',
     'refresh_force' => 'refreshForce',
+    'social_network' => 'socialNetwork',
+    'social_action' => 'socialAction',
+    'social_target' => 'socialTarget',
+    'id' => 1,
+    'eventId' => 1,
     'method' => 1,
     'eventCategory' => 1,
     'eventAction' => 1,
@@ -911,6 +927,7 @@ function intel_filter_event_for_push($event) {
     'onData' => 1,
     'onHandler' => 1,
     'selectorFilter' => 1,
+    'selectorNot' => 1,
     'refreshForce' => 1,
   );
 
@@ -1208,7 +1225,7 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
 
 
         $script .= "(function(w,d,o,u,b,i,r,a,s,c,t){" . $terminator;
-        $script .= "w['OEIntelObject']=r;" . $terminator;
+        $script .= "w['L10iObject']=r;" . $terminator;
         $script .= "w[r]=w[r]||function() {" . $terminator;
         $script .= "(w[r].q=w[r].q||[]).push(arguments)" . $terminator;
         $script .= "}," . $terminator;
@@ -1225,7 +1242,7 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
         $script .= "d=q=c='';t=new Date().getTime();" . $terminator;
         $script .= "document.cookie='l10i_bt='+t+';path=/';c=document.cookie;if(c&&c.indexOf('l10i_bt=')!=-1){d='$l10ijs_propdir';$q_script}" . $terminator;
         $script .= "(function(i,s,o,g,r,a,m){" . $terminator;
-        $script .= "i['OEIntelObject']=r;" . $terminator;
+        $script .= "i['L10iObject']=r;" . $terminator;
         $script .= "i[r]=i[r] || function() {" . $terminator;
         $script .= "(i[r].q=i[r].q||[]).push(arguments)" . $terminator;
         $script .= "}," . $terminator;
@@ -2211,6 +2228,7 @@ function intel_user_register_form_submit(&$form, &$form_state) {
  * @param $comment_ID
  * @param $comment_approved
  */
+add_action( 'comment_post', 'intel_comment_post', 10, 3 );
 function intel_comment_post( $comment_ID, $comment_approved, $commentdata = array() ) {
   // fetch comment
   $args = array(
@@ -2246,5 +2264,17 @@ function intel_comment_post( $comment_ID, $comment_approved, $commentdata = arra
   // save the page flushes to cache
   intel_save_flush_page_intel_pushes();
 }
-add_action( 'comment_post', 'intel_comment_post', 10, 3 );
+
+add_action( 'pre_get_posts', 'intel_pre_get_posts');
+function intel_pre_get_posts($query) {
+  // check for site search which uses the s query
+  if (!empty($query->query['s'])) {
+    //$event = intel()->intel_event_info('wp_search_form_submission');
+    $event = intel()->intel_event_info('wp_search_result_click');
+    if (!empty($event)) {
+      $eventDef = intel_filter_event_for_push($event);
+      intel_add_page_intel_push(array('event', $eventDef));
+    }
+  }
+}
 

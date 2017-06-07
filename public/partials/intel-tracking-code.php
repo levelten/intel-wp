@@ -25,7 +25,7 @@ return;
   })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 </script>
 <script>
-  (function(w,d,o,u,b,i,r,a,s,c,t){w['OEIntelObject']=r;w[r]=w[r]||function(){
+  (function(w,d,o,u,b,i,r,a,s,c,t){w['L10iObject']=r;w[r]=w[r]||function(){
       (w[r].q=w[r].q||[]).push(arguments)},t=1*new Date();s='';a='l10i_bt=';d.cookie=a+t+';path=/';c=d.cookie;if(c&&c.indexOf(a)!=-1){u+=i;if(c.indexOf('l10i_s=')==-1){s='?t='+t}}u+=b+s;a=d.createElement(o),b=d.getElementsByTagName(o)[0];a.async=1;a.src=u;b.parentNode.insertBefore(a,b)
   })(window,document,'script','//<?php echo $l10iapi_url; ?>','/js/<?php echo $l10iapi_js_file; ?>','/p/<?php echo esc_html($ga_tid); ?>','io');
   io("ga.create","<?php echo esc_html($ga_tid); ?>","auto",{"name":"l10i","userId":"."});

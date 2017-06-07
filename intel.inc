@@ -32,6 +32,19 @@ define('INTEL_STATUS_FORBIDDEN', 403);
 define('INTEL_STATUS_NOT_FOUND', 404);
 define('INTEL_STATUS_SERVER_ERROR', 500);
 
+// add hooks to support env option overrides
+if (!empty($GLOBALS['intel_wp_config_options'])) {
+  foreach ($GLOBALS['intel_wp_config_options'] as $k => $v) {
+    if ($k == 'gadash_options' && function_exists('gadwp') && !empty(gadwp()->config->options)) {
+      // gadwp may have already loaded its config options, if so, update them with the overrides.
+      gadwp()->config->options = Intel_Df::drupal_array_merge_deep(gadwp()->config->options, $GLOBALS['intel_wp_config_options'][$k]);
+    }
+    else {
+      add_filter( 'pre_option_' . $k , 'intel_wp_config_option', -10, 2 );
+    }
+  }
+}
+
 // add intel_menu to hook_intel_menu_info
 add_filter('intel_menu_info', 'intel_menu');
 /**
@@ -816,6 +829,18 @@ function intel_menu($items = array()) {
     'description' => 'Add a new cta block.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('intel_ga_explorer_report'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'reports/intel.ga_explorer_report.inc',
+  );
+
+  $items['admin/util/env_settings'] = array(
+    'title' => 'Env. Settings',
+    'description' => 'Settings sets for dev and test environments',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_env_settings'),
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_TASK,
