@@ -3443,8 +3443,13 @@ function intel_gapi_attach_management_custom_dimension(&$gadwp) {
 
 function intel_get_ga_admin_custom_dimensions_url() {
   $ga_profile = get_option('intel_ga_profile');
-  return "https://analytics.google.com/analytics/web/#management/Settings/a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['viewId']}/%3Fm.page%3DCustomDimensions";
+  return "https://analytics.google.com/analytics/web/#management/Settings/" . intel_get_ga_profile_slug() . "/%3Fm.page%3DCustomDimensions";
   //$url = "https://analytics.google.com/analytics/web/#management/Settings/a5541069w22533750p78133449/%3Fm.page%3DGoals";
+}
+
+function intel_get_ga_profile_slug() {
+  $ga_profile = get_option('intel_ga_profile');
+  return "a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['viewId']}";
 }
 
 function intel_is_intl_goal($ga_goal) {

@@ -162,10 +162,8 @@ class Intel_Admin {
 			add_submenu_page( 'intel_reports', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_reports', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_reports', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
-			//add_submenu_page( 'intel_settings', esc_html__( "General Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_settings', array( 'Intel_Settings', 'general_settings' ) );
-			//if (intel_is_debug()) {
-				add_submenu_page( 'intel_reports', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
-			//}
+			add_submenu_page( 'intel_reports', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_reports', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
   	}
 	}
 
@@ -217,6 +215,14 @@ class Intel_Admin {
 			$q = 'admin/util';
 			$breadcrumbs[] = array(
 				'text' => esc_html__('Utilities', 'intel'),
+				'path' => Intel_Df::url($q),
+			);
+			$navbar_base_q = $navbar_base_qt = $q;
+		}
+		if ($_GET['page'] == 'intel_help') {
+			$q = 'admin/help';
+			$breadcrumbs[] = array(
+				'text' => esc_html__('Help', 'intel'),
 				'path' => Intel_Df::url($q),
 			);
 			$navbar_base_q = $navbar_base_qt = $q;

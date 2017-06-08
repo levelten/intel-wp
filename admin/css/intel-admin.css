@@ -7,6 +7,10 @@
     font-size: 110%;
 }
 
+.intel-content p {
+    font-size: inherit;
+}
+
 .intel-content .card {
     margin-top: 0;
     padding: 0;
@@ -25,6 +29,15 @@
 .bootstrap-wrapper .intel-content h5,
 .bootstrap-wrapper .intel-content h6 {
     margin-top: 0;
+}
+
+.bootstrap-wrapper .intel-content article h1,
+.bootstrap-wrapper .intel-content article h2,
+.bootstrap-wrapper .intel-content article h3,
+.bootstrap-wrapper .intel-content article h4,
+.bootstrap-wrapper .intel-content article h5,
+.bootstrap-wrapper .intel-content article h6 {
+    margin-top: 20px;
 }
 
 .intel-content .header {

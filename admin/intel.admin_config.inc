@@ -892,6 +892,9 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   $form_state['event'] = $event;
   $add = empty($event['key']);
   $custom = (!$event || !empty($event['custom'])) ? 1 : 0;
+  if ($add) {
+    $event += $_GET;
+  }
 
   $overridable = intel_get_intel_events_overridable_fields($event);
 

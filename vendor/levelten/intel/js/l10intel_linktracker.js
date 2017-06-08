@@ -101,7 +101,7 @@ function L10iLinkTracker(_ioq, config) {
         }
 
         if (!hrefType) {
-            var downloadPattern = /\.(zip|exe|dmg|pdf|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav)$/i;
+            var downloadPattern = /\.(zip|exe|dmg|pdf|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav|png|jpg|jpeg|gif)$/i;
 
             var loc = _ioq.parseUrl(href);
 

@@ -984,6 +984,23 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_CALLBACK,
   );
 
+  // util callbacks
+
+  $items['admin/help'] = array(
+    'title' => 'Help',
+    'description' => 'Guides and docs.',
+    'page callback' => 'intel_help',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_help.inc',
+  );
+  $items['admin/help/getting-started'] = array(
+    'title' => 'Getting started',
+    'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+    'weight' => $w++,
+  );
+
 
 
   /*

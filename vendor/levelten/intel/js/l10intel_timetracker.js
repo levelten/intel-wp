@@ -56,7 +56,13 @@ function L10iTimeTracker(_ioq, config) {
             ts.push(' - ');
             m = Math.floor(tdr / 60);
             s = tdr % 60;
-            si = (inc * Math.floor(s / inc));
+            if (td0 == 0) {
+                si = td0 + inc;
+            }
+            else {
+                si = (inc * Math.floor(s / inc));
+            }
+
             ts.push((m < 10) ? '0' + m : m);
             ts.push(':');
             ts.push((si < 10) ? '0' + si : si);

@@ -63,12 +63,10 @@ function intel_page_alter(&$page) {
     'eventDefs' => array(),
   );
 
-  if (!empty($_GET['io-admin'])) {
+  if (!empty($_GET['io-admin']) && Intel_Df::user_access('admin intel')) {
     wp_enqueue_style('intel_front_admin', INTEL_URL . 'css/intel-front-admin.css');
     $config['admin'] = 1;
   }
-
-  Intel_Df::watchdog('request', print_r($_REQUEST, 1));
 
   // set scorings
   $scorings = intel_get_scorings('js_setting');

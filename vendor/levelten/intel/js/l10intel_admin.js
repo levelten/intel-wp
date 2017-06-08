@@ -7,6 +7,9 @@ function L10iAdmin(_ioq, config) {
 
 
     this.init = function init() {
+        if (!_ioq.settings.admin) {
+            return;
+        }
         var ths = this;
         io('addCallback', 'bindEvent', ths.bindEventCallback);
     };
