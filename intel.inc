@@ -4008,7 +4008,7 @@ function intel_class_autoload($className) {
     if ($classPath[1] == 'Service') {
       $filePath .= "apiclient-services/src/Google/Service/{$classPath[2]}/";
       if ($classPath[3] == 'Resource') {
-        $filePath .= "resource/{$classPath[4]}.php";
+        $filePath .= "Resource/{$classPath[4]}.php";
       }
       else {
         $filePath .= "{$classPath[3]}.php";
