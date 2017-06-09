@@ -31,13 +31,13 @@ function intel_util_temp() {
 
   $gadash_options = get_option('gadash_options', array());
   $ops = json_decode($gadash_options, true);
-  intel_d($gadash_options);
-  intel_d($ops);
+  intel_d($gadash_options);//
+  intel_d($ops);//
 
   $gadash_options = get_option('gadash_network_options', array());
   $ops = json_decode($gadash_options, true);
-  intel_d($gadash_options);
-  intel_d($ops);
+  intel_d($gadash_options);//
+  intel_d($ops);//
 
 
 
@@ -61,11 +61,11 @@ function intel_util_temp_form($form, &$form_state) {
   );
   */
 
-intel_d($settings);
+intel_d($settings);//
 
   $page_match = Intel_Df::drupal_match_path($settings['uri'], $settings['enable_pages']);
 
-  intel_d($page_match);
+  intel_d($page_match);//
 
   $form['uri'] = array(
     '#type' => 'textfield',
@@ -247,7 +247,7 @@ function intel_util_test_webform_form_validate($form, &$form_state) {
 function intel_util_test_webform_form_submit($form, &$form_state) {
   $msg = Intel_Df::t('Form submitted');
   $values = $form_state['values'];
-  intel_d($values);
+  intel_d($values);//
 
   // get initialied var structure
   $vars = intel_form_submission_vars_default();
@@ -289,7 +289,7 @@ function intel_util_test_webform_form_submit($form, &$form_state) {
   $time1 = microtime(TRUE);
   $msg .= " (t1d=" .  number_format($time1 - $_SESSION['intel_weform_test']['time0'], 3) . 'sec';
 
-  intel_d($vars);
+  intel_d($vars);//
 
   // process submission data
   intel_process_form_submission($vars);
@@ -297,7 +297,7 @@ function intel_util_test_webform_form_submit($form, &$form_state) {
   $msg .= ", t2d=" .  number_format(microtime(TRUE) - $time1, 3) . "sec)";
 
   $msg .= "\n" . intel()->tracker->get_pushes_script();
-  intel_d($msg);
+  intel_d($msg);//
   Intel_Df::drupal_set_message($msg, 'status');
 
   unset($_SESSION['intel_weform_test']);

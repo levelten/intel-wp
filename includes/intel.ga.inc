@@ -589,7 +589,7 @@ function intel_get_intel_events_overridable_fields($event) {
   ) + $overridable_defaults;
 
   // a new unitialize event
-  if (empty($event)) {
+  if (empty($event) || empty($event['key'])) {
     return $overridable_all;
   }
 
@@ -2700,7 +2700,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   if (!empty($feed->rows)) {
     $ch = $feed->getColumnHeaders();
     if (!is_array($ch)) {
-      intel_d($feed);
+      intel_d($feed);//
     }
     $colHeaders = array();
     foreach ($ch as $v) {

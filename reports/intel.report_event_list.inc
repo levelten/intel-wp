@@ -30,7 +30,7 @@ function intel_event_list_report_page($report_subtype = '-', $report_subfilter =
 function intel_event_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
   require_once INTEL_DIR . "/includes/intel.page_data.inc";
-intel_d($vars);
+
   $output = '';
 
   /*
@@ -108,8 +108,6 @@ intel_d($vars);
 
 
   $d = $ga_data->data;
-intel_d($d);
-  intel_d($dataScope);
 
   if (!empty($d[$indexBy])) {
     ksort($d[$indexBy]);
@@ -119,7 +117,7 @@ intel_d($d);
   if (empty($d[$indexBy]['_all'][$dataScope]['events'])) {
     $d[$indexBy]['_all'][$dataScope]['events'] = array();
   }
-intel_d($d[$indexBy]['_all'][$dataScope]['events']);
+
   foreach ($d[$indexBy]['_all'][$dataScope]['events'] AS $index => $de) {
     if (isset($de['i'])) {
       $params = $vars['report_params'];

@@ -652,8 +652,8 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
 
   // spliting score and target processing to support admin_scoring and admin_setup
   // forms
-  $form['#validate'][] = 'intel_admin_scoring_score_validate';
-  $form['#submit'][] = 'intel_admin_scoring_score_submit';
+  $f['#validate'][] = 'intel_admin_scoring_score_validate';
+  $f['#submit'][] = 'intel_admin_scoring_score_submit';
 
   return $f;
 }
@@ -892,11 +892,12 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   $form_state['event'] = $event;
   $add = empty($event['key']);
   $custom = (!$event || !empty($event['custom'])) ? 1 : 0;
+
+  $overridable = intel_get_intel_events_overridable_fields($event);
+
   if ($add) {
     $event += $_GET;
   }
-
-  $overridable = intel_get_intel_events_overridable_fields($event);
 
   $form_state['intel_overridable'] = $overridable;
 
@@ -1398,7 +1399,6 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     }
   }
   */
-
 
   $events = get_option('intel_intel_events_custom', array());
   $events[$key] = $event;

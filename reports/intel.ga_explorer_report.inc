@@ -165,7 +165,7 @@ function intel_ga_explorer_report() {
       $rows = array();
       $data_rows = intel_get_ga_feed_rows($data);
       $cols = array();
-      intel_d($data_rows);
+      intel_d($data_rows);//
       if (!empty($data_rows) && is_array($data_rows)) {
         foreach ($data_rows AS $r) {
           $row = array();

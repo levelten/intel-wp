@@ -3561,7 +3561,7 @@ function intel_print_var($var, $console = FALSE) {
     print "<script> console.log($json); </script>";
   }
   else {
-    intel_d($var);
+    intel_d($var);//
   }
 }
 

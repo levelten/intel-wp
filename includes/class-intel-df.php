@@ -1084,6 +1084,9 @@ class Intel_Df  {
 		elseif (strpos($path, 'admin/util') === 0) {
 			$admin_page = 'intel_util';
 		}
+		elseif (strpos($path, 'admin/help') === 0) {
+			$admin_page = 'intel_help';
+		}
 		elseif (strpos($path, 'admin/people/contacts') === 0) {
 			$admin_page = 'intel_visitor';
 		}

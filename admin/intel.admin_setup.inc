@@ -799,7 +799,6 @@ function intel_admin_setup_validate_intel_api_key($form, &$form_state, $status) 
 
 function intel_admin_setup_submit_intel_api_key($form, &$form_state) {
   $values = $form_state['values'];
-intel_d("update_option intel_apikey = " + $values['intel_apikey']);
   update_option('intel_apikey', trim($values['intel_apikey']));
 }
 
@@ -2152,10 +2151,25 @@ function intel_admin_setup_finish($form, &$form_state) {
   $items[] = Intel_Df::t('The Intelligence plugin was setup successfully.');
   $items[] = '</p>';
 
+
+
   $items[] = '<p>';
-  $items[] = Intel_Df::t('Report timeframes use the last 30 full days.');
-  $items[] = Intel_Df::t('Look for reports to start populating tomorrow.');
+  $items[] = Intel_Df::t('Valued interactions are now being tracked on your site based on your settings.');
+  $items[] = Intel_Df::t('To view these interactions launch:');
+  $l_options = Intel_Df::l_options_add_target('ga');
+  $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
+  $url = "https://analytics.google.com/analytics/web/#realtime/rt-event/" . intel_get_ga_profile_slug() . "/%3Fmetric.type%3D5/";
+  $items[] = '<br>' . Intel_Df::l( Intel_Df::t('Google Analytics realtime events report'), $url, $l_options);
+  //$items[] = '<br>' . Intel_Df::t('(click on tracked links and forms to trigger events)');
   $items[] = '</p>';
+
+  $items[] = '<p>';
+  $l_options = array();
+  $items[] = Intel_Df::t('To learn more about how to further implement results oriented analytics !link.', array(
+      '!link' => Intel_Df::l( Intel_Df::t('visit the Getting Started Tutorial'), 'admin/help', $l_options)
+    ));
+  $items[] = '</p>';
+
   $items[] = '</div>';
 
   $f['instructions'] = array(

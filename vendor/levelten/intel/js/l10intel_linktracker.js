@@ -19,6 +19,7 @@ function L10iLinkTracker(_ioq, config) {
 
         return;
 
+        /*
         var $target = $('a.temp').not('.linktracker-0');
         var evtDef = {
             onHandler: function (ed, $t, e) {
@@ -43,11 +44,12 @@ function L10iLinkTracker(_ioq, config) {
             }
           });
         }
+        */
     };
 
     this.eventHandler = function eventHandler(event) {
         var i, v;
-
+console.log(event);
         v = _ioq.getEventArgsFromEvent(event);
         var evtDef = v[0], $obj = v[1], options = v[3];
 

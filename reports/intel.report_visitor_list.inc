@@ -33,7 +33,7 @@ function intel_visitor_list_report($vars) {
   $output = '';
 
   $vars['indexBy'] = $vars['report_modes'][0];
-intel_d($vars['report_modes']);
+
   $timeops = 'l30d';
   if ($vars['report_modes'][1] == 'recent') {
     $vars['timeops'] = 'l30dfn';
