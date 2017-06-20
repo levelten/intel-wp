@@ -1108,8 +1108,8 @@ class Intel_Form  {
 						$value = in_array($elements['#type'], array('checkboxes', 'tableselect')) ? array_keys($elements['#value']) : $elements['#value'];
 						foreach ($value as $v) {
 							if (!isset($options[$v])) {
-								self::form_error($elements, $t('An illegal choice has been detected. Please contact the site administrator.'));
-								Intel_Df::watchdog('form', 'Illegal choice %choice in !name element.', array('%choice' => $v, '!name' => empty($elements['#title']) ? $elements['#parents'][0] : $elements['#title']), WATCHDOG_ERROR);
+								self::form_error($elements, call_user_func($t, 'An illegal choice has been detected. Please contact the site administrator.'));
+								Intel_Df::watchdog('form', 'Illegal choice %choice in !name element.', array('%choice' => $v, '!name' => empty($elements['#title']) ? $elements['#parents'][0] : $elements['#title']), Intel_Df::WATCHDOG_ERROR);
 							}
 						}
 					}
@@ -1127,8 +1127,8 @@ class Intel_Form  {
 						self::form_set_value($elements, NULL, $form_state);
 					}
 					elseif (!isset($options[$elements['#value']])) {
-						self::form_error($elements, $t('An illegal choice has been detected. Please contact the site administrator.'));
-						Intel_Df::watchdog('form', 'Illegal choice %choice in %name element.', array('%choice' => $elements['#value'], '%name' => empty($elements['#title']) ? $elements['#parents'][0] : $elements['#title']), WATCHDOG_ERROR);
+						self::form_error($elements, call_user_func($t, 'An illegal choice has been detected. Please contact the site administrator.'));
+						Intel_Df::watchdog('form', 'Illegal choice %choice in %name element.', array('%choice' => $elements['#value'], '%name' => empty($elements['#title']) ? $elements['#parents'][0] : $elements['#title']), Intel_Df::WATCHDOG_ERROR);
 					}
 				}
 			}

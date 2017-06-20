@@ -866,17 +866,6 @@ function intel_menu($items = array()) {
     'file' => 'reports/intel.ga_explorer_report.inc',
   );
 
-  $items['admin/util/env_settings'] = array(
-    'title' => 'Env. Settings',
-    'description' => 'Settings sets for dev and test environments',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('intel_env_settings'),
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'weight' => $w++,
-    'file' => 'reports/intel.ga_explorer_report.inc',
-  );
 
   $items['admin/util/clear_gapi_cache'] = array(
     'title' => 'Utilities',
@@ -889,6 +878,16 @@ function intel_menu($items = array()) {
   );
 
   if (intel_test_mode()) {
+    $items['admin/util/environment'] = array(
+      'title' => 'Server Env.',
+      'description' => 'Server environment',
+      'page callback' => 'intel_util_environment',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.inc',
+    );
+
     $items['admin/util/test'] = array(
       'title' => 'Tests',
       //'description' => 'Analyze and optimize node content.',
@@ -4043,36 +4042,47 @@ function intel_form_shortcode($vars) {
 spl_autoload_register('intel_class_autoload');
 function intel_class_autoload($className) {
   // list of classes intel needs to specify autoloading.
-  $autoload =  array();
-
-  // autoload classes not included in gadwp GA files
-  $autoload['Google_Service_Analytics_CustomDimension'] = 1;
-  $autoload['Google_Service_Analytics_CustomDimensions'] = 1;
-  $autoload['Google_Service_Analytics_CustomDimensionParentLink'] = 1;
-  $autoload['Google_Service_Analytics_Resource_ManagementCustomDimensions'] = 1;
-
-  if (empty($autoload[$className])) {
-    return;
-  }
+  $filePath = '';
 
   $classPath = explode('_', $className);
-  if ($classPath[0] == 'Google') {
-    $filePath = INTEL_DIR . 'vendor/';
-    $filePath .= 'google/';
-    if ($classPath[1] == 'Service') {
-      $filePath .= "apiclient-services/src/Google/Service/{$classPath[2]}/";
-      if ($classPath[3] == 'Resource') {
-        $filePath .= "Resource/{$classPath[4]}.php";
-      }
-      else {
-        $filePath .= "{$classPath[3]}.php";
-      }
 
-    }
-    else {
-      $filePath .= 'apiclient/src/Google/';
+  if ($classPath[0] == 'Intel') {
+    if ($classPath[1] == 'Df') {
+      $filePath = INTEL_DIR . 'includes/class-intel-df.php';
     }
   }
+
+  if ($classPath[0] == 'Google') {
+    $autoload =  array();
+    // autoload classes not included in gadwp GA files
+    $autoload['Google_Service_Analytics_CustomDimension'] = 1;
+    $autoload['Google_Service_Analytics_CustomDimensions'] = 1;
+    $autoload['Google_Service_Analytics_CustomDimensionParentLink'] = 1;
+    $autoload['Google_Service_Analytics_Resource_ManagementCustomDimensions'] = 1;
+
+    if (empty($autoload[$className])) {
+      return;
+    }
+
+    if ($classPath[0] == 'Google') {
+      $filePath = INTEL_DIR . 'vendor/';
+      $filePath .= 'google/';
+      if ($classPath[1] == 'Service') {
+        $filePath .= "apiclient-services/src/Google/Service/{$classPath[2]}/";
+        if ($classPath[3] == 'Resource') {
+          $filePath .= "Resource/{$classPath[4]}.php";
+        }
+        else {
+          $filePath .= "{$classPath[3]}.php";
+        }
+
+      }
+      else {
+        $filePath .= 'apiclient/src/Google/';
+      }
+    }
+  }
+
 
   if (!empty($filePath) && file_exists($filePath)) {
     require_once ($filePath);

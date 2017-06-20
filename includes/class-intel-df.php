@@ -130,6 +130,7 @@ class Intel_Df  {
 	const MENU_CONTEXT_INLINE = 0x0002;
 
 	const WATCHDOG_NOTICE = 5;
+	const WATCHDOG_ERROR = 3;
 
 	private function __construct() {
 
@@ -393,6 +394,11 @@ class Intel_Df  {
 			$data = $attribute . '="' . self::check_plain($data) . '"';
 		}
 		return $attributes ? ' ' . implode(' ', $attributes) : '';
+	}
+
+	public static function drupal_clean_machinename($identifier) {
+		$identifier = self::drupal_clean_css_identifier($identifier);
+		return str_replace('-', '_', $identifier);
 	}
 
 	public static function drupal_clean_css_identifier($identifier, $filter = array(' ' => '-', '_' => '-', '/' => '-', '[' => '-', ']' => '')) {

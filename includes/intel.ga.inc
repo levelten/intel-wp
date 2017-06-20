@@ -74,16 +74,24 @@ function intel_goal_const($goal, $ga_goal = array()) {
 function intel_goal_save($goal, $options = array()) {
   $goals = intel_goal_load();
 
-  // if new goal, const and get ga_id
-  if (empty($goal['ga_id'])) {
-    $goal = intel_goal_const($goal);
+  if (!is_array($goals)) {
+    $goals = array();
   }
+
+  // if new goal, const and get ga_id
+  if (isset($goal['ga_id']) && isset($goals[$goal['ga_id']])) {
+    $goal = Intel_Df::drupal_array_merge_deep($goals[$goal['ga_id']], $goal);
+  }
+
+  // fill in missing defaults
+  $goal = intel_goal_const($goal);
 
   // if goal type is Intel goal, save to ga goal also
   if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL' ) {
     $ga_goal = array(
       'id' => $goal['ga_id'],
       'name' => $goal['title'],
+      'type' => $goal['type'],
     );
     $ga_goal = intel_ga_goal_save($ga_goal);
   }
@@ -96,9 +104,20 @@ function intel_goal_save($goal, $options = array()) {
 
 function intel_ga_goal_load($name = '', $options = array()) {
 
+  $op_meta = get_option('intel_option_meta', array());
+
+  // refresh if goal have never been updated
+  if (empty($op_meta['ga_goals_updated'])) {
+    $options['refresh'] = 1;
+  }
+
+  // cache for one day unless requested
+  if (!isset($options['refresh'])) {
+    $options['refresh'] = 86400;
+  }
+
   // load goals from ga
   if (!empty($options['refresh'])) {
-    $op_meta = get_option('intel_option_meta', array());
     $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
     if ((time() - $op_meta['ga_goals_updated']) > $time) {
 
@@ -106,7 +125,6 @@ function intel_ga_goal_load($name = '', $options = array()) {
 
       try {
         $ga_goals = intel_imapi_ga_goal_get();
-
         update_option('intel_ga_goals', $ga_goals);
         $op_meta['ga_goals_updated'] = time();
         update_option('intel_option_meta', $op_meta);
@@ -170,34 +188,41 @@ function intel_ga_goal_const($ga_goal) {
 }
 
 function intel_ga_goal_save($ga_goal, $options = array()) {
-
+  include_once INTEL_DIR . 'includes/intel.imapi.inc';
   if (empty($ga_goal['name'])) {
     return FALSE;
   }
 
-  $ga_goals = intel_ga_goal_load();
-
-  // if type is not set, assume ga_goal needs to be constructed
-  if (empty($ga_goal['type'])) {
-    $ga_goal = intel_ga_goal_const($ga_goal);
-//intel_d('intel_imapi_ga_goal_insert');
-//intel_d($ga_goal);
-    intel_imapi_ga_goal_insert($ga_goal);
+  $is_intel_goal = 0;
+  $ga_goals = intel_ga_goal_load(NULL, $options);
+  // determine if goal id exists in
+  $ga_goal0 = 0;
+  if (isset($ga_goal['id']) && isset($ga_goals[$ga_goal['id']])) {
+    $ga_goal0 = $ga_goals[$ga_goal['id']];
   }
+
+  // data needs to be merged in from data in GA or defaults
+  // for a new goal
+  if ($ga_goal['type'] == 'INTL' || $ga_goal['type'] == 'INTEL' ) {
+    if (!empty($ga_goal0)) {
+      $ga_goal = Intel_Df::drupal_array_merge_deep($ga_goal0, $ga_goal);
+      $ga_goal['details']['conditions'][0]['expression'] = $ga_goal['name'] . '\+$';
+    }
+    else {
+      $ga_goal = intel_ga_goal_const($ga_goal);
+    }
+    $ga_goal['type'] = 'EVENT';
+  }
+
   // if intel goal, check if should be saved
-  else if (intel_is_intl_goal($ga_goal)) {
+  if (intel_is_intl_goal($ga_goal)) {
     $update = 0;
-    $ga_goal0 = !empty($ga_goals[$ga_goal['id']]) ? $ga_goals[$ga_goal['id']] : array();
 
     if (empty($ga_goal0)) {
-//intel_d('intel_imapi_ga_goal_insert');
-//intel_d($ga_goal);
       intel_imapi_ga_goal_insert($ga_goal);
     }
     // check if original goal and new goal are equivalent, if not save to GA.
     else if ($ga_goal['name'] != $ga_goal0['name']) {
-//intel_d('intel_imapi_ga_goal_update');
-//intel_d($ga_goal);
       intel_imapi_ga_goal_update($ga_goal);
     }
   }
@@ -2205,17 +2230,26 @@ function intel_get_base_scorings() {
 
 function intel_get_intel_goals_default($info = array()) {
 
-  $title = Intel_Df::t('Contact');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $title = Intel_Df::t('General');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,
-    'description' => Intel_Df::t('General contact. Use as a default goal.'),
+    'description' => Intel_Df::t('General conversion. Use as a default goal.'),
+    'value' => 50,
+  );
+
+  $title = Intel_Df::t('Contact');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('General contact. Use as a default goal that creates a contact.'),
     'value' => 50,
   );
 
   $title = Intel_Df::t('Sales inquiry');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,
@@ -2224,7 +2258,7 @@ function intel_get_intel_goals_default($info = array()) {
   );
 
   $title = Intel_Df::t('Research request');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,
@@ -2233,7 +2267,7 @@ function intel_get_intel_goals_default($info = array()) {
   );
 
   $title = Intel_Df::t('Research request');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,
@@ -2242,7 +2276,7 @@ function intel_get_intel_goals_default($info = array()) {
   );
 
   $title = Intel_Df::t('Consideration request');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,
@@ -2251,7 +2285,7 @@ function intel_get_intel_goals_default($info = array()) {
   );
 
   $title = Intel_Df::t('Decision request');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,
@@ -2260,7 +2294,7 @@ function intel_get_intel_goals_default($info = array()) {
   );
 
   $title = Intel_Df::t('Subscribe');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,
@@ -2269,7 +2303,7 @@ function intel_get_intel_goals_default($info = array()) {
   );
 
   $title = Intel_Df::t('Job application');
-  $name = strtolower(Intel_Df::drupal_clean_css_identifier($title));
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
   $info[$name] = array(
     'title' => $title,
     'name' => $name,

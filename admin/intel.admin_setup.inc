@@ -7,6 +7,7 @@
 include_once INTEL_DIR . 'includes/class-intel-form.php';
 
 function intel_admin_setup_info($items = array()) {
+  $sys_meta = get_option('intel_system_meta', array());
   $items = array();
   $items['start'] = array(
     'text' => Intel_Df::t('Start'),
@@ -31,30 +32,41 @@ function intel_admin_setup_info($items = array()) {
     'text' => Intel_Df::t('Intelligence API key'),
     'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
   );
-  $items['addon_install'] = array(
-    'text' => Intel_Df::t('Add-on installation'),
-    'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
-    'progress_msg' => Intel_Df::t('Now we are tracking!'),
-  );
-  $items['addon_settings'] = array(
-    'text' => Intel_Df::t('Add-on settings'),
-    'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
-  );
-  $items['goals'] = array(
-    'text' => Intel_Df::t('Goals'),
-    'action_img_src' => INTEL_URL . '/images/setup_goals_action.png',
-    'progress_msg' => Intel_Df::t('The hard parts over!'),
-  );
-  $items['scoring'] = array(
-    'text' => Intel_Df::t('Scoring'),
-    'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
-    'progress_msg' => Intel_Df::t('The hard parts over!'),
-  );
-  $items['form_settings'] = array(
-    'text' => Intel_Df::t('Form settings'),
-    'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
-    'progress_msg' => Intel_Df::t('Only one more!'),
-  );
+
+  if (!empty($sys_meta['setup_wizard_extended'])) {
+    $items['addon_install'] = array(
+      'text' => Intel_Df::t('Add-on installation'),
+      'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
+      'progress_msg' => Intel_Df::t('Now we are tracking!'),
+    );
+    $items['addon_settings'] = array(
+      'text' => Intel_Df::t('Add-on settings'),
+      'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
+    );
+    $items['goals'] = array(
+      'text' => Intel_Df::t('Goals'),
+      'action_img_src' => INTEL_URL . '/images/setup_goals_action.png',
+      'progress_msg' => Intel_Df::t('The hard parts over!'),
+    );
+    $items['scoring'] = array(
+      'text' => Intel_Df::t('Scoring'),
+      'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
+      'progress_msg' => Intel_Df::t('The hard parts over!'),
+    );
+    $items['form_settings'] = array(
+      'text' => Intel_Df::t('Form settings'),
+      'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
+      'progress_msg' => Intel_Df::t('Only one more!'),
+    );
+  }
+  else {
+    $items['basic_config'] = array(
+      'text' => Intel_Df::t('Configuration'),
+      'action_img_src' => INTEL_URL . '/images/setup_intel_action.png',
+      'progress_msg' => Intel_Df::t('Now we are tracking!'),
+    );
+  }
+
   $items['finish'] = array(
     'text' => Intel_Df::t('Finish'),
     'submit_button_text' => '',
@@ -184,7 +196,8 @@ EOT;
     $value = $item['text'];
     // enable checklist item links if setup has been completed to enable people
     // to go back to a prior step.
-    if (!empty($sys_meta['setup_complete'])) {
+    //if (!empty($sys_meta['setup_complete'])) {
+    if (in_array($k, $sys_meta['setup_successes'])) {
       $value = Intel_Df::l($item['text'], Intel_Df::current_path(), array('query' => array('step' => $k)));
     }
     $tag = array(
@@ -340,11 +353,16 @@ function intel_admin_setup_submit($form, &$form_state) {
     }
     $l_options = array(
       'query' => array(
+      )
+    );
+    $l_options2 = array(
+      'query' => array(
         'step' => $next_step,
       )
     );
-    $msg = Intel_Df::t('Form was submitted. !link', array(
-      '!link' => Intel_Df::l(Intel_Df::t('Click here to go to the next step.'), Intel_Df::current_path(), $l_options),
+    $msg = Intel_Df::t('Form was submitted. !wizard_link or !next_link', array(
+      '!wizard_link' => Intel_Df::l(Intel_Df::t('Click here to return to wizard'), Intel_Df::current_path(), $l_options),
+      '!next_link' => Intel_Df::l(Intel_Df::t('click here to go to the next step.'), Intel_Df::current_path(), $l_options2),
     ));
     Intel_Df::drupal_set_message($msg, 'success');
   }
@@ -731,11 +749,11 @@ function intel_admin_setup_intel_api_key($form, &$form_state) {
 
   $items[] = '<p>';
   $items[] = Intel_Df::t('Copy and paste the API key provided in the Intelligence admin into the field below.');
+  $items[] = '</p>';
   $f['instructions'] = array(
     '#type' => 'markup',
     '#markup' => implode(' ', $items),
   );
-  $items[] = '</p>';
 
   $f['intel_apikey'] = array(
     '#type' => 'textfield',
@@ -800,6 +818,93 @@ function intel_admin_setup_validate_intel_api_key($form, &$form_state, $status) 
 function intel_admin_setup_submit_intel_api_key($form, &$form_state) {
   $values = $form_state['values'];
   update_option('intel_apikey', trim($values['intel_apikey']));
+}
+
+function intel_admin_setup_basic_config($form, &$form_state) {
+  $f = array();
+
+  $sys_meta = get_option('intel_system_meta', array());
+
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Intelligence tracks valued interactions on your website using customizable Google Analytics events and goals.');
+  $items[] = Intel_Df::t('If you would like to just get started with Intelligence, you can simply enable default settings.');
+  $items[] = Intel_Df::t('Alternatively, you can enable the extended setup wizard settings to step through custom configuration.');
+  $items[] = '</p>';
+
+  $f['instructions'] = array(
+    '#type' => 'markup',
+    '#markup' => implode(' ', $items),
+  );
+
+  $desc = Intel_Df::t('Test');
+  $options = array(
+    'default' => Intel_Df::t('Use defaults and finish wizard'),
+    'custom' => Intel_Df::t('Customize using the extended wizard'),
+  );
+  $default = '';
+  if (in_array('basic_config', $sys_meta['setup_successes'])) {
+    $default = (!empty($sys_meta['setup_wizard_extended']) ) ? 'custom' : 'default';
+  }
+  $f['init_config'] = array(
+    '#type' => 'radios',
+    '#title' =>  Intel_Df::t('Initial configuration settings'),
+    '#default_value' => $default,
+    '#options' => $options,
+    //'#required' => 1,
+    //'#description' => $desc,
+  );
+
+  return $f;
+}
+
+function intel_admin_setup_check_basic_config($form, &$form_state) {
+  $status = array();
+
+  $sys_meta = get_option('intel_system_meta', array());
+  if (isset($sys_meta['setup_successes']) && in_array('basic_config', $sys_meta['setup_successes'])) {
+    $status['success'] = 1;
+  }
+
+  return $status;
+}
+
+function intel_admin_setup_validate_basic_config($form, &$form_state, $status) {
+  if (empty($form_state['values']['init_config'])) {
+    $msg = Intel_Df::t('Please select an initial configuration option.');
+    Intel_Form::form_set_error('init_config', $msg);
+  }
+}
+
+function intel_admin_setup_submit_basic_config($form, &$form_state) {
+  $values = $form_state['values'];
+  if ($values['init_config'] == 'default') {
+    $goal_defaults = intel_get_intel_goals_default();
+    // create default goals
+    $ga_goals = intel_ga_goal_load();
+    $goals = intel_goal_load();
+    // check if an intelligence goal exists
+    $intel_goal = 0;
+    foreach ($ga_goals as $k => $v) {
+      if (intel_is_intl_goal($v)) {
+        $intel_goal = 1;
+        break;
+      }
+    }
+    if (!$intel_goal) {
+      intel_goal_save($goal_defaults['general']);
+      intel_goal_save($goal_defaults['contact']);
+    }
+  }
+  else {
+    $sys_meta = get_option('intel_system_meta', array());
+    // enable extended wizard
+    $sys_meta['setup_wizard_extended'] = 1;
+    // remove setup complete if already done
+    if (isset($sys_meta['setup_complete'])) {
+      unset($sys_meta['setup_complete']);
+    }
+    update_option('intel_system_meta', $sys_meta);
+  }
 }
 
 function intel_admin_setup_addon_install($form, &$form_state) {
@@ -1366,11 +1471,15 @@ function intel_admin_setup_goals($form, &$form_state) {
 
     if (empty($ga_goal) || $ga_goal['type'] == 'INTL' || $ga_goal['type'] == 'INTEL' ) {
       // if no goals exist, add first default so at least one intel goal is created
-      if (empty($ga_goal) && !$intl_goal_cnt) {
-        reset($goals_default);
-        $goal_default = current($goals_default);
-        $ga_goal['name'] = $goal_default['title'];
-        $goal['description'] = $goal_default['description'];
+      if (empty($ga_goal) && empty($goal) && $i <= 2) {
+        if ($i == 1) {
+          $ga_goal['name'] = $goals_default['general']['title'];
+          $goal['description'] = $goals_default['general']['description'];
+        }
+        elseif ($i == 2) {
+          $ga_goal['name'] = $goals_default['contact']['title'];
+          $goal['description'] = $goals_default['contact']['description'];
+        }
       }
       $intl_goal_cnt++;
 
@@ -1458,9 +1567,12 @@ function intel_admin_setup_check_goals($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
-  $ga_goals = get_option('intel_ga_goals', array());
+  $form_state['intel_goals'] = $goals = intel_goal_load();
+  $form_state['intel_ga_goals'] = $ga_goals = intel_ga_goal_load(null, array('refresh' => 3600));
+  //$ga_goals = get_option('intel_ga_goals', array());
   $op_meta = get_option('intel_option_meta', array());
 
+  /*
   if (
     !empty($_GET['refresh'])
     || empty($op_meta['ga_goals_updated'])
@@ -1484,6 +1596,7 @@ function intel_admin_setup_check_goals($form, &$form_state) {
 
   $form_state['intel_ga_goals'] = $ga_goals;
   $form_state['intel_goals'] = $goals = get_option('intel_goals', array());
+  */
   // if form submitted, process form_state values
   if (!empty($form_state['input'])) {
     $values = $form_state['input'];
@@ -1549,9 +1662,39 @@ function intel_admin_setup_validate_goals($form, &$form_state, $status) {
 function intel_admin_setup_submit_goals($form, &$form_state) {
   $values = $form_state['values'];
 
+  $goals = $form_state['intel_goals'];
   $ga_goals = $form_state['intel_ga_goals'];
 
   $goals_default = intel_get_intel_goals_default();
+  for($i = 1; $i <= 20; $i++) {
+    $id = "$i";
+
+    if (!empty($values["goal_{$id}_name"])) {
+      // only save goal if changes have been made
+      $goal = !empty($goals[$id]) ? $goals[$id] : array();
+
+      if (!empty($goal)) {
+        if (
+          isset($goal['title']) && ($goal['title'] == $values["goal_{$id}_name"])
+          && isset($goal['description']) && ($goal['description'] == $values["goal_{$id}_description"])
+        ) {
+          continue;
+        }
+      }
+      $goal['title'] = $values["goal_{$id}_name"];
+      $goal['description'] = $values["goal_{$id}_description"];
+
+      // if goal already exists in GA, set the ga_id so a new one isn't
+      // inserted
+      if (!empty($ga_goals[$id])) {
+        $goal['ga_id'] = $id;
+      }
+      intel_goal_save($goal);
+    }
+  }
+
+  return;
+
 
   $saves = array();
   for($i = 1; $i <= 20; $i++) {
@@ -2132,6 +2275,8 @@ function intel_admin_setup_submit_form_settings($form, &$form_state) {
 function intel_admin_setup_finish($form, &$form_state) {
   $f = array();
 
+  $sys_meta = get_option('intel_system_meta', array());
+
   $status = $form_state['intel_statuses']['finish'];
 
   $markup = '';
@@ -2148,7 +2293,12 @@ function intel_admin_setup_finish($form, &$form_state) {
   $items[] = '<h3>' . Intel_Df::t('Congratulations!') . '</h3>';
 
   $items[] = '<p>';
-  $items[] = Intel_Df::t('The Intelligence plugin was setup successfully.');
+  $items[] = Intel_Df::t('The Intelligence plugin %mode setup is complete.', array(
+    '%mode' => empty($sys_meta['setup_full_enabled']) ? Intel_Df::t('basic') : Intel_Df::t('full'),
+  ));
+  if (empty($sys_meta['setup_full_enabled'])) {
+    $items[] = Intel_Df::t('To complete the full setup, click the ');
+  }
   $items[] = '</p>';
 
 

@@ -68,27 +68,6 @@ function intel_imapi_ga_goal_get($goal_id = 0, $options = array()) {
   return $response['ga_goal'];
 }
 
-function intel_imapi_ga_goal_save($ga_goal, $options = array()) {
-
-  $apiclient = intel_imapi_get_client($vars);
-
-  $response = FALSE;
-  $params = isset($options['params']) ? $options['params'] : array();
-  $params['tid'] = $vars['tid'];
-  $data = array(
-    'apikey' => $vars['apikey'],
-    'ga_goal' => $ga_goal,
-  );
-
-  try {
-    $response = $apiclient->getJSON('ga_goal/save', $params, $data);
-  }
-  catch (Exception $e) {
-    throw($e);
-  }
-  return $response;
-}
-
 function intel_imapi_ga_goal_insert($ga_goal, $options = array()) {
 
   $apiclient = intel_imapi_get_client($vars);
@@ -107,6 +86,8 @@ function intel_imapi_ga_goal_insert($ga_goal, $options = array()) {
   catch (Exception $e) {
     throw($e);
   }
+  //delay calls to GA by 200ms
+  usleep(200000);
   return $response;
 }
 
@@ -128,6 +109,8 @@ function intel_imapi_ga_goal_update($ga_goal, $options = array()) {
   catch (Exception $e) {
     throw($e);
   }
+  //delay calls to GA by 200ms
+  usleep(200000);
   return $response;
 }
 
