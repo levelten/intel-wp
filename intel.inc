@@ -11,7 +11,7 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.3');
+define('INTEL_L10IAPI_JS_VER', '0.2.4');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -125,6 +125,19 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_config.inc',
   );
   */
+
+  $items['admin/config/intel/settings/goal'] = array(
+    'title' => 'Goals',
+    'description' => 'Goal configuration.',
+    'page callback' => 'intel_admin_goal_list_page',
+    'access callback' => 'user_access',
+    //'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
   $items['admin/config/intel/settings/intel_event'] = array(
     'title' => 'Events',
     'description' => 'Intel events configuration.',
@@ -169,6 +182,34 @@ function intel_menu($items = array()) {
     'weight' => $w++,
     'file' => 'admin/intel.admin_config.inc',
   );
+
+  $items['admin/config/intel/settings/goal/%intel_goal'] = array(
+    'title' => 'View goal',
+    'page callback' => 'intel_admin_goal_view_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/goal/add'] = array(
+    'title' => 'Add goal',
+    'page callback' => 'intel_admin_goal_add_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_ACTION,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  $items['admin/config/intel/settings/goal/%intel_goal/edit'] = array(
+    'title' => 'Edit goal',
+    'page callback' => 'intel_admin_goal_edit_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
   $items['admin/config/intel/settings/intel_event/%intel_intel_event'] = array(
     'title' => 'View event',
     'page callback' => 'intel_admin_intel_event_view_page',
@@ -1733,6 +1774,19 @@ function intel_verify_apikey(&$message = '', &$property = array(), $options = ar
     $message = Intel_Df::t('API key invalid.') . ' ' . $message;
     return FALSE;
   }
+}
+
+function intel_is_installed($level = 'min') {
+
+  $message = '';
+
+  if ($level == 'min') {
+    $api_level = intel_api_level();
+    return !empty($api_level);
+  }
+
+  $sys_meta = get_option('intel_system_meta', array());
+  return !empty($sys_meta['setup_complete']);
 }
 
 add_filter('intel_entity_info', 'intel_entity_info');

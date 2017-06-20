@@ -3,25 +3,34 @@ var _ioq = _ioq || [];
 function L10iAdmin(_ioq, config) {
     var ioq = _ioq;
     var io = _ioq.io;
-    var $ = jQuery;
-
+    var eventTests = [];
+    var eventBindReported = [];
 
     this.init = function init() {
-        if (!_ioq.settings.admin) {
+        ioq.log('L10iAdmin.init()');//
+        if (!ioq.settings.admin) {
             return;
         }
         var ths = this;
         io('addCallback', 'bindEvent', ths.bindEventCallback);
+        io('addCallback', 'triggerEventAlter', ths.triggerEventAlterCallback);
+        io('addCallback', 'triggerEvent', ths.triggerEventCallback);
     };
 
     this.bindEventCallback = function bindEventCallback(evtDef, $target) {
-        //$target.addClass('io-admin io-event-binded');
+        var evt = {};
+        var options = {
+            test: 1,
+            admin: {
+                bindTarget: []
+            }
+        };
+
         $target.each(function(index, value) {
             var evt = {};
             var $value = $(value);
-            var options = {
-                test: 1
-            };
+
+
             var ret = 0;
             // check if default eventHandler is overridden
             if (evtDef.onHandler) {
@@ -39,10 +48,80 @@ function L10iAdmin(_ioq, config) {
                 ret = _ioq.defEventHandler(evtDef, $value, evt, options);
             }
 
-            if (_ioq.isObject(ret) && _ioq.isObject(ret.gaEvent) && ret.gaEvent.eventCategory) {
-                $value.addClass('io-admin io-event-binded');
-            }
+            //if (_ioq.isObject(ret) && _ioq.isObject(ret.gaEvent) && ret.gaEvent.eventCategory) {
+            //    bindTargets.push(value);
+            //}
         });
+
+        var logObj = {
+            eventDef: evtDef,
+            bindTarget: options.admin.bindTarget
+        };
+
+        console.log("Intelligence event bind:");
+        console.log(logObj);
+    };
+
+    this.triggerEventAlterCallback = function triggerEventAlterCallback(trigEvt, $target, event, options, evtDef) {
+        if (!options.test)  {
+            options.test = 2;
+        }
+    };
+
+    this.triggerEventCallback = function triggerEventCallback(trigEvt, $target, event, options, evtDef, gaEvt) {
+        if (!options.test)  {
+            return;
+        }
+
+        var target;
+        var prevent = 0;
+        if (ioq.location.params['io-admin-prevent'] && ioq.isFunction(event.preventDefault)) {
+            event.preventDefault();
+        }
+
+        var logObj = {
+            eventDef: evtDef
+        };
+
+        // binding stage
+        if (options.test == 1) {
+            if (ioq.isObject(gaEvt) && gaEvt.eventCategory) {
+                if (ioq.is$Object($target)) {
+                    options.admin.bindTarget.push($target.get(0));
+                }
+            }
+
+            $target.css('outline', '4px solid #33FF33');
+            //$target.addClass('io-admin io-event-binded');
+
+            return;
+        }
+        // trigger stage
+        if (options.test == 2) {
+            ds = '';
+            for (i in gaEvt) {
+                if (ds) {
+                    ds += ',';
+                }
+                ds += '\n  ' + i + ': ';
+                if (ioq.isString(gaEvt[i])) {
+                    ds += "'" + gaEvt[i] + "'";
+                }
+                else {
+                    ds += gaEvt[i];
+                }
+            }
+            alert("ga.send.event: {" + ds + '\n}');
+            logObj.target$ = $target;
+            logObj.event = event;
+            logObj.trigEvt = trigEvt;
+            logObj.gaEvt = gaEvt;
+            logObj.options = options;
+            console.log("Intelligence event trigger:");
+            console.log(logObj);
+        }
+
+        //alert("ga.send.event: ");
     };
 
     this.init();

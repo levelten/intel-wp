@@ -313,7 +313,7 @@ class Intel {
   	$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_setup_notice' );
 
 		// plugin action links
-		$this->loader->add_action( 'plugin_action_links_intel/intel.php', $plugin_admin, 'plugin_action_links' );
+		$this->loader->add_action( 'plugin_action_links_' . plugin_basename(INTEL_DIR . 'intel.php'), $plugin_admin, 'plugin_action_links', 10, 2 );
 	}
 
 	public function setup_cron() {

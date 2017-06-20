@@ -29,15 +29,13 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $gadash_options = get_option('gadash_options', array());
-  $ops = json_decode($gadash_options, true);
-  intel_d($gadash_options);//
-  intel_d($ops);//
+  intel_d(INTEL_DIR);
+  $a = plugin_basename(INTEL_DIR);
+  intel_d($a);
 
-  $gadash_options = get_option('gadash_network_options', array());
-  $ops = json_decode($gadash_options, true);
-  intel_d($gadash_options);//
-  intel_d($ops);//
+  $flag = intel_is_installed();
+
+  intel_d($flag);
 
 
 
@@ -67,10 +65,16 @@ intel_d($settings);//
 
   intel_d($page_match);//
 
+  $desc = Intel_Df::t('Input your LevelTen Intelligence API key. You can get one at !link',
+    array(
+      '!link' => Intel_Df::l(Intel_Df::t('api.getlevelten.com'), 'http://api.getlevelten.com/site', array('attributes' => array('target' => '_blank'))),
+    )
+  );
   $form['uri'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('URI to match'),
     '#default_value' => !empty($settings['uri']) ? $settings['uri'] : '',
+    '#description' => $desc,
   );
 
   $options = array(

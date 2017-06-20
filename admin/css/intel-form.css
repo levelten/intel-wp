@@ -45,3 +45,8 @@
 .marker, .form-required {
     color: #f00;
 }
+
+/* hides standard description in favor of tooltip popovers */
+.bootstrap-wrapper .form-item .description {
+    display: none;
+}

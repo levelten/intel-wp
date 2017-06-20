@@ -6,6 +6,239 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
+
+
+
+function intel_goal_load($name = '', $options = array()) {
+  $goals = get_option('intel_goals', array());
+  if (!empty($name)) {
+    return !empty($goals[$name]) ? $goals[$name] : 0;
+  }
+  return $goals;
+}
+
+function intel_goal_const($goal, $ga_goal = array()) {
+  if (!empty($ga_goal)) {
+    if (!isset($goal['title']) && isset($ga_goal['name'])) {
+      $goal['title'] = $ga_goal['name'];
+    }
+    if (!isset($goal['ga_id']) && isset($ga_goal['id'])) {
+      $goal['ga_id'] = $ga_goal['id'];
+    }
+    if (!isset($goal['type']) && isset($ga_goal['type'])) {
+      $goal['type'] = !intel_is_intl_goal($ga_goal) ? $ga_goal['type'] : 'INTL';
+    }
+    if (!isset($goal['value']) && isset($ga_goal['value'])) {
+      $goal['value'] = $ga_goal['value'];
+    }
+  }
+
+  if (empty($goal['title'])) {
+    return FALSE;
+  }
+
+  // if not ga_id set, find first available id
+  if (empty($goal['ga_id'])) {
+    $ga_goals = intel_ga_goal_load();
+
+    for ($i = 1; $i <= 20; $i++) {
+      if (!isset($ga_goals["$i"])) {
+        $goal['ga_id'] = "$i";
+        break;
+      }
+    }
+  }
+
+  if (empty($goal['ga_id'])) {
+    return FALSE;
+  }
+
+  $defaults = array(
+    'ga_id' => $goal['ga_id'],
+    'name' => str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($goal['title']))),
+    'title' => $goal['title'],
+    'description' => '',
+    'type' => 'INTL',
+    'value' => 0,
+    'context' => array(
+      'general' => 1,
+      'submission' => 1,
+      'phonecall' => 1,
+    ),
+  );
+  $goal = Intel_Df::drupal_array_merge_deep($defaults, $goal);
+
+  return $goal;
+}
+
+function intel_goal_save($goal, $options = array()) {
+  $goals = intel_goal_load();
+
+  // if new goal, const and get ga_id
+  if (empty($goal['ga_id'])) {
+    $goal = intel_goal_const($goal);
+  }
+
+  // if goal type is Intel goal, save to ga goal also
+  if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL' ) {
+    $ga_goal = array(
+      'id' => $goal['ga_id'],
+      'name' => $goal['title'],
+    );
+    $ga_goal = intel_ga_goal_save($ga_goal);
+  }
+
+  $goals[$goal['ga_id']] = $goal;
+  update_option('intel_goals', $goals);
+
+  return $goal;
+}
+
+function intel_ga_goal_load($name = '', $options = array()) {
+
+  // load goals from ga
+  if (!empty($options['refresh'])) {
+    $op_meta = get_option('intel_option_meta', array());
+    $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
+    if ((time() - $op_meta['ga_goals_updated']) > $time) {
+
+      include_once INTEL_DIR . 'includes/intel.imapi.inc';
+
+      try {
+        $ga_goals = intel_imapi_ga_goal_get();
+
+        update_option('intel_ga_goals', $ga_goals);
+        $op_meta['ga_goals_updated'] = time();
+        update_option('intel_option_meta', $op_meta);
+      }
+      catch (Exception $e) {
+        Intel_Df::drupal_set_message($e->getMessage(), 'error');
+        $ga_goals = array();
+      }
+    }
+  }
+
+  if (!isset($ga_goals)) {
+    $ga_goals = get_option('intel_ga_goals', array());
+  }
+
+  if (!empty($name)) {
+    return !empty($ga_goals[$name]) ? $ga_goals[$name] : 0;
+  }
+  return $ga_goals;
+}
+
+function intel_ga_goal_const($ga_goal) {
+  if (empty($ga_goal['name'])) {
+    return FALSE;
+  }
+  // if not id set, find first available id
+  if (empty($ga_goal['id'])) {
+    $ga_goals = intel_ga_goal_load();
+
+    for ($i = 1; $i <= 20; $i++) {
+      if (!isset($ga_goals["$i"])) {
+        $ga_goal['id'] = "$i";
+        break;
+      }
+    }
+  }
+
+  if (empty($ga_goal['id'])) {
+    return FALSE;
+  }
+
+  $defaults = array(
+    'id' => $ga_goal['id'],
+    'name' => $ga_goal['name'],
+    'type' => 'EVENT',
+    'active' => TRUE,
+    'value' => 0,
+    'details' => array(
+      'useEventValue' => TRUE,
+      'conditions' => array(
+        array(
+          'type' => 'CATEGORY',
+          'matchType' => 'REGEXP',
+          'expression' => $ga_goal['name'] . '\+$',
+        ),
+      ),
+    ),
+  );
+  $ga_goal = Intel_Df::drupal_array_merge_deep($defaults, $ga_goal);
+  return $ga_goal;
+}
+
+function intel_ga_goal_save($ga_goal, $options = array()) {
+
+  if (empty($ga_goal['name'])) {
+    return FALSE;
+  }
+
+  $ga_goals = intel_ga_goal_load();
+
+  // if type is not set, assume ga_goal needs to be constructed
+  if (empty($ga_goal['type'])) {
+    $ga_goal = intel_ga_goal_const($ga_goal);
+//intel_d('intel_imapi_ga_goal_insert');
+//intel_d($ga_goal);
+    intel_imapi_ga_goal_insert($ga_goal);
+  }
+  // if intel goal, check if should be saved
+  else if (intel_is_intl_goal($ga_goal)) {
+    $update = 0;
+    $ga_goal0 = !empty($ga_goals[$ga_goal['id']]) ? $ga_goals[$ga_goal['id']] : array();
+
+    if (empty($ga_goal0)) {
+//intel_d('intel_imapi_ga_goal_insert');
+//intel_d($ga_goal);
+      intel_imapi_ga_goal_insert($ga_goal);
+    }
+    // check if original goal and new goal are equivalent, if not save to GA.
+    else if ($ga_goal['name'] != $ga_goal0['name']) {
+//intel_d('intel_imapi_ga_goal_update');
+//intel_d($ga_goal);
+      intel_imapi_ga_goal_update($ga_goal);
+    }
+  }
+
+  $ga_goals[$ga_goal['id']] = $ga_goal;
+  update_option('intel_ga_goals', $ga_goals);
+  return $ga_goal;
+}
+
+function intel_is_intl_goal($ga_goal) {
+  if (!empty($ga_goal['type']) && $ga_goal['type'] == 'EVENT') {
+    if (!empty($ga_goal['details']['conditions'])) {
+      $cat_cond = array();
+      foreach ($ga_goal['details']['conditions'] as $v) {
+        if ($v['type'] == 'CATEGORY') {
+          $cat_cond = $v;
+        }
+      }
+      if (!empty($cat_cond)) {
+        if (!empty($cat_cond['matchType']) && !empty($cat_cond['expression']) && $cat_cond['matchType'] == 'REGEXP') {
+          $name = substr($cat_cond['expression'], 0, -3);
+          $term = substr($cat_cond['expression'], -3);
+          if ($term == '\+$' && $name == $ga_goal['name']) {
+            return TRUE;
+          }
+        }
+      }
+    }
+  }
+  return FALSE;
+}
+
+function intel_get_goal_categories() {
+  $goal_categories = array(
+    'event' => Intel_Df::t('Event'),
+    'submission' => Intel_Df::t('Event'),
+  );
+  $goal_categories = apply_filters('intel_goal_categories', $goal_categories);
+  return $goal_categories;
+}
+
 /**
  * types = flag, list, scalar, vector
  */
@@ -418,19 +651,7 @@ function intel_get_intel_event_info_default($event = array()) {
   return $event;
 }
 
-function intel_get_goal_categories() {
-  $goal_categories = array(
-    'event' => Intel_Df::t('Event'),
-    'submission' => Intel_Df::t('Event'),
-  );
-  $goal_categories = apply_filters('intel_goal_categories', $goal_categories);
-  return $goal_categories;
-}
 
-function intel_get_goal_info() {
-  $goal_info = get_option('intel_goals', array());
-  return $goal_info;
-}
 
 //add_filter('intel_intel_event_info', 'intel_get_goal_event_info');
 function intel_get_goal_event_info($info = array()) {
@@ -3255,6 +3476,17 @@ function intel_fetch_ga_goals($save = 0) {
   return $ga_goals;
 }
 
+function intel_goal_type_titles() {
+  return array(
+    'INTL' => Intel_Df::t('Intelligence'),
+    'INTEL' => Intel_Df::t('Intelligence'),
+    'EVENT' => Intel_Df::t('Event'),
+    'VISIT_TIME_ON_SITE' => Intel_Df::t('Duration'),
+    'VISIT_NUM_PAGES' => Intel_Df::t('Pages/session'),
+    'URL_DESTINATION' => Intel_Df::t('Destination'),
+  );
+}
+
 function intel_fetch_ga_goals_page() {
 
   $ga_goals = intel_fetch_ga_goals();
@@ -3452,25 +3684,4 @@ function intel_get_ga_profile_slug() {
   return "a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['viewId']}";
 }
 
-function intel_is_intl_goal($ga_goal) {
-  if (!empty($ga_goal['type']) && $ga_goal['type'] == 'EVENT') {
-    if (!empty($ga_goal['details']['conditions'])) {
-      $cat_cond = array();
-      foreach ($ga_goal['details']['conditions'] as $v) {
-        if ($v['type'] == 'CATEGORY') {
-          $cat_cond = $v;
-        }
-      }
-      if (!empty($cat_cond)) {
-        if (!empty($cat_cond['matchType']) && !empty($cat_cond['expression']) && $cat_cond['matchType'] == 'REGEXP') {
-          $name = substr($cat_cond['expression'], 0, -3);
-          $term = substr($cat_cond['expression'], -3);
-          if ($term == '\+$' && $name == $ga_goal['name']) {
-            return TRUE;
-          }
-        }
-      }
-    }
-  }
-  return FALSE;
-}
+

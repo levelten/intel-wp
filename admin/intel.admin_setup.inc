@@ -1289,7 +1289,7 @@ function intel_admin_setup_goals($form, &$form_state) {
   );
 
   $cells = array();
-  $cells[] = Intel_Df::t('ID');
+  $cells[] = Intel_Df::t('Id');
   $cells[] = Intel_Df::t('Name');
   $cells[] = Intel_Df::t('Type');
   $cells[] = Intel_Df::t('Description');

@@ -257,7 +257,7 @@ function intel_admin_settings($form, &$form_state) {
 
   $form['intl_scripts'] = array(
     '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Intl Scripts'),
+    '#title' => Intel_Df::t('Intel Scripts'),
     '#collapsible' => TRUE,
   );
 
@@ -704,49 +704,198 @@ function intel_admin_scoring_submit(&$form, &$form_state) {
   update_option('intel_targets', $targets);
 }
 
-function intel_admin_goals($form, &$form_state) {
+function intel_admin_goal_list_page() {
   require_once INTEL_DIR . "includes/intel.ga.inc";
 
-  $goal_categories = intel_get_goal_categories();
+  // load internal saved goals
+  $goals = intel_goal_load();
+  $options = array(
+    'refresh' => 3600,
+  );
+  if (isset($_GET['refresh']) && is_numeric($_GET['refresh'])) {
+    $options['refresh'] = intval($_GET['refresh']);
+  }
+  $ga_goals = intel_ga_goal_load('', $options);
 
-  $event_goals = get_option('intel_event_goals', array());
-  $value = '';
-  foreach ($event_goals AS $g) {
-    $value .= $g['ga_id'] . '|' . $g['title'] . '|' . $g['description'] . "\n";
+  $id_limit = 20;
+
+  intel_d($goals);
+  intel_d($ga_goals);
+
+  $type_titles = intel_goal_type_titles();
+
+  if (!empty($_GET['debug'])) {
+    intel_d($goals);//
   }
-  $form['event_goals'] = array(
-    '#type' => 'textarea',
-    '#title' => Intel_Df::t('Goals (event driven)'),
-    '#default_value' => $value,
-    '#description' => Intel_Df::t('Enter any goal you would like to trigger using an event. Enter one goal per line as name,ga_goal_id (e.g. <em>Contact form,1</em>). Note in order for goals to track, they must also be setup properly in Google Analytics.'),
+
+  $header = array(
+    Intel_Df::t('Id'),
+    Intel_Df::t('Goal name'),
+    Intel_Df::t('Type'),
+    Intel_Df::t('Description'),
+    //t('Type'),
+    //Intel_Df::t('Module'),
+    Intel_Df::t('Ops'),
   );
-  $submission_goals = get_option('intel_submission_goals', intel_get_submission_goals_default());
-  $value = '';
-  foreach ($submission_goals AS $g) {
-    $value .= $g['ga_id'] . '|' . $g['title'] . '|' . $g['description'] . "\n";
+  $rows = array();
+
+  $options = array();
+  $custom_default_value = '';
+  $link_options = array(
+    'query' => Intel_Df::drupal_get_destination(),
+  );
+  $link_options = array();
+  for ($i = 1; $i <= $id_limit; $i++) {
+    $key = "$i";
+    $goal = !empty($goals[$key]) ? $goals[$key] : array();
+    $ga_goal = !empty($ga_goals[$key]) ? $ga_goals[$key] : array();
+
+    $ops = array();
+    $ops[] = Intel_Df::l(Intel_Df::t('edit'), 'admin/config/intel/settings/goal/' . $key . '/edit', $link_options);
+
+    $row = array(
+      $key,
+      Intel_Df::t('(unknown)'),
+      Intel_Df::t('(unknown)'),
+      '',
+    );
+    if (empty($goal) && empty($ga_goal)) {
+      continue;
+    }
+    // check if goal or ga_goal is missing data, i.e. out of sync
+    if (empty($goal)) {
+      $goal = intel_goal_const($goal, $ga_goal);
+      intel_goal_save($goal);
+    }
+    else if (empty($ga_goal)) {
+intel_d($goal);
+      intel_goal_save($goal);
+    }
+
+    $row[1] = $goal['title'];
+    $row[2] = $type_titles[$goal['type']];
+    $row[3] = $goal['description'];
+
+    $row[] = implode(' ', $ops);
+    $rows[] = $row;
   }
-  $form['submission_goals'] = array(
-    '#type' => 'textarea',
-    '#title' => Intel_Df::t('Submission goals'),
-    '#default_value' => $value,
-    '#description' => Intel_Df::t('Enter any goals that can be triggered by a form submission. Enter one goal per line as name,ga_goal_id (e.g. <em>Contact form,1</em>). Note in order for goals to track, they must also be setup properly in Google Analytics.'),
+
+  $vars = array(
+    'header' => $header,
+    'rows' => $rows,
   );
 
-  $phonecall_goals = get_option('intel_phonecall_goals', intel_get_phonecall_goals_default());
-  $value = '';
-  foreach ($phonecall_goals AS $g) {
-    $value .= $g['ga_id'] . '|' . $g['title'] . '|' . $g['description'] . "\n";
+  $output = Intel_Df::theme('table', $vars);
+
+  return $output;
+}
+
+function intel_admin_goal_add_page() {
+  //drupal_set_title(t('Add visitor attribute'));
+  $form = Intel_Form::drupal_get_form('intel_admin_goal_form', array());
+  return $form;
+  return Intel_Df::render($form);
+}
+
+function intel_admin_goal_edit_page($goal) {
+  Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $goal['title'])));
+  $form = Intel_Form::drupal_get_form('intel_admin_goal_form', $goal);
+  return $form;
+  return Intel_Df::render($form);
+}
+
+function intel_admin_goal_form($form, &$form_state, $goal) {
+  require_once INTEL_DIR . "includes/intel.ga.inc";
+
+  $add = 0;
+  $custom = 0; // is editable in CMS
+  if (!is_array($goal) || empty($goal)) {
+    $add = 1;
+    $custom = 1;
   }
-  $form['phonecall_goals'] = array(
-    '#type' => 'textarea',
-    '#title' => Intel_Df::t('Phone call goals'),
-    '#default_value' => $value,
-    '#description' => Intel_Df::t('Enter any goals that can be triggered by phonecall. Enter one goal per line as name,ga_goal_id (e.g. <em>Contact call,1</em>). Note in order for goals to track, they must also be setup properly in Google Analytics.'),
+  else {
+    $custom = ($goal['type'] == 'INTEL' || $goal['type'] == 'INTL') ? 1 : 0;
+  }
+
+  if ($add) {
+    if (!empty($_GET['title'])) {
+      $goal['title'] = $_GET['title'];
+    }
+  }
+
+  $type_titles = intel_goal_type_titles();
+
+  if (!$custom) {
+    $msg = Intel_Df::t('This goal was setup in Google Analytics.');
+  }
+
+  $form_state['intel_goal'] = $goal;
+
+  $form['general'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('General'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    //'#description' => Intel_Df::t('The parameters sent to Google Analtyics when the event is triggered.'),
   );
+
+  $key = 'title';
+  $form['general'][$key] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Title'),
+    '#default_value' => !empty($goal[$key]) ? $goal[$key] : '',
+    '#description' => Intel_Df::t('The goal name.'),
+    '#size' => 32,
+    '#required' => 1,
+    '#disabled' => !($custom),
+  );
+
+  $key = 'ga_id';
+  $form['general'][$key] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Id'),
+    '#markup' => !empty($goal[$key]) ? $goal[$key] : Intel_Df::t('Next available id'),
+    '#description' => Intel_Df::t('The Id of the goal in Google Anaytics.'),
+    '#size' => 32,
+    '#required' => 1,
+  );
+
+  /*
+  $key = 'name';
+  $form['general'][$key] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Id'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('A unique identifier (machine name) for the event. Should only include letters, numbers and underscores.'),
+    '#size' => 32,
+    '#required' => 1,
+  );
+  */
+
+  $key = 'description';
+  $form['general'][$key] = array(
+    '#type' => 'textarea',
+    '#title' => Intel_Df::t('Description'),
+    '#default_value' => !empty($goal[$key]) ? $goal[$key] : '',
+    '#description' => Intel_Df::t('Description of the goal.'),
+    //'#disabled' => !($custom || !empty($overridable[$key])),
+    '#rows' => 2,
+  );
+
+  $key = 'type';
+  $form['general'][$key] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Type'),
+    '#markup' => !empty($goal[$key]) ? $type_titles[$goal[$key]] : $type_titles['INTL'],
+    '#description' => Intel_Df::t('Type of goal.'),
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#rows' => 2,
+  );
+
 
   $form['save'] = array(
     '#type' => 'submit',
-    '#value' => Intel_Df::t('Update settings'),
+    '#value' => $add ? Intel_Df::t('Add goal') : Intel_Df::t('Save goal'),
   );
 
 
@@ -755,54 +904,15 @@ function intel_admin_goals($form, &$form_state) {
 
 
 
-function intel_admin_goals_submit(&$form, &$form_state) {
+function intel_admin_goal_form_submit(&$form, &$form_state) {
   $values = $form_state['values'];
 
-  $defaults = intel_get_submission_goals_default();
-  $goals = array();
-  $a = explode("\n", $values['submission_goals']);
-  foreach ($a AS $b) {
-    $c = explode("|", $b);
-    if ((count($c) == 2) || (count($c) == 3)) {
-      $key = strtolower(Intel_Df::drupal_clean_css_identifier($c[1]));
-      $goals[$key] = array(
-        'ga_id' => (int)trim($c[0]),
-        'title' => trim($c[1]),
-      );
-      if (!empty($c[2])) {
-        $goals[$key]['description'] = trim($c[2]);
-      }
-      if (isset($defaults[$key])) {
-        if (isset($defaults[$key]['value'])) {
-          $goals[$key]['value'] = $defaults[$key]['value'];
-        }
-      }
-    }
-  }
-  update_option('intel_submission_goals', $goals);
+  $goal = $form_state['intel_goal'];
 
-  $defaults = array();
-  $goals = array();
-  $a = explode("\n", $values['event_goals']);
-  foreach ($a AS $b) {
-    $c = explode("|", $b);
-    if ((count($c) == 2) || (count($c) == 3)) {
-      $key = strtolower(Intel_Df::drupal_clean_css_identifier($c[1]));
-      $goals[$key] = array(
-        'ga_id' => (int)trim($c[0]),
-        'title' => trim($c[1]),
-      );
-      if (!empty($c[2])) {
-        $goals[$key]['description'] = trim($c[2]);
-      }
-      if (isset($defaults[$key])) {
-        if (isset($defaults[$key]['value'])) {
-          $goals[$key]['value'] = $defaults[$key]['value'];
-        }
-      }
-    }
-  }
-  update_option('intel_event_goals', $goals);
+  $goal['title'] = $values['title'];
+  $goal['description'] = $values['description'];
+
+  intel_goal_save($goal);
 }
 
 function intel_admin_intel_event_list_page() {
@@ -1008,7 +1118,6 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
       $form['ga_event_values'][$key]['#markup'] = Intel_Df::t('(not set)');
     }
 
-
     $form['ga_event_values']['inline_wrapper_1'] = array(
       '#type' => 'markup',
       '#markup' => '</div><div class="pull-left" style="padding-left: 15px;">',
@@ -1019,17 +1128,23 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     $goals = get_option('intel_goals', array());
     foreach ($goals AS $key => $goal) {
       if (empty($goal['context']['general'])) {
-        return;
+        continue;
       }
       $options[$goal['ga_id']] = $goal['title'];
     }
+
+    $desc = Intel_Df::t('Select the goal to be triggered with the event.');
+    $l_options = Intel_Df::l_options_add_target('intel-admin-goal');
+    $desc .= ' ' . Intel_Df::t('You can create and manage goals in the !link.', array(
+        '!link' => Intel_Df::l( Intel_Df::t('Intelligence goal admin'), 'admin/config/intel/settings/goal', $l_options),
+      ));
     $key = 'ga_id';
     $form['ga_event_values'][$key] = array(
       '#type' => (1 || $custom || !empty($overridable[$key])) ? 'select' : 'item',
       '#title' => Intel_Df::t('Goal'),
       '#options' => $options,
-      '#default_value' => !empty($event['ga_id']) ? $event['ga_id'] : '',
-      '#description' => Intel_Df::t('Select the goal to be triggered with the event.'),
+      '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+      '#description' => $desc,
       '#disabled' => !($custom || !empty($overridable[$key])),
       '#attributes' => array(
         'class' => array(
@@ -1038,6 +1153,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
         ),
       ),
     );
+
     $form['ga_event_values'][$key]['#markup'] = '(not set)';
     if ($form['ga_event_values'][$key]['#default_value']) {
       $form['ga_event_values'][$key]['#markup'] = $goals[$form['ga_event_values'][$key]['#default_value']]['title'];
@@ -1166,6 +1282,26 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
       //'#description' => Intel_Df::t(''),
     );
 
+    $key = 'selector_filter';
+    $form['trigger']['advanced'][$key] = array(
+      '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
+      '#title' => Intel_Df::t('Selector filter'),
+      '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+      '#description' => Intel_Df::t('Input a jQuery child selector to be used a filter method. If left blank, filter method will not be applied. Executed as jQuery(\'selector\').filter(\'[selector filter]\').on(\'on event\').'),
+      '#disabled' => !($custom || !empty($overridable[$key])),
+      '#size' => 64,
+    );
+
+    $key = 'selector_not';
+    $form['trigger']['advanced'][$key] = array(
+      '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
+      '#title' => Intel_Df::t('Selector not'),
+      '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+      '#description' => Intel_Df::t('Input a jQuery child selector to be used a not method. If left blank, not method will not be applied. Executed as jQuery(\'selector\').not(\'[selector not]\').on(\'on event\').'),
+      '#disabled' => !($custom || !empty($overridable[$key])),
+      '#size' => 64,
+    );
+
     $key = 'on_selector';
     $form['trigger']['advanced'][$key] = array(
       '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
@@ -1218,15 +1354,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
       '#suffix' => '</div></div>',
     );
 
-    $key = 'selector_filter';
-    $form['trigger']['advanced'][$key] = array(
-      '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
-      '#title' => Intel_Df::t('Selector filter'),
-      '#default_value' => !empty($event[$key]) ? $event[$key] : '',
-      '#description' => Intel_Df::t('Input a jQuery child selector to be used a filter method. If left blank filter method will not be applyed. Executed as jQuery(\'selector\').filter(\'[filter selector]\').on(\'on event\').'),
-      '#disabled' => !($custom || !empty($overridable[$key])),
-      '#size' => 64,
-    );
+
 
     $key = 'refresh_force';
     $form['trigger']['advanced'][$key] = array(

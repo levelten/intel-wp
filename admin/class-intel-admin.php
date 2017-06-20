@@ -300,12 +300,19 @@ class Intel_Admin {
 						if ($path_args[4] == 'intel_event') {
 							$load_index = 5;
 							$load_type = 'intel_intel_event';
-							$load_title = Intel_Df::t('Intl Event');
+							$load_title = Intel_Df::t('Intel Event');
+							$bc_title = Intel_Df::t('Event');
+						}
+						elseif ($path_args[4] == 'goal') {
+							$load_index = 5;
+							$load_type = 'intel_goal';
+							$bc_title = $load_title = Intel_Df::t('Goal');
 						}
 						if ($load_index) {
 							$func = $load_type . '_load';
 							$path_args_t[$load_index] = $func($path_args[$load_index]);
-						  if(empty($path_args_t[$load_index])) {
+							$entity = $path_args_t[$load_index];
+						  if(empty($entity)) {
 								$vars = array(
 									'title' => esc_html__('404 Error', 'intel'),
 									'markup' => Intel_Df::t('@load_title not found', array(
@@ -325,10 +332,16 @@ class Intel_Admin {
 							}
 							$a = array_slice($path_args, 0, 5);
 							$breadcrumbs[] = array(
-								'text' => esc_html__('Events', 'intel'),
+								'text' => $bc_title,
 								'path' => Intel_Df::url(implode('/', $a)),
 							);
+							$a = array_slice($path_args, 0, 6);
+							$breadcrumbs[] = array(
+								'text' => $entity['title'],
+								//'path' => Intel_Df::url(implode('/', $a)),
+							);
 						}
+
 					}
 
 
@@ -433,9 +446,8 @@ class Intel_Admin {
 		}
 
 		// check if setup is complete
-		$sys_meta = get_option('intel_system_meta', array());
 		if ($q != 'admin/config/intel/settings/setup'
-			&& empty($sys_meta['setup_complete'])) {
+			&& !intel_is_installed('min')) {
 			$msg = Intel_Df::t('Intelligence setup must be complete before accessing this page. !link.', array(
 				'!link' => Intel_Df::l(Intel_Df::t('Click here to run the setup wizard'), 'admin/config/intel/settings/setup'),
 			));
@@ -604,13 +616,14 @@ class Intel_Admin {
 	}
 
 	public function admin_setup_notice() {
-		$api_level = intel_api_level();
-  	if (!empty($api_level)) {
-			return;
-		}
+
 		// Don't show the connect notice anywhere but the plugins.php after activating
 		$current = get_current_screen();
 		if ( 'plugins' !== $current->parent_base ) {
+			return;
+		}
+
+		if (intel_is_installed('min')) {
 			return;
 		}
 

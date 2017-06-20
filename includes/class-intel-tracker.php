@@ -185,7 +185,7 @@ class Intel_Tracker {
 		$script = '';
 		$script .= "var intel_settings = " . json_encode($js_settings) . ";\n";
 		$script .= intel_get_js_embed('l10i', 'local');
-		$script .= "$io_name('set', 'config', intel_settings.intel.config);\n";
+		$script .= "$io_name('setConfig', intel_settings.intel.config);\n";
 		if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
 			foreach ($js_settings['intel']['pushes'] as $cm => $push) {
 				if ($cm == 'setUserId') {
@@ -201,7 +201,7 @@ class Intel_Tracker {
 		}
 
 
-		$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
+		//$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
 		//if (!empty($js_settings['intel']['pushes']['events'])) {
 		//	$script .= "$io_name('event', intel_settings.intel.pushes.event);\n";
 		//}

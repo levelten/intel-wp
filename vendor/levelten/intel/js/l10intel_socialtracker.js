@@ -3,7 +3,7 @@ var _l10iq = _l10iq || [];
 function L10iSocialTracker(_ioq, config) {
     var ioq = _ioq;
     var io = _ioq.io;
-    var $ = jQuery;
+
     var socialDefs = {};
     socialDefs.facebook = {
         title: 'Facebook',
@@ -17,7 +17,7 @@ function L10iSocialTracker(_ioq, config) {
         //$('a').on('mouseover', {eventType: 'click'}, ths.eventHandler); // for testing event sends
     };
 
-    this.eventHandlerAlter = function eventHandlerAlter (evtDef, $target, event) {
+    this.eventHandlerAlter = function eventHandlerAlter (evtDef, $target, event, options) {
         var a, href, parsedHref;
         if (!evtDef.socialNetwork) {
             a = $target.attr('data-io-social-network');
@@ -30,7 +30,7 @@ function L10iSocialTracker(_ioq, config) {
         }
     };
 
-    this.eventHandler = function eventHandler(evtDef, $target, event, gaEvt) {
+    this.eventHandler = function eventHandler(evtDef, $target, event, options) {
         if (evtDef.socialNetwork && evtDef.socialAction) {
             var socialDef = {
                 socialNetwork: evtDef.socialNetwork,
@@ -38,7 +38,9 @@ function L10iSocialTracker(_ioq, config) {
                 socialTarget: _ioq.location.href,
                 hitType: 'social'
             };
-            io('ga.send', socialDef);
+            if (!options.test) {
+                io('ga.send', socialDef);
+            }
         }
     };
 

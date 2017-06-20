@@ -3,10 +3,9 @@ var _ioq = _ioq || [];
 function L10iLinkTracker(_ioq, config) {
     var ioq = _ioq;
     var io = _ioq.io;
-    var $ = jQuery;
-
 
     this.init = function init() {
+        ioq.log('L10iLinkTracker.init()');
         var ths = this;
         var evtDef = {
             selector: 'a',
@@ -49,7 +48,7 @@ function L10iLinkTracker(_ioq, config) {
 
     this.eventHandler = function eventHandler(event) {
         var i, v;
-console.log(event);
+
         v = _ioq.getEventArgsFromEvent(event);
         var evtDef = v[0], $obj = v[1], options = v[3];
 
@@ -131,7 +130,13 @@ console.log(event);
         }
 
 
-        evtDef.eventCategory = hrefTypeTitles[hrefType] + ' link ' + eventType;
+        if (options.test) {
+          evtDef.eventCategory = "[Type] link " + eventType;
+        }
+        else {
+          evtDef.eventCategory = hrefTypeTitles[hrefType] + ' link ' + eventType;
+        }
+
         // force re-construct
         delete(evtDef.const);
 
@@ -139,6 +144,7 @@ console.log(event);
     };
 
     this.init();
+    //_ioq.push(['addCallback', 'domReady', this.init, this]);
 }
 
 _ioq.push(['providePlugin', 'linktracker', L10iLinkTracker, {}]);

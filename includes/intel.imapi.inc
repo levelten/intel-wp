@@ -44,6 +44,7 @@ function intel_imapi_get_client(&$vars, $options = array()) {
 }
 
 function intel_imapi_ga_goal_get($goal_id = 0, $options = array()) {
+
   $vars = array();
   $apiclient = intel_imapi_get_client($vars);
 
@@ -65,8 +66,6 @@ function intel_imapi_ga_goal_get($goal_id = 0, $options = array()) {
   }
 
   return $response['ga_goal'];
-
-  return $response;
 }
 
 function intel_imapi_ga_goal_save($ga_goal, $options = array()) {
