@@ -16,6 +16,7 @@
  */
 function intel_imapi_get_client(&$vars, $options = array()) {
   $vars['tid'] = isset($options['tid']) ? $options['tid'] : get_option('intel_ga_tid', '');
+  $vars['viewid'] = isset($options['viewid']) ? $options['viewid'] : get_option('intel_ga_view', '');
   if (empty($vars['tid'])) {
     $message = Intel_Df::t('Tracking id is not set.');
     throw new Exception($message);
@@ -51,6 +52,7 @@ function intel_imapi_ga_goal_get($goal_id = 0, $options = array()) {
   $response = FALSE;
   $params = isset($options['params']) ? $options['params'] : array();
   $params['tid'] = $vars['tid'];
+  $params['viewid'] = $vars['viewid'];
   $data = array(
     'apikey' => $vars['apikey'],
   );
@@ -75,6 +77,7 @@ function intel_imapi_ga_goal_insert($ga_goal, $options = array()) {
   $response = FALSE;
   $params = isset($options['params']) ? $options['params'] : array();
   $params['tid'] = $vars['tid'];
+  $params['viewid'] = $vars['viewid'];
   $data = array(
     'apikey' => $vars['apikey'],
     'ga_goal' => $ga_goal,
@@ -98,6 +101,7 @@ function intel_imapi_ga_goal_update($ga_goal, $options = array()) {
   $response = FALSE;
   $params = isset($options['params']) ? $options['params'] : array();
   $params['tid'] = $vars['tid'];
+  $params['viewid'] = $vars['viewid'];
   $data = array(
     'apikey' => $vars['apikey'],
     'ga_goal' => $ga_goal,

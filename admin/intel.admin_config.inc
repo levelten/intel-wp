@@ -624,7 +624,7 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
     );
   }
 
-  $goals = get_option('intel_goals', array());
+  $goals = intel_goal_load();
 
   $form_state['goals'] = $goals;
   foreach ($goals AS $i => $m) {

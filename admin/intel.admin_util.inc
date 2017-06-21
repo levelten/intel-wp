@@ -30,12 +30,13 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  return;
+
 
   $ga_goals = intel_ga_goal_load(null, array('refresh' => 1));
 
   intel_d($ga_goals);
 
+  return '';
   $goal = array(
     'ga_id' => '8',
     'title' => 'Contact2',
