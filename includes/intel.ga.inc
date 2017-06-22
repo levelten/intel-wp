@@ -7,12 +7,35 @@
  */
 
 
+/**
+ * Loads a goal or all goals if no key is provided.
+ *
+ * If options.refresh is set, will also check if all goals are saved in GA and
+ * add intel goal to ga if not.
+ *
+ * @param string $name
+ * @param array $options
+ * @return int|mixed|void
+ */
+function intel_goal_load($key = '', $options = array()) {
 
-
-function intel_goal_load($name = '', $options = array()) {
   $goals = get_option('intel_goals', array());
-  if (!empty($name)) {
-    return !empty($goals[$name]) ? $goals[$name] : 0;
+
+  // if refresh, sync goals with ga_goals
+  // first, update ga goals with goals data, then check if any new data is in
+  // ga that needs to be updated in goal data.
+  if (!empty($options['refresh'])) {
+    $op_meta = get_option('intel_option_meta', array());
+    $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
+    if ((time() - $op_meta['ga_goals_updated']) > $time) {
+      $goals = intel_sync_goals_ga_goals();
+      $op_meta['ga_goals_updated'] = time();
+      update_option('intel_option_meta', $op_meta);
+    }
+  }
+
+  if (!empty($key)) {
+    return !empty($goals[$key]) ? $goals[$key] : 0;
   }
   return $goals;
 }
@@ -59,7 +82,7 @@ function intel_goal_const($goal, $ga_goal = array()) {
     'title' => $goal['title'],
     'description' => '',
     'type' => 'INTL',
-    'value' => 0,
+    'value' => 100,
     'context' => array(
       'general' => 1,
       'submission' => 1,
@@ -95,7 +118,6 @@ function intel_goal_save($goal, $options = array()) {
   // set
   if (!empty($goal['ga_id']) && !empty($ga_goals[$goal['ga_id']])) {
     $ga_goal = $ga_goals[$goal['ga_id']];
-    intel_d($ga_goal);
     if (empty($goal['type']) && !empty($ga_goal['type'])) {
       if (intel_is_intl_goal($ga_goal)) {
         $goal['type'] = 'INTL';
@@ -122,7 +144,6 @@ function intel_goal_save($goal, $options = array()) {
     );
     $ga_goal = intel_ga_goal_save($ga_goal);
   }
-
   $goals[$goal['ga_id']] = $goal;
   update_option('intel_goals', $goals);
 
@@ -201,16 +222,18 @@ function intel_ga_goal_const($ga_goal) {
     'value' => 0,
     'details' => array(
       'useEventValue' => TRUE,
-      'conditions' => array(
-        array(
-          'type' => 'CATEGORY',
-          'matchType' => 'REGEXP',
-          'expression' => $ga_goal['name'] . '\+$',
-        ),
-      ),
     ),
   );
   $ga_goal = Intel_Df::drupal_array_merge_deep($defaults, $ga_goal);
+  if (empty($ga_goal['details']['conditions'])) {
+    $ga_goal['details']['conditions'] = array(
+      array(
+        'type' => 'CATEGORY',
+        'matchType' => 'REGEXP',
+        'expression' => $ga_goal['name'] . '\+$',
+      )
+    );
+  }
   return $ga_goal;
 }
 
@@ -244,12 +267,14 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
   // if intel goal, check if should be saved
   if (intel_is_intl_goal($ga_goal)) {
     $update = 0;
-
     if (empty($ga_goal0)) {
       intel_imapi_ga_goal_insert($ga_goal);
     }
     // check if original goal and new goal are equivalent, if not save to GA.
-    else if ($ga_goal['name'] != $ga_goal0['name']) {
+    elseif (
+      $ga_goal['name'] != $ga_goal0['name']
+      || !intel_is_intl_goal($ga_goal0)
+    ) {
       intel_imapi_ga_goal_update($ga_goal);
     }
   }
@@ -257,6 +282,87 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
   $ga_goals[$ga_goal['id']] = $ga_goal;
   update_option('intel_ga_goals', $ga_goals);
   return $ga_goal;
+}
+
+function intel_sync_goals_ga_goals() {
+
+  $goals = get_option('intel_goals', array());
+  $ga_goals = intel_ga_goal_load(null, array('refresh' => 1));
+  $processed = array();
+
+  if (!empty($_GET['debug'])) {
+    intel_d($goals);
+    intel_d($ga_goals);
+  }
+  // first update ga_goals to match what is in goals data
+  foreach ($goals as $id => $goal) {
+
+    // check if goal does not exist in GA
+    if (!isset($ga_goals[$id])) {
+      // if intel goal, save it to ga
+      if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL') {
+        $ga_goal = array(
+          'id' => $goal['ga_id'],
+          'name' => $goal['title'],
+          'type' => $goal['type'],
+        );
+        $ga_goal = intel_ga_goal_save($ga_goal);
+        $processed[$id] = 1;
+      }
+      else {
+        // if non intel goal, remove it from goals list
+        $processed[$id] = 1;
+        unset($goals[$id]);
+      }
+    }
+    else {
+      $ga_goal = $ga_goals[$id];
+      if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL') {
+        if (
+          $ga_goal['name'] != $goal['title']
+          || !intel_is_intl_goal($ga_goal)
+        ) {
+          $ga_goal = array(
+            'id' => $goal['ga_id'],
+            'name' => $goal['title'],
+            'type' => $goal['type'],
+          );
+          $ga_goal = intel_ga_goal_save($ga_goal);
+        }
+        $processed[$id] = 1;
+      }
+    }
+  }
+
+  // second update goals list for any goals added in ga
+  $ga_goals = intel_ga_goal_load();
+  if (!empty($_GET['debug'])) {
+    intel_d($goals);
+    intel_d($ga_goals);
+    intel_d($processed);
+  }
+  foreach ($ga_goals as $id => $ga_goal) {
+    if (!empty($processed[$id])) {
+      continue;
+    }
+    if (!intel_is_intl_goal($ga_goal)) {
+      if (!isset($goals[$id])) {
+        $goals[$id] = intel_goal_const(array(), $ga_goal);
+      }
+      else {
+        $goals[$id]['title'] = $ga_goal['name'];
+        $goals[$id]['type'] = $ga_goal['type'];
+        $goals[$id]['value'] = $ga_goal['value'];
+      }
+    }
+    elseif (empty($goals[$id])) {
+      // unset 0 value in GA so default intel goal value is used
+      unset($ga_goal['value']);
+      $goals[$id] = intel_goal_const(array(), $ga_goal);
+    }
+  }
+  update_option('intel_goals', $goals);
+  return $goals;
 }
 
 function intel_is_intl_goal($ga_goal) {
@@ -302,7 +408,7 @@ function intel_get_intel_event_info_default($event = array()) {
     'title' => Intel_Df::t('Form submission'),
     'description' => Intel_Df::t('General form submission'),
     'valued_event' => 1,
-    'value' => 100,
+    'value' => 10,
     'overridable' => 0,
     'ga_event_auto' => array(
       'description' => Intel_Df::t('Automatically generated by form support add-ons.'),
@@ -1011,6 +1117,17 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
  */
 function intel_intel_event_load($key) {
   return intel_get_intel_event_info($key);
+}
+
+function intel_intel_event_save($event) {
+  if (empty($event['key'])) {
+    return FALSE;
+  }
+
+  $events = get_option('intel_intel_events_custom', array());
+  $events[$event['key']] = $event;
+
+  update_option('intel_intel_events_custom', $events);
 }
 
 function intel_get_enabled_intel_events($context) {
@@ -2170,20 +2287,20 @@ function intel_init_targets() {
   $target['value_per_page_per_day'] = array(
     'title' => Intel_Df::t('Value per page / day'),
     'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 1.00,
+    'value' => 2.00,
     'group' => 'page',
   );
   $target['value_per_page_per_day_warning'] = array(
     'title' => Intel_Df::t('Value per page / day (warning)'),
     'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 0.10,
+    'value' => 0.20,
     'group' => 'page',
   );
 
   $target['value_per_page_per_entrance'] = array(
     'title' => Intel_Df::t('Value per page / entry'),
     'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 0.50,
+    'value' => 2.00,
     'group' => 'page',
   );
   $target['value_per_page_per_entrance_warning'] = array(
@@ -2196,13 +2313,13 @@ function intel_init_targets() {
   $target['value_per_visit'] = array(
     'title' => Intel_Df::t('Value / visit'),
     'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 1.00,
+    'value' => 2.00,
     'group' => 'visit',
   );
   $target['value_per_visit_warning'] = array(
     'title' => Intel_Df::t('Value per page / day (warning)'),
     'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 0.10,
+    'value' => 0.20,
     'group' => 'visit',
   );
 
@@ -2239,18 +2356,18 @@ function intel_get_base_scorings() {
   $scoring = array();
   $scoring['entrance'] = array(
     'title' => Intel_Df::t('Entrances'),
-    'description' => Intel_Df::t('A visit to the site.'),
-    'value' => 0.50,
+    'description' => Intel_Df::t('A visit to the site. (Sessions)'),
+    'value' => 0.10,
   );
   $scoring['stick'] = array(
     'title' => Intel_Df::t('Sticks'),
-    'description' => Intel_Df::t('The visitor went to at least on other page or triggered a interaction event. Entrances - bounces'),
-    'value' => 0.50,
+    'description' => Intel_Df::t('The visitor went to at least on other page or triggered a interaction event. (Sessions - Bounces)'),
+    'value' => 0.25,
   );
   $scoring['additional_pages'] = array(
     'title' => Intel_Df::t('Additional pages'),
     'description' => Intel_Df::t('Each additional page beyond the initial entrance page.'),
-    'value' => 0.10,
+    'value' => 0.05,
   );
   return $scoring;
 }
@@ -3743,6 +3860,17 @@ function intel_get_ga_admin_custom_dimensions_url() {
 function intel_get_ga_profile_slug() {
   $ga_profile = get_option('intel_ga_profile');
   return "a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['viewId']}";
+}
+
+function intel_get_ga_admin_url($page = '', $options = array()) {
+  $url = "https://analytics.google.com/analytics/web/#management/Settings/" . intel_get_ga_profile_slug() . '/';
+  if ($page == 'custom_dimensions') {
+    $url .= '%3Fm.page%3DCustomDimensions';
+  }
+  if ($page == 'goal_list') {
+    $url .= '%3Fm.page%3DGoals%26m-content-goalList.rowShow%3D20';
+  }
+  return $url;
 }
 
 

@@ -906,8 +906,11 @@ function intel_admin_setup_submit_basic_config($form, &$form_state) {
   if ($values['init_config'] == 'default') {
     $goal_defaults = intel_get_intel_goals_default();
     // create default goals
+    $goals = intel_goal_load(null, array('refresh' => 300));
     $ga_goals = intel_ga_goal_load();
-    $goals = intel_goal_load();
+
+intel_d($goals);
+intel_d($ga_goals);
     // check if an intelligence goal exists
     $intel_goal = 0;
     foreach ($ga_goals as $k => $v) {
@@ -1318,8 +1321,19 @@ function intel_admin_setup_goals($form, &$form_state) {
 
   $status = $form_state['intel_statuses']['goals'];
 
-  $ga_goals = $form_state['intel_ga_goals'];
-  $goals = get_option('intel_goals', array());
+  $options = array(
+    'refresh' => 3600,
+  );
+  if (isset($_GET['refresh']) && is_numeric($_GET['refresh'])) {
+    $options['refresh'] = intval($_GET['refresh']);
+  }
+  $goals = intel_goal_load(null, $options);
+  $ga_goals = intel_ga_goal_load();
+
+  if (!empty($_GET['debug'])) {
+    intel_d($goals);
+    intel_d($ga_goals);
+  }
 
   $goals_default = intel_get_intel_goals_default();
 
@@ -1501,31 +1515,20 @@ function intel_admin_setup_goals($form, &$form_state) {
 
 
 
-    if (intel_is_intl_goal($ga_goal)) {
-      $ga_goal['type'] = 'INTL';
-      //$ga_goal['typeLabel'] = Intel_Df::t('Intel');
-    }
-
-    if (empty($ga_goal) || $ga_goal['type'] == 'INTL' || $ga_goal['type'] == 'INTEL' ) {
+    if (empty($goal) || $goal['type'] == 'INTL' || $goal['type'] == 'INTEL' ) {
       // if no goals exist, add first default so at least one intel goal is created
-      if (empty($ga_goal) && empty($goal) && $i <= 2) {
+      if (empty($goal) && $i <= 2) {
         if ($i == 1) {
-          $ga_goal['name'] = $goals_default['general']['title'];
+          $goal['title'] = $goals_default['general']['title'];
           $goal['description'] = $goals_default['general']['description'];
         }
         elseif ($i == 2) {
-          $ga_goal['name'] = $goals_default['contact']['title'];
+          $goal['title'] = $goals_default['contact']['title'];
           $goal['description'] = $goals_default['contact']['description'];
         }
       }
       $intl_goal_cnt++;
 
-      $default = !empty($ga_goal['name']) ? $ga_goal['name'] : '';
-      // in case there are goals set in the CMS but not in GA, use the CMS data
-      // this happens when someone changes GA profiles after goals have been set
-      if (!$default && !empty($goal['title']) && !empty($goal['type']) && $goal['type'] == 'INTL') {
-        $default = $goal['title'];
-      }
       $f["goal_{$i}_name"] = array(
         '#type' => 'textfield',
         //'#attributes' => array(
@@ -1533,7 +1536,7 @@ function intel_admin_setup_goals($form, &$form_state) {
         //),
         '#prefix' => '<td class="' . $col_classes[1] . '">',
         '#suffix' => '</td>',
-        '#default_value' => $default,
+        '#default_value' => !empty($goal['title']) ? $goal['title'] : '',
         '#attributes' => array(
           'class' => array(
             'goal-name'
@@ -1556,12 +1559,7 @@ function intel_admin_setup_goals($form, &$form_state) {
       '#type' => 'item',
       '#prefix' => '<td class="' . $col_classes[2] . '">',
       '#suffix' => '</td>',
-      '#markup' => !empty($ga_goal['type']) && !empty($type_titles[$ga_goal['type']]) ? $type_titles[$ga_goal['type']] : $type_titles['INTL'],
-    );
-
-    $f["goal_{$i}_type"] = array(
-      '#type' => 'value',
-      '#value' => !empty($ga_goal['type']) ? $ga_goal['type'] : 'INTL',
+      '#markup' => !empty($goal['type']) && !empty($type_titles[$goal['type']]) ? $type_titles[$goal['type']] : $type_titles['INTL'],
     );
 
     $f["goal_{$i}_description"] = array(
@@ -1603,12 +1601,18 @@ function intel_admin_setup_check_goals($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
-  $form_state['intel_goals'] = $goals = intel_goal_load();
+
   $refresh = !empty($_GET['refresh']) && is_numeric($_GET['refresh']) ? intval($_GET['refresh']) : 3600;
+
+  $form_state['intel_goals'] = $goals = intel_goal_load(null, array('refresh' => $refresh));
+  $form_state['intel_ga_goals'] = $ga_goals = intel_ga_goal_load();
+
+  // after refresh, unset and return status to maintain step
   if (isset($_GET['refresh'])) {
     unset($_GET['refresh']);
+    return $status;
   }
-  $form_state['intel_ga_goals'] = $ga_goals = intel_ga_goal_load(null, array('refresh' => $refresh));
+
   //$ga_goals = get_option('intel_ga_goals', array());
   $op_meta = get_option('intel_option_meta', array());
 
@@ -1782,133 +1786,14 @@ function intel_admin_setup_submit_goals($form, &$form_state) {
     update_option('intel_system_meta', $sys_meta);
   }
 
-
-
   return;
-
-
-  $saves = array();
-  for($i = 1; $i <= 20; $i++) {
-    $id = "$i";
-    if (!empty($values["goal_{$id}_name"])) {
-      $goal_arr = array(
-        'id' => $id,
-        'name' => $values["goal_{$id}_name"],
-        'type' => 'EVENT',
-        'active' => TRUE,
-        'value' => 0,
-        'details' => array(
-          'useEventValue' => TRUE,
-          'conditions' => array(
-            array(
-              'type' => 'CATEGORY',
-              'matchType' => 'REGEXP',
-              'expression' => $values["goal_{$id}_name"] . '\+$',
-            ),
-          ),
-        ),
-      );
-      // check if goal settings in values matches existing goal, don't save if so
-      if (!empty($ga_goals[$id])) {
-        $ga_goal = $ga_goals[$id];
-        if (
-          $ga_goal['name'] == $goal_arr['name']
-          && !empty($ga_goal['details']['conditions'][0]) && empty($ga_goal['details']['conditions'][1])
-          && $ga_goal['details']['conditions'][0]['type'] == 'CATEGORY'
-          && $ga_goal['details']['conditions'][0]['matchType'] == 'REGEXP'
-          && $ga_goal['details']['conditions'][0]['expression'] == $goal_arr['name'] . '\+$'
-        ) {
-          continue;
-        }
-      }
-
-      if (!empty($ga_goals[$id])) {
-        $saves[$id] = 'update';
-        try {
-          intel_imapi_ga_goal_update($goal_arr);
-        }
-        catch(Exception $e) {
-          Intel_Df::drupal_set_message($e->getMessage(), 'error');
-        }
-      }
-      else {
-        $saves[$id] = 'insert';
-        try {
-          intel_imapi_ga_goal_insert($goal_arr);
-        }
-        catch(Exception $e) {
-          Intel_Df::drupal_set_message($e->getMessage(), 'error');
-        }
-      }
-    }
-  }
-
-  if (!empty($saves)) {
-    $ga_goals = intel_imapi_ga_goal_get();
-  }
-
-  $goals0 = get_option('intel_goals', array());
-  $goals = array();
-  foreach ($ga_goals as $id => $ga_goal) {
-
-    $name = str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($ga_goal['name'])));
-
-    if (intel_is_intl_goal($ga_goal)) {
-      if (!empty($goals0[$id]['value'])) {
-        $value = $goals0[$id]['value'];
-      }
-      elseif (!empty($goals_defalt[$name]['value'])) {
-        $value = $goals_defalt[$name]['value'];
-      }
-      else {
-        $value = 50;
-      }
-    }
-    else {
-      $value = $ga_goal['value'];
-    }
-
-    $goals[$id] = array(
-      'ga_id' => $id,
-      'name' => $name,
-      'title' => $ga_goal['name'],
-      'description' => !empty($goals0[$id]['description']) ? $goals0[$id]['description'] : '',
-      'type' => !empty($goals0[$id]['type']) ? $goals0[$id]['type'] : '',
-      'value' => $value,
-      'context' => array(),
-    );
-
-    if (isset($values["goal_{$id}_type"])) {
-      $goals[$id]['type'] = $values["goal_{$id}_type"];
-    }
-
-    if (isset($values["goal_{$id}_description"])) {
-      $goals[$id]['description'] = $values["goal_{$id}_description"];
-    }
-
-    // if goal type INTL, set contexts
-    if ($goals[$id]['type'] == 'INTL') {
-      // if no context exists for goal, add all contexts
-      if (empty($goals0[$id]['context'])) {
-        $goals[$id]['context'] = array(
-          'general' => 1,
-          'phonecall' => 1,
-          'submission' => 1,
-        );
-      }
-      else {
-        $goals[$id]['context'] = $goals0[$id]['context'];
-      }
-    }
-  }
-  update_option('intel_goals', $goals);
 }
 
 /*
  * Scoring setup form
  *
  */
-function intel_admin_setup_scoring($form, &$form_state) {
+function intel_admin_setup_scoring(&$form, &$form_state) {
   $f = array();
 
   $status = $form_state['intel_statuses']['scoring'];

@@ -643,7 +643,7 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
         '#type' => 'item',
         '#title' => $m['title'],
         '#markup' => $value,
-        '#description' => $m['description'] . ' (' . Intel_Df::t('Goal value set in Google Analytics.') . ')',
+        '#description' => $m['description'] . ' ' . Intel_Df::t('Goal value set in Google Analytics admin.'),
         '#size' => 8,
       );
     }
@@ -652,8 +652,8 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
 
   // spliting score and target processing to support admin_scoring and admin_setup
   // forms
-  $f['#validate'][] = 'intel_admin_scoring_score_validate';
-  $f['#submit'][] = 'intel_admin_scoring_score_submit';
+  $form['#validate'][] = 'intel_admin_scoring_score_validate';
+  $form['#submit'][] = 'intel_admin_scoring_score_submit';
 
   return $f;
 }
@@ -678,12 +678,31 @@ function intel_admin_scoring_score_validate(&$form, &$form_state) {
  */
 function intel_admin_scoring_score_submit(&$form, &$form_state) {
   $values = $form_state['values'];
-
+  $goals = intel_goal_load();
+  $events = intel_intel_event_load();
   $scores = array();
   foreach ($values AS $k => $value) {
+    $value = floatval($value);
     if (substr($k, 0, 6) == 'score_') {
-      $key = substr($k, 6);
-      $scores[$key] = floatval($value);
+      $k = substr($k, 6);
+      if (substr($k, 0, 6) == 'event_') {
+        $k = substr($k, 6);
+        if (!empty($events[$k])) {
+          $events[$k]['value'] = $value;
+          intel_intel_event_save($events[$k]);
+        }
+      }
+      else if (substr($k, 0, 5) == 'goal_') {
+        $k = substr($k, 5);
+        if (!empty($goals[$k])) {
+          $goals[$k]['value'] = $value;
+          intel_goal_save($goals[$k]);
+        }
+      }
+      else {
+        $scores[$k] = $value;
+      }
+
     }
   }
 
@@ -707,20 +726,27 @@ function intel_admin_scoring_submit(&$form, &$form_state) {
 function intel_admin_goal_list_page() {
   require_once INTEL_DIR . "includes/intel.ga.inc";
 
-  // load internal saved goals
-  $goals = intel_goal_load();
   $options = array(
     'refresh' => 3600,
   );
   if (isset($_GET['refresh']) && is_numeric($_GET['refresh'])) {
     $options['refresh'] = intval($_GET['refresh']);
   }
-  $ga_goals = intel_ga_goal_load('', $options);
+  $goals = intel_goal_load(null, $options);
+  $ga_goals = intel_ga_goal_load();
+
+  if (isset($_GET['refresh'])) {
+    Intel_Df::drupal_set_message(Intel_Df::t('Goal data has been refreshed'));
+    $l_option = Intel_Df::l_options_add_query(array());
+    Intel_Df::drupal_goto(Intel_Df::current_path(), $l_option);
+  }
+
+  if (!empty($_GET['debug'])) {
+    intel_d($goals);
+    intel_d($ga_goals);
+  }
 
   $id_limit = 20;
-
-  intel_d($goals);
-  intel_d($ga_goals);
 
   $type_titles = intel_goal_type_titles();
 
@@ -744,7 +770,6 @@ function intel_admin_goal_list_page() {
   $link_options = array(
     'query' => Intel_Df::drupal_get_destination(),
   );
-  $link_options = array();
   for ($i = 1; $i <= $id_limit; $i++) {
     $key = "$i";
     $goal = !empty($goals[$key]) ? $goals[$key] : array();
@@ -763,15 +788,6 @@ function intel_admin_goal_list_page() {
       continue;
     }
     // check if goal or ga_goal is missing data, i.e. out of sync
-    if (empty($goal)) {
-      $goal = intel_goal_const($goal, $ga_goal);
-      intel_goal_save($goal);
-    }
-    else if (empty($ga_goal)) {
-intel_d($goal);
-      intel_goal_save($goal);
-    }
-
     $row[1] = $goal['title'];
     $row[2] = $type_titles[$goal['type']];
     $row[3] = $goal['description'];
@@ -786,6 +802,9 @@ intel_d($goal);
   );
 
   $output = Intel_Df::theme('table', $vars);
+
+  $l_options = Intel_Df::l_options_add_query(array('refresh' => 1));
+  $output .= "<br>\n" . Intel_Df::l( Intel_Df::t('Refresh data'), Intel_Df::current_path(), $l_options );
 
   return $output;
 }
@@ -823,6 +842,12 @@ function intel_admin_goal_form($form, &$form_state, $goal) {
     }
   }
 
+  $ga_goals = intel_ga_goal_load();
+
+  if (!empty($goal['ga_id']) && !empty($ga_goals[$goal['ga_id']])) {
+    $ga_goal = $ga_goals[$goal['ga_id']];
+  }
+
   $type_titles = intel_goal_type_titles();
 
   if (!$custom) {
@@ -840,11 +865,15 @@ function intel_admin_goal_form($form, &$form_state, $goal) {
   );
 
   $key = 'title';
+  $desc = Intel_Df::t('The goal name.');
+  if (!$custom) {
+    $desc .= ' ' . Intel_Df::t('Set in Google Analytics');
+  }
   $form['general'][$key] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('Title'),
     '#default_value' => !empty($goal[$key]) ? $goal[$key] : '',
-    '#description' => Intel_Df::t('The goal name.'),
+    '#description' => $desc,
     '#size' => 32,
     '#required' => 1,
     '#disabled' => !($custom),
@@ -892,6 +921,20 @@ function intel_admin_goal_form($form, &$form_state, $goal) {
     '#rows' => 2,
   );
 
+  $key = 'value';
+  $desc = Intel_Df::t('Value for goal.');
+  if (!$custom) {
+    $desc .= ' ' . Intel_Df::t('Set in Google Analytics.');
+  }
+  $form['general'][$key] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Value'),
+    '#default_value' => !empty($goal[$key]) ? $goal[$key] : '',
+    '#description' => $desc,
+    '#disabled' => !($custom || !empty($overridable[$key])),
+    '#size' => 10,
+  );
+
 
   $form['save'] = array(
     '#type' => 'submit',
@@ -909,8 +952,15 @@ function intel_admin_goal_form_submit(&$form, &$form_state) {
 
   $goal = $form_state['intel_goal'];
 
-  $goal['title'] = $values['title'];
+  if (!empty($values['title'])) {
+    $goal['title'] = $values['title'];
+  }
+
   $goal['description'] = $values['description'];
+
+  if (!empty($values['value'])) {
+    $goal['value'] = floatval($values['value']);
+  }
 
   intel_goal_save($goal);
 }

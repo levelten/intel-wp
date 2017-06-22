@@ -28,7 +28,7 @@ function L10iAdmin(_ioq, config) {
 
         $target.each(function(index, value) {
             var evt = {};
-            var $value = $(value);
+            var $value = jQuery(value);
 
 
             var ret = 0;
@@ -62,6 +62,10 @@ function L10iAdmin(_ioq, config) {
         console.log(logObj);
     };
 
+    this.setBindTarget = function ($target) {
+        $target.css('outline', '4px solid #33FF33');
+    };
+
     this.triggerEventAlterCallback = function triggerEventAlterCallback(trigEvt, $target, event, options, evtDef) {
         if (!options.test)  {
             options.test = 2;
@@ -91,9 +95,8 @@ function L10iAdmin(_ioq, config) {
                 }
             }
 
-            $target.css('outline', '4px solid #33FF33');
-            //$target.addClass('io-admin io-event-binded');
-
+            //$target.css('outline', '4px solid #33FF33');
+            this.setBindTarget($target);
             return;
         }
         // trigger stage

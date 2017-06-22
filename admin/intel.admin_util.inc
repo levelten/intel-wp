@@ -30,7 +30,15 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
+  $items = array();
 
+  $url = intel_get_ga_admin_url('goal_list');
+  $l_options = Intel_Df::l_options_add_target('_blank');
+  $items[] = Intel_Df::l($url, $url, $l_options);
+
+  $output = implode("<br>\n<br>\n", $items);
+
+  return $output;
 
   $ga_goals = intel_ga_goal_load(null, array('refresh' => 1));
 
