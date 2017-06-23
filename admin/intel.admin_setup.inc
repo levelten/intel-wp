@@ -909,8 +909,6 @@ function intel_admin_setup_submit_basic_config($form, &$form_state) {
     $goals = intel_goal_load(null, array('refresh' => 300));
     $ga_goals = intel_ga_goal_load();
 
-intel_d($goals);
-intel_d($ga_goals);
     // check if an intelligence goal exists
     $intel_goal = 0;
     foreach ($ga_goals as $k => $v) {
@@ -1331,8 +1329,8 @@ function intel_admin_setup_goals($form, &$form_state) {
   $ga_goals = intel_ga_goal_load();
 
   if (!empty($_GET['debug'])) {
-    intel_d($goals);
-    intel_d($ga_goals);
+    intel_d($goals);//
+    intel_d($ga_goals);//
   }
 
   $goals_default = intel_get_intel_goals_default();

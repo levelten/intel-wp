@@ -7,7 +7,7 @@ function L10iAdmin(_ioq, config) {
     var eventBindReported = [];
 
     this.init = function init() {
-        ioq.log('L10iAdmin.init()');//
+        ioq.log('admin:init()');//
         if (!ioq.settings.admin) {
             return;
         }
@@ -57,13 +57,13 @@ function L10iAdmin(_ioq, config) {
             eventDef: evtDef,
             bindTarget: options.admin.bindTarget
         };
-
-        console.log("Intelligence event bind:");
-        console.log(logObj);
     };
 
     this.setBindTarget = function ($target) {
-        $target.css('outline', '4px solid #33FF33');
+        $target.css('outline', '3px solid #33FF33');
+        if (ioq.isDebug()) {
+            $target.addClass('io-admin-bind-target');
+        }
     };
 
     this.triggerEventAlterCallback = function triggerEventAlterCallback(trigEvt, $target, event, options, evtDef) {
@@ -94,9 +94,8 @@ function L10iAdmin(_ioq, config) {
                     options.admin.bindTarget.push($target.get(0));
                 }
             }
-
             //$target.css('outline', '4px solid #33FF33');
-            this.setBindTarget($target);
+            io('admin:setBindTarget', $target);
             return;
         }
         // trigger stage
@@ -120,8 +119,6 @@ function L10iAdmin(_ioq, config) {
             logObj.trigEvt = trigEvt;
             logObj.gaEvt = gaEvt;
             logObj.options = options;
-            console.log("Intelligence event trigger:");
-            console.log(logObj);
         }
 
         //alert("ga.send.event: ");

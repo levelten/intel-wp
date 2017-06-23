@@ -291,8 +291,8 @@ function intel_sync_goals_ga_goals() {
   $processed = array();
 
   if (!empty($_GET['debug'])) {
-    intel_d($goals);
-    intel_d($ga_goals);
+    intel_d($goals);//
+    intel_d($ga_goals);//
   }
   // first update ga_goals to match what is in goals data
   foreach ($goals as $id => $goal) {
@@ -337,9 +337,9 @@ function intel_sync_goals_ga_goals() {
   // second update goals list for any goals added in ga
   $ga_goals = intel_ga_goal_load();
   if (!empty($_GET['debug'])) {
-    intel_d($goals);
-    intel_d($ga_goals);
-    intel_d($processed);
+    intel_d($goals);//
+    intel_d($ga_goals);//
+    intel_d($processed);//
   }
   foreach ($ga_goals as $id => $ga_goal) {
     if (!empty($processed[$id])) {
@@ -736,7 +736,7 @@ function intel_get_intel_event_info_default($event = array()) {
   );
   */
 
-  if (!empty($scripts_enabled['addthis'])) {
+  if (intel_is_intel_script_enabled('addthis')) {
     $event['addthis_social_share_click'] = array(
       'title' => Intel_Df::t('AddThis social share click'),
       'category' => Intel_Df::t('Social share click'),
@@ -763,7 +763,7 @@ function intel_get_intel_event_info_default($event = array()) {
     );
   }
 
-  if (!empty($scripts_enabled['youtube'])) {
+  if (intel_is_intel_script_enabled('youtube')) {
     $event['youtube_video_play'] = array(
       'title' => Intel_Df::t('YouTube video play'),
       'category' => Intel_Df::t('Video play'),

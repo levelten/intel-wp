@@ -242,8 +242,13 @@ $ga_data->setDebug(0);
     }
   }
   // order date data cronologically
-  ksort($d['date']);
-  
+  if (!empty($d['date'])) {
+    ksort($d['date']);
+  }
+  else {
+    return Intel_Df::t('No data found.');
+  }
+
 //dsm($d);
 
   $vars = array(

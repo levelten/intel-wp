@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.8
-Stable tag: 1.1.0-dev
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,13 @@ For installation instructions, visit [intelligencewp.com/installation](http://ww
 
 = 1.0.0 =
 * Initial version
+
+= 1.0.5 =
+* Goal admin
+* Goal & GA goal load and save functions
+* Goal / GA goal sync
+* Setup wizard autoconfig
+* Environment data utility
 
 == Upgrade Notice ==
 

@@ -16,6 +16,7 @@ function L10iYouTube(_ioq) {
     this.ready = false;
 
     this.init = function init() {
+
         this.domReady = true;
         if (!this.ready && this.apiReady) {
             this.trackYouTube();
@@ -43,6 +44,7 @@ function L10iYouTube(_ioq) {
     };
 
     this.trackYouTube = function () {
+        //ioq.log('YouTube:trackYouTube()');//
         jQuery('iframe').each(function() {
             var video = jQuery(this);
             if(video.attr('src') !== undefined){
@@ -56,6 +58,7 @@ function L10iYouTube(_ioq) {
                     var width = video.width();
                     var height = video.height();
                     jQuery('iframe#' + matches[1]).replaceWith('<div id="' + matches[1] + '"></div>');
+
                     var player = new YT.Player(matches[1], {
                         videoId: matches[1],
                         height: height,
@@ -68,6 +71,12 @@ function L10iYouTube(_ioq) {
                         */
                     });
                     io('youtube:trackPlayer', player, matches[1]);
+
+                    if (ioq.location.params['io-admin'] && ioq.hasPlugin('admin')) {
+                        $target = jQuery('iframe#' + matches[1]);
+                        io('admin:setBindTarget', $target);
+                    }
+
                     //ths.trackPlayer(player, matches[1]);
                 }
             }

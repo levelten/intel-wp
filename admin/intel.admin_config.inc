@@ -742,8 +742,8 @@ function intel_admin_goal_list_page() {
   }
 
   if (!empty($_GET['debug'])) {
-    intel_d($goals);
-    intel_d($ga_goals);
+    intel_d($goals);//
+    intel_d($ga_goals);//
   }
 
   $id_limit = 20;
@@ -1254,9 +1254,11 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     $key = 'value';
     $form['ga_event_values'][$key] = array(
       '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
-      '#title' => Intel_Df::t('Event value (default)'),
+      '#title' => Intel_Df::t('Event value'),
       '#default_value' => !empty($event[$key]) ? $event[$key] : '',
-      '#description' => Intel_Df::t('Input the default Google Analytics event value. For valued and goal events, this value can be overridden on the Scorings settings admin.'),
+      '#description' => Intel_Df::t('Input the default Google Analytics event value. For valued and goal events, this value can also be set in the !link.', array(
+        '!link' => Intel_Df::l( Intel_Df::t('Scoring admin'), 'admin/config/intel/settings/scoring'),
+      )),
       '#size' => 12,
       '#disabled' => !($custom || !empty($overridable[$key])),
     );

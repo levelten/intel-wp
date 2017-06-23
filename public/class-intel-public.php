@@ -133,7 +133,7 @@ class Intel_Public {
 		$args = array(
 			'parent' => 'intel',
 			'id'    => 'intel-content-scorecard',
-			'title' => Intel_Df::t('Content scorecard'),
+			'title' => Intel_Df::t('Report: Content scorecard'),
 			'href'  => Intel_Df::url('admin/reports/intel/scorecard', $l_options),
 			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
 		);
@@ -142,7 +142,7 @@ class Intel_Public {
 		$args = array(
 			'parent' => 'intel',
 			'id'    => 'intel-content-trafficsource',
-			'title' => Intel_Df::t('Content traffic source'),
+			'title' => Intel_Df::t('Report: Content traffic source'),
 			'href'  => Intel_Df::url('admin/reports/intel/trafficsource', $l_options),
 			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
 		);
@@ -151,11 +151,34 @@ class Intel_Public {
 		$args = array(
 			'parent' => 'intel',
 			'id'    => 'intel-content-visitor',
-			'title' => Intel_Df::t('Content visitors'),
+			'title' => Intel_Df::t('Report: Content visitors'),
 			'href'  => Intel_Df::url('admin/reports/intel/visitor', $l_options),
 			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
 		);
 		$wp_admin_bar->add_node( $args );
+
+		if (intel_is_intel_script_enabled('admin') && Intel_Df::user_access('admin intel')) {
+			if (!empty($_GET['io-admin'])) {
+				$query = $_GET;
+				unset($query['io-admin']);
+				$l_options_admin = Intel_Df::l_options_add_query($query);
+				$title_mode = Intel_Df::t('disable');
+			}
+			else {
+
+				$l_options_admin = Intel_Df::l_options_add_query(array('io-admin' => 1));
+				$title_mode = Intel_Df::t('enable');
+			}
+
+			$args = array(
+				'parent' => 'intel',
+				'id'    => 'intel-front-end-admin',
+				'title' => Intel_Df::t('Admin: Event explorer') . ' ' . $title_mode,
+				'href'  => Intel_Df::url(Intel_Df::current_path(), $l_options_admin),
+				'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+			);
+			$wp_admin_bar->add_node( $args );
+		}
 
 	}
 

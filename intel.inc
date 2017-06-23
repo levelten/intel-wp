@@ -2955,7 +2955,7 @@ function _intel_intel_script_info($info = array()) {
   );
   $info['admin'] = array(
     'title' => Intel_Df::t('Admin'),
-    'description' => Intel_Df::t('Provides visual tools for configuring events.'),
+    'description' => Intel_Df::t('Provides front-end tools for configuring events.'),
     'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_admin.js',
     'enabled' => 0,
     'selectable' => 1,
