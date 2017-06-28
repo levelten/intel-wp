@@ -148,7 +148,10 @@ class ReportView {
   
   function formatRowString($text, $stoplen = 40) {
     if(strlen($text) > ($stoplen + 4)) {
-     return substr($text, 0, $stoplen) . '...';
+      // use the mb_substr b/c some strings have special chars that aren't
+      // processed properly by substr
+      $text = mb_substr($text, 0, $stoplen,'UTF-8') . '...';
+      //$text = substr($text, 0, $stoplen) . '...';
     }
     return $text;    
   }

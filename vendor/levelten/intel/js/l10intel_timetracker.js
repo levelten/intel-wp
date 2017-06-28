@@ -3,9 +3,10 @@ var _l10iq = _l10iq || [];
 function L10iTimeTracker(_ioq, config) {
     var ioq = _ioq;
     var io = _ioq.io;
-    var $ = jQuery;
+    var $;
 
     this.init = function init() {
+        $ = jQuery;
         var ths = this;
         var $window = $(window);
         //$window.on('beforeunload', function (event) { io('abr:doUnload', event); });
@@ -14,20 +15,12 @@ function L10iTimeTracker(_ioq, config) {
         //$('a').on('hover', function (event) { ths.doUnload(event) });
     };
 
-    this.setStickTimeout = function setStickTimeout() {
-
-    };
-
-    this.checkStick = function checkStick() {
-
-    };
-
     this.doUnload = function doUnload() {
         ga('set', 'transport', 'beacon');
         // detect if
         var td0, m, s, si, inc;
         var maxTime = 600;
-        var td = (window.performance) ? performance.now() / 1000 : (_ioq.getTime() - _ioq.pageviewSent);
+        var td = ioq.getVisibleTime();
         if (td > maxTime) {
             td = maxTime;
         }
@@ -86,8 +79,6 @@ function L10iTimeTracker(_ioq, config) {
         io('ga.send', 'timing', 'Page visibility', 'visible', Math.round(1000 * td));
 
     };
-
-
 
     this.init();
 }

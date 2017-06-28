@@ -629,6 +629,18 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
   $form_state['goals'] = $goals;
   foreach ($goals AS $i => $m) {
     $value = !empty($scorings['goal_' . $i]) ? $scorings['goal_' . $i] : (isset($m['value']) ? $m['value'] : 0);
+    $f['goals']['score_goal_' . $i] = array(
+      '#type' => 'textfield',
+      '#title' => $m['title'],
+      '#default_value' => $value,
+      '#description' => $m['description'],
+      '#size' => 8,
+    );
+    if ($goals[$i]['type'] != 'INTL') {
+      $f['goals']['score_goal_' . $i]['#disabled'] = 1;
+      $f['goals']['score_goal_' . $i]['#description'] .= ' ' . Intel_Df::t('Goal value set in Google Analytics admin.');
+    }
+    /*
     if ($goals[$i]['type'] == 'INTL') {
       $f['goals']['score_goal_' . $i] = array(
         '#type' => 'textfield',
@@ -647,6 +659,7 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
         '#size' => 8,
       );
     }
+    */
 
   }
 

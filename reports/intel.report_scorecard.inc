@@ -51,11 +51,14 @@ function intel_scorecard_report($vars) {
   $cache_options = array();
   $row_count = 100;
   
-  $output = '';    
-  
-  $timeops = $vars['timeframe'];
+  $output = '';
+
+  $start_date = $vars['start_date'];
+  $end_date = $vars['end_date'];
+  $number_of_days = $vars['number_of_days'];
+  //$timeops = $vars['timeframe'];
   //$timeops = 'yesterday';
-  list($start_date, $end_date, $number_of_days) = _intel_get_report_dates_from_ops($timeops, $cache_options);
+  //list($start_date, $end_date, $number_of_days) = _intel_get_report_dates_from_ops($timeops, $cache_options);
 
   $ga_data = new LevelTen\Intel\GAModel();
 $ga_data->setDebug(0);

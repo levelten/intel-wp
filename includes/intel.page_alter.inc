@@ -1224,15 +1224,18 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
 
         $script .= "(function(w,d,o,u,b,i,r,a,s,c,t){" . $terminator;
         $script .= "w['L10iObject']=r;" . $terminator;
+        $script .= "t=1*new Date();" . $terminator;
         $script .= "w[r]=w[r]||function() {" . $terminator;
-        $script .= "(w[r].q=w[r].q||[]).push(arguments)" . $terminator;
+        $script .= "(w[r].q=w[r].q||[]).push(arguments);" . $terminator;
+        $script .= "w[r].t=t" . $terminator;
         $script .= "}," . $terminator;
-        $script .= "t=1*new Date();s='';" . $terminator;
+
         if ($l10ijs_propdir) {
           $script .= "a='l10i_bt=';" . $terminator;
           $script .= "d.cookie=a+t+';path=/';c=d.cookie;" . $terminator;
           $script .= "if(c&&c.indexOf(a)!=-1){u+=i;$q_script}" . $terminator;
         }
+        $script .= "s='';" . $terminator;
         $script .= "u+=b+s;" . $terminator;
         $script .= "a=d.createElement(o),b=d.getElementsByTagName(o)[0];a.async=1;a.src=u;b.parentNode.insertBefore(a,b)" . $terminator;
         $script .= "})(window,document,'script','//$api_hostpath','$l10ijs_path','$l10ijs_propdir','$io_name');" . $terminator;

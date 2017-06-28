@@ -33,7 +33,7 @@ if ( $current_user->roles[0] != 'administrator' ) {
 	);
 }
 
-$title = __('Intelligence info');
+$title = __('Environment Info');
 
 include( ABSPATH . 'wp-admin/admin-header.php' );
 ?>
@@ -44,8 +44,8 @@ echo esc_html( $title );
 
 	<div class="intelligence-info">
 	<?php
-		include_once( $dirname . '/admin/intel.admin_util.inc');
-		print intel_util_environment();
+		include_once( $dirname . '/includes/intel.env_info.inc');
+		print intel_env_info_content();
 	?>
 	</div>
 </div>

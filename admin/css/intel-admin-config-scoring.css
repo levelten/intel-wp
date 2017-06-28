@@ -3,7 +3,9 @@
  * included in this file.
  */
 
-.intel-admin-config-scoring-scores .form-type-textfield  {
+.intel-admin-config-scoring-scores .form-type-textfield,
+.intel-admin-config-scoring-scores .form-type-item
+{
     width: 320px;
     float: left;
 }

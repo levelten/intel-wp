@@ -27,7 +27,8 @@ function intel_goal_load($key = '', $options = array()) {
   if (!empty($options['refresh'])) {
     $op_meta = get_option('intel_option_meta', array());
     $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
-    if ((time() - $op_meta['ga_goals_updated']) > $time) {
+    $ga_goals_updated = !empty($op_meta['ga_goals_updated']) ? $op_meta['ga_goals_updated'] : 0;
+    if ((time() - $ga_goals_updated) > $time) {
       $goals = intel_sync_goals_ga_goals();
       $op_meta['ga_goals_updated'] = time();
       update_option('intel_option_meta', $op_meta);
@@ -167,7 +168,8 @@ function intel_ga_goal_load($name = '', $options = array()) {
   // load goals from ga
   if (!empty($options['refresh'])) {
     $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
-    if ((time() - $op_meta['ga_goals_updated']) > $time) {
+    $ga_goals_updated = !empty($op_meta['ga_goals_updated']) ? $op_meta['ga_goals_updated'] : 0;
+    if ((time() - $ga_goals_updated) > $time) {
 
       include_once INTEL_DIR . 'includes/intel.imapi.inc';
 
@@ -706,6 +708,24 @@ function intel_get_intel_event_info_default($event = array()) {
 
   }
 
+  if (intel_is_intel_script_enabled('sticktracker')) {
+    $event['sticktracker_page_stick'] = array(
+      'title' => Intel_Df::t('Page stick'),
+      'description' => Intel_Df::t('Triggered when visitors read page content'),
+      'mode' => '',
+      'valued_event' => 1,
+      'value' => 0.1,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically set by Stick Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggers on page unload set in Stick Tracker script.'),
+      ),
+      'js_setting' => 0, // processed via _linktracker.js
+      'overridable' => 0,
+    );
+  }
+
   if (intel_is_intel_script_enabled('timetracker')) {
     $event['timetracker_page_time'] = array(
       'title' => Intel_Df::t('Page time'),
@@ -769,7 +789,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'category' => Intel_Df::t('Video play'),
       'description' => Intel_Df::t('When a video is played'),
       'valued_event' => 1,
-      'value' => 0,
+      'value' => 0.05,
       'trigger_auto' => array(
         'description' => Intel_Df::t('Automatically triggered by the YouTube script when the play button of the YouTube player is pressed.'),
       ),
@@ -799,6 +819,22 @@ function intel_get_intel_event_info_default($event = array()) {
         'description' => Intel_Df::t('Automatically triggered by the YouTube script when a YouTube video stops playing.'),
       ),
       'js_setting' => 1,
+      'overridable' => 0,
+    );
+
+    $event['youtube_video_stick'] = array(
+      'title' => Intel_Df::t('YouTube video stick'),
+      'description' => Intel_Df::t('Triggered when visitors watches content to the end'),
+      'mode' => '',
+      'valued_event' => 1,
+      'value' => 0.1,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically set by YouTube script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggers on page unload set inYouTube script.'),
+      ),
+      'js_setting' => 0, // processed via _linktracker.js
       'overridable' => 0,
     );
   }
@@ -2355,13 +2391,13 @@ function intel_get_targets() {
 function intel_get_base_scorings() {
   $scoring = array();
   $scoring['entrance'] = array(
-    'title' => Intel_Df::t('Entrances'),
-    'description' => Intel_Df::t('A visit to the site. (Sessions)'),
+    'title' => Intel_Df::t('Entrance'),
+    'description' => Intel_Df::t('A visit, i.e. new session, to the site.'),
     'value' => 0.10,
   );
   $scoring['stick'] = array(
-    'title' => Intel_Df::t('Sticks'),
-    'description' => Intel_Df::t('The visitor went to at least on other page or triggered a interaction event. (Sessions - Bounces)'),
+    'title' => Intel_Df::t('Session stick'),
+    'description' => Intel_Df::t('A visitor goes to at least one other page or triggered a interaction event. I.e. Sessions - Bounces'),
     'value' => 0.25,
   );
   $scoring['additional_pages'] = array(

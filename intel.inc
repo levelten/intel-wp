@@ -2974,6 +2974,13 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 1,
     'selectable' => 1,
   );
+  $info['sticktracker'] = array(
+    'title' => Intel_Df::t('Stick tracker'),
+    'description' => Intel_Df::t('Tracks when visitors have ready or engaged with content.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_sticktracker.js',
+    'enabled' => 1,
+    'selectable' => 1,
+  );
   $info['timetracker'] = array(
     'title' => Intel_Df::t('Time tracker'),
     'description' => Intel_Df::t('Tracks actual time on page using page unload events.'),
@@ -4037,6 +4044,16 @@ function intel_form_shortcode($vars) {
     $tvars['markup'] = $form;
     print Intel_Df::theme('intel_shortcode', $tvars);
   }
+}
+
+add_shortcode('io-wrapper', 'intel_io_wrapper_shortcode');
+function intel_io_wrapper_shortcode($vars, $content) {
+  $filter = array(
+    'title' => '',
+    'uri' => '',
+  );
+  $vars = shortcode_atts( $filter, $vars);
+  return '<span class="io-target" title="Alpha">' . $content . "</span>";
 }
 
 spl_autoload_register('intel_class_autoload');
