@@ -84,6 +84,7 @@ function intel_page_alter(&$page) {
     }
   }
 
+  $config['contentSelector'] = 'div.entry-content';
 
   $ga_goals = get_option('intel_goals', array());
   foreach ($ga_goals as $goal) {

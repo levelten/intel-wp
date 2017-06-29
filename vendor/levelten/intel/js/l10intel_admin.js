@@ -15,6 +15,13 @@ function L10iAdmin(_ioq, config) {
         io('addCallback', 'bindEvent', ths.bindEventCallback);
         io('addCallback', 'triggerEventAlter', ths.triggerEventAlterCallback);
         io('addCallback', 'triggerEvent', ths.triggerEventCallback);
+        io('addCallback', 'domReady', this.domReady, this);
+    };
+
+    this.domReady = function () {
+        if (ioq.$content) {
+            ioq.$content.css('outline', '3px dashed #44FF44');
+        }
     };
 
     this.bindEventCallback = function bindEventCallback(evtDef, $target) {
@@ -60,7 +67,7 @@ function L10iAdmin(_ioq, config) {
     };
 
     this.setBindTarget = function ($target) {
-        $target.css('outline', '3px solid #33FF33');
+        $target.css('outline', '3px solid #44FF44');
         if (ioq.isDebug()) {
             $target.addClass('io-admin-bind-target');
         }
