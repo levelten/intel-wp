@@ -11,7 +11,7 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.4');
+define('INTEL_L10IAPI_JS_VER', '0.2.5');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -2967,24 +2967,17 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 1,
     'selectable' => 1,
   );
+  $info['pagetracker'] = array(
+    'title' => Intel_Df::t('Page tracker'),
+    'description' => Intel_Df::t('Tracks visible time on page, scroll depth and if page content was consumed.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_pagetracker.js',
+    'enabled' => 1,
+    'selectable' => 1,
+  );
   $info['socialtracker'] = array(
     'title' => Intel_Df::t('Social tracker'),
     'description' => Intel_Df::t('Tracks social media shares and profile widgets.'),
     'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_socialtracker.js',
-    'enabled' => 1,
-    'selectable' => 1,
-  );
-  $info['sticktracker'] = array(
-    'title' => Intel_Df::t('Stick tracker'),
-    'description' => Intel_Df::t('Tracks when visitors have ready or engaged with content.'),
-    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_sticktracker.js',
-    'enabled' => 1,
-    'selectable' => 1,
-  );
-  $info['timetracker'] = array(
-    'title' => Intel_Df::t('Time tracker'),
-    'description' => Intel_Df::t('Tracks actual time on page using page unload events.'),
-    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_timetracker.js',
     'enabled' => 1,
     'selectable' => 1,
   );

@@ -9,7 +9,7 @@ function L10iStickTracker(_ioq, config) {
         ioq.log('StickTracker::init()');
         $ = jQuery;
         var ths = this;
-        ioq.addCallback('timeChange.15', ths.handlePageConsumedTime, this);
+        ioq.addCallback('timeChange.30', ths.handlePageConsumedTime, this);
         //ioq.addCallback('sessionStick', ths.handleSessionStick);
 
         //$('a').on('hover', function (event) { ths.doUnload(event) });

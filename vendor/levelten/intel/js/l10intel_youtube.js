@@ -146,6 +146,14 @@ function L10iYouTube(_ioq) {
             io('event', ga_event2);
             //_l10iq.push(['_trackIntelEvent', jQuery(this), ga_event2, '']);
             this.playerState[id].paused = true;
+
+            if (positionPer >= 90) {
+                var ga_event3 = jQuery.extend({}, ga_event);
+                ga_event3.eventCategory = 'Video consumed!';
+                ga_event3.eventValue = ioq.get('c.scorings.events.youtube_video_consumed', 0);
+                ga_event3.eid = 'videoConsumed';
+                io('event', ga_event3);
+            }
         }
     };
     _l10iq.push(['addCallback', 'domReady', this.init, this]);

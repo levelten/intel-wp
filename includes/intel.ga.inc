@@ -643,6 +643,54 @@ function intel_get_intel_event_info_default($event = array()) {
     );
   }
 
+  if (intel_is_intel_script_enabled('pagetracker')) {
+    $event['pagetracker_page_consumed'] = array(
+      'title' => Intel_Df::t('Page consumed'),
+      'description' => Intel_Df::t('When visitors read a significant amount of page content'),
+      'mode' => '',
+      'valued_event' => 1,
+      'value' => 0.1,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically set by Page Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggers on page unload set in Page Tracker script.'),
+      ),
+      'js_setting' => 0, // processed via _linktracker.js
+      'overridable' => 0,
+    );
+
+    $event['pagetracker_page_time'] = array(
+      'title' => Intel_Df::t('Page time'),
+      'description' => Intel_Df::t('Sends visible time on page values when page unloads'),
+      'mode' => '',
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically set by Page Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggers on page unload set in Page Tracker script.'),
+      ),
+      'js_setting' => 0, // processed via _linktracker.js
+      'overridable' => 0,
+    );
+
+    $event['pagetracker_page_scroll'] = array(
+      'title' => Intel_Df::t('Page scroll'),
+      'description' => Intel_Df::t('Sends max page  scroll depth when page unloads'),
+      'mode' => '',
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically set by Page Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggers on page unload set in Page Tracker script.'),
+      ),
+      'js_setting' => 0, // processed via _linktracker.js
+      'overridable' => 0,
+    );
+  }
+
   if (intel_is_intel_script_enabled('socialtracker')) {
 
     $event['socialtracker_social_share_click'] = array(
@@ -723,44 +771,6 @@ function intel_get_intel_event_info_default($event = array()) {
     );
 
   }
-
-  if (intel_is_intel_script_enabled('sticktracker')) {
-    $event['sticktracker_page_consumed'] = array(
-      'title' => Intel_Df::t('Page consumed'),
-      'description' => Intel_Df::t('When visitors read a significant amount of page content'),
-      'mode' => '',
-      'valued_event' => 1,
-      'value' => 0.1,
-      'ga_event_auto' => array(
-        'description' => Intel_Df::t('Automatically set by Stick Tracker script.'),
-      ),
-      'trigger_auto' => array(
-        'description' => Intel_Df::t('Automatically triggers on page unload set in Stick Tracker script.'),
-      ),
-      'js_setting' => 0, // processed via _linktracker.js
-      'overridable' => 0,
-    );
-  }
-
-  if (intel_is_intel_script_enabled('timetracker')) {
-    $event['timetracker_page_time'] = array(
-      'title' => Intel_Df::t('Page time'),
-      'description' => Intel_Df::t('Sends time on page values when page unloads'),
-      'mode' => '',
-      'value' => 0,
-      'ga_event_auto' => array(
-        'description' => Intel_Df::t('Automatically set by Time Tracker script.'),
-      ),
-      'trigger_auto' => array(
-        'description' => Intel_Df::t('Automatically triggers on page unload set in Time Tracker script.'),
-      ),
-      'js_setting' => 0, // processed via _linktracker.js
-      'overridable' => 0,
-    );
-  }
-
-
-
 
   /*
   $event['phone_call'] = array(

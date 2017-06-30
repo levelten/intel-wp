@@ -281,6 +281,19 @@ function intel_admin_settings($form, &$form_state) {
     '#description' => Intel_Df::t('Select any intel integration scripts you want to include on your site.'),
   );
 
+  $form['pagetracker_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Page Tracker Settings'),
+    '#collapsible' => TRUE,
+  );
+  $desc = Intel_Df::t('Enter a jQuery selector to identify DOM element wrapper for page content. E.g. For the default WP theme, this is "div.entry-content"');
+  $form['pagetracker_settings']['intel_content_selector'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Content selector'),
+    '#default_value' => get_option('intel_content_selector', 'div.entry-content'),
+    '#description' => $desc,
+  );
+
   $form['apis'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Additional APIs'),
