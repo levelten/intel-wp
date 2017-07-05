@@ -818,6 +818,7 @@ function intel_admin_setup_check_intel_api_key($form, &$form_state) {
   }
   $form_state['intel_api_level'] = $api_level;
 
+  /* disabled, issue with autoloading ga classes with 5.1 version of gadwp
   // check custom dimensions setup correctly
   if ($api_level) {
     $dims = intel_fetch_ga_custom_dimensions();
@@ -830,6 +831,7 @@ function intel_admin_setup_check_intel_api_key($form, &$form_state) {
       ));
     }
   }
+  */
 
   return $status;
 }

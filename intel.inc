@@ -4065,32 +4065,32 @@ function intel_class_autoload($className) {
   if ($classPath[0] == 'Google') {
     $autoload =  array();
     // autoload classes not included in gadwp GA files
-    $autoload['Google_Service_Analytics_CustomDimension'] = 1;
-    $autoload['Google_Service_Analytics_CustomDimensions'] = 1;
-    $autoload['Google_Service_Analytics_CustomDimensionParentLink'] = 1;
-    $autoload['Google_Service_Analytics_Resource_ManagementCustomDimensions'] = 1;
+    $autoload['Google_Service_Resource'] = 1;
+    $autoload['Google_Utils_UriTemplate'] = 1;
+    $autoload['Google_Service_Analytics_CustomDimension'] = 2;
+    $autoload['Google_Service_Analytics_CustomDimensions'] = 2;
+    $autoload['Google_Service_Analytics_CustomDimensionParentLink'] = 2;
+    $autoload['Google_Service_Analytics_Resource_ManagementCustomDimensions'] = 2;
 
     if (empty($autoload[$className])) {
       return;
     }
 
-    if ($classPath[0] == 'Google') {
-      $filePath = INTEL_DIR . 'vendor/';
-      $filePath .= 'google/';
-      if ($classPath[1] == 'Service') {
-        $filePath .= "apiclient-services/src/Google/Service/{$classPath[2]}/";
-        if ($classPath[3] == 'Resource') {
-          $filePath .= "Resource/{$classPath[4]}.php";
-        }
-        else {
-          $filePath .= "{$classPath[3]}.php";
-        }
-
-      }
-      else {
-        $filePath .= 'apiclient/src/Google/';
-      }
+    $filePath = INTEL_DIR . 'vendor/';
+    $filePath .= 'google/';
+    if ($autoload[$className] == 1) {
+      $filePath .= "apiclient/";
     }
+    else {
+      $filePath .= "apiclient-services/";
+    }
+    $filePath .= "src/Google/";
+    $i = 1;
+    for (; $i < (count($classPath) - 1); $i++) {
+      $filePath .= $classPath[$i] . '/';
+    }
+
+    $filePath .= $classPath[$i] . '.php';
   }
 
 
