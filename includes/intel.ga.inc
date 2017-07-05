@@ -656,7 +656,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'trigger_auto' => array(
         'description' => Intel_Df::t('Automatically triggers on page unload set in Page Tracker script.'),
       ),
-      'js_setting' => 0, // processed via _linktracker.js
+      'js_setting' => 1, // processed via _linktracker.js
       'overridable' => 0,
     );
 
@@ -861,7 +861,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'trigger_auto' => array(
         'description' => Intel_Df::t('Automatically triggers on page unload set inYouTube script.'),
       ),
-      'js_setting' => 0, // processed via _linktracker.js
+      'js_setting' => 1, // processed via _linktracker.js
       'overridable' => 0,
     );
   }

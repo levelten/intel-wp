@@ -21,7 +21,7 @@ function L10iPageTracker(_ioq, config) {
     };
 
     this.handlePageConsumedTime = function () {
-        console.log('PageTracker::handlePageConsumedTime()');
+        ioq.log('PageTracker::handlePageConsumedTime()');
         var
           ths = this,
           scroll = ioq.get('p.scroll.contentBottomMaxPer', 0);
@@ -38,7 +38,7 @@ function L10iPageTracker(_ioq, config) {
     };
 
     this.handlePageConsumedScroll = function (scroll) {
-        console.log('PageTracker::handlePageConsumedScroll()');
+        ioq.log('PageTracker::handlePageConsumedScroll()');
         //console.log(scroll.contentBottomMaxPer);
         if (scroll.contentBottomMaxPer > 90) {
             ioq.removeCallback('scroll', this.handlePageConsumedScroll, this);
@@ -47,15 +47,20 @@ function L10iPageTracker(_ioq, config) {
     };
 
     this.sendPageConsumedEvent = function() {
-        console.log('PageTracker::sendPageConsumedEvent()');
+        ioq.log('PageTracker::sendPageConsumedEvent()');
         var evtDef = {
             eventCategory: 'Page consumed!',
             eventAction: '[[pageTitle]]',
             eventLabel: '[[pageUri]]',
-            eventValue: ioq.get('c.scorings.events.pageConsumed', 0),
+            eventValue: ioq.get('c.scorings.events.pagetracker_page_consumed', 0),
             nonInteraction: false
         };
         io('event', evtDef);
+    };
+
+    this.formatPer = function formatPer(value) {
+        value = value || 0;
+        return Math.round(Math.min(100, Math.max(0, value)));
     };
 
     this.handleUnload = function handleUnload() {
@@ -121,28 +126,34 @@ function L10iPageTracker(_ioq, config) {
 
 
         scroll = ioq.get('p.scroll', {});
-        m = scroll.contentBottomMaxPer;
-        // make sure m is between 0 & 100
-        s = Math.round(Math.min(100, Math.max(0, m)));
-        ts = '';
-        if (s < 10) {
-            ts = '  ';
-        }
-        else if (s < 100) {
-            ts = ' ';
+        if (scroll.contentBottomMaxPer) {
+            // make sure m is between 0 & 100
+            td = this.formatPer(scroll.contentBottomMaxPer);
+            tdr = (Math.round(td / 10) * 10);
+            ts = '';
+            if (tdr < 10) {
+                ts = '~  ';
+            }
+            else if (tdr < 100) {
+                ts = '~';
+            }
+
+            var evtDef = {
+                eventCategory: 'Page scroll',
+                eventAction: ts + tdr + '%',
+                eventLabel: '' + td,
+                eventValue: td,
+                nonInteraction: true,
+                metric10: scroll.pageMax,
+                metric11: ioq.round(this.formatPer(scroll.bottomInitPer), 3),
+                metric12: ioq.round(this.formatPer(scroll.bottomMaxPer), 3),
+                metric13: scroll.contentMax,
+                metric14: ioq.round(this.formatPer(scroll.contentBottomInitPer), 3),
+                metric15: ioq.round(this.formatPer(scroll.contentBottomMaxPer), 3),
+            };
+            io('event', evtDef);
         }
 
-        var evtDef = {
-            eventCategory: 'Page scroll',
-            eventAction: ts + (Math.round(s / 10) * 10) + '%',
-            eventLabel: '' + s,
-            eventValue: s,
-            nonInteraction: true,
-            metric10: scroll.pageMax,
-            metric11: ioq.round(scroll.bottomMaxPer, 3),
-            metric12: ioq.round(m, 3),
-        };
-        io('event', evtDef);
 
         // send timing event
         io('ga.send', 'timing', 'Page visibility', 'visible', Math.round(1000 * td));

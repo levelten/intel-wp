@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.8
-Stable tag: 1.0.6-dev
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,7 +29,7 @@ To learn more about Intelligence for WordPress visit [intelligencewp.com](http:/
 
 == Installation ==
 
-For installation instructions, visit [intelligencewp.com/installation](http://www.intelligencewp.com/installation)
+For installation instructions, visit [intelligencewp.com/wiki/installation](http://www.intelligencewp.com/wiki/installation)
 
 == Changelog ==
 
@@ -43,10 +43,12 @@ For installation instructions, visit [intelligencewp.com/installation](http://ww
 * Setup wizard autoconfig
 * Environment data utility
 
-= 1.0.6 =
+= 1.1.0 =
 * Time interval JS API
 * Page scroll JS API
 * Page visibility change API
+* Page consume event
+* Video consume event
 
 == Upgrade Notice ==
 

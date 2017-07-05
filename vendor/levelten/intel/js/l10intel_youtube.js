@@ -129,31 +129,41 @@ function L10iYouTube(_ioq) {
             ga_event.eventCategory = 'Video watched';
             ga_event.eventValue = 100;
             ga_event.eid = 'videoWatched';
+
+            var ga_event3 = jQuery.extend({}, ga_event);
+            ga_event3.eventCategory = 'Video consumed!';
+            ga_event3.eventValue = ioq.get('c.scorings.events.youtube_video_consumed', 0);
+            ga_event3.eid = 'videoConsumed';
+
             io('event', ga_event);
-            //_l10iq.push(['_trackIntelEvent', jQuery(this), ga_event, '']);
+            io('event', ga_event3);
         }
         else if (event.data == YT.PlayerState.PAUSED && !this.playerState[id].paused){
             ga_event.eventCategory = 'Video stop';
             ga_event.eid = 'videoStop';
-            io('event', ga_event);
-            //_l10iq.push(['_trackIntelEvent', jQuery(this), ga_event, '']);
 
             // copy object for Video watched
             var ga_event2 = jQuery.extend({}, ga_event);
             ga_event2.eventCategory = 'Video watched';
             ga_event2.eventValue = positionPer;
             ga_event2.eid = 'videoWatched';
-            io('event', ga_event2);
-            //_l10iq.push(['_trackIntelEvent', jQuery(this), ga_event2, '']);
-            this.playerState[id].paused = true;
+
+            var ga_event3 = {};
 
             if (positionPer >= 90) {
-                var ga_event3 = jQuery.extend({}, ga_event);
+                ga_event3 = jQuery.extend({}, ga_event);
                 ga_event3.eventCategory = 'Video consumed!';
                 ga_event3.eventValue = ioq.get('c.scorings.events.youtube_video_consumed', 0);
                 ga_event3.eid = 'videoConsumed';
+            }
+
+            io('event', ga_event);
+            io('event', ga_event2);
+            if (positionPer >= 90) {
                 io('event', ga_event3);
             }
+
+            this.playerState[id].paused = true;
         }
     };
     _l10iq.push(['addCallback', 'domReady', this.init, this]);
