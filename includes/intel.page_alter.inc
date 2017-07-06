@@ -68,6 +68,8 @@ function intel_page_alter(&$page) {
     $config['admin'] = 1;
   }
 
+  $goals = intel_goal_load();
+
   // set scorings
   $scorings = intel_get_scorings('js_setting');
   foreach ($scorings as $k => $v) {
@@ -77,23 +79,24 @@ function intel_page_alter(&$page) {
     }
     else if (substr($k, 0, 5) == 'goal_') {
       $key = substr($k, 5);
-      $config['scorings']['goals'][$key] = $v;
+      if (!empty($goals[$key])) {
+        $config['scorings']['goals'][$goals[$key]['ga_id']] = $v;
+      }
     }
     else {
       $config['scorings'][$k] = $v;
     }
   }
 
-  $config['contentSelector'] = get_option('intel_content_selector', 'div.entry-content');
-
-  $ga_goals = get_option('intel_goals', array());
-  foreach ($ga_goals as $goal) {
+  foreach ($goals as $goal) {
     $config['gaGoals'][] = array(
       'id' => $goal['ga_id'],
       'name' => $goal['title'],
       //'value' => !empty($scorings['goal_' + $goal['ga_id']]) ? $scorings['goal_' + $goal['ga_id']] : 0
     );
   }
+
+  $config['contentSelector'] = get_option('intel_content_selector', 'div.entry-content');
 
   if ($a = get_option('intel_domain_name', '')) {
     $config['cookieDomain'] = $a;
@@ -1861,10 +1864,11 @@ function intel_process_form_submission($vars) {
 
   // if value is not set in track, enable scorings value to override
   if (!isset($track['value']) && isset($track['name'])) {
-    $k = $track['name'];
+    $k = 'event_' . $track['name'];
     if (!empty($intel_event['goal_name'])) {
       $k = 'goal_' . $intel_event['goal_name'];
     }
+
     if (isset($scorings[$k])) {
       $track['value'] = $scorings[$k];
     }
@@ -1878,8 +1882,12 @@ function intel_process_form_submission($vars) {
     $track += $intel_event;
   }
 
-  if (!empty($track['valued_event']) && substr($track['category'], -1) != '!') {
-    $track['category'] .= '!';
+  if (empty($track['event_category']) && !empty($track['category'])) {
+    $track['event_category'] = $track['category'];
+  }
+
+  if (!empty($track['valued_event']) && substr($track['event_category'], -1) != '!') {
+    $track['event_category'] .= '!';
   }
 
   if (!isset($track['action'])) {
@@ -2002,9 +2010,9 @@ function intel_process_form_submission($vars) {
   // enable other plugins to alter track
   $track = apply_filters('intel_form_submission_track_alter', $track, $hook_context);
 
-  if (!empty($track['category'])) {
+  if (!empty($track['event_category'])) {
     $call = array(
-      'eventCategory' => $track['category'],
+      'eventCategory' => $track['event_category'],
       'eventAction' => $track['action'],
       'eventLabel' => $track['label'],
       'eventValue' => $track['value'],
@@ -2222,7 +2230,7 @@ function intel_user_register_form_submit(&$form, &$form_state) {
   );
   intel_add_page_intel_push(array('event', $call));
   $pushes = intel_get_page_intel_pushes();
-  watchdog('intel_user_register_form_submit', print_r($pushes, 1));
+  //watchdog('intel_user_register_form_submit', print_r($pushes, 1));
 }
 
 /**

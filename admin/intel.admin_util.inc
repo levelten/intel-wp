@@ -32,13 +32,21 @@ function intel_util_temp() {
 
   $output = '';
 
-  $ga_dims = intel_ga_custom_dimension_load(null, array('refresh' => 1));
+  $scorings = intel_get_scorings();
 
-  intel_d($ga_dims);
+  $intel_events = intel_get_intel_event_info();
 
-  $ga_metrics = intel_ga_custom_metric_load(null, array('refresh' => 1));
+  intel_d($intel_events);
 
-  intel_d($ga_metrics);
+  intel_d($scorings);
+
+  $goals_by_name = intel_goal_load(null, array('index_by' => 'name'));
+
+  intel_d($goals_by_name);
+
+  $goals_by_gaid = intel_goal_load(null, array('index_by' => 'ga_id'));
+
+  intel_d($goals_by_gaid);
 
   return $output;
 
