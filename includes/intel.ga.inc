@@ -3744,7 +3744,8 @@ function intel_get_ga_admin_goals_url() {
   //$url = "https://analytics.google.com/analytics/web/#management/Settings/a5541069w22533750p78133449/%3Fm.page%3DGoals";
 }
 
-function intel_fetch_ga_custom_dimensions($save = 0) {
+
+function x_intel_fetch_ga_custom_dimensions($save = 0) {
   $ga_dimensions = &Intel_Df::drupal_static(__FUNCTION__, array());
 
   if (!empty($ga_dimensions)) {
@@ -3790,7 +3791,7 @@ function intel_fetch_ga_custom_dimensions($save = 0) {
   return $ga_dimensions;
 }
 
-function intel_gapi_attach_management_custom_dimension(&$gadwp) {
+function x_intel_gapi_attach_management_custom_dimension(&$gadwp) {
   /*
    * GADWP's GA library is too old to support custom dimensions.
    * So this is a hack to integrate custom dimension support.
@@ -3935,5 +3936,96 @@ function intel_get_ga_admin_url($page = '', $options = array()) {
   }
   return $url;
 }
+
+function intel_ga_custom_dimension_load($name = '', $options = array()) {
+
+  $op_meta = get_option('intel_option_meta', array());
+
+  // refresh if goal have never been updated
+  if (empty($op_meta['ga_custom_dimensions_updated'])) {
+    $options['refresh'] = 1;
+  }
+
+  // cache for one month unless requested
+  if (!isset($options['refresh'])) {
+    $options['refresh'] = 2592000;
+  }
+
+  // load goals from ga
+  if (!empty($options['refresh'])) {
+    $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
+    $ga_dims_updated = !empty($op_meta['ga_custom_dimensions_updated']) ? $op_meta['ga_custom_dimensions_updated'] : 0;
+    if ((time() - $ga_dims_updated) > $time) {
+
+      include_once INTEL_DIR . 'includes/intel.imapi.inc';
+
+      try {
+        $ga_dims = intel_imapi_ga_custom_dimension_get();
+        update_option('intel_ga_custom_dimensions', $ga_dims);
+        $op_meta['ga_custom_dimensions_updated'] = time();
+        update_option('intel_option_meta', $op_meta);
+      }
+      catch (Exception $e) {
+        Intel_Df::drupal_set_message($e->getMessage(), 'error');
+        $ga_dims = array();
+      }
+    }
+  }
+
+  if (!isset($ga_dims)) {
+    $ga_dims = get_option('intel_ga_custom_dimensions', array());
+  }
+
+  if (!empty($name)) {
+    return !empty($ga_dims[$name]) ? $ga_dims[$name] : 0;
+  }
+  return $ga_dims;
+}
+
+function intel_ga_custom_metric_load($name = '', $options = array()) {
+
+  $op_meta = get_option('intel_option_meta', array());
+
+  // refresh if goal have never been updated
+  if (empty($op_meta['ga_custom_metrics_updated'])) {
+    $options['refresh'] = 1;
+  }
+
+  // cache for one month unless requested
+  if (!isset($options['refresh'])) {
+    $options['refresh'] = 2592000;
+  }
+
+  // load goals from ga
+  if (!empty($options['refresh'])) {
+    $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
+    $ga_metrics_updated = !empty($op_meta['ga_custom_metrics_updated']) ? $op_meta['ga_custom_metrics_updated'] : 0;
+    if ((time() - $ga_metrics_updated) > $time) {
+
+      include_once INTEL_DIR . 'includes/intel.imapi.inc';
+
+      try {
+        $ga_metrics = intel_imapi_ga_custom_metric_get();
+        update_option('intel_ga_custom_metrics', $ga_metrics);
+        $op_meta['ga_custom_metrics_updated'] = time();
+        update_option('intel_option_meta', $op_meta);
+      }
+      catch (Exception $e) {
+        Intel_Df::drupal_set_message($e->getMessage(), 'error');
+        $ga_dims = array();
+      }
+    }
+  }
+
+  if (!isset($ga_metrics)) {
+    $ga_metrics = get_option('intel_ga_custom_metrics', array());
+  }
+
+  if (!empty($name)) {
+    return !empty($ga_metrics[$name]) ? $ga_metrics[$name] : 0;
+  }
+  return $ga_metrics;
+}
+
 
 

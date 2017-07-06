@@ -21,6 +21,7 @@ function intel_admin_settings($form, &$form_state) {
   // verify if gadwp exists
   $ga_data_source = intel_ga_data_source();
 
+
   $message = '';
   if (count($form_state['input']) == 0) { // hack to assure check and messages are only done once when form is submitted
     $account_level = intel_verify_apikey($message);
@@ -69,6 +70,8 @@ function intel_admin_settings($form, &$form_state) {
   foreach ($ga_profiles as $view_id => $profile) {
     $gap_options[$view_id] = "{$profile['propertyId']} / {$profile['viewName']}";
   }
+
+
 
   $form['l10iapi']['intel_ga_view'] = array(
     '#type' => 'select',

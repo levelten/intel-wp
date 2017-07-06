@@ -799,6 +799,7 @@ function intel_admin_setup_check_intel_api_key($form, &$form_state) {
   $intel_apikey = get_option('intel_apikey', '');
   if (isset($form_state['values']['intel_apikey'])) {
     $intel_apikey = $form_state['values']['intel_apikey'];
+
   }
 
   $tid = get_option('intel_ga_tid', '');
@@ -812,11 +813,33 @@ function intel_admin_setup_check_intel_api_key($form, &$form_state) {
 
   if (!empty($api_level)) {
     $status['success'] = 1;
+    if (isset($form_state['values']['intel_apikey'])) {
+      // need to save intel_apikey to check custom dimensions below
+      update_option('intel_apikey', $intel_apikey);
+    }
   }
   else {
     $status['error_msg'] = Intel_Df::t('Intelligence API not connected. Please verify that your tracking id and apikey are correct.');
   }
   $form_state['intel_api_level'] = $api_level;
+
+  // check custom dimensions setup correctly
+  if ($api_level) {
+
+    // load cached version first. If empty, refresh list from imapi
+    $dims = intel_ga_custom_dimension_load();
+    if (empty($dims)) {
+      $dims = intel_ga_custom_dimension_load(null, array('refresh' => 1));
+    }
+    if (empty($dims)) {
+      $status['success'] = 0;
+      $status['error_type'] = 'property_not_configured';
+      $l_options = Intel_Df::l_options_add_target('imapi');
+      $status['error_msg'] = Intel_Df::t('GA property configuration is not complete. !link', array(
+        '!link' => Intel_Df::l(Intel_Df::t('Click here to configure property.'), 'http://intl.getlevelten.com/property/' . $tid . '/ga_config', $l_options),
+      ));
+    }
+  }
 
   /* disabled, issue with autoloading ga classes with 5.1 version of gadwp
   // check custom dimensions setup correctly

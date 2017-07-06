@@ -4062,7 +4062,8 @@ function intel_class_autoload($className) {
     }
   }
 
-  if ($classPath[0] == 'Google') {
+  // disabled b/c of autoloading conflict with gadwp
+  if (0 && $classPath[0] == 'Google') {
     $autoload =  array();
     // autoload classes not included in gadwp GA files
     $autoload['Google_Service_Resource'] = 1;

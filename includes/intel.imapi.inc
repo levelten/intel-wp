@@ -118,5 +118,57 @@ function intel_imapi_ga_goal_update($ga_goal, $options = array()) {
   return $response;
 }
 
+function intel_imapi_ga_custom_dimension_get($custom_dimension_id = 0, $options = array()) {
+
+  $vars = array();
+  $apiclient = intel_imapi_get_client($vars);
+
+  $response = FALSE;
+  $params = isset($options['params']) ? $options['params'] : array();
+  $params['tid'] = $vars['tid'];
+  $params['viewid'] = $vars['viewid'];
+  $data = array(
+    'apikey' => $vars['apikey'],
+  );
+  if ($custom_dimension_id) {
+    $params['custom_dimension_id'] = $custom_dimension_id;
+  }
+
+  try {
+    $response = $apiclient->getJSON('ga_custom_dimension/get', $params, $data);
+  }
+  catch (Exception $e) {
+    throw($e);
+  }
+
+  return $response['ga_custom_dimension'];
+}
+
+function intel_imapi_ga_custom_metric_get($custom_metric_id = 0, $options = array()) {
+
+  $vars = array();
+  $apiclient = intel_imapi_get_client($vars);
+
+  $response = FALSE;
+  $params = isset($options['params']) ? $options['params'] : array();
+  $params['tid'] = $vars['tid'];
+  $params['viewid'] = $vars['viewid'];
+  $data = array(
+    'apikey' => $vars['apikey'],
+  );
+  if ($custom_metric_id) {
+    $params['custom_metric_id'] = $custom_metric_id;
+  }
+
+  try {
+    $response = $apiclient->getJSON('ga_custom_metric/get', $params, $data);
+  }
+  catch (Exception $e) {
+    throw($e);
+  }
+
+  return $response['ga_custom_metric'];
+}
+
 
 
