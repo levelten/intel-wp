@@ -24,25 +24,47 @@ function L10iPageTracker(_ioq, config) {
         ioq.log('PageTracker::handlePageConsumedTime()');
         var
           ths = this,
-          scroll = ioq.get('p.scroll.contentBottomMaxPer', 0);
-//console.log(scroll);
+          scroll = ioq.get('p.scroll', {});
         // check if visitor has scrolled 90% to bottom of content
-        if (scroll > 90) {
+        if (this.isDeepScroll(scroll)) {
             this.sendPageConsumedEvent();
         }
         else {
             ioq.addCallback('scroll', this.handlePageConsumedScroll, this);
         }
-
-
     };
 
     this.handlePageConsumedScroll = function (scroll) {
         ioq.log('PageTracker::handlePageConsumedScroll()');
         //console.log(scroll.contentBottomMaxPer);
-        if (scroll.contentBottomMaxPer > 90) {
+        if (this.isDeepScroll(scroll)) {
             ioq.removeCallback('scroll', this.handlePageConsumedScroll, this);
             this.sendPageConsumedEvent();
+        }
+    };
+
+    this.isDeepScroll = function (scroll) {
+        // test if content selector is set. I.e. contentBottomMax and bottomMax are equal if not set.
+        if (scroll.contentBottomMax != scroll.bottomMax) {
+            return (scroll.contentBottomMaxPer > 90);
+        }
+        else {
+            // content selector not set. Try to make reasonable assumptions given we could have comments an other items
+            // at bottom of page
+            // consider true if scroll > 80 %
+            if (scroll.bottomMaxPer > 80) {
+                return 1;
+            }
+            var $comments = $('#comments.comments-area');
+            if ($comments.length) {
+                var d = ioq.getElementDimensions($comments);
+                // recalculate bottomMaxPer using top of comments as bottom of page
+                var bmp = 100 * scroll.bottomMax / d.top;
+                if (bmp > 85) {
+                    return 1;
+                }
+            }
+            return 0;
         }
     };
 
@@ -119,8 +141,8 @@ function L10iPageTracker(_ioq, config) {
             eventLabel: '' + tdr,
             eventValue: tdr,
             nonInteraction: true,
-            metric8: tdr,
-            metric9: 1
+            //metric8: tdr,
+            //metric9: 1
         };
         io('event', evtDef);
 
@@ -128,28 +150,31 @@ function L10iPageTracker(_ioq, config) {
         scroll = ioq.get('p.scroll', {});
         if (scroll.contentBottomMaxPer) {
             // make sure m is between 0 & 100
-            td = this.formatPer(scroll.contentBottomMaxPer);
-            tdr = (Math.round(td / 10) * 10);
+            var sd = this.formatPer(scroll.contentBottomMaxPer);
+            var sdr = (Math.round(sd / 10) * 10);
             ts = '';
-            if (tdr < 10) {
+            if (sdr < 10) {
                 ts = '~  ';
             }
-            else if (tdr < 100) {
+            else if (sdr < 100) {
                 ts = '~';
             }
 
             var evtDef = {
                 eventCategory: 'Page scroll',
-                eventAction: ts + tdr + '%',
-                eventLabel: '' + td,
-                eventValue: td,
+                eventAction: ts + sdr + '%',
+                eventLabel: '' + sd,
+                eventValue: sd,
                 nonInteraction: true,
+                metric8: 1,
+                metric9: tdr,
                 metric10: scroll.pageMax,
-                metric11: ioq.round(this.formatPer(scroll.bottomInitPer), 3),
-                metric12: ioq.round(this.formatPer(scroll.bottomMaxPer), 3),
-                metric13: scroll.contentMax,
-                metric14: ioq.round(this.formatPer(scroll.contentBottomInitPer), 3),
-                metric15: ioq.round(this.formatPer(scroll.contentBottomMaxPer), 3),
+                metric11: this.formatPer(scroll.bottomMaxPer),
+                metric12: this.formatPer(scroll.bottomInitPer)
+
+                //metric13: scroll.contentMax,
+                //metric14: ioq.round(this.formatPer(scroll.contentBottomInitPer), 3),
+                //metric15: ioq.round(this.formatPer(scroll.contentBottomMaxPer), 3),
             };
             io('event', evtDef);
         }

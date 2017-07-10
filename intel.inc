@@ -4019,6 +4019,11 @@ function intel_linked_field_settings_alter(&$settings, $context) {
   }
 }
 
+add_shortcode('intel_setup_auto', 'intel_setup_auto_shortcode');
+function intel_setup_auto_shortcode($vars) {
+  return '<img scr="' . INTEL_URL . 'images/clear.png" id="intel-setup-auto-img" style="height: 100px;">';
+}
+
 add_shortcode('intel_form', 'intel_form_shortcode');
 function intel_form_shortcode($vars) {
   include_once ( INTEL_DIR . 'includes/class-intel-form.php' );

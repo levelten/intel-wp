@@ -96,7 +96,7 @@ function intel_page_alter(&$page) {
     );
   }
 
-  $config['contentSelector'] = get_option('intel_content_selector', 'div.entry-content');
+  $config['contentSelector'] = get_option('intel_content_selector', '');
 
   if ($a = get_option('intel_domain_name', '')) {
     $config['cookieDomain'] = $a;

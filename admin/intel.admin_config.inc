@@ -293,7 +293,7 @@ function intel_admin_settings($form, &$form_state) {
   $form['pagetracker_settings']['intel_content_selector'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('Content selector'),
-    '#default_value' => get_option('intel_content_selector', 'div.entry-content'),
+    '#default_value' => get_option('intel_content_selector', ''),
     '#description' => $desc,
   );
 

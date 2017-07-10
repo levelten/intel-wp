@@ -11,6 +11,7 @@ function L10iYouTube(_ioq) {
     var io = _ioq.io;
     this.playerState = {};
     this.players = {};
+    this.playerEvents = {};
     this.domReady = false;
     this.apiReady = false;
     this.ready = false;
@@ -39,6 +40,10 @@ function L10iYouTube(_ioq) {
         this.playerState[videoId] = {
             state: -1,
             paused: true
+        };
+        this.playerEvents[videoId] = {
+            play: 0,
+            consumed: 0
         };
 
     };
@@ -99,6 +104,7 @@ function L10iYouTube(_ioq) {
         title += ': ' + ((videoData.title) ? videoData.title : '(not set)');
 
         var player = this.players[id];
+        var playerEvents = this.playerEvents[id];
         var ga_event = {
             'eventCategory': "Video event",
             'eventAction': "YouTube: " + title,
@@ -113,30 +119,50 @@ function L10iYouTube(_ioq) {
             rk: id,
             domi: id
         };
-        var positionPer = Math.round(100 * player.getCurrentTime() / player.getDuration());
+        var duration = player.getDuration();
+        var playTime = player.getCurrentTime();
+        var positionPer = Math.round(100 * playTime / duration);
         if (event.data == YT.PlayerState.PLAYING){
             ga_event.eventCategory = 'Video play';
-            var value = io('get', 'config.scorings.events.youtube_video_play', 0);
-            if (value > 0) {
-                ga_event.eventCategory += '!';
+            ga_event.eventValue = 0;
+            // only value play on first occurance for video
+            if (!playerEvents.play) {
+                ga_event.eventCategory += '!'
+                ga_event.eventValue = io('get', 'c.scorings.events.youtube_video_play', 0);
             }
             ga_event.eid = 'videoPlay';
             //_l10iq.push(['_trackIntelEvent', jQuery(this), ga_event, '']);
             io('event', ga_event);
+
+            this.playerEvents[id].play++;
             this.playerState[id].paused = false;
         }
-        else if (event.data == YT.PlayerState.ENDED  && !this.playerState[id].paused){
+        else if (event.data == YT.PlayerState.ENDED  && !this.playerState[id].paused) {
             ga_event.eventCategory = 'Video watched';
             ga_event.eventValue = 100;
             ga_event.eid = 'videoWatched';
 
-            var ga_event3 = jQuery.extend({}, ga_event);
-            ga_event3.eventCategory = 'Video consumed!';
-            ga_event3.eventValue = ioq.get('c.scorings.events.youtube_video_consumed', 0);
-            ga_event3.eid = 'videoConsumed';
+            var ga_event3 = {};
+
+            // only fire consumed event once per video
+            if (!playerEvents.consumed) {
+                ga_event3 = jQuery.extend({}, ga_event);
+                ga_event3.eventCategory = 'Video consumed!';
+                ga_event3.eventValue = ioq.get('c.scorings.events.youtube_video_consumed', 0);
+                ga_event3.eid = 'videoConsumed';
+            }
+
+            ga_event.metric8 = 1;
+            ga_event.metric9 = Math.round(duration);
+            ga_event.metric10 = Math.round(duration);
+            ga_event.metric11 = 100;
+            ga_event.metric12 = 0;
 
             io('event', ga_event);
-            io('event', ga_event3);
+            if (ga_event3.eid) {
+                io('event', ga_event3);
+                this.playerEvents[id].consumed++;
+            }
         }
         else if (event.data == YT.PlayerState.PAUSED && !this.playerState[id].paused){
             ga_event.eventCategory = 'Video stop';
@@ -146,21 +172,29 @@ function L10iYouTube(_ioq) {
             var ga_event2 = jQuery.extend({}, ga_event);
             ga_event2.eventCategory = 'Video watched';
             ga_event2.eventValue = positionPer;
-            ga_event2.eid = 'videoWatched';
 
             var ga_event3 = {};
 
-            if (positionPer >= 90) {
+            // only fire consumed event once per video and only if over 90% watched
+            if (!playerEvents.consumed && positionPer >= 90) {
                 ga_event3 = jQuery.extend({}, ga_event);
                 ga_event3.eventCategory = 'Video consumed!';
                 ga_event3.eventValue = ioq.get('c.scorings.events.youtube_video_consumed', 0);
                 ga_event3.eid = 'videoConsumed';
             }
 
+            ga_event2.eid = 'videoWatched';
+            ga_event2.metric8 = 1;
+            ga_event2.metric9 = Math.round(positionPer);
+            ga_event2.metric10 = Math.round(duration);
+            ga_event2.metric11 = Math.round(positionPer);
+            ga_event2.metric12 = 0;
+
             io('event', ga_event);
             io('event', ga_event2);
-            if (positionPer >= 90) {
+            if (ga_event3.eid) {
                 io('event', ga_event3);
+                this.playerEvents[id].consumed++;
             }
 
             this.playerState[id].paused = true;
