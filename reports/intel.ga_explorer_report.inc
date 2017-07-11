@@ -8,6 +8,7 @@
 
 function intel_ga_explorer_report() {
   $request = get_option('intel_ga_explorer_request', '');
+intel_d($request);
   $options = array('' => Intel_Df::t('- None -'));
   $presets = intel_ga_explorer_presets();
   foreach ($presets AS $name => $arr) {
@@ -125,12 +126,16 @@ function intel_ga_explorer_report() {
   );
   if (!empty($request)) {
     //$req = drupal_array_merge_deep($request['preset'], $request['custom']);
+    $def = array();
+
     $req = $request['preset'] + $request['custom'];
+    $req['dimensions'] = !empty($request['preset']['dimensions']) ? $request['preset']['dimensions'] : array();
     if (!empty($request['custom']['dimensions'])) {
       $req['dimensions'] = array_merge($req['dimensions'], $request['custom']['dimensions']);
     }
+    $req['metrics'] = !empty($request['preset']['metrics']) ? $request['preset']['metrics'] : array();
     if (!empty($request['custom']['metrics'])) {
-      $req['metrics'] += array_merge($req['metrics'], $request['custom']['metrics']);
+      $req['metrics'] = array_merge($req['metrics'], $request['custom']['metrics']);
     }
 
     if (intel_is_debug()) {
@@ -249,7 +254,7 @@ function intel_ga_explorer_report_submit($form, &$form_state) {
   $request['custom']['start_date'] = strtotime(str_replace("'", '', $values['start_date']));
   $request['custom']['end_date'] = strtotime(str_replace("'", '', $values['end_date']));
   $request['custom']['max_results'] = str_replace("'", '', $values['max_results']);
-
+intel_d($request);
   update_option('intel_ga_explorer_request', $request);
 }
 
@@ -309,11 +314,11 @@ function intel_ga_explorer_presets() {
   );
 
 
-  // challenge, wit
+  //
   $presets['entrances'] = array(
     'title' => Intel_Df::t('Entrances (no dimensions)'),
-    'metrics' => array('ga:entrances', 'ga:newVisits', 'ga:pageviewsPerSession', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
-    //'metrics' => array('ga:entrances', 'ga:pageviewsPerSession'),
+    'metrics' => array('ga:entrances', 'ga:newUsers', 'ga:pageviewsPerSession', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
+    //'metrics' => array('ga:entrances', 'ga:pageviewsPerSession', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
   );
 
 
@@ -333,13 +338,6 @@ function intel_ga_explorer_presets() {
     //'segment' => 'dynamic::ga:customVarValue1=@&a=6&',
     //'filters' => 'ga:customVarValue1=@&og=53&',
   );
-
-  $presets['entrances'] = array(
-    'title' => Intel_Df::t('Entrances (no dimensions)'),
-    'metrics' => array('ga:entrances', 'ga:newVisits', 'ga:pageviewsPerSession', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
-    //'metrics' => array('ga:entrances', 'ga:pageviewsPerSession'),
-  );
-
 
   // ?goalValueAll = ga:entrances x ga:pageValue
   // filter: ga:customVarValue1=@&og=53&;entrances>0
@@ -367,13 +365,21 @@ function intel_ga_explorer_presets() {
 
 
 
+  // ?goalValueAll = ga:entrances x ga:pageValue
+  // filter: ga:customVarValue1=@&og=53&;entrances>0
+  $presets['entrances_scorecard_date'] = array(
+    'title' => Intel_Df::t('Entrances Scorecard Date'),
+    'dimensions' => array('ga:date'),
+    'metrics' => array('ga:entrances', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
+  );
+
 
   // ?goalValueAll = ga:entrances x ga:pageValue
   // filter: ga:customVarValue1=@&og=53&;entrances>0
   $presets['entrances_scorecard_date_pageattr'] = array(
     'title' => Intel_Df::t('Entrances Scorecard Date (filter: Page Attr)'),
     'dimensions' => array('ga:date'),
-    'metrics' => array('ga:entrances', 'ga:newVisits', 'ga:pageviewsPerSession', 'ga:timeOnSite', 'ga:bounces', 'ga:pageValue', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
+    'metrics' => array('ga:entrances', 'ga:newVisits', 'ga:pageviewsPerSession', 'ga:timeOnPage', 'ga:bounces', 'ga:pageValue', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
     //'filters' => 'ga:entrances>0',
     'filters' => 'ga:customVarValue1=@&og=53&;ga:entrances>0',
   );

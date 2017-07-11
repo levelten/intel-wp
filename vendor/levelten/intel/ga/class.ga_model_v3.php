@@ -623,28 +623,20 @@ class GAModel {
     }
     else if ($type == 'entrances') {
       if (isset($reportModes[0]) && (($reportModes[0] == 'social') || ($reportModes[0] == 'seo'))) {
-        $request['metrics'] = array('ga:entrances', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
-        // v3
-        //$request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
+        $request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
         $request['sort'] = '-ga:entrances';
       }
       else {
-        $request['metrics'] = array('ga:entrances', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
-        // v3
-        //$request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
+        $request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
         $request['sort'] = '-ga:goalValueAll,-ga:entrances';
       }
     }
     else if ($type == 'sessions') {
-      $request['metrics'] = array('ga:sessions', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:pageValue');
-      // v3 $request['metrics'] = array('ga:sessions', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:pageValue');
+      $request['metrics'] = array('ga:sessions', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:pageValue');
       $request['sort'] = '-ga:pageviews';
     }
-    else if ($type == 'visitors') {
-      $request['metrics'] = array('ga:newUsers');
-    }
     else if ($types[1] == 'events') {
-      $request['metrics'] = array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue', 'ga:metric2');
+      $request['metrics'] = array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue');
       if (isset($reportModes[0]) && ($reportModes[0] == 'landingpage')) {
         $filters[] = "ga:eventCategory=~^Landing page";
         $request['sort'] = '-ga:totalEvents';
@@ -655,13 +647,11 @@ class GAModel {
       }
       else if (isset($types[2]) && $types[2] == 'valued') {
         $filters[] = "ga:eventCategory=~!$";
-        $request['sort'] = '-ga:metric2,-ga:totalEvents';
-        // ca $request['sort'] = '-ga:eventValue,-ga:totalEvents';
+        $request['sort'] = '-ga:eventValue,-ga:totalEvents';
       }
       else if (isset($types[2]) && $types[2] == 'goal') {
         $filters[] = "ga:eventCategory=~\+$";
-        $request['sort'] = '-ga:metric3,-ga:totalEvents';
-        // ca $request['sort'] = '-ga:eventValue,-ga:totalEvents';
+        $request['sort'] = '-ga:eventValue,-ga:totalEvents';
       }
       else if (isset($types[2]) && $types[2] == 'nonvalued') {
         $filters[] = "ga:eventCategory!~(!|\+)$";
@@ -1119,9 +1109,6 @@ class GAModel {
         case 'sessions':
           $d = $this->addSessionFeedData($d, $feedRows, $feedTotals, $curIndex, $subIndexBy);
           break;
-        case 'visitors':
-          $d = $this->addVisitorFeedData($d, $feedRows, $feedTotals, $curIndex, $subIndexBy);
-          break;
         /*
         //case 'pageviews_events':
         //case 'pageviews_events_valued':
@@ -1301,11 +1288,12 @@ class GAModel {
 
   function _addEntranceFeedDataRow(&$data, $row) {
     $data['entrances'] += $row['entrances'];
-    // v3 $data['newVisits'] += $row['newVisits'];
+    $data['newVisits'] += $row['newVisits'];
+    //$data['pageviews'] += !empty($row['pageviews']) ? $row['pageviews'] : ($row['entrances'] * $row['pageviewsPerSession']);
     $data['pageviews'] += !empty($row['pageviews']) ? $row['pageviews'] : 0;
     $data['uniquePageviews'] += !empty($row['uniquePageviews']) ? $row['uniquePageviews'] : 0;
-    $data['timeOnPage'] += $row['timeOnPage'];
-    // v3 $data['timeOnSite'] += $row['timeOnSite'];
+    //$data['pageviewsPerSession'] += ($row['entrances'] * $row['pageviewsPerSession']);
+    $data['timeOnSite'] += $row['timeOnSite'];
     $data['sticks'] += ($row['entrances'] - $row['bounces']);
     $data['goalValueAll'] += !empty($row['goalValueAll']) ? $row['goalValueAll'] : 0;
     $data['goalCompletionsAll'] += !empty($row['goalCompletionsAll']) ? $row['goalCompletionsAll'] : 0;
@@ -1349,11 +1337,10 @@ class GAModel {
     $data['recordCount']++;
 
     $data['sessions'] += !empty($row['sessions']) ? $row['sessions'] : 0;
-    // v3 $data['newVisits'] += !empty($row['newVisits']) ? $row['newVisits'] : 0;
+    $data['newVisits'] += !empty($row['newVisits']) ? $row['newVisits'] : 0;
     $data['pageviews'] += !empty($row['pageviews']) ? $row['pageviews'] : 0;
     $data['uniquePageviews'] += !empty($row['uniquePageviews']) ? $row['uniquePageviews'] : 0;
-    $data['timeOnPage'] += !empty($row['timeOnPage']) ? $row['timeOnPage'] : 0;
-    // v3 $data['timeOnSite'] += !empty($row['timeOnSite']) ? $row['timeOnSite'] : 0;
+    $data['timeOnSite'] += !empty($row['timeOnSite']) ? $row['timeOnSite'] : 0;
     $data['goalValueAll'] += !empty($row['goalValueAll']) ? $row['goalValueAll'] : 0;
     $data['goalCompletionsAll'] += !empty($row['goalCompletionsAll']) ? $row['goalCompletionsAll'] : 0;
 
@@ -1376,74 +1363,6 @@ class GAModel {
       }
     }
 
-    return $data;
-  }
-
-  function addVisitorFeedData($d, $rows, $totals, $indexBy, $subIndexBy = '') {
-    if (!isset($d['_all']['visitor'])) {
-      $d['_all']['visitor'] = $this->initVisitorDataStruc();
-      $d['_totals']['visitor'] = $this->initVisitorDataStruc();
-    }
-    if ($subIndexBy && !isset($d['_all']['visitor'][$subIndexBy])) {
-      $d['_all'][$subIndexBy] = $this->initVisitorDataStruc();
-    }
-    $this->_addVisitorFeedDataRow($d['_totals']['visitor'], $totals);
-    foreach($rows AS $row) {
-      if (!$indexes = $this->initFeedIndex($row, $indexBy, $d)) {
-        continue;
-      }
-      $subIndex = $this->initFeedIndex($row, $subIndexBy);
-      if (!is_array($indexes)) {
-        $indexes = array($indexes);
-      }
-      foreach ($indexes AS $index) {
-        if (!isset($d[$index]['visitor'])) {
-          $d[$index]['visitor'] = $this->initVisitorDataStruc();
-        }
-        if ($subIndexBy) {
-          if (!isset($d[$index][$subIndexBy])) {
-            $d[$index][$subIndexBy] = array('_all' => array());
-            $d[$index][$subIndexBy]['_all']['visitor'] = $this->initVisitorDataStruc();
-          }
-          if ($subIndex && !isset($d[$index][$subIndexBy][$subIndex])) {
-            $d[$index][$subIndexBy][$subIndex] = array('visitor' => $this->initVisitorDataStruc());
-            $d[$index][$subIndexBy][$subIndex]['i'] = $subIndex;
-          }
-        }
-      }
-
-      $keys = $indexes;
-      array_unshift($keys, '_all');
-
-      $subkeys = array('_all');
-      if ($subIndex) {
-        $subkeys[] = $subIndex;
-      }
-
-      foreach ($keys AS $k) {
-        if ($subIndexBy) {
-          // only counts for _all once
-          if ($k == '_all') {
-            $this->_addVisitorFeedDataRow($d['_all'][$subIndexBy], $row);
-          }
-          else {
-            foreach ($subkeys AS $sk) {
-              $this->_addVisitorFeedDataRow($d[$k][$subIndexBy][$sk]['visitor'], $row);
-            }
-          }
-
-        }
-        else {
-          $this->_addVisitorFeedDataRow($d[$k]['visitor'], $row);
-        }
-      }
-    }
-    return $d;
-  }
-
-  function _addVisitorFeedDataRow(&$data, $row) {
-    $data['newUsers'] += $row['newUsers'];
-    //$data['recordCount']++;
     return $data;
   }
 
@@ -1505,20 +1424,11 @@ class GAModel {
   }
 
   function _addEventsFeedDataRow($data, $row, $type = '') {
-    // ignore session sticks
     if ($type == 'valued' || $type == 'goal') {
-      // leverage metric better float precision back to value
-      if ($type == 'valued' && !empty($row['metric2'])) {
-        $row['eventValue'] = $row['metric2'];
-      }
-      else if ($type == 'goal' && !empty($row['metric3'])) {
-        $row['eventValue'] = $row['metric3'];
-      }
       $data['valuedValue'] += $row['eventValue'];
       $data['totalValuedEvents'] += $row['totalEvents'];
       $data['uniqueValuedEvents'] += $row['uniqueEvents'];
     }
-
     $data['value'] += $row['eventValue'];
     $data['totalEvents'] += $row['totalEvents'];
     $data['uniqueEvents'] += $row['uniqueEvents'];
@@ -1695,7 +1605,7 @@ class GAModel {
     $data['totalEvents'] += $row['totalEvents'];
     $data['uniqueEvents'] += $row['uniqueEvents'];
     if (substr($row['eventCategory'], -1) == '!') {
-      $data['value'] += !empty($row['metric2']) ? $row['metric2'] : $row['eventValue'];
+      $data['value'] += $row['eventValue'];
       $data['totalValuedEvents'] += $row['totalEvents'];
       $data['uniqueValuedEvents'] += $row['uniqueEvents'];
     }
@@ -1957,11 +1867,10 @@ class GAModel {
       'events' => $this->initEventsDataArrayStruc(),
       'goals' => $this->initGoalsDataArrayStruc(),
       'entrances' => 0,
-      // v3 'newVisits' => 0,
+      'newVisits' => 0,
       'pageviews' => 0,
       'uniquePageviews' => 0,
-      'timeOnPage' => 0,
-      // v3 'timeOnSite' => 0,
+      'timeOnSite' => 0,
       'sticks' => 0,
       'goalValueAll' => 0,
       'goalCompletionsAll' => 0,
@@ -1995,23 +1904,15 @@ class GAModel {
       'events' => $this->initEventsDataArrayStruc(),
       'goals' => $this->initGoalsDataArrayStruc(),
       'sessions' => 0,
-      //'newVisits' => 0,
+      'newVisits' => 0,
       'pageviews' => 0,
       'uniquePageviews' => 0,
-      'timeOnPage' => 0,
-      // v3 'timeOnSite' => 0,
+      'timeOnSite' => 0,
       'goalValueAll' => 0, // the goalValue directly generated by the entity
       'goalCompletionsAll' => 0,
       'pageValue' => 0,
       'pageValueAll' => 0, // the goalValue of any downstream goals (ie goal assists)
       'recordCount' => 0,
-    );
-    return $a;
-  }
-
-  function initVisitorDataStruc() {
-    $a = array(
-      'newUsers' => 0,
     );
     return $a;
   }

@@ -290,13 +290,33 @@ class ScorecardReportView extends ReportView {
     $summary_elements['stickrate'] = self::renderSparklineValueElement($e);
     
     $e = $init_e;
-  
+
+
+    /* remove New Visits sparkline report until solution can be found for dealing with v4 newUsers data
+    //$e['keys'] = $visitDataIndexes[0] . '.newUsers';
+    $e['keys'] = 'visitor.newUsers';
+    $e['title'] = 'New Users';
+    $total = !empty($datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) ? ($datasum[$visitDataIndexes[0]]['newUsers'] / $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) : 0;
+    $e['total'] = number_format(100 * $total, 1) . "%";
+    $summary_elements['percentNewUsers'] = self::renderSparklineValueElement($e);
+
+    // v3
     $e['keys'] = $visitDataIndexes[0] . '.newVisits';
     $e['title'] = 'New Visits';
     $total = !empty($datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) ? ($datasum[$visitDataIndexes[0]]['newVisits'] / $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) : 0;
     $e['total'] = number_format(100 * $total, 1) . "%";
     $summary_elements['percentNewVisits'] = self::renderSparklineValueElement($e);
-  
+    */
+
+    $e = $init_e;
+    $e['keys'] = $visitDataIndexes[0] . '.timeOnPage';
+    $e['keys2'] = $visitDataKeys;
+    $e['keys_operator'] = '/';
+    $e['title'] = 'Avg. Time';
+    $total = !empty($datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) ? ($datasum[$visitDataIndexes[0]]['timeOnPage'] / $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) : 0;
+    $e['total'] = self::formatDeltaTime($total);
+    $summary_elements['avgTimeOnPage'] = self::renderSparklineValueElement($e);
+    /* v3
     $e = $init_e;
     $e['keys'] = $visitDataIndexes[0] . '.timeOnSite';
     $e['keys2'] = $visitDataKeys;
@@ -305,6 +325,7 @@ class ScorecardReportView extends ReportView {
     $total = !empty($datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) ? ($datasum[$visitDataIndexes[0]]['timeOnSite'] / $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) : 0;
     $e['total'] = self::formatDeltaTime($total);
     $summary_elements['avgTimeOnSite'] = self::renderSparklineValueElement($e);
+    */
     
     $e['keys'] = $visitDataIndexes[0] . '.pageviews';
     $e['keys2'] = $visitDataKeys;
@@ -392,9 +413,10 @@ class ScorecardReportView extends ReportView {
   
     $output .= $summary_elements['pageviews'];
     $output .= $summary_elements['pageviewsPerSession'];
-  
-    $output .= $summary_elements['percentNewVisits'];
-    $output .= $summary_elements['avgTimeOnSite']; 
+
+    // remove New Visits sparkline report until solution can be found for dealing with v4 newUsers data
+    //$output .= $summary_elements['percentNewUsers'];
+    $output .= $summary_elements['avgTimeOnPage'];
     
     $output .= $summary_elements['value'];
      

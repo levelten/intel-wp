@@ -41,6 +41,8 @@ function intel_scorecard_report_page($report_subtype = '-', $report_subfilter = 
 //function intel_scorecard_report($filters = array(), $context = '-', $sub_index = '-', $mode = '') {
 function intel_scorecard_report($vars) {
 //dsm($vars);
+
+  intel_d($vars);
   intel_include_library_file('ga/class.ga_model.php');
   require_once INTEL_DIR . "includes/intel.page_data.inc";
 
@@ -61,7 +63,7 @@ function intel_scorecard_report($vars) {
   //list($start_date, $end_date, $number_of_days) = _intel_get_report_dates_from_ops($timeops, $cache_options);
 
   $ga_data = new LevelTen\Intel\GAModel();
-$ga_data->setDebug(0);
+//$ga_data->setDebug(0);
   $ga_data->setContext($vars['context']);
   $ga_data->setContextMode($vars['context_mode']);
   $ga_data->setAttributeInfoAll($vars['attribute_info']);
@@ -74,12 +76,13 @@ $ga_data->setDebug(0);
   // note: add +1 to number of days incase timeframe is not an exact day, e.g. l30dfn
   $ga_data->setRequestDefaultParam('max_results', ($number_of_days+1));
 
-  //$ga_data->setDebug(1);
+  $ga_data->setDebug(1);
   $ga_data->loadFeedData('pageviews');
-  //$ga_data->setDebug(0);
-
+  $ga_data->setDebug(0);
 
   $ga_data->loadFeedData('entrances');
+
+  //$ga_data->loadFeedData('visitors');
 
   if ($context == 'page' || $context == 'page-attr' || $context_mode == 'subsite') {
     $ga_data->loadFeedData('sessions');
@@ -87,7 +90,6 @@ $ga_data->setDebug(0);
 
   $ga_data->setRequestSetting('details', 1);
   $ga_data->setRequestDefaultParam('max_results', 10 *  ($number_of_days+1));
-
   $ga_data->loadFeedData('pageviews_events_valued');
 
   //d($ga_data->data);
@@ -152,7 +154,7 @@ $ga_data->setDebug(0);
   $ga_data->setRequestDefaultParam('max_results', 100);
   $request = $ga_data->loadFeedData('entrances', 'trafficsources'); 
   
-  $d = $ga_data->data;
+  $d = $d = $ga_data->data;;
 
   if (!empty($path)) {
     $created = intel_get_node_created($path);
@@ -251,8 +253,6 @@ $ga_data->setDebug(0);
   else {
     return Intel_Df::t('No data found.');
   }
-
-//dsm($d);
 
   $vars = array(
     'data' => $d,
