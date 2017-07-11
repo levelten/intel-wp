@@ -106,26 +106,17 @@ function L10iPageTracker(_ioq, config) {
             inc = 60;
         }
         if (inc) {
-            td0 = tdr - inc;
-            if (td0 < 0) {
-                td0 = 0;
-            }
-            m = Math.floor(td0 / 60);
-            s = td0 % 60;
+            m = Math.floor(tdr / 60);
+            s = tdr % 60;
             si = (inc * Math.floor(s / inc));
             ts.push((m < 10) ? '0' + m : m);
             ts.push(':');
             ts.push((si < 10) ? '0' + si : si);
             ts.push(' - ');
-            m = Math.floor(tdr / 60);
-            s = tdr % 60;
-            if (td0 == 0) {
-                si = td0 + inc;
-            }
-            else {
-                si = (inc * Math.floor(s / inc));
-            }
-
+            td0 = tdr + inc;
+            m = Math.floor(td0 / 60);
+            s = td0 % 60;
+            si = (inc * Math.floor(s / inc));
             ts.push((m < 10) ? '0' + m : m);
             ts.push(':');
             ts.push((si < 10) ? '0' + si : si);

@@ -41,8 +41,6 @@ function intel_scorecard_report_page($report_subtype = '-', $report_subfilter = 
 //function intel_scorecard_report($filters = array(), $context = '-', $sub_index = '-', $mode = '') {
 function intel_scorecard_report($vars) {
 //dsm($vars);
-
-  intel_d($vars);
   intel_include_library_file('ga/class.ga_model.php');
   require_once INTEL_DIR . "includes/intel.page_data.inc";
 
@@ -76,9 +74,9 @@ function intel_scorecard_report($vars) {
   // note: add +1 to number of days incase timeframe is not an exact day, e.g. l30dfn
   $ga_data->setRequestDefaultParam('max_results', ($number_of_days+1));
 
-  $ga_data->setDebug(1);
+  //$ga_data->setDebug(1);
   $ga_data->loadFeedData('pageviews');
-  $ga_data->setDebug(0);
+  //$ga_data->setDebug(0);
 
   $ga_data->loadFeedData('entrances');
 

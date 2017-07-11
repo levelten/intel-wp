@@ -565,12 +565,16 @@ function theme_intel_visit_steps_table(&$variables) {
     $time = $ts - $start_time;
     $tf = ($time > 3600) ? 'H:i:s' : 'i:s';
     if ($step['type'] == 'page') {
-      $rows[] = array(
-        '+' . date($tf, $time),
-        Intel_Df::l($step['pageTitle'], '//' . $step['hostname'] . $step['pagePath']),
-        '-',
-      );
-      $last_page_ts = $ts;
+      if (!empty($step['pageviews'])) {
+        $rows[] = array(
+          '+' . date($tf, $time),
+          Intel_Df::l($step['pageTitle'], '//' . $step['hostname'] . $step['pagePath']),
+          '-',
+        );
+        $last_page_ts = $ts;
+      }
+
+
     }
     elseif ($step['type'] == 'event') {
       $class = 'event';

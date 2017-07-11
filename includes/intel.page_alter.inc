@@ -380,7 +380,7 @@ function intel_page_alter(&$page) {
   //drupal_alter('intel_page_settings_js', $js, $page);
   $js = apply_filters('intel_page_settings_js', $js, $page);
   if (!empty($_GET['debug'])) {
-    dsm('js'); dsm($js);
+    intel_d($js);//
   }
   intel()->add_js($js, 'setting');
 }
@@ -1671,20 +1671,27 @@ function intel_process_form_submission($vars) {
 
   // if vid not set on visitor, save to create vid
   if ($api_level == 'pro') {
+    // only save if visitor name is set
     if (empty($visitor->vid)) {
       $visitor->save();
     }
 
-    // update visitor attributes in analytics cookies
-    // TODO check if this should be done here
-    // va cookie is no longer supported in classic analytics
-    // TODO: change to work with l10i_va cookie
-    $va = $visitor->apiVisitor->extractCookieVa();
-    if (isset($va)) {
-      $visitor->setVar('data', 'analytics', '', $va);
+    if (!empty($visitor->vid)) {
+      // update visitor attributes in analytics cookies
+      // TODO check if this should be done here
+      // va cookie is no longer supported in classic analytics
+      // TODO: change to work with l10i_va cookie
+      $va = $visitor->apiVisitor->extractCookieVa();
+      if (isset($va)) {
+        $visitor->setVar('data', 'analytics', '', $va);
+      }
+
+      $submission->vid = $visitor->vid;
+    }
+    else {
+      $submission->vid = 0;
     }
 
-    $submission->vid = $visitor->vid;
   }
 
   // check if api vtk was loaded succesfully

@@ -430,6 +430,7 @@ add_filter('intel_intel_event_info', 'intel_get_intel_event_info_default');
 function intel_get_intel_event_info_default($event = array()) {
   $scripts_enabled = get_option('intel_intel_scripts_enabled', array());
 
+  /*
   $event['session_stick'] = array(
     'title' => Intel_Df::t('Session stick'),
     'description' => Intel_Df::t('When a visitor visits a second page or triggers a interaction event.'),
@@ -445,6 +446,7 @@ function intel_get_intel_event_info_default($event = array()) {
     ),
     //'overridable' => 1,
   );
+  */
 
   $event['form_submission'] = array(
     'title' => Intel_Df::t('Form submission'),
@@ -2799,6 +2801,8 @@ function intel_score_page_aggregation($data, $divideby = 1, &$score_components =
     //$scores['_all']['traffic'] += $entrance['entrances'] * $scoring['entrance'];
     if (!empty($entrance['sticks'])) {
       $scores['entrance']['traffic'] += $entrance['sticks'] * $scoring['stick'];
+      // when using Session stick events, stick numbers should be removed from events
+      $scores['entrance']['events'] -= $entrance['sticks'] * $scoring['stick'];
     }
     if ($entrance['pageviews']['traffic'] > 2) {
       $scores['entrance']['traffic'] += ($entrance['pageviews'] - $entrance['entrances'] - $entrance['sticks']) * $scoring['additional_pages'];
@@ -2946,6 +2950,8 @@ function intel_score_item($data, $divideby = 1, &$score_components = array(), $m
     //$scores['_all']['traffic'] += $entrance['entrances'] * $scoring['entrance'];
     if (!empty($entrance['sticks'])) {
       $scores['entrance']['traffic'] += $entrance['sticks'] * $scoring['stick'];
+      // when using Session stick events, stick numbers should be removed from events
+      //$scores['entrance']['events'] -= $entrance['sticks'] * $scoring['stick'];
     }
     if ($entrance['pageviews'] > 2) {
       $scores['entrance']['traffic'] += ($entrance['pageviews'] - $entrance['entrances'] - $entrance['sticks']) * $scoring['additional_pages'];

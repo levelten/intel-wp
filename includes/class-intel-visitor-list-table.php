@@ -404,11 +404,11 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 			$edit_link = esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), get_edit_user_link( $visitor->vid ) ) );
 
 			if ( current_user_can( 'edit_intel_visitor',  $visitor->vid ) ) {
-				$edit = "<strong><a href=\"$edit_link\">$visitor->name</a></strong><br />";
+				$edit = "<strong><a href=\"$edit_link\">" . $visitor->name() . "</a></strong><br />";
 				//$actions['edit'] = '<a href="' . $edit_link . '">' . __( 'Edit' ) . '</a>';
 			} else {
 				//$edit = "<strong>$visitor->name</strong><br />";
-				$edit = "<strong>" . Intel_Df::l($visitor->name, 'visitor/' . $visitor->vid) . "</strong><br />";
+				$edit = "<strong>" . Intel_Df::l($visitor->name(), 'visitor/' . $visitor->vid) . "</strong><br />";
 				//$actions['edit'] = Intel_Df::l(__('Edit', 'intel'), 'visitor/' . $visitor->vid . '/edit');
 				$actions['clickstream'] = Intel_Df::l(__('Clickstream', 'intel'), 'visitor/' . $visitor->vid . '/clickstream');
 			}
@@ -436,11 +436,11 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 			$role_classes = '';
 
 			// Set up the checkbox ( because the user is editable, otherwise it's empty )
-			$checkbox = '<label class="screen-reader-text" for="visitor_' . $visitor->vid . '">' . sprintf( __( 'Select %s' ), $visitor->name ) . '</label>'
+			$checkbox = '<label class="screen-reader-text" for="visitor_' . $visitor->vid . '">' . sprintf( __( 'Select %s' ), $visitor->name() ) . '</label>'
 						. "<input type='checkbox' name='visitors[]' id='visitor_{$visitor->vid}' class='{$role_classes}' value='{$visitor->vid}' />";
 
 		} else {
-			$edit = '<strong>' . $visitor->name . '</strong>';
+			$edit = '<strong>' . $visitor->name() . '</strong>';
 		}
 		$avatar = get_avatar(1, 32);
 		//$avatar = get_avatar( $visitor->vid, 32 );
@@ -500,10 +500,10 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 						//$r .= "$user_object->first_name $user_object->last_name";
 						break;
 					case 'email':
-						$r .= "<a href='" . esc_url( "mailto:$email" ) . "'>$email</a>";
+						$r .= !empty($email) ? "<a href='" . esc_url( "mailto:$email" ) . "'>$email</a>" : Intel_Df::t('(not set)');
 						break;
 					case 'contact_created':
-						$r .= Intel_Df::format_date($visitor->contact_created, 'medium');
+						$r .= Intel_Df::format_date($visitor->created, 'medium');
 						break;
 					case 'last_activity':
 						$r .= Intel_Df::format_date($visitor->last_activity, 'medium');

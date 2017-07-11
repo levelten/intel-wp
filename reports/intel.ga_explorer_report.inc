@@ -261,7 +261,7 @@ intel_d($request);
 function intel_ga_explorer_presets() {
   $presets = array();
 
-  // works for date
+  // standard pageviews metrics w/o dimensions
   $presets['pageviews'] = array(
     'title' => Intel_Df::t('Pageviews (no dimensions)'),
     'metrics' => array('ga:pageviews', 'ga:uniquePageviews', 'ga:pageviewsPerSession', 'ga:timeOnPage', 'ga:exits', 'ga:goalValueAll', 'ga:goalCompletionsAll', 'ga:pageValue'),
@@ -275,18 +275,54 @@ function intel_ga_explorer_presets() {
     'metrics' => array('ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:exits', 'ga:goalValueAll', 'ga:goalCompletionsAll', 'ga:pageValue'),
   );
 
+  // standard valued events metrics w/o dimensions
+  $presets['pageviews_events'] = array(
+    'title' => Intel_Df::t('Pageviews Events (no dimensions)'),
+    'metrics' => array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue'),
+    'sort' => '-ga:totalEvents',
+  );
+
+  $presets['pageviews_events_content_list'] = array(
+      'title' => Intel_Df::t('Pageviews Events > content list'),
+      'dimensions' => array('ga:pagePath'),
+    ) + $presets['pageviews_events'];
+
+  $presets['pageviews_events_content_event_list'] = array(
+      'title' => Intel_Df::t('Pageviews Events > content & event list'),
+      'dimensions' => array('ga:pagePath,ga:eventCategory'),
+    ) + $presets['pageviews_events'];
+
+  // standard valued events metrics w/o dimensions
+  $presets['pageviews_events_valued'] = array(
+    'title' => Intel_Df::t('Pageviews Events Valued (no dimensions)'),
+    'metrics' => array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue', 'ga:metric2'),
+    'filters' => 'ga:eventCategory=~!$',
+    'sort' => '-ga:metric2,-ga:totalEvents',
+  );
+
+  $presets['pageviews_events_valued_content_list'] = array(
+    'title' => Intel_Df::t('Pageviews Events Valued > content list'),
+    'dimensions' => array('ga:pagePath'),
+  ) + $presets['pageviews_events_valued'];
+
+  $presets['pageviews_events_valued_content_event_list'] = array(
+    'title' => Intel_Df::t('Pageviews Events Valued > content & event list'),
+    'dimensions' => array('ga:pagePath,ga:eventCategory'),
+  ) + $presets['pageviews_events_valued'];
+
+
   // goalValues not reported when pagePath filter used
   $presets['pageviews_content_filter'] = array(
-    'title' => Intel_Df::t('Pageviews > content filter'),
+    'title' => Intel_Df::t('Pageviews > filter content type = post'),
     'metrics' => array('ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:exits', 'ga:goalValueAll', 'ga:goalCompletionsAll', 'ga:pageValue'),
-    //'filters' => 'ga:pagePath==/blog/ian-whitcomb/brand-publisher-style-guides'
+    'filters' => 'ga:dimension6=@&rt2=post',
   );
 
   $presets['pageviews_content_list_pa'] = array(
     'title' => Intel_Df::t('Pageviews > content list > pa filter'),
     'dimensions' => array('ga:pagePath'),
     'metrics' => array('ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:exits', 'ga:goalValueAll', 'ga:goalCompletionsAll', 'ga:pageValue'),
-    //'filters' => 'ga:customVarValue1=@&a=6&'
+    'filters' => 'ga:dimension1=@&a=1&'
   );
 
   // goalValue provides in seg completed goals numbers, ? on any goal
@@ -314,14 +350,66 @@ function intel_ga_explorer_presets() {
   );
 
 
-  //
+  // standard entrance (downstream metrics) metrics w/o dimensions
   $presets['entrances'] = array(
     'title' => Intel_Df::t('Entrances (no dimensions)'),
-    'metrics' => array('ga:entrances', 'ga:newUsers', 'ga:pageviewsPerSession', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
-    //'metrics' => array('ga:entrances', 'ga:pageviewsPerSession', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
+    'metrics' => array('ga:entrances', 'ga:pageviewsPerSession', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
   );
 
+  // note goalValues lost when pagePath dimension used, calc goalValueAll using pageValue * uniquePageviews
+  // using filter: ga:pagePath=@/ used to correct this, but no longer works
+  $presets['entrances_content_list'] = array(
+    'title' => Intel_Df::t('Entrances > content list'),
+    'dimensions' => array('ga:landingPagePath'),
+    'metrics' => array('ga:entrances', 'ga:pageviewsPerSession', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
+  );
 
+  $presets['entrances_events'] = array(
+    'title' => Intel_Df::t('Entrances Events (no dimensions)'),
+    'metrics' => array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue'),
+    'sort' => '-ga:totalEvents',
+  );
+
+  $presets['entrances_events_content_list'] = array(
+      'title' => Intel_Df::t('Entrances Events > content list'),
+      'dimensions' => array('ga:landingPagePath'),
+    ) + $presets['entrances_events'];
+
+  $presets['entrances_events_content_event_list'] = array(
+      'title' => Intel_Df::t('Entrances Events > content, event list'),
+      'dimensions' => array('ga:landingPagePath,ga:eventCategory'),
+    ) + $presets['entrances_events'];
+
+  // standard valued events metrics w/o dimensions
+  $presets['entrances_events_valued'] = array(
+    'title' => Intel_Df::t('Entrances Events Valued (no dimensions)'),
+    'metrics' => array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue', 'ga:metric2'),
+    'filters' => 'ga:eventCategory=~!$',
+    'sort' => '-ga:metric2,-ga:totalEvents',
+  );
+
+  $presets['entrances_events_valued_content_list'] = array(
+      'title' => Intel_Df::t('Entrances Events Valued > content list'),
+      'dimensions' => array('ga:landingPagePath'),
+    ) + $presets['entrances_events_valued'];
+
+  $presets['entrances_events_valued_content_event_list'] = array(
+      'title' => Intel_Df::t('Entrances Events Valued > content, event list'),
+      'dimensions' => array('ga:landingPagePath,ga:eventCategory'),
+    ) + $presets['entrances_events_valued'];
+
+  // standard visigtor (downstream metrics) metrics w/o dimensions
+  $presets['visitors'] = array(
+    'title' => Intel_Df::t('Visitors (no dimensions)'),
+    'metrics' => array('ga:entrances', 'ga:pageviewsPerSession', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
+  );
+
+  // standard visigtor (downstream metrics) metrics w/o dimensions
+  $presets['visitors_visitor'] = array(
+    'title' => Intel_Df::t('Visitors > visitor list'),
+    'dimensions' => array('ga:dimension5'),
+    'metrics' => array('ga:entrances', 'ga:pageviewsPerSession', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
+  );
 
 
   $presets['entrances_works'] = array(
@@ -363,15 +451,6 @@ function intel_ga_explorer_presets() {
     //'filters' => 'ga:customVarValue1=@&a=6&;ga:entrances>0',
   );
 
-
-
-  // ?goalValueAll = ga:entrances x ga:pageValue
-  // filter: ga:customVarValue1=@&og=53&;entrances>0
-  $presets['entrances_scorecard_date'] = array(
-    'title' => Intel_Df::t('Entrances Scorecard Date'),
-    'dimensions' => array('ga:date'),
-    'metrics' => array('ga:entrances', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll'),
-  );
 
 
   // ?goalValueAll = ga:entrances x ga:pageValue

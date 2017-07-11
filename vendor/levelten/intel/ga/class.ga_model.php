@@ -644,7 +644,7 @@ class GAModel {
       $request['metrics'] = array('ga:newUsers');
     }
     else if ($types[1] == 'events') {
-      $request['metrics'] = array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue', 'ga:metric2');
+      $request['metrics'] = array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue');
       if (isset($reportModes[0]) && ($reportModes[0] == 'landingpage')) {
         $filters[] = "ga:eventCategory=~^Landing page";
         $request['sort'] = '-ga:totalEvents';
@@ -654,11 +654,13 @@ class GAModel {
         $request['sort'] = '-ga:totalEvents';
       }
       else if (isset($types[2]) && $types[2] == 'valued') {
+        $request['metrics'][] = 'ga:metric2';
         $filters[] = "ga:eventCategory=~!$";
         $request['sort'] = '-ga:metric2,-ga:totalEvents';
         // ca $request['sort'] = '-ga:eventValue,-ga:totalEvents';
       }
       else if (isset($types[2]) && $types[2] == 'goal') {
+        $request['metrics'][] = 'ga:metric3';
         $filters[] = "ga:eventCategory=~\+$";
         $request['sort'] = '-ga:metric3,-ga:totalEvents';
         // ca $request['sort'] = '-ga:eventValue,-ga:totalEvents';
