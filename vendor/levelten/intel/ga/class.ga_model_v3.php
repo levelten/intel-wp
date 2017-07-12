@@ -623,16 +623,16 @@ class GAModel {
     }
     else if ($type == 'entrances') {
       if (isset($reportModes[0]) && (($reportModes[0] == 'social') || ($reportModes[0] == 'seo'))) {
-        $request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
+        $request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
         $request['sort'] = '-ga:entrances';
       }
       else {
-        $request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
+        $request['metrics'] = array('ga:entrances', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:bounces', 'ga:goalValueAll', 'ga:goalCompletionsAll');
         $request['sort'] = '-ga:goalValueAll,-ga:entrances';
       }
     }
     else if ($type == 'sessions') {
-      $request['metrics'] = array('ga:sessions', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnSite', 'ga:pageValue');
+      $request['metrics'] = array('ga:sessions', 'ga:newVisits', 'ga:pageviews', 'ga:uniquePageviews', 'ga:timeOnPage', 'ga:pageValue');
       $request['sort'] = '-ga:pageviews';
     }
     else if ($types[1] == 'events') {
@@ -768,7 +768,7 @@ class GAModel {
     }
     else if ($indexBy == 'visit') {
       $request['dimensions'][] = 'ga:' . $this->attrStorage['vtk']['field'];
-      $request['dimensions'][] = 'ga:visitCount';
+      $request['dimensions'][] = 'ga:sessionCount';
       if ($reportModes[1] == 'recent') {
         $request['dimensions'][] = 'ga:' . $this->attrStorage['ts']['field'];
         $request['sort'] = '-ga:' . $this->attrStorage['ts']['field'];
@@ -1293,7 +1293,7 @@ class GAModel {
     $data['pageviews'] += !empty($row['pageviews']) ? $row['pageviews'] : 0;
     $data['uniquePageviews'] += !empty($row['uniquePageviews']) ? $row['uniquePageviews'] : 0;
     //$data['pageviewsPerSession'] += ($row['entrances'] * $row['pageviewsPerSession']);
-    $data['timeOnSite'] += $row['timeOnSite'];
+    $data['timeOnPage'] += $row['timeOnPage'];
     $data['sticks'] += ($row['entrances'] - $row['bounces']);
     $data['goalValueAll'] += !empty($row['goalValueAll']) ? $row['goalValueAll'] : 0;
     $data['goalCompletionsAll'] += !empty($row['goalCompletionsAll']) ? $row['goalCompletionsAll'] : 0;
@@ -1340,7 +1340,7 @@ class GAModel {
     $data['newVisits'] += !empty($row['newVisits']) ? $row['newVisits'] : 0;
     $data['pageviews'] += !empty($row['pageviews']) ? $row['pageviews'] : 0;
     $data['uniquePageviews'] += !empty($row['uniquePageviews']) ? $row['uniquePageviews'] : 0;
-    $data['timeOnSite'] += !empty($row['timeOnSite']) ? $row['timeOnSite'] : 0;
+    $data['timeOnPage'] += !empty($row['timeOnSite']) ? $row['timeOnSite'] : 0;
     $data['goalValueAll'] += !empty($row['goalValueAll']) ? $row['goalValueAll'] : 0;
     $data['goalCompletionsAll'] += !empty($row['goalCompletionsAll']) ? $row['goalCompletionsAll'] : 0;
 
@@ -1697,7 +1697,7 @@ class GAModel {
       $index = $row[$this->attrStorage['vtk']['field']];
     }
     else if ($indexBy == 'visit') {
-      $index = $row[$this->attrStorage['vtk']['field']] . '-' . $row['visitCount'];
+      $index = $row[$this->attrStorage['vtk']['field']] . '-' . $row['sessionCount'];
     }
     else if ($indexBy == 'location') {
       if (isset($row['city']) && isset($row['region'])) {

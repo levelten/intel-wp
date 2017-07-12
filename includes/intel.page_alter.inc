@@ -1671,8 +1671,8 @@ function intel_process_form_submission($vars) {
 
   // if vid not set on visitor, save to create vid
   if ($api_level == 'pro') {
-    // only save if visitor name is set
-    if (empty($visitor->vid)) {
+    // only save if at least one identifier exists
+    if (empty($visitor->vid) && !empty($visitor->identifiers)) {
       $visitor->save();
     }
 

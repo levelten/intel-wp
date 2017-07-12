@@ -100,8 +100,9 @@ function L10iYouTube(_ioq) {
         var videoData = event.target.getVideoData();
 
         var id = videoData.video_id;
-        var title = (videoData.author) ? videoData.author : '(not set)';
-        title += ': ' + ((videoData.title) ? videoData.title : '(not set)');
+        //var title = (videoData.author) ? videoData.author : '(not set)';
+        //title += ': ' + ((videoData.title) ? videoData.title : '(not set)');
+        var title = ((videoData.title) ? videoData.title : '(not set)');
 
         var player = this.players[id];
         var playerEvents = this.playerEvents[id];

@@ -528,20 +528,26 @@ function theme_intel_visit_steps_table(&$variables) {
   $output = '';
 
   $steps = $variables['steps'];
+
   $header = array(
     __('Time', 'intel'),
     __('Page/Event', 'intel'),
     __('Value', 'intel'),
   );
-  // preprocess to asign events to correct pages
+  // preprocess to assign events to correct pages
   $last_page_ts = 0;
+  $last_page_path = '';
   foreach ($steps as $i => $step) {
     $ts = $step['time'];
     if ($step['type'] == 'page') {
       $last_page_ts = $ts;
+      $last_page_path = $step['pagePath'];
     }
     if ($step['type'] == 'event') {
       if ($ts == $last_page_ts) {
+        if ($last_page_path != $step['pagePath']) {
+          $steps[$i]['time'] -= 1;
+        }
         if (substr($step['category'], 0, 16) == 'Form submission:') {
           $steps[$i]['time'] -= 1;
         }
@@ -566,15 +572,17 @@ function theme_intel_visit_steps_table(&$variables) {
     $tf = ($time > 3600) ? 'H:i:s' : 'i:s';
     if ($step['type'] == 'page') {
       if (!empty($step['pageviews'])) {
-        $rows[] = array(
+        $row = array(
+          'class' => array('page'),
+        );
+        $row['data'] = array(
           '+' . date($tf, $time),
           Intel_Df::l($step['pageTitle'], '//' . $step['hostname'] . $step['pagePath']),
-          '-',
+          (!empty($step['value'])) ? intel_event_value_format($step['value'], array('mode' => 'valued')) : '-',
         );
+        $rows[] = $row;
         $last_page_ts = $ts;
       }
-
-
     }
     elseif ($step['type'] == 'event') {
       $class = 'event';
@@ -584,11 +592,18 @@ function theme_intel_visit_steps_table(&$variables) {
       elseif (substr($step['category'], -1) == '+') {
         $class .= ' goal-event';
       }
-      $rows[] = array(
+      else {
+        $class .= ' standard-event';
+      }
+      $row = array(
+        'class' => array($class),
+      );
+      $row['data'] = array(
         ($ts == $last_page_ts) ? '"' : '+' . date($tf, $time),
         '<span class="' . $class . '">' . $step['category'] . ': ' . $step['action'] . '</span>',
-        (!empty($step['value'])) ? number_format($step['value'], 2) : '-',
+        (!empty($step['value'])) ? intel_event_value_format($step['value'], array('mode' => $step['mode'])) : '-',
       );
+      $rows[] = $row;
     }
     if (!empty($event_rows)) {
       $rows = array_merge($rows, $event_rows);

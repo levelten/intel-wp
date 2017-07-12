@@ -163,6 +163,8 @@ class Intel_Entity {
 			'error' => array(),
 			// list of statuses key by hook keys. 0=failed, 1=success
 			'statuses' => array(),
+			// returned results
+			'result' => array(),
 		);
 		return $ret;
 	}
@@ -175,7 +177,7 @@ class Intel_Entity {
 		return $this->data['syncStatus']['synced'];
 	}
 
-	public function setSyncProcessStatus($process, $status, $error_message = '', $error_code = 1) {
+	public function setSyncProcessStatus($process, $status, $error_message = '', $error_code = 0) {
 		// $error_code = 0 clears error
 		$this->data['syncStatus']['statuses'][$process] = $status;
 	}
@@ -220,6 +222,30 @@ class Intel_Entity {
 			return $this->data['syncStatus']['error'][$process];
 		}
 		return array();
+	}
+
+	public function getSyncResult($process) {
+		if (isset($this->data['syncStatus']['result'][$process])) {
+			return $this->data['syncStatus']['result'][$process];
+		}
+		return array();
+	}
+
+	public function addSyncResult($process, $message = '', $status_code = 0) {
+		// $error_code = 0 clears error
+		if (!isset($this->data['syncStatus']['result'][$process])) {
+			$this->data['syncStatus']['result'][$process] = array();
+		}
+		$this->data['syncStatus']['result'][$process][] = array(
+			'code' => $status_code,
+			'message' => $message,
+			'time' => time(),
+		);
+	}
+
+	public function clearSyncResult($process) {
+		// $error_code = 0 clears error
+		$this->data['syncStatus']['result'][$process] = array();
 	}
 
 	public function syncData() {

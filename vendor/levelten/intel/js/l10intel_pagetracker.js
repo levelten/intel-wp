@@ -5,6 +5,7 @@ function L10iPageTracker(_ioq, config) {
     var io = _ioq.io;
     var $;
     var $win;
+    var depthEventsSent = 0;
 
     this.init = function init() {
         ioq.log('PageTracker::init()');
@@ -15,6 +16,9 @@ function L10iPageTracker(_ioq, config) {
 
         // add callback for time intervale
         ioq.addCallback('timeInterval.30', ths.handlePageConsumedTime, this);
+
+        // add callback to process if page has been abandoned
+        ioq.addCallback('timeInterval.900', ths.handlePageAbandoned, this);
 
         // add beforeunload callback to trigger page time and page scroll events
         $win.on('beforeunload', function (event) { ths.handleUnload(event); });
@@ -85,12 +89,32 @@ function L10iPageTracker(_ioq, config) {
         return Math.round(Math.min(100, Math.max(0, value)));
     };
 
+    this.handlePageAbandoned = function handlePageAbandoned() {
+        return this.sendPageDepthEvents();
+    };
+
     this.handleUnload = function handleUnload() {
         ga('set', 'transport', 'beacon');
+        this.sendPageDepthEvents();
+    };
+
+    this.sendPageDepthEvents = function () {
+        // only fire depth events once per page
+        if (this.depthEventsSent) {
+            return;
+        }
+        this.depthEventsSent = 1;
+
+        // if page has been left open for more than 30 mins, don't send event.
+        if (ioq.getTimeDelta() > 3600) {
+            return;
+        }
+
         // detect if
         var td0, m, s, si, inc, scroll;
         var maxTime = 600;
         var td = ioq.getVisibleTime();
+
         if (td > maxTime) {
             td = maxTime;
         }

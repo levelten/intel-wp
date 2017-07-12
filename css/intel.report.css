@@ -475,3 +475,7 @@ form#intel_report_filters_form {
     margin-right: auto;
     margin-top: 200px;
 }
+
+#intel-report table.visit-steps .standard-event {
+  color: #888;
+}

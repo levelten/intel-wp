@@ -197,14 +197,32 @@ function intel_l10iapi_sync_visitordata($visitor) {
       intel_d('FullContact person:'); intel_d($fc_data);//
     }
 
-    if (!empty($fc_data)) {
+    if (empty($fc_data)) {
+      $fc_data = array(
+        'status' => 0,
+      );
+    }
+
+    if ($fc_data['status'] == 200) {
       intel_sync_fullcontact_visitordata($visitor, $fc_data);
       $visitor->setVar('ext', 'fullcontact', $fc_data);
       $visitor->merge();
-      // if fullcontact data is queued for search, keep sync request
-      if ($fc_data['status'] == 202) {
-        $visitor->setSyncError('', 202);
+      $visitor->clearSyncResult('l10iapi');
+    }
+    else {
+      $sync_result = $visitor->getSyncResult('l10iapi');
+      // if more than three attempts, just mark as synced
+      if (count($sync_result) >= 2) {
+        $visitor->clearSyncResult('l10iapi');
+        $status = 1;
+      }
+      // if status is 202, (queuing request for search), set status=0 to re queue
+      elseif($fc_data['status'] == 202) {
+        $visitor->addSyncResult('l10iapi', $fc_data['message'], $fc_data['status']);
         $status = 0;
+      }
+      else {
+        $visitor->addSyncResult('l10iapi', $fc_data['message'], $fc_data['status']);
       }
     }
   }

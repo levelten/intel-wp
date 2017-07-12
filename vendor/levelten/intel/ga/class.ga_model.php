@@ -780,7 +780,7 @@ class GAModel {
     }
     else if ($indexBy == 'visit') {
       $request['dimensions'][] = 'ga:' . $this->attrStorage['vtk']['field'];
-      $request['dimensions'][] = 'ga:visitCount';
+      $request['dimensions'][] = 'ga:sessionCount';
       if ($reportModes[1] == 'recent') {
         $request['dimensions'][] = 'ga:' . $this->attrStorage['ts']['field'];
         $request['sort'] = '-ga:' . $this->attrStorage['ts']['field'];
@@ -1789,7 +1789,7 @@ class GAModel {
       $index = $row[$this->attrStorage['vtk']['field']];
     }
     else if ($indexBy == 'visit') {
-      $index = $row[$this->attrStorage['vtk']['field']] . '-' . $row['visitCount'];
+      $index = $row[$this->attrStorage['vtk']['field']] . '-' . $row['sessionCount'];
     }
     else if ($indexBy == 'location') {
       if (isset($row['city']) && isset($row['region'])) {

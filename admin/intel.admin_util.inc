@@ -30,36 +30,16 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $output = '';
+  $ts = !empty($_GET['time']) ? $_GET['time'] : time();
+  $time = Intel_Df::format_date($ts);
 
-  $scorings = intel_get_scorings();
+  intel_d($time);
 
-  $intel_events = intel_get_intel_event_info();
+  $time = date_i18n('Y-m-d G:i:s', $ts);
 
-  intel_d($intel_events);
+  intel_d($time);
 
-  intel_d($scorings);
-
-  $goals_by_name = intel_goal_load(null, array('index_by' => 'name'));
-
-  intel_d($goals_by_name);
-
-  $goals_by_gaid = intel_goal_load(null, array('index_by' => 'ga_id'));
-
-  intel_d($goals_by_gaid);
-
-  return $output;
-
-  $ga_goals = intel_ga_goal_load(null, array('refresh' => 1));
-
-  intel_d($ga_goals);
-
-  return '';
-  $goal = array(
-    'ga_id' => '8',
-    'title' => 'Contact2',
-  );
-  intel_goal_save($goal);
+  return $time;
 
 
 

@@ -10,8 +10,7 @@ function intel_visitor_clickstream_report_page($report_params = '-', $report_sub
   require_once INTEL_DIR . "/includes/intel.reports.inc";
   require_once INTEL_DIR . "/includes/intel.ga.inc";
   $output = '';
-$args = func_get_args();
-intel_d($args);
+
   $vars = array();
   if (!empty($entity_type) && $entity_type != '-') {
     $vars['entity_type'] = $entity_type;
@@ -55,11 +54,15 @@ function intel_visitor_clickstream_report($vars) {
   }
   
   list($start_date, $end_date, $number_of_days) = _intel_get_report_dates("-90 days", "Now");
+  // add 15 minutes (900 secs) of caching
+  $start_date = 900 * round($start_date / 900);
+  $end_date = 900 * round($end_date / 900);
+
   $vtk_segment = 'sessions::condition::ga:dimension5==' . implode(',ga:dimension5==', $vtkids);
   //$vtk_filter = 'ga:dimension5==' . implode(',ga:dimension5==', $vtkids);
   $request = array(
-    'dimensions' => array('ga:hostname', 'ga:pagePath', 'ga:pageTitle', 'ga:visitLength', 'ga:dimension5', 'ga:visitCount', 'ga:dimension4'),
-    'metrics' => array('ga:entrances', 'ga:pageviews', 'ga:bounces', 'ga:timeOnSite', 'ga:timeOnPage', 'ga:goalValueAll'),
+    'dimensions' => array('ga:hostname', 'ga:pagePath', 'ga:pageTitle', 'ga:visitLength', 'ga:dimension5', 'ga:sessionCount', 'ga:dimension4'),
+    'metrics' => array('ga:entrances', 'ga:pageviews', 'ga:bounces', 'ga:timeOnPage', 'ga:goalValueAll'),
     'sort_metric' => 'ga:dimension4',
     'start_date' => $start_date,
     'end_date' => $end_date,
@@ -70,8 +73,6 @@ function intel_visitor_clickstream_report($vars) {
   );
 
   $data = intel_ga_api_data($request, $cache_options);
-intel_d($request);
-intel_d($data);
 
   $visits = array();
   $visitindex = 0;
@@ -82,15 +83,15 @@ intel_d($data);
       if (!isset($steps[$ts])) { 
         $steps[$ts] = array(); 
       }
-      $visitid = $row['dimension5'] . '-' . $row['visitCount'];
+      $visitid = $row['dimension5'] . '-' . $row['sessionCount'];
       if (!isset($steps['_visits'][$visitid])) {
         $steps[$ts]['visitindex'] = $visitindex;
         $steps[$ts]['visit'] = array('events' => _intel_init_events_array());
         $steps[$ts]['visit']['timestamp'] = $ts;
         $steps[$ts]['visit']['vtk'] = $row['dimension5'];
-        $steps[$ts]['visit']['visitCount'] = $row['visitCount'];
+        $steps[$ts]['visit']['sessionCount'] = $row['sessionCount'];
         $steps[$ts]['visit']['visitLength'] = $row['visitLength'];
-        $steps[$ts]['visit']['timeOnSite'] = floatval($row['timeOnSite']);
+        $steps[$ts]['visit']['timeOnPage'] = floatval($row['timeOnPage']);
         $steps[$ts]['visit']['sticks'] = 1 - $row['bounces']; 
         $steps[$ts]['visit']['pageviews'] = 0;
         $steps[$ts]['visit']['goalValueAll'] = floatval($row['goalValueAll']);
@@ -103,6 +104,7 @@ intel_d($data);
       }      
       $steps[$ts]['page']['hostname'] = $row['hostname'];
       $steps[$ts]['page']['pagePath'] = $row['pagePath'];
+      $steps[$ts]['page']['hostpath'] = $row['hostname'] . $row['pagePath'];
       $steps[$ts]['page']['pageTitle'] = $row['pageTitle'];
       $steps[$ts]['page']['pageviews'] = intval($row['pageviews']);
       $steps[$ts]['page']['timeOnPage'] = floatval(['timeOnPage']);
@@ -141,7 +143,7 @@ intel_d($data);
       if (!isset($steps[$ts]['events'])) {
         $steps[$ts]['events'] = _intel_init_events_array();
       }
-
+      $row['metric2'] = floatval($row['metric2']);
       $valuedValue = !empty($row['metric2']) ? $row['metric2'] : $row['eventValue'];
       $event = array(
         'timestamp' => $ts,
@@ -149,14 +151,22 @@ intel_d($data);
         'pageindex' => $pageindex,
         'hostname' => $row['hostname'],
         'pagePath' => $row['pagePath'],
+        'hostpath' => $row['hostname'] . $row['pagePath'],
         'eventCategory' => $row['eventCategory'],
         'eventAction' => $row['eventAction'],
         //'eventLabel' => $row['eventLabel'],
         'eventLabel' => '',
-        'eventValue' => floatval($row['eventValue']),
+        'eventValue' => floatval($valuedValue),
         'is_valuedevent' => (substr($row['eventCategory'], -1) == '!') ? 1 : 0,
         'value' => (substr($row['eventCategory'], -1) == '!') ? floatval($valuedValue) : 0,
+        'mode' => '',
       );
+      if (substr($row['eventCategory'], -1) == '!') {
+        $event['mode'] = 'valued';
+      }
+      elseif (substr($row['eventCategory'], -1) == '+') {
+        $event['mode'] = 'goal';
+      }
       $steps[$ts]['events'][] = $event; 
       $steps[$ts]['events']['_all'] = _intel_update_event_all_values($steps[$ts]['events']['_all'], $event);
       $steps[$pageindex]['page']['events'][] = $event;
@@ -270,9 +280,7 @@ intel_d($data);
   
   ksort($steps);
 
-intel_d($steps);
-
-  $output = ''; 
+  $output = '';
   
   $vars = array(
     'steps' => $steps,
@@ -347,6 +355,7 @@ function theme_intel_visitor_clickstream($variables) {
 EOD;
   $output .= '<div id="intel-report"><div id="visitor-report">' . "\n";
 
+  $scorings = intel_get_scorings();
   $locations = array();
   $locstr = '';
   $vi = 0;
@@ -359,12 +368,15 @@ EOD;
   $endday = '';
   $visit_ts = 0;
   $page_ts = 0;
+  $stick = 0;
   $tldata = array(
     'visits' => array(),
     'pages' => array(),
     'events' => array(),
   );  // tag, start
   $session_steps = array();
+  $last_page_hostpath = '';
+  $last_page_hostpath_indexes = array();
   $i = 0;
 
   foreach ($steps AS $ts => $step) {
@@ -380,6 +392,9 @@ EOD;
       if ($vi) {
         $col2 .= Intel_Df::theme('intel_visit_steps_table', array('steps' => $session_steps));
         $session_steps = array();
+        $last_page_hostpath = '';
+        $last_page_hostpath_indexes = array();
+        $stick = 0;
         //$col2 .= "        <div style=\"clear: left;\"></div>\n";
         //$col2 .= "      </div>\n";
         $col2 .= "    </div>\n";
@@ -394,73 +409,28 @@ EOD;
       $vi ++;
       $tldata['visits'][$ts] = _intel_init_tl_visit($step, $ts, $vi);
       $vout .= '<div class="session">' . "\n";
-      $vout .= '  <h3 class="card-header">' . Intel_Df::t('Visit') . " " . $step['visit']['visitCount'];
+      $vout .= '  <h3 class="card-header">' . Intel_Df::t('Visit') . " " . $step['visit']['sessionCount'];
       if (count($vtkids) > 1) {
         $vout .= ' (' . substr($step['visit']['vtk'], 0, 10) . ')';
       }
-      $vout .= ': ' . date("D F j, Y, g:i a", $ts) . "</h3>\n";
+      $vout .= ': ' . Intel_Df::format_date($ts, 'long') . "</h3>\n";
+      //$vout .= ': ' . date("D F j, Y, g:i a", $ts) . "</h3>\n";
       $vout .= '<div class="row">';
       $col1 = '  <div class="col-md-3 pull-left">' . "\n";
       theme_intel_visitor_referrer($step, '        ', $tldata['visits'][$ts]);
       $col1 .= Intel_Df::theme('intel_trafficsource_block', array('trafficsource' => $step['referrer']));
-      /*
-      $col1 .= '    <div class="referrer report-box">' . "\n";
-      $col1 .= '      <h4>' . Intel_Df::t('Referrer') . "</h4>\n";
-      $col1 .= '      <div class="environment report-box-body">' . "\n";
-      $col1 .=
-      $col1 .= '      </div>' . "\n";
-      $col1 .= '    </div>' . "\n";      
-      */
+
       if (!empty($step['location'])) {
         $col1 .= Intel_Df::theme('intel_location_block', array(
           'location' => $step['location']
         ));
       }
-      /*
-      if (!empty($step['location'])) {
-        $lat = $step['location']['latitude'];
-        $lon = $step['location']['longitude'];
-        if (empty($locations["$lat,$lon"])) {
-          $locations["$lat,$lon"] = array(
-            'lat' => $lat,
-            'lon' => $lon,
-            'name' => $step['location']['metro'],
-            //'country' => $step['location']['country'],
-            'count' => 1,
-          );
-        }
-        else {
-          $locations["$lat,$lon"]['count'] ++;
-        }
-        $col1 .= '    <div class="location report-box">' . "\n";
-        $col1 .= '      <h4>' . Intel_Df::t('Location') . "</h4>\n";
-        $col1 .= '      <div class="report-box-body">' . "\n";
-        $col1 .= '        <div class="text">' . "\n";
-        $col1 .= '          ' . $step['location']['city'] . ', ' . $step['location']['region'] . "<br />\n";
-        $col1 .= '          ' . $step['location']['country'] . "<br /> <br />\n";
-        $col1 .= '          ' . $step['location']['metro'] . "<br />\n";
-        $col1 .= '        </div>' . "\n";
-        $col1 .= '        <div class="map">' . "\n";
-        $col1 .= theme_intel_visitor_map($locations["$lat,$lon"], array(), '          ');
-        $col1 .= '        </div>' . "\n";
-        $col1 .= '        <div style="clear: left;"></div>' . "\n";
-        $col1 .= '      </div>' . "\n";
-        $col1 .= '    </div>' . "\n";        
-      }
-      */
       if (!empty($step['location'])) {
         $col1 .= Intel_Df::theme('intel_browser_environment_block', array(
           'environment' => $step['environment']
         ));
       }
-      /*
-      $col1 .= '    <div class="environment report-box">' . "\n";
-      $col1 .= '      <h4>' . Intel_Df::t('System') . "</h4>\n";
-      $col1 .= '      <div class="report-box-body">' . "\n";
-      $col1 .= theme_intel_visitor_environment($step, '        ');
-      $col1 .= '      </div>' . "\n";
-      $col1 .= '    </div>' . "\n";
-      */
+
       $col1 .= '  </div>' . "\n"; // end summary column
       
       $col2 = '  <div class="col-md-9">' . "\n";
@@ -475,21 +445,33 @@ EOD;
     //}
     $s = '        ';
     if (!empty($step['page'])) {
-      $si = $step['page'];
-      $si['time'] = $ts;
-      $si['type'] = 'page';
-      $session_steps[] = $si;
+      if ($last_page_hostpath != $step['page']['hostpath']) {
+        $si = $step['page'];
+        $si['time'] = $ts;
+        $si['type'] = 'page';
+        //$si['value'] = empty($last_page_hostpath_indexes) ? $scorings['entrance'] : $scorings['additional_pages'];
+        $session_steps[] = $si;
 
-      //$col2 .= $s . '<div class="pageview">' . "\n";
-      //$col2 .= $s . '  <div class="time">' . $time . "</div>\n";
-      //$col2 .= $s . '  <div class="item">' . Intel_Df::l($step['page']['pageTitle'], "http://" . $step['page']['hostname'] . $step['page']['pagePath']) . "</div>\n";
-      //$col2 .= $s . '  <div class="value">' . '-' . "</div>\n";
-      //$col2 .= $s . '</div>' . "\n";
+        if (!$stick && count($last_page_hostpath_indexes) == 1 && !empty($scorings['stick'])) {
+          $si = array();
+          $si['time'] = $ts;
+          $si['type'] = 'event';
+          $si['category'] = '(' . Intel_Df::t('stick') . ')';
+          $si['action'] = '';
+          $si['value'] = $scorings['stick'];
+          $si['mode'] = 'valued';
+          $si['hostname'] = $step['page']['hostname'];
+          $si['pagePath'] = $step['page']['pagePath'];
+          //$session_steps[] = $si;
+        }
 
-      $vars = array('text' => "time: $time");
-      $tldata['pages'][$ts] = _intel_init_tl_page($step, $ts, $visit_ts, $vi, $vars);
+        $vars = array('text' => "time: $time");
+        $tldata['pages'][$ts] = _intel_init_tl_page($step, $ts, $visit_ts, $vi, $vars);
 
-      $page_ts = $ts;
+        $page_ts = $ts;
+        $last_page_hostpath = $step['page']['hostpath'];
+        $last_page_hostpath_indexes[$last_page_hostpath] = $ts;
+      }
     }
     if (!empty($step['events']) && is_array($step['events'])) {
 
@@ -525,8 +507,11 @@ EOD;
         $si['category'] = $event['eventCategory'];
         $si['action'] = $event['eventAction'];
         $si['value'] = $event['eventValue'];
+        $si['mode'] = $event['mode'];
+        $si['hostname'] = $event['hostname'];
+        $si['pagePath'] = $event['pagePath'];
         $session_steps[] = $si;
-        $hostpath = $event['hostname'] . $event['pagePath'];
+        $hostpath = $event['hostpath'];
         $item = $event['eventCategory'] . ": " . $event['eventAction'];
         if (in_array(strtolower($event['eventCategory']), $label_is_link)) {
           if (strpos($event['eventLabel'], '://') !== FALSE) {
@@ -539,8 +524,9 @@ EOD;
           $item = $event['eventCategory'] . ": " . $l;
         }
         $value = '-';
-        if ($event['eventValue']) {
-          $value = "$" . number_format($event['eventValue'], 2);
+        if ($event['mode']) {
+          $value = intel_event_value_format($event['value'], array('mode' => $event['mode']));
+          //$value = $value_format['prefix'] . number_format($event['value'], $value_format['decimals']) . $value_format['prefix'];
         }
         $cat = Intel_Df::drupal_clean_css_identifier("event category " . strtolower($event['eventCategory']));
         $valued = (!empty($event['eventValue'])) ? ' event-valued' : '';
@@ -571,7 +557,9 @@ EOD;
                 'text' => $text,
                 'valuetext' => (($value != '-') ? "+$value" : ''),
               );
-              _intel_tl_add_event_to_page($tldata, $event['pageindex'], $text, $type);
+
+              _intel_tl_add_event_to_page($tldata, $last_page_hostpath_indexes[$event['hostpath']], $text, $type);
+              //_intel_tl_add_event_to_page($tldata, $event['pageindex'], $text, $type);
               // only show events that don't occur on a page
               if (!empty($step['page'])) {
                 //$tldata['events'][$ts][] = _intel_init_tl_event($step, $i, $ts, $visit_ts, $vi, $vars);
@@ -582,7 +570,7 @@ EOD;
       }
     }
   }
-intel_d($session_steps);
+
   $col2 .= Intel_Df::theme('intel_visit_steps_table', array('steps' => $session_steps));
 
   //$col2 .= "        <div style=\"clear: left;\"></div>\n";
@@ -747,12 +735,12 @@ function _intel_init_tl_visit($step, $ts, $visitindex) {
   $ret = array(
     'startDate' => _intel_format_timelinejs_timestamp($ts-1),
     'endDate' => _intel_format_timelinejs_timestamp($ts + $step['visit']['visitLength']),
-    'headline' => 'Visit ' . $step['visit']['visitCount'],
+    'headline' => 'Visit ' . $step['visit']['sessionCount'],
     'text' => '',
     'tag' => 'visits',
     'asset' => array(),
     'visitindex' => $visitindex,
-    'visitcount' => $step['visit']['visitCount'],
+    'visitcount' => $step['visit']['sessionCount'],
   );
   return $ret;
 }

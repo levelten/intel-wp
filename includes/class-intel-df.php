@@ -913,7 +913,9 @@ class Intel_Df  {
 	public static function format_date($time, $format = '') {
 		$formats = array(
 			'' => 'Y-m-d G:i:s',
+			'short' => 'm/d/Y - H:i',
 			'medium' => 'Y-m-d G:i',
+			'long' => 'l, F j, Y - H:i',
 			'duration' => ($time > 3600) ? 'G:m:s' : 'm:s',
 		);
 		if (!empty($formats[$format])) {
@@ -922,6 +924,7 @@ class Intel_Df  {
 		if (empty($format)) {
 			$format = $formats[''];
 		}
+		return date_i18n($format, $time);
 		return date($format, $time);
 	}
 
