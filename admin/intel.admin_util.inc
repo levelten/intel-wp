@@ -30,16 +30,9 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $ts = !empty($_GET['time']) ? $_GET['time'] : time();
-  $time = Intel_Df::format_date($ts);
+  $goals = get_option('intel_goals', array());
 
-  intel_d($time);
-
-  $time = date_i18n('Y-m-d G:i:s', $ts);
-
-  intel_d($time);
-
-  return $time;
+  intel_d($goals);
 
 
 

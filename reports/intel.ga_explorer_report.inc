@@ -8,7 +8,6 @@
 
 function intel_ga_explorer_report() {
   $request = get_option('intel_ga_explorer_request', '');
-intel_d($request);
   $options = array('' => Intel_Df::t('- None -'));
   $presets = intel_ga_explorer_presets();
   foreach ($presets AS $name => $arr) {

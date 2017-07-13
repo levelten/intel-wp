@@ -131,7 +131,7 @@ function intel_goal_const($goal, $ga_goal = array()) {
  * @return array|bool
  */
 function intel_goal_save($goal, $options = array()) {
-  $goals = intel_goal_load();
+  $goals = intel_goal_load(null, array('index_by' => 'ga_id'));
   $ga_goals = intel_ga_goal_load();
 
   // if goal already exists, merge in existing properties
@@ -169,6 +169,7 @@ function intel_goal_save($goal, $options = array()) {
     );
     $ga_goal = intel_ga_goal_save($ga_goal);
   }
+
   $goals[$goal['ga_id']] = $goal;
   update_option('intel_goals', $goals);
 
@@ -387,6 +388,7 @@ function intel_sync_goals_ga_goals() {
       $goals[$id] = intel_goal_const(array(), $ga_goal);
     }
   }
+
   update_option('intel_goals', $goals);
   return $goals;
 }
@@ -1014,12 +1016,15 @@ function intel_get_event_goal_info($filter = '') {
 }
 
 function intel_format_intel_event_eventcategory($event, $goal_info) {
-
-
   $str = !empty($event['title']) ? $event['title'] : '';
   $str = !empty($event['category']) ? $event['category'] : $str;
   if (!empty($event['goal_event']) || (!empty($event['mode']) && $event['mode'] == 'goal')) {
-    $str .= ': ' . $goal_info[$event['ga_id']]['title'] . '+';
+    if (!empty($goal_info[$event['ga_id']])) {
+      $str .= ': ' . $goal_info[$event['ga_id']]['title'] . '+';
+    }
+    elseif (!empty($goal_info[$event['goal_name']])) {
+      $str .= ': ' . $goal_info[$event['goal_name']]['title'] . '+';
+    }
   }
   elseif (!empty($event['valued_event']) || (!empty($event['mode']) && $event['mode'] == 'valued')) {
     $str .= '!';
@@ -3523,9 +3528,10 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
       );
     }
   }
-  $request['filters'] = '';
+
   $request['dimensions'] = array('ga:dimension5', 'ga:sessionCount', 'ga:medium', 'ga:source', 'ga:referralPath', 'ga:keyword', 'ga:dimension4');
   $request['metrics'] = array('ga:entrances');
+  $request['filters'] = 'ga:entrances>0';
   $request['sort_metric'] = '-ga:dimension4';  // note: cant sort by sessionCount as it is treated as a string not an int
   $request['max_results'] = 10;
 
@@ -3535,14 +3541,9 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
   $visitCountMax = 0;
   $tsMin = REQUEST_TIME;
   $rows = intel_get_ga_feed_rows($data);
+
   if (!empty($rows) && is_array($rows)) {
     foreach ($rows AS $row) {
-      /*
-      $visitCountMin = $i = (int)$row['sessionCount'];
-      if (!$visitCountMax) {
-        $visitCountMax = $i;
-      }
-      */
       $i = $row['dimension5'] . '-' . $row['sessionCount'];
       $visitor['visits'][$i] = array(
         'trafficsource' => array(),
@@ -3561,6 +3562,8 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
       }
     }
   }
+
+  $request['filters'] = '';
   $request['dimensions'] = array('ga:dimension5', 'ga:sessionCount', 'ga:socialNetwork', 'ga:campaign');
   $request['metrics'] = array('ga:pageviews', 'ga:bounces', 'ga:timeOnPage', 'ga:goalValueAll');
   $request['sort_metric'] = '';
@@ -3573,7 +3576,6 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
   $rows = intel_get_ga_feed_rows($data);
   if (!empty($rows) && is_array($rows)) {
     foreach ($rows AS $row) {
-      //$i = (int)$row['sessionCount'];
       $i = $row['dimension5'] . '-' . $row['sessionCount'];
       $visitor['visits'][$i]['entrance'] = array();
       $visitor['visits'][$i]['entrance']['entrances'] = 1;
@@ -3599,7 +3601,6 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
   $data = intel_ga_api_data($request, $cache);
   //dsm($request); dsm($data);
   $rows = intel_get_ga_feed_rows($data);
-  intel_d($rows);
   if (!empty($rows) && is_array($rows)) {
     foreach ($rows AS $row) {
       //$i = (int)$row['sessionCount'];
@@ -3615,7 +3616,6 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
   }
   $score_components = '';
   $score = 0;
-intel_d($visitor);
   foreach ($visitor['visits'] AS $index => $visit) {
     if (substr($index, 0, 1) == '_') {
       continue;

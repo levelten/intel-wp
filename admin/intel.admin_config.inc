@@ -759,7 +759,16 @@ function intel_admin_scoring_submit(&$form, &$form_state) {
 function intel_admin_goal_list_page() {
   require_once INTEL_DIR . "includes/intel.ga.inc";
 
+
+  if (!empty($_GET['resync'])) {
+    intel_sync_goals_ga_goals();
+    Intel_Df::drupal_set_message(Intel_Df::t('Goal data has been resynced'));
+    $l_option = Intel_Df::l_options_add_query(array());
+    Intel_Df::drupal_goto(Intel_Df::current_path(), $l_option);
+  }
+
   $options = array(
+    'index_by' => 'ga_id',
     'refresh' => 3600,
   );
   if (isset($_GET['refresh']) && is_numeric($_GET['refresh'])) {
@@ -837,7 +846,9 @@ function intel_admin_goal_list_page() {
   $output = Intel_Df::theme('table', $vars);
 
   $l_options = Intel_Df::l_options_add_query(array('refresh' => 1));
-  $output .= "<br>\n" . Intel_Df::l( Intel_Df::t('Refresh data'), Intel_Df::current_path(), $l_options );
+  $output .= "<br>\n" . Intel_Df::l( Intel_Df::t('refresh data'), Intel_Df::current_path(), $l_options );
+  $l_options = Intel_Df::l_options_add_query(array('resync' => 1));
+  $output .= " | " . Intel_Df::l( Intel_Df::t('resync data'), Intel_Df::current_path(), $l_options );
 
   return $output;
 }

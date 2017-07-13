@@ -931,7 +931,11 @@ function intel_admin_setup_submit_basic_config($form, &$form_state) {
   if ($values['init_config'] == 'default') {
     $goal_defaults = intel_get_intel_goals_default();
     // create default goals
-    $goals = intel_goal_load(null, array('refresh' => 300));
+    $options = array(
+      'index_by' => 'ga_id',
+      'refresh' => 300,
+    );
+    $goals = intel_goal_load(null, $options);
     $ga_goals = intel_ga_goal_load();
 
     // check if an intelligence goal exists
@@ -1345,6 +1349,7 @@ function intel_admin_setup_goals($form, &$form_state) {
   $status = $form_state['intel_statuses']['goals'];
 
   $options = array(
+    'index_by' => 'ga_id',
     'refresh' => 3600,
   );
   if (isset($_GET['refresh']) && is_numeric($_GET['refresh'])) {
@@ -1625,9 +1630,12 @@ function intel_admin_setup_check_goals($form, &$form_state) {
 
   $status = array();
 
-  $refresh = !empty($_GET['refresh']) && is_numeric($_GET['refresh']) ? intval($_GET['refresh']) : 3600;
+  $options = array(
+    'index_by' => 'ga_id',
+    'refresh' => !empty($_GET['refresh']) && is_numeric($_GET['refresh']) ? intval($_GET['refresh']) : 3600,
+  );
 
-  $form_state['intel_goals'] = $goals = intel_goal_load(null, array('refresh' => $refresh));
+  $form_state['intel_goals'] = $goals = intel_goal_load(null, $options);
   $form_state['intel_ga_goals'] = $ga_goals = intel_ga_goal_load();
 
   // after refresh, unset and return status to maintain step

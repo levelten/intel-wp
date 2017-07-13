@@ -309,9 +309,9 @@ function template_preprocess_intel_visitor_social_links (&$variables) {
       )
     );
     $upload_dir = wp_upload_dir();
-    $upload_basedir = $upload_dir['basedir'] . '/';
+    $upload_baseurl = $upload_dir['baseurl'] . '/';
     $iv = array(
-      'path' => $upload_basedir . $info['icon'],
+      'path' => $upload_baseurl . $info['icon'],
       'alt' => $alt,
       'title' => $alt,
     );

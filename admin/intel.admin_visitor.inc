@@ -473,7 +473,7 @@ function intel_visitor_page($entity) {
     $synced = $entity->getSynced();
     if (empty($synced)) {
       $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
-      $msg = Intel_Df::t('Visitor data has not yet been synced. !link.', array(
+      $msg = Intel_Df::t('Visitor data has not yet been fully synced. !link.', array(
         '!link' => Intel_Df::l(Intel_Df::t('Click here to sync'), "visitor/{$entity->vid}/sync", $l_options),
       ));
       Intel_Df::drupal_set_message($msg, 'warning');

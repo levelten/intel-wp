@@ -392,6 +392,7 @@ EOD;
       if ($vi) {
         $col2 .= Intel_Df::theme('intel_visit_steps_table', array('steps' => $session_steps));
         $session_steps = array();
+        $page_ts = 0;
         $last_page_hostpath = '';
         $last_page_hostpath_indexes = array();
         $stick = 0;
@@ -444,36 +445,35 @@ EOD;
       $time = "+" . _intel_format_delta_time($ts - $step['visitindex']);
     //}
     $s = '        ';
-    if (!empty($step['page'])) {
-      if ($last_page_hostpath != $step['page']['hostpath']) {
-        $si = $step['page'];
+    if (!empty($step['page']) && !empty($step['page']['pageviews'])) {
+
+      $si = $step['page'];
+      $si['time'] = $ts;
+      $si['type'] = 'page';
+      //$si['value'] = empty($last_page_hostpath_indexes) ? $scorings['entrance'] : $scorings['additional_pages'];
+      $session_steps[] = $si;
+
+      if (!$stick && count($last_page_hostpath_indexes) == 1 && !empty($scorings['stick'])) {
+        $si = array();
         $si['time'] = $ts;
-        $si['type'] = 'page';
-        //$si['value'] = empty($last_page_hostpath_indexes) ? $scorings['entrance'] : $scorings['additional_pages'];
-        $session_steps[] = $si;
-
-        if (!$stick && count($last_page_hostpath_indexes) == 1 && !empty($scorings['stick'])) {
-          $si = array();
-          $si['time'] = $ts;
-          $si['type'] = 'event';
-          $si['category'] = '(' . Intel_Df::t('stick') . ')';
-          $si['action'] = '';
-          $si['value'] = $scorings['stick'];
-          $si['mode'] = 'valued';
-          $si['hostname'] = $step['page']['hostname'];
-          $si['pagePath'] = $step['page']['pagePath'];
-          //$session_steps[] = $si;
-        }
-
-        $vars = array('text' => "time: $time");
-        $tldata['pages'][$ts] = _intel_init_tl_page($step, $ts, $visit_ts, $vi, $vars);
-
-        $page_ts = $ts;
-        $last_page_hostpath = $step['page']['hostpath'];
-        $last_page_hostpath_indexes[$last_page_hostpath] = $ts;
+        $si['type'] = 'event';
+        $si['category'] = '(' . Intel_Df::t('stick') . ')';
+        $si['action'] = '';
+        $si['value'] = $scorings['stick'];
+        $si['mode'] = 'valued';
+        $si['hostname'] = $step['page']['hostname'];
+        $si['pagePath'] = $step['page']['pagePath'];
+        //$session_steps[] = $si;
       }
+
+      $vars = array('text' => "time: $time");
+      $tldata['pages'][$ts] = _intel_init_tl_page($step, $ts, $visit_ts, $vi, $vars);
+
+      $page_ts = $ts;
+      $last_page_hostpath = $step['page']['hostpath'];
+      $last_page_hostpath_indexes[$last_page_hostpath] = $ts;
     }
-    if (!empty($step['events']) && is_array($step['events'])) {
+    if (!empty($step['events']) && is_array($step['events']) && $page_ts) {
 
       $etime = '"';
       if ($ts != $page_ts) {

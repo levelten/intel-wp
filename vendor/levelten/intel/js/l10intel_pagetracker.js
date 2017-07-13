@@ -74,6 +74,10 @@ function L10iPageTracker(_ioq, config) {
 
     this.sendPageConsumedEvent = function() {
         ioq.log('PageTracker::sendPageConsumedEvent()');
+        // if page has been left open for more than 30 mins, don't send event.
+        if (ioq.getTimeDelta() > 3600) {
+            return;
+        }
         var evtDef = {
             eventCategory: 'Page consumed!',
             eventAction: '[[pageTitle]]',
