@@ -647,7 +647,7 @@ function template_preprocess_intel_visitor_visits_table(&$variables) {
         $medium . ' / ' . $source,
         $visit['entrance']['pageviews'],
         number_format($score, 2),
-        Intel_Df::l(Intel_Df::t('view'), $variables['entity']->uri() . '/clickstream', array('query' => array('visit-count' => $i))),
+        Intel_Df::l(Intel_Df::t('view'), $variables['entity']->uri() . '/clickstream', array('query' => array('visit-ts' => $visit['time']))),
       );
     }
     if (count($rows)) {

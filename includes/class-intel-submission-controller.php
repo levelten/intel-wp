@@ -173,13 +173,15 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 				$step['type'] = 'page';
 				$step['hostname'] = $row['hostname'];
 				$step['pagePath'] = $row['pagePath'];
+				$step['hostpath'] = $row['hostname'] . $row['pagePath'];
 				$step['pageTitle'] = $row['pageTitle'];
+				$step['pageviews'] = intval($row['pageviews']);
 				$ret['session']['steps'][] = $step;
 			}
 		}
 
 		$request['dimensions'] = array('ga:eventCategory', 'ga:eventAction', 'ga:hostname', 'ga:pagePath', 'ga:dimension4');
-		$request['metrics'] = array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue');
+		$request['metrics'] = array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue', 'ga:metric2');
 		$request['filter'] = array();
 		$data = intel_ga_api_data($request, $cache);
 
@@ -190,19 +192,32 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 				if ($ts > $ret['lasthit']) {
 					$visitor['lasthit'] = $ts;
 				}
+				$mode = '';
+				$value = intval($row['eventValue']);
+				if (substr($row['eventCategory'], -1) == '!') {
+					$value = floatval($row['metric2']);
+					$mode = 'valued';
+				}
+				elseif (substr($row['eventCategory'], -1) == '+') {
+					$mode = 'goal';
+				}
+
 				$step = array(
 					'time' => (int) $ts,
 					'type' => 'event',
 					'category' => $row['eventCategory'],
 					'action' => $row['eventAction'],
-					'value' => (int)$row['eventValue'],
+					'value' => $value,
+					'mode' => $mode,
+					'hostname' => $row['hostname'],
+					'pagePath' => $row['pagePath'],
 				);
 				$ret['session']['steps'][] = $step;
 			}
 		}
 
 		$goals = array();
-		$goal_info = intel_get_goal_info();
+		$goal_info = intel_goal_load(null, array('index_by' => 'ga_id'));
 
 		$request['dimensions'] = array('ga:dimension4');
 		$request['metrics'] = array();

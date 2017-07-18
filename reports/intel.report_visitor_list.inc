@@ -117,7 +117,8 @@ function intel_visitor_list_report($vars) {
         'type' => 'content',
       );
       $d[$vars['indexBy']][$index]['links'] = intel_build_report_links($link_keys, $filter, $vars['report_params']);
-      $d[$vars['indexBy']][$index]['links'][] = Intel_Df::l(Intel_Df::t('clickstream'), intel_build_report_path('visitor', array(), 'clickstream', $filter));
+      $d[$vars['indexBy']][$index]['links'][] = Intel_Df::l(Intel_Df::t('clickstream'), 'visitor/' . $vtkid . '/clickstream');
+      //$d[$vars['indexBy']][$index]['links'][] = Intel_Df::l(Intel_Df::t('clickstream'), intel_build_report_path('visitor', array(), 'clickstream', $filter));
 
 /*
       $params = $vars['report_params'];

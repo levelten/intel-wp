@@ -103,12 +103,12 @@ function L10iAddthis(_ioq, config) {
             return;
         }
         var ga_event = {
-            'eventCategory': "Social share!",
+            'eventCategory': "Social share click!",
             'eventAction': (typeof addthis.util.getServiceName(evt.data.service) != 'undefined') ? addthis.util.getServiceName(evt.data.service) : evt.data.service,
             'eventLabel': "[[systemAlias]]",
             'eventValue': io('get', 'config.scorings.events.addthis_social_share', 0),
             'nonInteraction': false,
-            'eid': 'socialShare'
+            'eid': 'socialShareClick'
         };
         io('event', ga_event);
     };

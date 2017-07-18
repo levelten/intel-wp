@@ -248,7 +248,7 @@ class Intel_Entity {
 		$this->data['syncStatus']['result'][$process] = array();
 	}
 
-	public function syncData() {
-		$this->controller->syncData($this);
+	public function syncData($options = array()) {
+		$this->controller->syncData($this, $options);
 	}
 }

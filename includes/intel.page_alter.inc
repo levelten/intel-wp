@@ -803,6 +803,7 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
       $_SESSION['intel']['page_pushes'][$method] = array();
     }
 
+    $index = -1;
     if ($method == 'set') {
       $index = $push[0];
       $value = $push[1];
@@ -811,14 +812,29 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
       $index = count($_SESSION['intel']['page_pushes'][$method]);
       $value = $push[0];
     }
+    elseif ($method == 'setUserId') {
+      $value = $push[0];
+    }
     else {
       $index = count($_SESSION['intel']['page_pushes'][$method]);
       $value = $push;
     }
 
-    $_SESSION['intel']['page_pushes'][$method][$index] = $value;
+    if ($index == -1) {
+      $_SESSION['intel']['page_pushes'][$method] = $value;
+    }
+    else {
+      $_SESSION['intel']['page_pushes'][$method][$index] = $value;
+    }
+
   }
+
   $ret = $_SESSION['intel']['page_pushes'];
+
+  if ($action == 'save_flush') {
+    intel()->quick_session_cache();
+    unset($_SESSION['intel']['page_pushes']);
+  }
   if ($action == 'get_flush') {
     unset($_SESSION['intel']['page_pushes']);
   }
@@ -1003,6 +1019,23 @@ function intel_trigger_intel_event_by_name($event_name, $values = array()) {
   return intel_trigger_intel_event($values);
 }
 
+function intel_cache_busting_url($url) {
+  $enable = Intel_Df::drupal_static( __FUNCTION__ );
+  if (!isset($enable)) {
+    $enable = get_option('intel_cache_busting', INTEL_CACHE_BUSTING_DEFAULT);
+  }
+  if (!$enable) {
+    return $url;
+  }
+  $parse_url = parse_url($url);
+  if (!empty($parse_url['query'])) {
+    $url .= '&iot=' . microtime();
+  }
+  else {
+    $url .= '?iot=' . microtime();
+  }
+  return $url;
+}
 /*
 function intel_print_var($var) {
   dsm($var);
@@ -1352,7 +1385,7 @@ function intel_js_alter(&$javascript) {
     //$str = '_l10iq.push(["set", "config", ' . drupal_json_encode($options['config']) . ']);' . "\n";
     if (isset($options['pushes']) && is_array($options['pushes'])) {
       foreach ($options['pushes'] as $cm => $push) {
-        if ($cm == 'setUserId') {
+        if (0 && $cm == 'setUserId') {
           $pushstr .= $io_name . '("' . $cm . '","' . $push[0][0];
           if (!empty($push[0][1])) {
             $pushstr .= '","' . $push[0][1];
@@ -2002,13 +2035,26 @@ function intel_process_form_submission($vars) {
     }
   }
 
+  //$userId = Intel_Visitor::extractUserId();
+  if ($api_level == 'pro' && !empty($visitor->identifiers['vtk'][0])) {
+    $vtk = $visitor->identifiers['vtk'][0];
+    $data = array(
+      'userId' => $vtk,
+    );
+    intel_add_page_intel_push(array('setUserId', $data));
+    // if visitor already exists (with original vtk), clear out identifiers
+    if ($vtk != intel()->vtk) {
+      $visitor->deleteIdentifierValue('vtk', intel()->vtk);
+      $visitor->deleteIdentifierValue('gacid', intel()->gacid);
+    }
+  }
+
   // save visitor
   if (!empty($visitor->vid)) {
     intel_visitor_save($visitor);
     //watchdog('intel.page_alter 992', print_r($visitor, 1));
   }
-  //$userId = Intel_Visitor::extractUserId();
-  intel_add_page_intel_push(array('setUserId', '.', $visitor->vtk));
+
 
   // queue to sync visitor data
   // add delay to wait for ga data to populate
@@ -2247,6 +2293,12 @@ function intel_user_register_form_submit(&$form, &$form_state) {
  */
 add_action( 'comment_post', 'intel_comment_post', 10, 3 );
 function intel_comment_post( $comment_ID, $comment_approved, $commentdata = array() ) {
+
+  // don't save "visitors" that don't have a vtk. They are likely spam bots
+  $vtk = Intel_Visitor::extractVtk();
+  if (empty($vtk)) {
+    return;
+  }
   // fetch comment
   $args = array(
     'comment_ID' => $comment_ID,

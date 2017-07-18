@@ -95,9 +95,7 @@ class Intel_Visitor extends Intel_Entity  {
 	public function completeLoad() {
 		$this->attachIdentifiers($this->controller->loadIdentifiers($this));
 		if (empty($this->vtk) && !empty($this->identifiers['vtk'][0])) {
-			$this->vtk = $this->identifiers['vtk'][0];
-			$this->vtkid = substr($this->vtk, 0, 20);
-			$this->vtkc = substr($this->vtk, 20);
+			$this->setVtk($this->identifiers['vtk'][0]);
 		}
 	}
 
@@ -450,6 +448,8 @@ class Intel_Visitor extends Intel_Entity  {
 
 	public function setVtk($vtk) {
 		$this->vtk = $vtk;
+		$this->vtkid = substr($this->vtk, 0, 20);
+		$this->vtkc = substr($this->vtk, 20);
 	}
 
 	public function setUserId($userId) {
@@ -551,7 +551,20 @@ class Intel_Visitor extends Intel_Entity  {
 	}
 
 	public function getIdentifiers($type) {
-		return $this->identifiers[$type];
+		return isset($this->identifiers[$type]) ? $this->identifiers[$type] : array();
+	}
+
+	public function deleteIdentifierValue($type, $value) {
+		if (empty($this->identifiers[$type])) {
+			return;
+		}
+		$ids = array();
+		foreach ($this->identifiers[$type] as $i => $v) {
+			if ($value != $v) {
+				$ids[] = $v;
+			}
+		}
+		$this->identifiers[$type] = $ids;
 	}
 
 	public function clearIdentifierType($type) {

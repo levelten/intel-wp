@@ -1947,7 +1947,7 @@ class Intel_Df  {
 		update_option($name, $value);
 	}
 
-	public static function watchdog($type, $message, $variables = array(), $severity = Intel_Df::WATCHDOG_NOTICE, $link = NULL) {
+	public static function watchdog($type, $message = '', $variables = array(), $severity = Intel_Df::WATCHDOG_NOTICE, $link = NULL) {
 		//$option_log = get_option('intel_debug_log', '');
 		$msg = __('WATCHDOG', 'intel') . ': ' . $type . ":\n" . $message;
 		//self::drupal_set_message($msg);

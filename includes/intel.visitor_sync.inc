@@ -103,12 +103,17 @@ function intel_work_sync_visitor_request_queue($limit = 10, $runtime = 60) {
   return $items;
 }
 
-add_filter( 'intel_sync_visitor', 'intel_ga_sync_visitordata' );
+add_filter( 'intel_sync_visitor', 'intel_ga_sync_visitordata', 5, 2);
 /**
  * Implements intel_sync_visitordata
  * @param unknown_type $visitor
  */
-function intel_ga_sync_visitordata($visitor) {
+function intel_ga_sync_visitordata($visitor, $options = array()) {
+Intel_Df::watchdog('intel_ga_sync_visitordata options', print_r($options, 1));
+  if (!empty($options['processes']) && !in_array('ga', $options['processes'])) {
+    return $visitor;
+  }
+
   require_once INTEL_DIR . "includes/intel.ga.inc";
   $vtkids = array();
 
@@ -179,9 +184,11 @@ function intel_sync_fullcontact_page($vtk) {
   return $output;
 }
 
-add_filter( 'intel_sync_visitor', 'intel_l10iapi_sync_visitordata' );
-function intel_l10iapi_sync_visitordata($visitor) {
-
+add_filter( 'intel_sync_visitor', 'intel_l10iapi_sync_visitordata', 10, 2);
+function intel_l10iapi_sync_visitordata($visitor, $options) {
+  if (!empty($options['processes']) && !in_array('l10iapi', $options['processes'])) {
+    return $visitor;
+  }
   $status = 1;
 
   if (
@@ -243,14 +250,14 @@ function intel_sync_fullcontact_visitordata(&$visitor, $data) {
   );
   $bio = '';
   $klout = '';
-  if ($data['photos'] && is_array($data['photos'])) {
+  if (!empty($data['photos']) && is_array($data['photos'])) {
     foreach ($data['photos'] AS $i => $v) {
       if (!empty($v['isPrimary'])) {
         $visitor->setProp('image', $v, $prop_options);
       }
     }
   }
-  if ($data['socialProfiles'] && is_array($data['socialProfiles'])) {
+  if (!empty($data['socialProfiles']) && is_array($data['socialProfiles'])) {
     foreach ($data['socialProfiles'] AS $i => $v) {
       if (!empty($v['bio'])) {
         $v['description'] = $v['bio'];
@@ -303,7 +310,7 @@ function intel_sync_fullcontact_visitordata(&$visitor, $data) {
       }
       elseif ($v['type'] == 'twitter') {
         $visitor->setProp('twitter', $v, $prop_options);
-        if ($v['bio']) {
+        if (!empty($v['bio'])) {
           $bio = $v['bio'];
         }
       }
@@ -348,7 +355,7 @@ function intel_sync_fullcontact_visitordata(&$visitor, $data) {
       }
     }
   }
-  if ($bio) {
+  if (!empty($bio)) {
     $v = array(
       '@value' => $bio,
     );

@@ -98,6 +98,10 @@ class Intel {
 
 	public $base_root;
 
+	public $vtk;
+
+	public $gacid;
+
 	private $session_hash;
 
 	/**
@@ -278,13 +282,9 @@ class Intel {
 
 		$this->admin = $plugin_admin = new Intel_Admin( $this->get_plugin_name(), $this->get_version() );
 
-
-
 		$this->loader->add_action( 'admin_init', $this, 'setup_role_caps');
 
 		$this->loader->add_action( 'admin_init', $this, 'setup_cron');
-
-
 
 		// on intel admin pages, buffer page output and create sessions
 		if (self::is_intel_admin_page()) {
@@ -441,16 +441,20 @@ class Intel {
 
 		$_SESSION['intel'] = !empty($_SESSION['intel']) ? $_SESSION['intel'] : array();
 
-		$this->session_hash = Intel_Visitor::extractVtk();
-		if (empty($this->session_hash)) {
-			$this->session_hash = Intel_Visitor::extractCid();
-		}
+		$this->vtk = Intel_Visitor::extractVtk();
 
+		$this->gacid = Intel_Visitor::extractCid();
+
+		$this->session_hash = !empty($this->vtk) ? $this->vtk : $this->gacid;
+
+//Intel_Df::watchdog('quick_session_init() hash', $this->session_hash);
 		if (!empty($this->session_hash)) {
 
 			$this->session_hash = substr($this->session_hash, 0, 20);
 
 			$cache = get_transient('intel_session_' . $this->session_hash);
+
+//Intel_Df::watchdog('quick_session_init() cache', print_r($cache, 1));
 			if ($cache !== FALSE) {
 				$_SESSION['intel'] = $cache;
 				delete_transient('intel_session_' . $this->session_hash);
@@ -458,13 +462,35 @@ class Intel {
 		}
 	}
 
-	protected function quick_session_cache() {
-		if (!empty($this->session_hash) && !empty($_SESSION['intel'])) {
-			set_transient('intel_session_' . $this->session_hash, $_SESSION['intel'], 1800);
+	public function quick_session_cache() {
+//Intel_Df::watchdog('quick_session_cache() hash', $this->session_hash);
+		if (empty($this->session_hash)) {
+			return;
+		}
+
+		// check if cache already has values
+		$cache = get_transient('intel_session_' . $this->session_hash);
+		if ($cache === FALSE) {
+			$cache = array();
+		}
+
+		if (!empty($_SESSION['intel']) && is_array($_SESSION['intel'])) {
+			if (!empty($cache)) {
+				$cache = Intel_Df::drupal_array_merge_deep($cache, $_SESSION['intel']);
+			}
+			else {
+				$cache = $_SESSION['intel'];
+			}
+		}
+
+//Intel_Df::watchdog('quick_session_cache() cache', print_r($cache, 1));
+		if (!empty($cache)) {
+			set_transient('intel_session_' . $this->session_hash, $cache, 1800);
 		}
 	}
 
 	public function wp_redirect_quick_session_cache($location, $status) {
+//Intel_Df::watchdog('wp_redirect_quick_session_cache() location', $location);
 		$this->quick_session_cache();
 		return $location;
 	}

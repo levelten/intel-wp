@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.8
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -52,6 +52,10 @@ For installation instructions, visit [intelligencewp.com/wiki/installation](http
 
 = 1.1.5 =
 * Migrate to GAPI v4
+
+= 1.1.6 =
+* Improved quick cache support
+* Added cache busting option
 
 == Upgrade Notice ==
 

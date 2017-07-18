@@ -21,6 +21,7 @@ define('INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT', 1);
 define('INTEL_TRACK_PHONECALLS_DEFAULT', 0);
 define('INTEL_TRACK_EMAILCLICKS_DEFAULT', 0);
 define('INTEL_TRACK_REALTIME_DEFAULT', 0);
+define('INTEL_CACHE_BUSTING_DEFAULT', 1);
 
 define('INTEL_HELP_APIVERS', 'http://api.getlevelten.com');
 
@@ -3354,7 +3355,11 @@ function intel_sync_visitordata_page($visitor = null, $count = 5) {
 
   $output = '';
   if ($visitor) {
-    $visitor = intel_sync_visitordata($visitor);
+    $options = array();
+    if (!empty($_GET['processes'])) {
+      $options['processes'] = explode(',', $_GET['processes']);
+    }
+    $visitor = intel_sync_visitordata($visitor, $options);
     $statuses = $visitor->getSyncProcessStatus();
     foreach ($statuses AS $k => $v) {
       $output .= "$k: $v<br>\n";
@@ -3382,7 +3387,7 @@ function intel_sync_visitordata_page($visitor = null, $count = 5) {
   return $output;
 }
 
-function intel_sync_visitordata($visitor, $request = array()) {
+function intel_sync_visitordata($visitor, $options = array()) {
   require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
 
   if (!empty($_GET['debug'])) {
@@ -3396,7 +3401,7 @@ function intel_sync_visitordata($visitor, $request = array()) {
     return $visitor;
   }
 
-  $visitor->syncData();
+  $visitor->syncData($options);
 
   return $visitor;
 }
@@ -3481,7 +3486,10 @@ function intel_sync_visitor_request_worker($item) {
     )));
     return;
   }
-  $visitor = intel_sync_visitordata($visitor, $item);
+  $options = array(
+    'request' => $item,
+  );
+  $visitor->syncData($options);
   $statuses = $visitor->getSyncProcessStatus();
 
   $success = 1;
@@ -3494,7 +3502,7 @@ function intel_sync_visitor_request_worker($item) {
   }
 
   if (!$success) {
-    if (1 || intel_is_debug()) {
+    if (intel_is_debug()) {
       $msg = Intel_Df::t('Failed: @vtk', array('@vtk' => $item->vtk)) . "<br>\n<br>\nitem:<br>\n" . print_r($item, 1) . "<br>\n<br>\nstatus:<br>\n" . print_r($statuses, 1);
       Intel_Df::watchdog('intel sync visitor', $msg);
     }
@@ -3508,7 +3516,7 @@ function intel_sync_visitor_request_worker($item) {
     update_option('intel_sync_visitor_requests', $requeues);
   }
   else {
-    if (1 || intel_is_debug()) {
+    if (intel_is_debug()) {
       Intel_Df::watchdog('intel sync visitor', Intel_Df::t('Success: @vtk', array('@vtk' => $item->vtk)));
     }
   }

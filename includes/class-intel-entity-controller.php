@@ -230,7 +230,7 @@ class Intel_Entity_Controller {
 		}
 	}
 
-	public static function syncData($entity, $request = array()) {
+	public static function syncData($entity, $options = array()) {
 		if (!empty($_GET['debug'])) {
 			intel_d('entity0');//
 			intel_d($entity);//
@@ -242,13 +242,13 @@ class Intel_Entity_Controller {
 		}
 
 		// initial data gathering stage
-		$entity = apply_filters('intel_sync_' . $entity_type, $entity, $request);
+		$entity = apply_filters('intel_sync_' . $entity_type, $entity, $options);
 
 		// alter initial data gathering
-		$entity = apply_filters('intel_sync_' . $entity_type . '_alter', $entity, $request);
+		$entity = apply_filters('intel_sync_' . $entity_type . '_alter', $entity, $options);
 
 		// data presave stage
-		$entity = apply_filters('intel_sync_' . $entity_type . '_presave', $entity, $request);
+		$entity = apply_filters('intel_sync_' . $entity_type . '_presave', $entity, $options);
 
 		$statuses = $entity->getSyncProcessStatus();
 		$synced = intel()->time();
@@ -263,7 +263,7 @@ class Intel_Entity_Controller {
 		$entity->save();
 
 		// data save stage
-		do_action('intel_sync_' . $entity_type . '_save', $entity, $request);
+		do_action('intel_sync_' . $entity_type . '_save', $entity, $options);
 
 		return $entity;
 	}

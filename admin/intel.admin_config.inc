@@ -202,6 +202,12 @@ function intel_admin_settings($form, &$form_state) {
     '#default_value' => get_option('intel_track_emailclicks', INTEL_TRACK_EMAILCLICKS_DEFAULT),
     '#description' => Intel_Df::t('Enables email click tracking features.'),
   );
+  $form['l10iapi']['advanced']['intel_cache_busting'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Enable cache busting'),
+    '#default_value' => get_option('intel_cache_busting', INTEL_CACHE_BUSTING_DEFAULT),
+    '#description' => Intel_Df::t('Appends iot query string element to bypass page caching when custom data is sent.'),
+  );
   $form['l10iapi']['advanced']['intel_sync_visitordata_fullcontact'] = array(
     '#type' => 'checkbox',
     '#title' => Intel_Df::t('Sync Full Contact data'),

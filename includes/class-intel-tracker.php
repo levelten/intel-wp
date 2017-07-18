@@ -188,7 +188,7 @@ class Intel_Tracker {
 		$script .= "$io_name('setConfig', intel_settings.intel.config);\n";
 		if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
 			foreach ($js_settings['intel']['pushes'] as $cm => $push) {
-				if ($cm == 'setUserId') {
+				if (0 && $cm == 'setUserId') {
 					$script .= $io_name . '("' . $cm . '","' . $push[0][0];
 					if (!empty($push[0][1])) {
 						$script .= '","' . $push[0][1];

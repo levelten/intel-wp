@@ -30,11 +30,28 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $goals = get_option('intel_goals', array());
+  //$pattern = (["'])(\\?.)*?\1;
 
-  intel_d($goals);
+  $string = '<script type="text/javascript"> function gformRedirect(){document.location.href=\'http://intlwp.localhost/thank-you/\';}gformRedirect();</script>';
 
+  intel_d($string);
 
+  $pattern = '/document.location.href=["\'](.*?)["\']/';
+  preg_match($pattern, $string, $matches);
+
+  intel_d($matches);
+
+  intel_d($matches[1]);
+
+  if (!empty($matches[1])) {
+    $url = intel_cache_busting_url($matches[1]);
+    intel_d($url);
+    if ($url != $matches[1]) {
+      $string = str_replace($matches[1], $url, $string);
+    }
+  }
+
+  intel_d($string);
 
   return '';
 }
