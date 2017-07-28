@@ -2326,7 +2326,7 @@ function intel_admin_setup_finish($form, &$form_state) {
   $items[] = '<p>';
   $l_options = array();
   $items[] = Intel_Df::t('To learn more about how to further implement results oriented analytics !link.', array(
-      '!link' => Intel_Df::l( Intel_Df::t('visit the Getting Started Tutorial'), 'admin/help', $l_options)
+      '!link' => Intel_Df::l( Intel_Df::t('visit the Getting Started Tutorial'), 'admin/help/tutorial', $l_options)
     ));
   $items[] = '</p>';
 

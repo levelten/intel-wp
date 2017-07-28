@@ -45,15 +45,18 @@
 				$description.hide();
 			}
 		});
+    var popovers = $('[data-toggle="popover"]');
+		if (popovers.popover) {
+			popovers.popover({
+				html: true,
+				placement: 'auto right',
+				content: function() {
+					var $formItem = $(this).parent('.form-item-desc-popover');
+					return $('.description', $formItem).html();
+				}
+			});
+		}
 
-		$('[data-toggle="popover"]').popover({
-			html: true,
-			placement: 'auto right',
-			content: function() {
-				var $formItem = $(this).parent('.form-item-desc-popover');
-				return $('.description', $formItem).html();
-			}
-		});
 
 		/*
 		// transform field descriptions into tooltips

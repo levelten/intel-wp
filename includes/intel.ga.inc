@@ -909,6 +909,7 @@ function intel_get_goal_event_info($info = array()) {
   $info = array_merge($info, intel_get_event_goal_info());
   return $info;
 }
+
 function intel_get_event_goal_info($filter = '') {
   $event = array();
   //$goals = get_option('intel_event_goals', array());
@@ -1227,7 +1228,7 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
  * @param $key
  * @return mixed
  */
-function intel_intel_event_load($key) {
+function intel_intel_event_load($key = NULL) {
   return intel_get_intel_event_info($key);
 }
 

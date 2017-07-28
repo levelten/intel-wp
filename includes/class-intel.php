@@ -114,7 +114,6 @@ class Intel {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-
 		$this->created = microtime(TRUE);
 
 		$this->plugin_name = 'intel';

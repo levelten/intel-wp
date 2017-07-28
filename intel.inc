@@ -1030,17 +1030,36 @@ function intel_menu($items = array()) {
   $items['admin/help'] = array(
     'title' => 'Help',
     'description' => 'Guides and docs.',
-    'page callback' => 'intel_help',
+    'page callback' => 'intel_help_tutorial_page',
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_CALLBACK,
     'file' => 'admin/intel.admin_help.inc',
   );
-  $items['admin/help/getting-started'] = array(
-    'title' => 'Getting started',
+  $items['admin/help/tutorial'] = array(
+    'title' => 'Tutorial',
     'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
-    'weight' => $w++,
   );
+  $items['admin/help/demo'] = array(
+    'title' => 'Demo',
+    //'description' => 'Tutorial.',
+    'page callback' => 'intel_help_demo_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_help.inc',
+  );
+  /*
+  $items['admin/help/tutorial'] = array(
+    'title' => 'Tutorial',
+    //'description' => 'Tutorial.',
+    'page callback' => 'intel_help_tutorial_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_help.inc',
+  );
+  */
 
 
 
@@ -1460,7 +1479,7 @@ function intel_api_access_error($vars = array()) {
     );
   }
 
-  $msg .= ' ' . l(t('Learn more about API versions'), INTEL_HELP_APIVERS, array('attributes' => array('target' => '_blank'))) . '.';
+  $msg .= ' ' . Intel_Df::l( Intel_Df::t('Learn more about API versions'), INTEL_HELP_APIVERS, array('attributes' => array('target' => '_blank'))) . '.';
   Intel_Df::drupal_set_message($msg, 'warning');
   return '';
 }
@@ -1490,6 +1509,10 @@ function intel_permission() {
   $permissions['admin intel'] = array(
     'title' => Intel_Df::t('Administer Intelligence'),
     'description' => Intel_Df::t('Enables user to configure module settings.'),
+  );
+  $permissions['debug intel'] = array(
+    'title' => Intel_Df::t('Debug Intelligence'),
+    'description' => Intel_Df::t('Enables user to access debug info.'),
   );
   $permissions['view all intel reports'] = array(
     'title' => Intel_Df::t('View all Intelligence reports'),
@@ -3628,6 +3651,15 @@ function intel_print_var($var, $console = FALSE) {
 
 if ( !function_exists( 'intel_d' ) ) {
   function intel_d() {
+    // check if user has access to this data
+    static $access;
+    if (!isset($access)) {
+      $access = Intel_Df::user_access('debug intel');
+    }
+    if (!$access) {
+      return;
+    }
+
     static $kint_aliases;
     $_ = func_get_args();
 
@@ -4040,15 +4072,18 @@ function intel_form_shortcode($vars) {
   if ($name_arr[0] == 'intel' && !empty($name_arr[1])) {
     if ($name_arr[1] == 'util') {
       include_once ( INTEL_DIR . 'admin/intel.admin_util.inc' );
-      if (is_callable($vars['name'])) {
-        $form = Intel_Form::drupal_get_form($vars['name']);
-      }
+    }
+    if ($name_arr[1] == 'demo') {
+      include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
+    }
+    if (is_callable($vars['name'])) {
+      $form = Intel_Form::drupal_get_form($vars['name']);
     }
   }
   if (!empty($form)) {
     $tvars = array();
     $tvars['markup'] = $form;
-    print Intel_Df::theme('intel_shortcode', $tvars);
+    return Intel_Df::theme('intel_shortcode', $tvars);
   }
 }
 
@@ -4151,5 +4186,23 @@ if (!empty($GLOBALS['intel_wp_config_options'])) {
     }
   }
 }
+
+
+function intel_posts_alter($posts) {
+//intel_d( $posts[0] );
+//$excerpt = get_the_excerpt( $posts[0] );
+//intel_d($excerpt);
+
+  $demo_options = get_option('intel_demo', 1);
+  if ($demo_options) {
+    include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
+    $posts = intel_demo_posts_alter($posts);
+  }
+
+  return $posts;
+}
+add_filter('the_posts','intel_posts_alter',-10);
+
+
 
 

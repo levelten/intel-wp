@@ -7,7 +7,33 @@
  */
 
 
-function intel_help() {
+function intel_help_page() {
+  $output = '';
+  $output .= '<article>';
+  $output .= '<div class="card"><div class="card-block">';
+
+  $output .= '<p class="lead">';
+  $output .= Intel_Df::t('Intelligence is designed to extend Google Analytics to track meaningful visitor interactions on your website.');
+  $output .= ' ' . Intel_Df::t('This tutorial will walk you through the essentials of extending Google Analytics using Intelligence to create results oriented analytics.');
+  $output .= '</p>';
+
+  $output .= '</div></div>';
+  $output .= '</article>';
+
+  return $output;
+}
+
+function intel_help_demo_page() {
+  $output = '';
+
+  $output .= Intel_Df::l(Intel_Df::t('Demo Home page'), 'intelligence/demo');
+
+  $output .= '<br><br>' . Intel_Df::l(Intel_Df::t('Demo Blog Post A'), 'intelligence/demo/blog/alpha');
+
+  return $output;
+}
+
+function intel_help_tutorial_page() {
   $output = '';
 
   $output .= '<article>';

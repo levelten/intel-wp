@@ -78,7 +78,6 @@ function intel_visitor_clickstream_report($vars) {
   $visitindex = 0;
   $visitcount = 0;
   $rows = intel_get_ga_feed_rows($data);
-
   if (!empty($rows) && is_array($rows)) {
     $visitid = '';
     foreach ($rows AS $row) {
@@ -126,7 +125,7 @@ function intel_visitor_clickstream_report($vars) {
       if (!isset($steps['_pageindex']["{$row['hostname']}{$row['pagePath']}"])) {
         $steps['_pages']["{$row['hostname']}{$row['pagePath']}"][$ts] = $ts;
       }
-      $steps[$visitindex]['visit']['pageviews']++;
+      $steps[$visitindex]['visit']['pageviews'] += intval($row['pageviews']);
     }
   }
   else {
@@ -199,6 +198,9 @@ function intel_visitor_clickstream_report($vars) {
       $ts = (int)$row['dimension4'];
       $pageindex = _intel_get_page_step_index($steps, $ts, $row['hostname'], $row['pagePath']);
       $visitindex = _intel_get_visit_step_index($steps, $ts);
+      if (!isset($steps[$ts]['events'])) {
+        $steps[$ts]['events'] = array();
+      }
       foreach ($steps[$ts]['events'] AS $i => $event) {
         if ((substr($i, 0, 1) != '_') && ($event['eventCategory'] == $row['eventCategory']) && ($event['eventAction'] == $row['eventAction'])) {
           $steps[$ts]['events'][$i]['eventLabel'] = $row['eventLabel'];
@@ -291,6 +293,18 @@ function intel_visitor_clickstream_report($vars) {
   }
 
   ksort($steps);
+
+  // set last hit
+  $lasthit = key (array_slice( $steps, -1, 1, TRUE ));
+  $lasthit = intval($lasthit);
+
+  if ((time() - $lasthit) < 1800) {
+    $msg = Intel_Df::t('The last hit retrieved from Google Analytics was only !time minutes ago.', array(
+      '!time' => floor((time() - $lasthit)/60),
+    ));
+    $msg .= ' ' . Intel_Df::t('Data may be missing as it may take Google Analytics up to 30 minutes to fully prepare analytics data.');
+    Intel_Df::drupal_set_message($msg, 'warning');
+  }
 
   $output = '';
   
@@ -390,7 +404,7 @@ EOD;
   $last_page_hostpath = '';
   $last_page_hostpath_indexes = array();
   $i = 0;
-  intel_d($steps);
+
   foreach ($steps AS $ts => $step) {
     if (substr($ts, 0, 1) == '_') {
       continue;
@@ -592,7 +606,7 @@ EOD;
       }
     }
   }
-intel_d($session_steps);
+
   $col2 .= Intel_Df::theme('intel_visit_steps_table', array('steps' => $session_steps));
 
   //$col2 .= "        <div style=\"clear: left;\"></div>\n";

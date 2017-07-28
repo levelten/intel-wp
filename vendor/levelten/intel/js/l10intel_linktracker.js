@@ -4,6 +4,21 @@ function L10iLinkTracker(_ioq, config) {
     var ioq = _ioq;
     var io = _ioq.io;
 
+    this.hrefTypeDefs = {};
+    this.hrefTypeDefs.external = {
+        title: 'External link'
+    };
+    this.hrefTypeDefs.download = {
+        title: 'Download link'
+    };
+    this.hrefTypeDefs.mailto = {
+        title: 'Mailto link'
+    };
+    this.hrefTypeDefs.tel = {
+        title: 'Tel link'
+    };
+
+
     this.init = function init() {
         ioq.log('L10iLinkTracker.init()');
         var ths = this;
@@ -11,7 +26,8 @@ function L10iLinkTracker(_ioq, config) {
             selector: 'a',
             selectorNot: '.linktracker-0',
             onEvent: 'click',
-            onHandler: ths.eventHandler,
+            //onEvent: 'contextmenu',
+            onHandler: function (event) { ths.handleLinkEvent(event) },
             transport: 'beacon'
         };
         io('event', evtDef);
@@ -46,101 +62,101 @@ function L10iLinkTracker(_ioq, config) {
         */
     };
 
-    this.eventHandler = function eventHandler(event) {
+    this.addHrefType = function addHrefType(name, obj) {
+      this.hrefTypeDefs[name] = obj;
+    };
+
+    this.removeHrefType = function removeHrefType(name) {
+        if (this.hrefTypeDefs[name]) {
+            delete(this.hrefTypeDefs[name]);
+        }
+    };
+
+    this.handleLinkEvent = function handleLinkEvent(event) {
         var i, v;
+        var f = {
+            event: event,
+            hrefTypeDefs: this.hrefTypeDefs
+        };
 
         v = _ioq.getEventArgsFromEvent(event);
-        var evtDef = v[0], $obj = v[1], options = v[3];
+        f.evtDef = v[0], f.$obj = v[1], f.options = v[3];
 
-        var eventType = event.type;
-        if (!eventType && evtDef.onEvent) {
-            eventType = evtDef.onEvent;
+
+        f.eventType = event.type;
+        if (!f.eventType && f.evtDef.onEvent) {
+            f.eventType = f.evtDef.onEvent;
         }
 
-        var href = $obj.attr('href');
+        f.href = f.$obj.attr('href');
 
-        if (!href) {
+        if (!f.href) {
             return;
         }
 
-        if ($obj.hasClass('prevent-linktracker')) {
+        if (f.$obj.hasClass('prevent-linktracker')) {
           return;
         }
 
-        var hrefTypeEnabled = {
-            external: 1,
-            internal: 0,
-            download: 1,
-            mailto: 1,
-            tel: 1
-        }
-
-        var hrefTypeTitles = {
-            external: 'External',
-            internal: 'Internal',
-            download: 'Download',
-            mailto: 'Mailto',
-            tel: 'Tel'
-        };
-
-        var hrefType = '';
+        f.hrefType = '';
 
         // check for hrefType specified via class track-link-[type id]
-        var classes = $obj.attr('class');
+        var classes = f.$obj.attr('class');
         classes = classes ? classes.split(' ') : [];
         for (i = 0; i < classes.length; i++) {
             v = classes[i];
             if (v.substr(0, 11) == 'track-link-') {
                 v = v.substr(11);
                 if (v == 'mode-valued') {
-                    evtDef.mode = 'valued';
+                    f.evtDef.mode = 'valued';
                 }
                 else {
-                    hrefType = v;
+                    f.hrefType = v;
                 }
             }
         }
 
-        if (!hrefType) {
+        if (!f.hrefType) {
             var downloadPattern = /\.(zip|exe|dmg|pdf|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav|png|jpg|jpeg|gif)$/i;
 
-            var loc = _ioq.parseUrl(href);
+            f.hrefObj = _ioq.parseUrl(f.href);
 
-            loc.external = (loc.hostname != _ioq.location.hostname);
+            f.hrefObj.external = (f.hrefObj.hostname != _ioq.location.hostname);
 
-            if (href.substr(0, 7) == 'mailto:') {
-                hrefType = 'mailto';
+            if (f.href.substr(0, 7) == 'mailto:') {
+                f.hrefType = 'mailto';
             }
-            else if (href.substr(0, 4) == 'tel:') {
-                hrefType = 'tel';
+            else if (f.href.substr(0, 4) == 'tel:') {
+                f.hrefType = 'tel';
             }
-            else if (loc.external) {
-                hrefType = 'external';
+            else if (f.hrefObj.external) {
+                f.hrefType = 'external';
             }
-            else if (href.match(downloadPattern)) {
-                hrefType = 'download';
+            else if (f.href.match(downloadPattern)) {
+                f.hrefType = 'download';
             }
             else {
-                hrefType = 'internal';
+                f.hrefType = 'internal';
             }
         }
 
-        if (!hrefTypeEnabled[hrefType] || !hrefTypeTitles[hrefType]) {
+        // trigger callbacks
+
+        ioq.triggerCallbacks('handleLinkEventAlter', f);
+
+        if (!f.hrefTypeDefs[f.hrefType]) {
             return;
         }
 
-
-        if (options.test) {
-          evtDef.eventCategory = "[Type] link " + eventType;
-        }
-        else {
-          evtDef.eventCategory = hrefTypeTitles[hrefType] + ' link ' + eventType;
+        f.evtDef.eventCategory = f.hrefTypeDefs[f.hrefType].title;
+        if (f.eventType) {
+            f.evtDef.eventCategory += ' ' + f.eventType
         }
 
         // force re-construct
-        delete(evtDef.const);
+        delete(f.evtDef.const);
 
-        return _ioq.defEventHandler(evtDef, $obj, event, options);
+        return _ioq.defEventHandler(f.evtDef, f.$obj, f.event, f.options);
     };
 
     this.init();

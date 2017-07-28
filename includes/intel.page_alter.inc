@@ -231,6 +231,7 @@ function intel_page_alter(&$page) {
   $context = array(
     'parsed_url' => $parsed_url
   );
+
   $all_page_events = intel_get_enabled_intel_events($context);
   $page_events = array_merge($page_events, $all_page_events);
 
@@ -912,6 +913,7 @@ function intel_filter_event_for_push($event) {
     //'category' => 'eventCategory', // automatically constructed
     'key' => 'id',
     'event_id' => 'eventId',
+    'event_category' => 'eventCategory',
     'action' => 'eventAction',
     'label' => 'eventLabel',
     'value' => 'eventValue',
@@ -2058,7 +2060,7 @@ function intel_process_form_submission($vars) {
 
   // queue to sync visitor data
   // add delay to wait for ga data to populate
-  intel_add_visitor_sync_request($visitor, 5 * 60);
+  intel_add_visitor_sync_request($visitor, 30 * 60);
 
   // enable other plugins to alter track
   $track = apply_filters('intel_form_submission_track_alter', $track, $hook_context);

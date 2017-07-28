@@ -485,20 +485,20 @@ function intel_visitor_page($entity) {
       $msg = '';
       if ((time() - $entity->data['analytics_visits']['_lasthit']) < 1800) {
         $msg .= Intel_Df::t('The last hit retrieved from Google Analytics was only !time minutes ago.', array(
-          '!time' => round((time() - $entity->data['analytics_visits']['_lasthit'])/60),
+          '!time' => floor((time() - $entity->data['analytics_visits']['_lasthit'])/60),
         ));
-        $msg .= ' ' . Intel_Df::t('It is recommended to allow up to 30 minutes for Google Analytics to fully processes analytics data before sync.');
+        $msg .= ' ' . Intel_Df::t('It is recommended to allow up to 30 minutes for Google Analytics to fully prepare analytics data before sync.');
       }
       else {
         $msg .= Intel_Df::t('The last sync of Google Analytics data was !time minutes after the last processed hit.', array(
-          '!time' => round(($synced - $entity->data['analytics_visits']['_lasthit'])/60),
+          '!time' => floor(($synced - $entity->data['analytics_visits']['_lasthit'])/60),
         ));
         $msg .= ' ' . Intel_Df::t('You may want to re-sync Google Analytics data to assure all processed data has been fetched.');
       }
 
       $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
       $l_options = Intel_Df::l_options_add_query(array('processes' => 'ga'), $l_options);
-      $msg .= '<br><br>' . Intel_Df::t('!link.', array(
+      $msg .= ' ' . Intel_Df::t('!link.', array(
         '!link' => Intel_Df::l(Intel_Df::t('Click here to sync the latest Google Analytics data for this visitor'), "visitor/{$entity->vid}/sync", $l_options),
       ));
       Intel_Df::drupal_set_message($msg, 'warning');
