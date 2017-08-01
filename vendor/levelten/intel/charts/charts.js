@@ -22,6 +22,8 @@ function L10iCharts() {
     	var options = google.visualization.NumberDateFormat.options;
         for (var i=0; i < dt.getNumberOfRows(); i++) {
           var date = new Date (dt.getValue(i, columnIndex));
+          // corrects for utc timezone
+          date = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),  date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
           var formatter = new google.visualization.DateFormat(options);
           var formatted = formatter.formatValue(date);
           dt.setFormattedValue(i, columnIndex, formatted);

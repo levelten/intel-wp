@@ -48,7 +48,7 @@ function intel_scorecard_report($vars) {
   $context = $vars['context'];
   $context_mode = $vars['context_mode'];
 
-  $cache_options = array();
+  $cache_options = $vars['cache_options'];
   $row_count = 100;
   
   $output = '';
@@ -252,6 +252,7 @@ function intel_scorecard_report($vars) {
     return Intel_Df::t('No data found.');
   }
 
+  /*
   $vars = array(
     'data' => $d,
     'row_count' => $row_count,
@@ -265,15 +266,44 @@ function intel_scorecard_report($vars) {
     'report_modes' => array(),
     //'report_modes' => $report_modes,
   );
+  */
+
+  $vars['goals'] = $goals;
+  $vars['data'] = $d;
+  $output .= theme_intel_report($vars);
+
+  return $output;
+
+  /*
   $output .= theme_intel_content_scorecard($vars);
+
 
   $output .= Intel_Df::t("Timeframe: %start_date - %end_date %refresh", array(
     '%start_date' => date("Y-m-d H:i", $start_date),
     '%end_date' => date("Y-m-d H:i", $end_date),
     '%refresh' => (!empty($cache_options['refresh'])) ? '(refresh)' : '',
-  ));  
+  ));
+
+  if (!empty($cache_options['round_start']) || !empty($cache_options['round_end'])) {
+    $cache_time = 900;
+
+    $start = $vars['start_date'];
+    if (!empty($cache_options['round_start'])) {
+      $start = $cache_time * floor($start / $cache_time);
+    }
+    $end = $vars['end_date'];
+    if (!empty($cache_options['round_end'])) {
+      $end = $cache_time * floor($end / $cache_time);
+    }
+
+    $output .= Intel_Df::t("(cache: %start_date - %end_date)", array(
+      '%start_date' => date("Y-m-d H:i", $start),
+      '%end_date' => date("Y-m-d H:i", $end),
+    ));
+  }
   
-  return $output;  
+  return $output;
+  */
 }
 
 function theme_intel_content_scorecard($vars) {

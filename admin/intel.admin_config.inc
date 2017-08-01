@@ -775,14 +775,15 @@ function intel_admin_goal_list_page() {
 
   $options = array(
     'index_by' => 'ga_id',
-    'refresh' => 3600,
+    //'refresh' => 3600,
   );
   if (isset($_GET['refresh']) && is_numeric($_GET['refresh'])) {
     $options['refresh'] = intval($_GET['refresh']);
   }
-  $goals = intel_goal_load(null, $options);
-  $ga_goals = intel_ga_goal_load();
 
+  $goals = intel_goal_load(null, $options);
+  //$ga_goals = intel_ga_goal_load();
+//intel_d($ga_goals);
   if (isset($_GET['refresh'])) {
     Intel_Df::drupal_set_message(Intel_Df::t('Goal data has been refreshed'));
     $l_option = Intel_Df::l_options_add_query(array());
@@ -791,7 +792,7 @@ function intel_admin_goal_list_page() {
 
   if (!empty($_GET['debug'])) {
     intel_d($goals);//
-    intel_d($ga_goals);//
+    //intel_d($ga_goals);//
   }
 
   $id_limit = 20;
@@ -821,7 +822,7 @@ function intel_admin_goal_list_page() {
   for ($i = 1; $i <= $id_limit; $i++) {
     $key = "$i";
     $goal = !empty($goals[$key]) ? $goals[$key] : array();
-    $ga_goal = !empty($ga_goals[$key]) ? $ga_goals[$key] : array();
+    //$ga_goal = !empty($ga_goals[$key]) ? $ga_goals[$key] : array();
 
     $ops = array();
     $ops[] = Intel_Df::l(Intel_Df::t('edit'), 'admin/config/intel/settings/goal/' . $key . '/edit', $link_options);
@@ -832,7 +833,7 @@ function intel_admin_goal_list_page() {
       Intel_Df::t('(unknown)'),
       '',
     );
-    if (empty($goal) && empty($ga_goal)) {
+    if (empty($goal)) {
       continue;
     }
     // check if goal or ga_goal is missing data, i.e. out of sync

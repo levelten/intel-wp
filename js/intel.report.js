@@ -1,17 +1,38 @@
 google.load('visualization', '1', {packages: ['corechart']});
 google.load('visualization', '1', {packages: ['table']});
 
-(function ($) {
+var _intel_reports = (function ($) {
   $( document ).ready(function() {
     init();
-    console.log( "ready!" );
   });
+
+  this.locObj;
 
   function init() {
     //google.load('visualization', '1', {packages: ['corechart']});
     //google.load('visualization', '1', {packages: ['table']});
+
+    var ths = this;
+
+    this.locObj = this.parseUrl(window.location.href);
+
     $('#apply-report-filter').click( function() {
       reportFilterSubmit();
+    });
+
+    $("select#timeframe").change(function(event) {
+      var i, url = '';
+      var a = window.location.href.split('?');
+      var timeframe = $(this).find('option:selected').attr('value');
+      ths.locObj.params.timeframe = $(this).find('option:selected').attr('value')
+      for (i in ths.locObj.params) {
+        if (url) {
+          url += '&';
+        }
+        url += i + '=' + ths.locObj.params[i];
+      }
+      url = a[0] + '?' + url;
+      window.location = url;
     });
 
     if ($('#intel-report-container').length > 0) {
@@ -31,8 +52,47 @@ google.load('visualization', '1', {packages: ['table']});
         $("#intel-report-container").replaceWith(data.report);
         l10iCharts.init();
       });
+
     }
   }
+
+  this.parseUrl = function (url) {
+    var l = document.createElement('a');
+
+    l.href = url;
+
+    var locObj = {
+      protocol: l.protocol,
+      hostname: l.hostname,
+      port: l.port,
+      pathname: l.pathname,
+      search: l.search,
+      hash: l.hash
+    };
+
+    locObj = this.normalizeLocation(locObj);
+
+    return locObj;
+  };
+
+  this.normalizeLocation = function (locObj) {
+    var a, b, i;
+    locObj.params = {};
+    if(locObj.search.charAt(0) == '?') {
+      locObj.search = locObj.search.slice(1);
+    }
+    a = locObj.search.split('&');
+    for (i = 0; i < a.length; i++) {
+      b = a[i].split('=');
+      locObj.params[b[0]] = b[1];
+    }
+    return locObj;
+  };
+
+  this.handleTimeframeChange = function(event, ths) {
+    console.log(arguments);
+    console.log(ths);
+  };
 
   intelReport = {
     attach: function (context) {

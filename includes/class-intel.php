@@ -379,7 +379,7 @@ class Intel {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
-		add_action( 'wp_head', array( $this->tracker, 'tracking_code' ), 99 );
+		add_action( 'wp_head', array( $this->tracker, 'tracking_code' ), 10 );
 
 		$this->loader->add_action( 'init', $this, 'quick_session_init' );
 		$this->loader->add_filter( 'wp_redirect', $this, 'wp_redirect_quick_session_cache', 10, 2 );
@@ -387,6 +387,8 @@ class Intel {
 		//$this->loader->add_action( 'wp_head', $plugin_public, 'admin_bar_menu_styles' );
 
 		$this->loader->add_action( 'admin_bar_menu', $plugin_public, 'admin_bar_menu', 100);
+
+		add_action( 'wp_footer', array( $this->tracker, 'tracking_settings' ), 99 );
 
 		//$this->loader->add_action( 'wp_footer', $this, 'process_js_settings' );
 	}
@@ -450,7 +452,6 @@ class Intel {
 		if (!empty($this->session_hash)) {
 
 			$this->session_hash = substr($this->session_hash, 0, 20);
-
 			$cache = get_transient('intel_session_' . $this->session_hash);
 
 //Intel_Df::watchdog('quick_session_init() cache', print_r($cache, 1));
@@ -458,6 +459,10 @@ class Intel {
 				$_SESSION['intel'] = $cache;
 				delete_transient('intel_session_' . $this->session_hash);
 			}
+		}
+
+		if (!empty($_SESSION['intel_quick_cache'])) {
+			$_SESSION['intel_quick_cache'] = array();
 		}
 	}
 
@@ -468,10 +473,8 @@ class Intel {
 		}
 
 		// check if cache already has values
-		$cache = get_transient('intel_session_' . $this->session_hash);
-		if ($cache === FALSE) {
-			$cache = array();
-		}
+		//$cache = get_transient('intel_session_' . $this->session_hash);
+		$cache = isset($_SESSION['intel_quick_cache']) ? $_SESSION['intel_quick_cache'] : array();
 
 		if (!empty($_SESSION['intel']) && is_array($_SESSION['intel'])) {
 			if (!empty($cache)) {
@@ -484,6 +487,8 @@ class Intel {
 
 //Intel_Df::watchdog('quick_session_cache() cache', print_r($cache, 1));
 		if (!empty($cache)) {
+			// save data that saved to quick_cache incase second call is made
+			$_SESSION['intel_quick_cache'] = $cache;
 			set_transient('intel_session_' . $this->session_hash, $cache, 1800);
 		}
 	}

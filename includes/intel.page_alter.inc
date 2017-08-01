@@ -335,13 +335,13 @@ function intel_page_alter(&$page) {
     $js['intel']['config']['track_adhoc_events'] = 0;
   }
   else {
-    $scripts = intel()->intel_script_info();
-    $enabled = get_option('intel_intel_scripts_enabled', array());
-    foreach ($scripts AS $key => $script) {
-      if (!empty($enabled[$key]) || (!isset($enabled[$key]) && !empty($script['enabled']))) {
-        wp_enqueue_script('intel_script_' . $key, $script['path']);
-      }
-    }
+    //$scripts = intel()->intel_script_info();
+    //$enabled = get_option('intel_intel_scripts_enabled', array());
+    //foreach ($scripts AS $key => $script) {
+    //  if (!empty($enabled[$key]) || (!isset($enabled[$key]) && !empty($script['enabled']))) {
+    //    wp_enqueue_script('intel_script_' . $key, $script['path']);
+    //  }
+    //}
   }
 
 
@@ -360,7 +360,7 @@ function intel_page_alter(&$page) {
   }
   */
 
-  $script = intel_get_js_embed('l10i', 'local');
+  //$script = intel_get_js_embed('l10i', 'local');
   //wp_enqueue_script('intel_tracker_embed', $script);
   //drupal_add_js($script, array('type' => 'inline', 'scope' => 'header', 'weight' => 0));
 
@@ -384,6 +384,7 @@ function intel_page_alter(&$page) {
     intel_d($js);//
   }
   intel()->add_js($js, 'setting');
+
 }
 
 function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $include_events = 0) {
@@ -782,7 +783,6 @@ function intel_save_flush_page_intel_pushes() {
 }
 
 function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') {
-
   if (!isset($_SESSION['intel'])) {
     $_SESSION['intel'] = array();
   }
@@ -911,7 +911,7 @@ function intel_filter_event_for_push($event) {
   // translate from classic format to UA format
   $trans = array(
     //'category' => 'eventCategory', // automatically constructed
-    'key' => 'id',
+    'key' => 'key',
     'event_id' => 'eventId',
     'event_category' => 'eventCategory',
     'action' => 'eventAction',
@@ -935,7 +935,7 @@ function intel_filter_event_for_push($event) {
     'social_network' => 'socialNetwork',
     'social_action' => 'socialAction',
     'social_target' => 'socialTarget',
-    'id' => 1,
+    'key' => 1,
     'eventId' => 1,
     'method' => 1,
     'eventCategory' => 1,
@@ -2057,14 +2057,12 @@ function intel_process_form_submission($vars) {
     //watchdog('intel.page_alter 992', print_r($visitor, 1));
   }
 
-
   // queue to sync visitor data
   // add delay to wait for ga data to populate
   intel_add_visitor_sync_request($visitor, 30 * 60);
 
   // enable other plugins to alter track
   $track = apply_filters('intel_form_submission_track_alter', $track, $hook_context);
-
   if (!empty($track['event_category'])) {
     $call = array(
       'eventCategory' => $track['event_category'],
@@ -2074,7 +2072,7 @@ function intel_process_form_submission($vars) {
       'nonInteraction' => FALSE,
       'oa' => $track['oa'],
     );
-    //Intel_Df::watchdog('form_submission', print_r($call, 1));
+    //Intel_Df::watchdog('form_submission', json_encode($call));
 
     intel_add_page_intel_push(array('event', $call));
 //dpm('page_intel_push=');dpm($call);//

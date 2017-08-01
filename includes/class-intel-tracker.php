@@ -173,19 +173,36 @@ class Intel_Tracker {
 	 * Generates tracking code
 	 */
 	public function tracking_code() {
-		require_once INTEL_DIR . 'includes/intel.page_alter.inc';
+		$io_name = 'io';
+
+		$script = '';
+		$script .= intel_get_js_embed('l10i', 'local');
+
+		print '<script>' . $script . '</script>';
+
+		// add intel_scripts
+		$scripts = intel()->intel_script_info();
+		$enabled = get_option('intel_intel_scripts_enabled', array());
+		foreach ($scripts AS $key => $script) {
+			if (!empty($enabled[$key]) || (!isset($enabled[$key]) && !empty($script['enabled']))) {
+				wp_enqueue_script('intel_script_' . $key, $script['path']);
+			}
+		}
+
+		return;
+	}
+
+	public function tracking_settings() {
+		$io_name = 'io';
 
 		$page = array();
 		intel_page_alter($page);
 
 		$js_settings = intel()->get_js_settings();
 
-		$io_name = 'io';
-
 		$script = '';
-		$script .= "var intel_settings = " . json_encode($js_settings) . ";\n";
-		$script .= intel_get_js_embed('l10i', 'local');
-		$script .= "$io_name('setConfig', intel_settings.intel.config);\n";
+		$script .= "var _intel_settings = " . json_encode($js_settings) . ";\n";
+		$script .= "$io_name('setConfig', _intel_settings.intel.config);\n";
 		if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
 			foreach ($js_settings['intel']['pushes'] as $cm => $push) {
 				if (0 && $cm == 'setUserId') {
@@ -195,7 +212,7 @@ class Intel_Tracker {
 					}
 					$script .= '");' . "\n";
 				} else {
-					$script .= "$io_name('$cm', intel_settings.intel.pushes.$cm);\n";
+					$script .= "$io_name('$cm', _intel_settings.intel.pushes.$cm);\n";
 				}
 			}
 		}
@@ -208,53 +225,8 @@ class Intel_Tracker {
 
 		print '<script>' . $script . '</script>';
 		return;
-
-		/*
-		// mimics logic in intel_js_alter()
-		$intel_js_settings = intel()->get_js_settings();
-		$
-
-
-		$io_name = 'io';
-		$pushstr = $io_name . '("set", "config", );' . "\n";
-		//$str = '_l10iq.push(["set", "config", ' . drupal_json_encode($options['config']) . ']);' . "\n";
-		if (isset($options['pushes']) && is_array($options['pushes'])) {
-			foreach ($options['pushes'] as $cm => $push) {
-				if ($cm == 'setUserId') {
-					$pushstr .= $io_name . '("' . $cm . '","' . $push[0][0];
-					if (!empty($push[0][1])) {
-						$pushstr .= '","' . $push[0][1];
-					}
-					$pushstr .= '");' . "\n";
-				} else {
-					$pushstr .= $io_name . '("' . $cm . '",' . drupal_json_encode($push) . ');' . "\n";
-				}
-				//$str .= '_l10iq.push(["' . $cm . '",' . drupal_json_encode($push) . ']);' . "\n";
-			}
-		}
-
-		$io_name = 'io';
-		print '<script>';
-    print "var intel_settings = " . json_encode(intel()->get_js_settings()) . ";\n";
-		print "$io_name('set', 'config', intel_settings.intel.config);\n";
-		print '</script>';
-		return;
-
-		$ga_tid = get_option( 'intel_ga_tid' );
-		$l10iapi_url = get_option('intel_l10iapi_url', '');
-		if (empty($l10iapi_url)) {
-			$l10iapi_url = INTEL_L10IAPI_URL;
-		}
-		$l10iapi_js_ver = get_option('intel_l10iapi_js_ver', '');
-		if (empty($l10iapi_js_ver)) {
-			$l10iapi_js_ver = INTEL_L10IAPI_JS_VER;
-		}
-		$debug_mode = get_option('intel_debug_mode', 0);
-
-		$l10iapi_js_file = $l10iapi_js_ver . '/' . (($debug_mode) ? 'l10i.js' : 'l10i.min.js');
-
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/partials/intel-tracking-code.php';
-		*/
 	}
+
+
 
 }

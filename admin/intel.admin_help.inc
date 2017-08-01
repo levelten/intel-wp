@@ -26,6 +26,28 @@ function intel_help_page() {
 function intel_help_demo_page() {
   $output = '';
 
+  $demo_settings = get_option('intel_demo_settings', array());
+
+  if (!empty($demo_settings['status'])) {
+
+  }
+  else {
+    $msg = Intel_Df::t('Demo is currently disabled. Go to demo settings to enable.');
+    Intel_Df::drupal_set_message($msg, 'warning');
+  }
+
+  $l_options = Intel_Df::l_options_add_class('btn btn-info');
+  $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path(), $l_options);
+  $output .= Intel_Df::l( Intel_Df::t('Demo settings'), 'admin/config/intel/settings/general/demo', $l_options) . '<br><br>';
+
+  $imapi_host = intel_get_imapi_host();
+
+  $ga_tid = get_option('intel_ga_tid', '');
+
+  $l_options = Intel_Df::l_options_add_class('btn btn-info');
+  $l_options = Intel_Df::l_options_add_query(array('base_urlpath' => intel()->base_url . intel()->base_path), $l_options);
+  $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), '//' . $imapi_host . '/property/' . $ga_tid . '/demo', $l_options) . '<br><br>';
+
   $output .= Intel_Df::l(Intel_Df::t('Demo Home page'), 'intelligence/demo');
 
   $output .= '<br><br>' . Intel_Df::l(Intel_Df::t('Demo Blog Post A'), 'intelligence/demo/blog/alpha');

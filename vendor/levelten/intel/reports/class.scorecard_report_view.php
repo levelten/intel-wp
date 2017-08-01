@@ -166,12 +166,13 @@ class ScorecardReportView extends ReportView {
   function renderSummarySection() {
     $output = '';
     $data = $this->data;
-
     $datasum = $data['date']['_all'];
     $context = $this->params['context'];
     $context_mode = $this->params['context_mode'];
     $targets = $this->targets;
-    $analysis_days = $this->params['analysis_days'];
+    //$analysis_days = $this->params['analysis_days'];
+    //$analysis_days = $this->dateRange['days'];
+    $analysis_days = !empty($this->params['analysis_days']) ?  $this->params['analysis_days'] : $this->dateRange['days'];
     $statusColorsBg = $this->statusColorsBackground;
     $statusColors = $this->statusColors;
     $summary_elements = array();
@@ -439,7 +440,8 @@ class ScorecardReportView extends ReportView {
     $context = $this->params['context'];
     $context_mode = $this->params['context_mode'];
     $targets = $this->targets;
-    $analysis_days = $this->params['analysis_days'];
+    //$analysis_days = $this->params['analysis_days'];
+    $analysis_days = !empty($this->params['analysis_days']) ?  $this->params['analysis_days'] : $this->dateRange['days'];
     $goals = $this->goals;
 
     // select which context to get data from

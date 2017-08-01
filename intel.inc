@@ -77,6 +77,17 @@ function intel_menu($items = array()) {
     'weight' => -1,
     'file' => 'admin/intel.admin_config.inc',
   );
+  $items['admin/config/intel/settings/general/demo'] = array(
+    'title' => 'Demo',
+    'description' => 'Basic setup',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_demo_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => -1,
+    'file' => 'admin/intel.admin_demo.inc',
+  );
   if (intel_is_extended() && intel_is_intel_script_enabled('linktracker')) {
     $items['admin/config/intel/settings/general/linktracker'] = array(
       'title' => 'Link tracker',
@@ -3639,6 +3650,17 @@ function intel_extended_mode() {
   return (get_option('intel_extended_mode', 0) || !empty($_GET['extended']));
 }
 
+function intel_get_imapi_host() {
+  $imapi_domain = get_option('intel_imapi_url', '');
+  if (!$imapi_domain) {
+    $imapi_domain = INTEL_IMAPI_URL;
+  }
+
+  $imapi_domain = explode('/', $imapi_domain);
+  $imapi_domain = $imapi_domain[0];
+  return $imapi_domain;
+}
+
 function intel_print_var($var, $console = FALSE) {
   if ($console) {
     $json = json_encode($var);
@@ -4193,15 +4215,15 @@ function intel_posts_alter($posts) {
 //$excerpt = get_the_excerpt( $posts[0] );
 //intel_d($excerpt);
 
-  $demo_options = get_option('intel_demo', 1);
-  if ($demo_options) {
+  $demo_settings = get_option('intel_demo_settings', array());
+  if (!empty($demo_settings['status'])) {
     include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
     $posts = intel_demo_posts_alter($posts);
   }
 
   return $posts;
 }
-add_filter('the_posts','intel_posts_alter',-10);
+add_filter('the_posts', 'intel_posts_alter', -10);
 
 
 

@@ -138,7 +138,9 @@ function intel_demo_posts_alter($posts){
     // stop interferring with other $posts arrays on this page (only works if the sidebar is rendered *after* the main page)
     $intel_demo_page_url = $page_url;
 
-    //wp_enqueue_script( 'intel_demo', INTEL_URL . 'js/intel.demo.js', array( 'jquery' ), intel()->get_version(), false );
+    $demo_settings = get_option('intel_demo_settings', array());
+
+    wp_enqueue_script( 'intel_demo', INTEL_URL . 'js/intel.demo.js', array( 'jquery' ), intel()->get_version(), false );
     wp_enqueue_style( 'intel_demo', INTEL_URL . 'css/intel.demo.css', array(), intel()->get_version(), 'all');
     wp_enqueue_style( 'intel_wpb-fa', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css' );
 
@@ -228,10 +230,20 @@ function intel_demo_posts_alter($posts){
         $content .= '<div class="intel-demo-social-profile social-wrapper social-profile">' . intel_demo_social_profile_buttons($post) . '</div>';
       }
 
-      $_post->post_content = '<div class="intel-demo-post-content">' . $content . '</div>';
-
-      if (empty($_post->post_excerpt)) {
-        $_post->post_excerpt = '<div class="intel-demo-post-content post-excerpt">' . $content . '</div>';
+      // if post list page, set content/excerpt fields based on settings
+      if ($post_count > 1) {
+        $_post->post_content = '';
+        $excerpt = !empty($_post->post_excerpt) ? $_post->post_excerpt : $content;
+        $_post->post_excerpt = '';
+        if (empty($demo_settings['post_list_content_fields']) || $demo_settings['post_list_content_fields'] == 'content') {
+          $_post->post_content = '<div class="intel-demo-post-content">' . $content . '</div>';
+        }
+        if (empty($demo_settings['post_list_content_fields']) || $demo_settings['post_list_content_fields'] == 'excerpt') {
+          $_post->post_excerpt = '<div class="intel-demo-post-content post-excerpt">' . $excerpt . '</div>';
+        }
+      }
+      else {
+        $_post->post_content = '<div class="intel-demo-post-content">' . $content . '</div>';
       }
 
       $posts[] = $_post;
@@ -527,13 +539,10 @@ function intel_demo_contact_form_submit($form, &$form_state) {
   $msg = Intel_Df::t('Thank you for contacting us. We will get back to you shortly.');
   Intel_Df::drupal_set_message($msg, 'status');
 
-  // save l10i.js settings till page refresh
-  intel_save_flush_page_intel_pushes();
+  // since the form is embedded with a shortcode, the page has already built and
+  // page alter already been sent
+  // print io commands directly to page
 
-  //$url = intel_cache_busting_url(Intel_Df::current_path());
-  //Intel_Df::drupal_goto($url);
-
-  //Intel_Df::drupal_goto('intelligence/demo/contact-submission');
-
-  //unset($_SESSION['intel_weform_test']);
+  //$script = intel()->tracker->get_pushes_script();
+  //print "\n$script";
 }

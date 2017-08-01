@@ -57,6 +57,10 @@ For installation instructions, visit [intelligencewp.com/wiki/installation](http
 * Improved quick cache support
 * Added cache busting option
 
+= 1.1.7 =
+* Demo pages
+* Report timeframe selector
+
 == Upgrade Notice ==
 
 = 1.0.0 =

@@ -1,5 +1,7 @@
-(function( $ ) {
+var _intel_form = (function( $ ) {
 	'use strict';
+
+	var ths = {};
 
 	$( window ).load(function() {
 	  init();
@@ -55,7 +57,9 @@
 					return $('.description', $formItem).html();
 				}
 			});
-		}
+		};
+
+
 
 
 		/*
@@ -70,6 +74,13 @@
 			}
 		});
 		*/
-
+		//return this;
 	}
+
+	ths.goto = function ($url) {
+		window.location = $url;
+	};
+
+	return ths;
+
 })( jQuery );

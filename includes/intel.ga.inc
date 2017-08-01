@@ -18,7 +18,6 @@
  * @return int|mixed|void
  */
 function intel_goal_load($key = '', $options = array()) {
-
   $index_by = 'name';
   if (!empty($options['index_by'])) {
     $index_by = $options['index_by'];
@@ -3087,7 +3086,7 @@ function _intel_get_report_dates_from_ops($ops = 'l30d', &$cache_options = array
   elseif ($ops == 'today') {
     $start = 'midnight';
     $end = 'now';
-    $cache_options = array('refresh' => 1);
+    $cache_options = array('round_start' => 1, 'round_end' => 1);
   }
   elseif (($ops == 'l24') || ($ops == 'l24fn') || ($ops == 'l24h') || ($ops == 'l24hfn')) {
     $start = '-24 hours';
@@ -3098,24 +3097,76 @@ function _intel_get_report_dates_from_ops($ops = 'l30d', &$cache_options = array
     $start = '-1 day midnight';
     $end = "midnight - 1 second";
   }
-  elseif ($ops == 'l7dfn') {
-    $start = "-7 days";
-    $end = "now";
-    $cache_options = array('refresh' => 1);
+  elseif ($ops == 'p1d') {
+    $start = "-2 days midnight";
+    $end = "-1 days midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
   }
-  elseif ($ops == 'l7d') {
+  elseif ($ops == 'l7dfn' || $ops == 'l1wfn') {
+    $start = "-6 days midnight";
+    $end = "now";
+    $cache_options = array('round_end' => 1);
+    //$cache_options = array('refresh' => 1);
+  }
+  elseif ($ops == 'l7d' || $ops == 'l1w') {
     $start = "-7 days midnight";
     $end = "midnight - 1 second";
-    $cache_options = array('refresh' => 1);
+    //$cache_options = array('refresh' => 1);
+  }
+  elseif ($ops == 'p7d' || $ops == 'p1w') {
+    $start = "-14 days midnight";
+    $end = "-7 days midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
+  }
+  elseif ($ops == 'l28dfn' || $ops == 'l4wfn') {
+    $start = "-27 days midnight";
+    $end = "now";
+    $cache_options = array('round_end' => 1);
+  }
+  elseif ($ops == 'l28d' || $ops == 'l4w') {
+    $start = "-28 days midnight";
+    $end = "midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
+  }
+  elseif ($ops == 'p28d' || $ops == 'p4w') {
+    $start = "-56 days midnight";
+    $end = "-28 days midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
   }
   elseif ($ops == 'l30dfn') {
-    $start = "-30 days";
+    $start = "-29 days midnight";
     $end = "now";
-    $cache_options = array('refresh' => 1);
+    $cache_options = array('round_end' => 1);
+  }
+  elseif ($ops == 'l30d') {
+    $start = "-30 days midnight";
+    $end = "midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
+  }
+  elseif ($ops == 'p30d') {
+    $start = "-60 days midnight";
+    $end = "-30 days midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
+  }
+  elseif ($ops == 'l91dfn' || $ops == 'l13wfn') {
+    $start = "-90 days midnight";
+    $end = "now";
+    $cache_options = array('round_end' => 1);
+  }
+  elseif ($ops == 'l91d' || $ops == 'l13w') {
+    $start = "-91 days midnight";
+    $end = "midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
+  }
+  elseif ($ops == 'p91d' || $ops == 'p13w') {
+    $start = "-182 days midnight";
+    $end = "-91 days midnight - 1 second";
+    //$cache_options = array('refresh' => 1);
   }
   elseif ($ops == 'thismonth') {
     $start = "midnight first day of this month";
-    $end = "midnight first day of next month - 1 second";
+    $end = "midnight - 1 second";
+    //$end = "midnight first day of next month - 1 second";
   }
   elseif ($ops == 'lastmonth') {
     $start = "midnight first day of last month";
@@ -3124,11 +3175,27 @@ function _intel_get_report_dates_from_ops($ops = 'l30d', &$cache_options = array
   elseif ($ops == 'monthtodate') {
     $start = "midnight first day of this month";
     $end = "now";
+    $cache_options = array('round_end' => 1);
+  }
+  elseif ($ops == 'thisweek') {
+    $start = "midnight this week";
+    $end = "midnight - 1 second";
+    //$end = "midnight first day of next month - 1 second";
+  }
+  elseif ($ops == 'lastweek') {
+    $start = "midnight last week";
+    $end = "midnight first day of this week - 1 second";
+  }
+  elseif ($ops == 'weektodate') {
+    $start = "midnight this week";
+    $end = "now";
+    $cache_options = array('round_end' => 1);
   }
   else  {  // "l30d" last 30 days from yesterday
     $start = "-30 days midnight";
     $end = "midnight - 1 second";
   }
+
   return _intel_get_report_dates($start, $end);
 }
 
@@ -3205,6 +3272,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   if (!empty($request['max_results']) ) {
     $options['max-results'] = $request['max_results'];
   }
+  /*
   $seed = $projectId . $from . $metrics;
   if (!empty($options['dimensions'])) {
     $seed .= $options['dimensions'];
@@ -3215,8 +3283,21 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   if (!empty($options['segment'])) {
     $seed .= $options['segment'];
   }
+  */
 
-  $serial = 'intel_' . md5(serialize(array_merge($request, array())));
+  // set caching for endates = 'now';
+  $request_cache = $request;
+  $cache_time = 900;
+
+  if (!empty($cache_options['round_start'])) {
+    $request_cache['start_date'] = $cache_time * floor($request_cache['start_date'] / $cache_time);
+
+  }
+  if (!empty($cache_options['round_end'])) {
+    $request_cache['end_date'] = $cache_time * floor($request_cache['end_date'] / $cache_time);
+  }
+  $serial = 'intel_' . md5(serialize(array_merge($request_cache, array())));
+
   //$serial = 'intel_' . $gapi->get_serial( $seed );
   $feed = intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options );
 

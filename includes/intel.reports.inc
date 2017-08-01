@@ -16,6 +16,12 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
   if (!is_array($vars)) {
     $vars = array();
   }
+  if (!isset($_SESSION['intel_report_vars'])) {
+    $_SESSION['intel_report_vars'] = array();
+  }
+  if (!empty($_SESSION['intel_report_vars']) && is_array($_SESSION['intel_report_vars'])) {
+    $vars += $_SESSION['intel_report_vars'];
+  }
   $vars += array(
     'title' => '',
     // machine name for report, used to determine dynamic function names
@@ -80,6 +86,8 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
     'related_reports' => array(),
     'extended_mode' => get_option('intel_extended_mode', 0),
   );
+
+
 
   // save end elements of report request uri
   $vars['report_args'] = array_slice(explode('/', $_GET['q']), 3);
@@ -382,10 +390,18 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
     $vars['context_mode'] = $a[1];
   }
 
+  if (!empty($_GET['timeframe'])) {
+    $_SESSION['intel_report_vars']['timeframe'] = $vars['timeframe'] = $_GET['timeframe'];
+  }
+
   if (empty($vars['timeframe'])) {
     $vars['timeframe'] = 'l30d';
   }
   list($vars['start_date'], $vars['end_date'], $vars['number_of_days']) = _intel_get_report_dates_from_ops($vars['timeframe'], $vars['cache_options']);
+
+  if (!empty($_GET['refresh'])) {
+    $vars['cache_options']['refresh'] = 1;
+  }
 
   // set report start and end dates
   if ($vars['report_modes'][1] == 'trend') {
@@ -587,6 +603,9 @@ function theme_intel_report($vars) {
   $report_view->setModes($vars['report_modes']);
   $report_view->setParam('context', $vars['context']);
   $report_view->setParam('context_mode', $vars['context_mode']);
+  if (isset($vars['goals'])) {
+    $report_view->setGoals($vars['goals']);
+  }
   if (isset($vars['indexBy'])) {
     $report_view->setParam('indexBy', $vars['indexBy']);
   }
@@ -607,7 +626,7 @@ function theme_intel_report($vars) {
   \LevelTen\Intel\ReportPageHeader::setAddScriptCallback('intel_report_add_js_callback');
   $output .= $report_view->renderReport();
 
-  $output .= Intel_Df::t("Timeframe: %start_date - %end_date", array(
+  $output .= Intel_Df::t("Time frame: %start_date - %end_date", array(
     '%start_date' => date("Y-m-d H:i", $vars['start_date']),
     '%end_date' => date("Y-m-d H:i", $vars['end_date']),
   ));
@@ -620,6 +639,29 @@ function theme_intel_report($vars) {
   if (!empty($vars['cache_options']['refresh'])) {
     $output .= ' (' . Intel_Df::t('refresh') . ')';
   }
+
+  if (!empty($vars['cache_options']['round_start']) || !empty($vars['cache_options']['round_end'])) {
+    $cache_time = 900;
+
+    $start = $vars['start_date'];
+    if (!empty($vars['cache_options']['round_start'])) {
+      $start = $cache_time * floor($start / $cache_time);
+    }
+    $end = $vars['end_date'];
+    if (!empty($vars['cache_options']['round_end'])) {
+      $end = $cache_time * floor($end / $cache_time);
+    }
+
+    $output .= ' ' . Intel_Df::t("(cache: %start_date - %end_date)", array(
+      '%start_date' => date("Y-m-d H:i", $start),
+      '%end_date' => date("Y-m-d H:i", $end),
+    ));
+  }
+
+  $query = $_GET;
+  $query['refresh'] = 1;
+  $l_options = Intel_Df::l_options_add_query($query);
+  $output .= ' ' . Intel_Df::l(Intel_Df::t('Clear cache'), Intel_Df::current_path(), $l_options);
 
   return $output;
 }
@@ -785,6 +827,61 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
   //if (!$access) {
   //  drupal_add_css('.intel-static-filter, .intel-related-links {display: none;} #intel-report a.intel-more {display: none;}', array('group' => CSS_THEME, 'type' => 'inline'));
   //}
+  $cookie_vars = !empty($_COOKIE['report_vars']) ? $_COOKIE['report_vars'] : '{}';
+  $cookie_vars = json_decode($cookie_vars, 1);
+  $options = array(
+    'l30d' => Intel_Df::t('Last 30 days'),
+    'l28d' => Intel_Df::t('Last 28 days'),
+    'l7d' => Intel_Df::t('Last 7 days'),
+    'yesterday' => Intel_Df::t('Yesterday'),
+    'thismonth' => Intel_Df::t('This month'),
+    'thisweek' => Intel_Df::t('This week'),
+    'p30d' => Intel_Df::t('Prior 30 days before last'),
+    'p28d' => Intel_Df::t('Prior 28 days before last'),
+    'p7d' => Intel_Df::t('Prior 7 days before last'),
+    'p1d' => Intel_Df::t('Day before yesterday'),
+    'lastmonth' => Intel_Df::t('Last month'),
+    'lastweek' => Intel_Df::t('Last week'),
+    'l30dfn' => Intel_Df::t('Last 30 days from now'),
+    'l28dfn' => Intel_Df::t('Last 28 days from now'),
+    'l7dfn' => Intel_Df::t('Last 7 days from now'),
+    'today' => Intel_Df::t('Today'),
+    'monthtodate' => Intel_Df::t('Month to now'),
+    'weektodate' => Intel_Df::t('Week to now'),
+  );
+  if (date('j') == 1) {
+    unset($options['thismonth']);
+  }
+  if (date('w') == 0) {
+    unset($options['thisweek']);
+  }
+
+  /*
+  $form['markup1'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="row"><div class="col-md-6"></div><div class="col-md-6">',
+  );
+  */
+  //$l_options = Intel_Df::l_options_add_class();
+  //$btn =
+  $form['timeframe'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Time frame'),
+    '#id' => 'timeframe',
+    '#options' => $options,
+    '#default_value' => $vars['timeframe'],
+    //'#prefix' => '<div class="filter-fieldset filter-fieldset-page">',
+    '#field_prefix' => Intel_Df::format_date($vars['start_date'], 'M j, Y') . ' - ' . Intel_Df::format_date($vars['end_date'], 'M j, Y'),
+  );
+
+  /*
+  $form['markup2'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div></div>',
+  );
+  */
+
+  return $form;
 
   $dynamic_filters = array();
   $context = (!empty($vars['context'])) ? $vars['context'] : '';

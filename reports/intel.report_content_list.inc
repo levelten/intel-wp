@@ -45,7 +45,7 @@ function intel_content_list_report($vars) {
 
   $ga_data_baseline = intel_get_content_report_ga_data($vars);
   $d = array();
-  $d['content'] = $ga_data_baseline->data['content'];
+  $d['content'] = !empty($ga_data_baseline->data['content']) ? $ga_data_baseline->data['content'] : array();
 
   // if vars set for comparison data, fetch that data
   if (!empty($vars['comp'])) {
@@ -141,6 +141,7 @@ function intel_content_list_report($vars) {
   }
 
   $vars['data'] = $d;
+
   $output .= theme_intel_report($vars);
 
   return $output;

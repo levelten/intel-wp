@@ -29,6 +29,11 @@ function L10iSocialTracker(_ioq, config) {
         ]
     });
     this.socialDefs.push({
+        key: 'instagram',
+        title: 'Instagram',
+        hostname: ['instagram.com']
+    });
+    this.socialDefs.push({
         key: 'linkedin',
         title: 'LinkedIn',
         hostname: ['linkedin.com'],
@@ -89,6 +94,10 @@ function L10iSocialTracker(_ioq, config) {
         //$('a').on('mouseover', {eventType: 'click'}, ths.eventHandler); // for testing event sends
     };
 
+    this.addSocialDef = function (name, def) {
+        this.socialDefs[name] = def;
+    };
+
     this.handleLinkEventAlter = function handleLinkEventAlter(f) {
         // check if hrefType is external
         if(f.hrefType != 'external') {
@@ -125,15 +134,24 @@ function L10iSocialTracker(_ioq, config) {
             }
         }
 
-        f.hrefType = 'social';
+        var eventKey = 'socialtracker_social_' + action + '_' + f.eventType;
+        if (ioq.eventDefsIndex[eventKey]) {
+            f.evtDef = ioq.eventDefs[ioq.eventDefsIndex[eventKey]];
+            f.evtDef.eventAction = f.evtDef.socialNetwork = def.title;
+            f.evtDef.socialAction = action;
+            f.hrefType = 'social';
+        }
 
-        f.hrefTypeDefs.social = {
-            title: 'Social ' + action
-        };
+        //f.hrefType = 'social';
+        //f.hrefTypeDefs.social = {
+        //    title: 'Social ' + action
+        //};
 
-        f.evtDef.eventAction = f.evtDef.socialNetwork = def.title;
-        f.evtDef.socialAction = action;
-        f.evtDef.triggerCallback = [{callback: 'socialtracker:eventHandler'}];
+
+
+
+        //f.evtDef.triggerCallback = [{callback: 'socialtracker:eventHandler'}];
+
 
         return f;
     };

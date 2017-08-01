@@ -48,15 +48,17 @@ function intel_visitor_clickstream_report($vars) {
 
   $sessions = array();
 
+
+  list($start_date, $end_date, $number_of_days) = _intel_get_report_dates("-90 days", "Now");
+
   $cache_options = array();
   if (!empty($_GET['refresh'])) {
     $cache_options['refresh'] = $_GET['refresh'];
   }
-  
-  list($start_date, $end_date, $number_of_days) = _intel_get_report_dates("-90 days", "Now");
-  // add 15 minutes (900 secs) of caching
-  $start_date = 900 * round($start_date / 900);
-  $end_date = 900 * round($end_date / 900);
+  else {
+    $cache_options['round_start'] = 1;
+    $cache_options['round_end'] = 1;
+  }
 
   $vtk_segment = 'sessions::condition::ga:dimension5==' . implode(',ga:dimension5==', $vtkids);
   //$vtk_filter = 'ga:dimension5==' . implode(',ga:dimension5==', $vtkids);
