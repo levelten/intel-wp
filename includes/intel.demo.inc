@@ -6,6 +6,216 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
+function intel_demo_user_load($id = NULL) {
+  $users = array();
+
+  $users['-1'] = (object) array(
+    'display_name' => 'Demo User 1'
+  );
+
+  $users['-2'] = (object) array(
+    'display_name' => 'Demo User 2'
+  );
+
+  $users['-3'] = (object) array(
+    'display_name' => 'Demo User 3'
+  );
+
+  if ($id) {
+    return !empty($users[$id]) ? $users[$id] : FALSE;
+  }
+
+  return $users;
+}
+
+function intel_demo_count_user_posts($userid, $post_type = 'post') {
+  $posts = intel_demo_post_load();
+  $count = 0;
+  foreach ($posts as $post) {
+    if (!$post_type || $post->post_type == $post_type) {
+      $count += ($post->post_author == $userid);
+    }
+  }
+  return $count;
+}
+
+function intel_demo_term_load($id = NULL) {
+  $terms = Intel_Df::drupal_static( __FUNCTION__, array());
+
+  if (empty($terms)) {
+    $term = array();
+    $term['-1'] = array(
+      'term_id' => -1,
+      'name' => 'demo tag 1',
+      'taxonomy' => 'post_tag',
+      'count' => 0,
+    );
+
+    $term['-2'] = array(
+      'term_id' => -2,
+      'name' => 'demo tag 2',
+      'taxonomy' => 'post_tag',
+      'count' => 0,
+    );
+
+    $term['-3'] = array(
+      'term_id' => -3,
+      'name' => 'demo tag 3',
+      'taxonomy' => 'post_tag',
+      'count' => 0,
+    );
+
+    $term['-11'] = array(
+      'term_id' => -11,
+      'name' => 'demo category 1',
+      'taxonomy' => 'category',
+      'count' => 0,
+    );
+
+    $term['-12'] = array(
+      'term_id' => -12,
+      'name' => 'demo category 2',
+      'taxonomy' => 'category',
+      'count' => 0,
+    );
+
+    $posts = intel_demo_post_load();
+    foreach ($posts as $post) {
+      if (!empty($post->intel_demo['terms'])) {
+        foreach ($post->intel_demo['terms'] as $tid) {
+          $term["$tid"]['count']++;
+        }
+      }
+    }
+
+    foreach ($term as $i => $t) {
+      $terms[$i] = (object)$t;
+    }
+  }
+
+
+  if ($id) {
+    return !empty($terms[$id]) ? $terms[$id] : FALSE;
+  }
+
+  return $terms;
+}
+
+function intel_demo_post_load($id = NULL, $options = array()) {
+  $posts = Intel_Df::drupal_static( __FUNCTION__, array());
+
+  if (empty($posts)) {
+    $post = array();
+
+    $post['-1'] = array(
+      'ID' => -1,
+      'post_type' => 'page',
+      'post_title' => Intel_Df::t('Demo Home'),
+      'post_content' => 'Page content',
+    );
+
+    $post['-2'] = array(
+      'ID' => '-2',
+      'post_type' => 'page',
+      'post_title' => 'Demo Page',
+      'post_content' => 'Page content',
+    );
+
+    $post['-3'] = array(
+      'ID' => '-3',
+      'post_type' => 'page',
+      'post_title' => 'Demo Contact',
+      'post_content' => '[intel_form name="intel_demo_contact_form"]',
+    );
+
+    $post['-4'] = array(
+      'ID' => -4,
+      'post_author' => -2,
+      'post_type' => 'post',
+      'post_name' => 'intelligence/demo/blog/alpha',
+      'guid' => 'intelligence/demo/blog/alpha',
+      'post_title' => Intel_Df::t('Demo Post A'),
+      'post_content' => 'Alpha content',
+      'comment_status' => 'open',
+      'intel_demo' => array(
+        'terms' => array(-1, -11, -12)
+      ),
+    );
+
+    $post['-5'] = array(
+      'ID' => '-5',
+      'post_author' => -3,
+      'post_type' => 'post',
+      'post_name' => 'intelligence/demo/blog/beta',
+      'post_title' => Intel_Df::t('Demo Post B'),
+      'post_content' => 'Beta content',
+      'comment_status' => 'open',
+      'intel_demo' => array(
+        'terms' => array(-1, -2, -11)
+      ),
+    );
+
+    $post['-6'] = array(
+      'ID' => '-6',
+      'post_author' => -3,
+      'post_type' => 'post',
+      'post_name' => 'intelligence/demo/blog/charlie',
+      'post_title' => Intel_Df::t('Demo Post C'),
+      'post_content' => 'Beta content',
+      'comment_status' => 'open',
+      'intel_demo' => array(
+        'terms' => array(-1, -2, -3, -12)
+      ),
+    );
+
+    $post_defaults = array(
+      'ID' => -99,
+      'post_author' => -1,
+      'post_date' => current_time('mysql'),
+      'post_date_gmt' => current_time('mysql', 1),
+      'post_content' => '',
+      'post_title' => Intel_Df::t("Page Title"),
+      'post_excerpt' => "",
+      'post_status' => 'static',
+      'comment_status' => 'closed',
+      'ping_status' => 'open',
+      'post_name' => 'intelligence/demo',
+      'guid' => get_bloginfo('wpurl') . '/' . 'intelligence/demo',
+      'post_type' => 'page',
+      'comment_count' => 0,
+      //'post_modified' => current_time('mysql'),
+      //'post_modified_gmt' => current_time('mysql', 1),
+      'filter' => 'raw',
+    );
+
+    $ipsums = array(
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer pulvinar molestie massa non aliquam. Nulla dolor metus, elementum vitae neque non, congue placerat sapien. Pellentesque mollis tortor in diam elementum accumsan. Fusce elementum sapien non massa imperdiet, a iaculis ante accumsan. Donec faucibus tempor velit, nec egestas libero placerat in. Nam vitae congue nisi. Integer mi elit, cursus et sapien vitae, hendrerit gravida quam. Mauris sit amet ante venenatis, posuere lectus vitae, fermentum enim. Vivamus fermentum eros mi, et elementum lorem lobortis et. Aenean consectetur mauris ac varius vehicula. Vestibulum condimentum ultrices sem, ac aliquet sapien congue et. Aenean eu felis a ligula mattis feugiat.',
+      'Aenean elementum elit sed nibh sollicitudin efficitur. Maecenas tincidunt ornare accumsan. Duis eros mi, posuere ut justo at, eleifend aliquam erat. Proin in lectus eros. Ut non ullamcorper dolor. Aenean tincidunt ligula suscipit porta ullamcorper. Vivamus in placerat mi. Nam tempus lacus sit amet nisl auctor accumsan. Maecenas laoreet massa in aliquam ullamcorper. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Quisque pellentesque lacinia felis sit amet ornare. Sed a felis diam. Etiam egestas sed augue at maximus. Ut ultrices magna hendrerit porta dapibus. Morbi fermentum at nisl sed ultrices.',
+      'Donec rhoncus nunc vitae turpis hendrerit, ac mattis massa ultrices. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Curabitur non nisl ante. Ut eu tempor mauris. Sed non massa dapibus, euismod enim at, porttitor est. Donec luctus lobortis rutrum. Cras rhoncus diam at efficitur laoreet. Phasellus rhoncus elementum risus eu fermentum. Nam sit amet ornare turpis. Suspendisse placerat, risus vel dignissim sollicitudin, tortor lorem imperdiet purus, hendrerit ultrices justo felis ut magna. Mauris dapibus gravida nibh, sed semper ante congue ac.',
+      'Curabitur pharetra odio sed felis hendrerit elementum. Phasellus bibendum eget risus a mattis. Maecenas egestas maximus lacus ac tincidunt. Vivamus dapibus ut est at bibendum. Suspendisse nec justo diam. Donec fermentum, lorem ut faucibus aliquet, felis erat condimentum leo, aliquet vestibulum tellus sapien eget enim. Vivamus sit amet orci urna. Pellentesque tempus magna leo, et consequat massa maximus non. Duis quis lacinia mauris, suscipit tincidunt libero. Cras tristique molestie mauris. Duis condimentum dui sapien, non aliquam arcu mattis vitae. Nam in nulla sed est finibus ultricies. Fusce accumsan diam vel eros eleifend, nec gravida leo mollis.',
+      'Nullam diam orci, maximus sed diam at, sodales vestibulum purus. Aenean tincidunt lorem blandit porta efficitur. Curabitur lacus lacus, aliquam eu facilisis ut, mollis ut orci. In finibus nisi vitae dui aliquet placerat. Proin at urna eget magna egestas interdum sit amet eu risus. Mauris dapibus feugiat convallis. Nunc et ultrices erat. Ut blandit consequat diam feugiat ultricies. Nam lobortis mauris in libero vestibulum ultricies. Proin sagittis faucibus eros in condimentum. Nullam vel urna sit amet leo faucibus tincidunt quis at enim. Mauris vestibulum sem ac odio suscipit, ut dignissim orci blandit.',
+    );
+
+    $post['-4']['post_content'] = $post['-4']['post_excerpt'] = $ipsums[0];
+    $post['-5']['post_content'] = $post['-5']['post_excerpt'] = $ipsums[4];
+    $post['-6']['post_content'] = $post['-6']['post_excerpt'] = '[embed]https://www.youtube.com/watch?v=A__S2YudnFI[/embed]';
+
+    $post['-4']['post_content'] .= "\n\n" . $ipsums[1] . "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3];
+    $post['-5']['post_content'] .= "\n\n" . $ipsums[3] . "\n\n" . $ipsums[2]  . "\n\n" . $ipsums[1] . "\n\n" . $ipsums[0] . "\n\n" . $ipsums[4] . "\n\n" . $ipsums[3];
+    $post['-6']['post_content'] .= "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3]  . "\n\n" . $ipsums[4];
+
+    foreach ($post as $i => $p) {
+      $posts[$i] = (object)($p + $post_defaults);
+    }
+  }
+
+  if ($id) {
+    return !empty($posts[$id]) ? $posts[$id] : FALSE;
+  }
+
+  return $posts;
+};
+
 function intel_demo_posts_alter($posts){
   global $wp;
   global $wp_query;
@@ -35,96 +245,56 @@ function intel_demo_posts_alter($posts){
     'path' => 'intelligence/demo/contact',
   );
 
+
+
   $urls = array(
     'intelligence/demo' => array(
-      'posts' => array(
-        array(
-          'post_type' => 'page',
-          'post_title' => Intel_Df::t('Home'),
-          'post_content' => 'Page content',
-        ),
+      'entity' => array(
+        'type' => 'post',
+        'id' => -1,
       ),
     ),
     'intelligence/demo/page' => array(
-      'posts' => array(
-        array(
-          'post_type' => 'page',
-          'post_title' => 'Page',
-          'post_content' => 'Page content',
-        ),
+      'entity' => array(
+        'type' => 'post',
+        'id' => -2,
       ),
     ),
     'intelligence/demo/contact' => array(
-      'posts' => array(
-        array(
-          'post_type' => 'page',
-          'post_title' => 'Contact',
-          'post_content' => '[intel_form name="intel_demo_contact_form"]',
-        ),
+      'entity' => array(
+        'type' => 'post',
+        'id' => -3,
       ),
     ),
     'intelligence/demo/blog' => array(
-      'posts' => array(),
+      'entity' => array(
+        'type' => 'post',
+        'id' => array(-4, -5, -6),
+      ),
       'wp_query' => array(
         'is_page' => false,
         'is_singular' => false,
       ),
     ),
     'intelligence/demo/blog/alpha' => array(
-      'posts' => array(
-        array(
-          'post_type' => 'post',
-          'post_name' => 'intelligence/demo/blog/alpha',
-          'guid' => 'intelligence/demo/blog/alpha',
-          'post_title' => Intel_Df::t('Post A'),
-          'post_content' => 'Alpha content',
-          'comment_status' => 'open',
-        ),
+      'entity' => array(
+        'type' => 'post',
+        'id' => -4,
       ),
     ),
     'intelligence/demo/blog/beta' => array(
-      'posts' => array(
-        array(
-          'post_type' => 'post',
-          'post_name' => 'intelligence/demo/blog/beta',
-          'post_title' => Intel_Df::t('Post B'),
-          'post_content' => 'Beta content',
-          'comment_status' => 'open',
-        ),
+      'entity' => array(
+        'type' => 'post',
+        'id' => -5,
       ),
     ),
     'intelligence/demo/blog/charlie' => array(
-      'posts' => array(
-        array(
-          'post_type' => 'post',
-          'post_name' => 'intelligence/demo/blog/charlie',
-          'post_title' => Intel_Df::t('Post C'),
-          'post_content' => 'Beta content',
-          'comment_status' => 'open',
-        ),
+      'entity' => array(
+        'type' => 'post',
+        'id' => -6,
       ),
     ),
   );
-
-  $ipsums = array(
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer pulvinar molestie massa non aliquam. Nulla dolor metus, elementum vitae neque non, congue placerat sapien. Pellentesque mollis tortor in diam elementum accumsan. Fusce elementum sapien non massa imperdiet, a iaculis ante accumsan. Donec faucibus tempor velit, nec egestas libero placerat in. Nam vitae congue nisi. Integer mi elit, cursus et sapien vitae, hendrerit gravida quam. Mauris sit amet ante venenatis, posuere lectus vitae, fermentum enim. Vivamus fermentum eros mi, et elementum lorem lobortis et. Aenean consectetur mauris ac varius vehicula. Vestibulum condimentum ultrices sem, ac aliquet sapien congue et. Aenean eu felis a ligula mattis feugiat.',
-    'Aenean elementum elit sed nibh sollicitudin efficitur. Maecenas tincidunt ornare accumsan. Duis eros mi, posuere ut justo at, eleifend aliquam erat. Proin in lectus eros. Ut non ullamcorper dolor. Aenean tincidunt ligula suscipit porta ullamcorper. Vivamus in placerat mi. Nam tempus lacus sit amet nisl auctor accumsan. Maecenas laoreet massa in aliquam ullamcorper. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Quisque pellentesque lacinia felis sit amet ornare. Sed a felis diam. Etiam egestas sed augue at maximus. Ut ultrices magna hendrerit porta dapibus. Morbi fermentum at nisl sed ultrices.',
-    'Donec rhoncus nunc vitae turpis hendrerit, ac mattis massa ultrices. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Curabitur non nisl ante. Ut eu tempor mauris. Sed non massa dapibus, euismod enim at, porttitor est. Donec luctus lobortis rutrum. Cras rhoncus diam at efficitur laoreet. Phasellus rhoncus elementum risus eu fermentum. Nam sit amet ornare turpis. Suspendisse placerat, risus vel dignissim sollicitudin, tortor lorem imperdiet purus, hendrerit ultrices justo felis ut magna. Mauris dapibus gravida nibh, sed semper ante congue ac.',
-    'Curabitur pharetra odio sed felis hendrerit elementum. Phasellus bibendum eget risus a mattis. Maecenas egestas maximus lacus ac tincidunt. Vivamus dapibus ut est at bibendum. Suspendisse nec justo diam. Donec fermentum, lorem ut faucibus aliquet, felis erat condimentum leo, aliquet vestibulum tellus sapien eget enim. Vivamus sit amet orci urna. Pellentesque tempus magna leo, et consequat massa maximus non. Duis quis lacinia mauris, suscipit tincidunt libero. Cras tristique molestie mauris. Duis condimentum dui sapien, non aliquam arcu mattis vitae. Nam in nulla sed est finibus ultricies. Fusce accumsan diam vel eros eleifend, nec gravida leo mollis.',
-    'Nullam diam orci, maximus sed diam at, sodales vestibulum purus. Aenean tincidunt lorem blandit porta efficitur. Curabitur lacus lacus, aliquam eu facilisis ut, mollis ut orci. In finibus nisi vitae dui aliquet placerat. Proin at urna eget magna egestas interdum sit amet eu risus. Mauris dapibus feugiat convallis. Nunc et ultrices erat. Ut blandit consequat diam feugiat ultricies. Nam lobortis mauris in libero vestibulum ultricies. Proin sagittis faucibus eros in condimentum. Nullam vel urna sit amet leo faucibus tincidunt quis at enim. Mauris vestibulum sem ac odio suscipit, ut dignissim orci blandit.',
-  );
-
-  $urls['intelligence/demo/blog/alpha']['posts'][0]['post_content'] = $ipsums[0];
-  $urls['intelligence/demo/blog/beta']['posts'][0]['post_content'] = $ipsums[4];
-  $urls['intelligence/demo/blog/charlie']['posts'][0]['post_content'] = '[embed]https://www.youtube.com/watch?v=A__S2YudnFI[/embed]';
-
-  $urls['intelligence/demo/blog']['posts'][] = $urls['intelligence/demo/blog/alpha']['posts'][0];
-  $urls['intelligence/demo/blog']['posts'][] = $urls['intelligence/demo/blog/beta']['posts'][0];
-  $urls['intelligence/demo/blog']['posts'][] = $urls['intelligence/demo/blog/charlie']['posts'][0];
-
-  $urls['intelligence/demo/blog/alpha']['posts'][0]['post_content'] .= "\n\n" . $ipsums[1] . "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3];
-  $urls['intelligence/demo/blog/beta']['posts'][0]['post_content'] .= "\n\n" . $ipsums[3] . "\n\n" . $ipsums[2]  . "\n\n" . $ipsums[1] . "\n\n" . $ipsums[0] . "\n\n" . $ipsums[4] . "\n\n" . $ipsums[3];
-  $urls['intelligence/demo/blog/charlie']['posts'][0]['post_content'] .= "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3]  . "\n\n" . $ipsums[4];
 
   // determine current page url
   $page_url = '';
@@ -134,6 +304,7 @@ function intel_demo_posts_alter($posts){
   elseif (!empty($wp->query_vars['page_id'])) {
     $page_url = $wp->query_vars['page_id'];
   }
+
   if ( empty($intel_demo_page_url) && !empty($urls[$page_url]) ) {
     // stop interferring with other $posts arrays on this page (only works if the sidebar is rendered *after* the main page)
     $intel_demo_page_url = $page_url;
@@ -144,28 +315,19 @@ function intel_demo_posts_alter($posts){
     wp_enqueue_style( 'intel_demo', INTEL_URL . 'css/intel.demo.css', array(), intel()->get_version(), 'all');
     wp_enqueue_style( 'intel_wpb-fa', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css' );
 
-    $posts_data = !empty($urls[$intel_demo_page_url]['posts']) ? $urls[$intel_demo_page_url]['posts'] : array();
+
     $wp_query_data = !empty($urls[$intel_demo_page_url]['wp_query']) ? $urls[$intel_demo_page_url]['wp_query'] : array();
 
-    $post_defaults = array(
-      'ID' => -999,
-      'post_author' => 1,
-      'post_date' => current_time('mysql'),
-      'post_date_gmt' => current_time('mysql', 1),
-      'post_content' => '',
-      'post_title' => Intel_Df::t("Page Title"),
-      'post_excerpt' => "",
-      'post_status' => 'static',
-      'comment_status' => 'closed',
-      'ping_status' => 'open',
-      'post_name' => $intel_demo_page_url,
-      'guid' => get_bloginfo('wpurl') . '/' . $intel_demo_page_url,
-      'post_type' => 'page',
-      'comment_count' => 0,
-      //'post_modified' => current_time('mysql'),
-      //'post_modified_gmt' => current_time('mysql', 1),
-      'filter' => 'raw',
-    );
+    $posts_data = array();
+    if ($urls[$intel_demo_page_url]['entity']) {
+      $ids = $urls[$intel_demo_page_url]['entity']['id'];
+      if (!is_array($ids)) {
+        $ids = array($ids);
+      }
+      foreach ($ids as $id) {
+        $posts_data[] = intel_demo_post_load($id);
+      }
+    }
 
     // build menu
     $menu = '';
@@ -176,15 +338,15 @@ function intel_demo_posts_alter($posts){
       $menu .= Intel_Df::l($i['text'], $i['path'], !empty($i['options']) ? $i['options'] : array());
     }
 
+    $demo_terms = intel_demo_term_load();
+
     $posts = array();
     $post_count = count($posts_data);
     foreach ($posts_data as $i => $post_data) {
 
-      $post_data += $post_defaults;
-
-
       // create a fake virtual page
       $post = new stdClass;
+      $post_data = (array)$post_data;
       foreach ($post_data as $k => $v) {
         $post->{$k} = $v;
       }
@@ -195,9 +357,10 @@ function intel_demo_posts_alter($posts){
       //$excerpt = apply_filters( 'get_the_excerpt', $post->post_excerpt, $post );
 
       $content = '';
+      $excerpt = '';
       if ($i == 0) {
         $content .= '<div class="intel-demo-menu">' . $menu . '</div>';
-        //$_post->post_title = '<div class="intel-demo-menu-placeholder"></div>' . $_post->post_title;
+        $excerpt .= '<div class="intel-demo-menu">' . $menu . '</div>';
       }
 
       if ($_post->post_type == 'post') {
@@ -205,7 +368,7 @@ function intel_demo_posts_alter($posts){
           $content .= '<div class="intel-demo-featured-image"><img src="http://via.placeholder.com/1280x720&text=Featured+Image"></div>';
         }
         else {
-          $content .= '<div class="intel-demo-featured-image"><img src="http://via.placeholder.com/1280x360&text=Featured+Image"></div>';
+          $excerpt .= '<div class="intel-demo-featured-image"><img src="http://via.placeholder.com/1280x360&text=Featured+Image"></div>';
         }
       }
 
@@ -213,7 +376,42 @@ function intel_demo_posts_alter($posts){
         $content .= '<div class="intel-demo-social-share social-wrapper social-share">' . intel_demo_social_share_buttons($post) . '</div>';
       }
 
+      if ($_post->post_type == 'post' && $post_count == 1) {
+        $terms = array(
+          'category' => array(),
+          'post_tag' => array(),
+        );
+
+        if (!empty($_post->intel_demo['terms'])) {
+          foreach ($_post->intel_demo['terms'] as $tid) {
+            if (!empty($demo_terms[$tid])) {
+              $t = $demo_terms[$tid];
+              $terms[$t->taxonomy][] = $t->name;
+            }
+          }
+        }
+        $content .= '<div class="intel-demo-terms terms-wrapper">';
+        $content .= '<div class="intel-demo-term-category term-wrapper term-category">' . Intel_Df::t('Categories') . ': ';
+        if (!empty($terms['category'])) {
+          $content .= implode(', ', $terms['category']);
+        }
+        else {
+          $content .= Intel_Df::t('(none)');
+        }
+        $content .= '</div>';
+        $content .= '<div class="intel-demo-term-tag term-wrapper term-tag">' . Intel_Df::t('Tags') . ': ';
+        if (!empty($terms['post_tag'])) {
+          $content .= implode(', ', $terms['post_tag']);
+        }
+        else {
+          $content .= Intel_Df::t('(none)');
+        }
+        $content .= '</div></div>';
+
+      }
+
       $content .= '<div class="intel-demo-body">' . $_post->post_content . '</div>';
+      $excerpt .= '<div class="intel-demo-body">' . $_post->post_excerpt . '</div>';
 
       if ($_post->post_type == 'post') {
         if ($post_count == 1) {
@@ -233,10 +431,9 @@ function intel_demo_posts_alter($posts){
       // if post list page, set content/excerpt fields based on settings
       if ($post_count > 1) {
         $_post->post_content = '';
-        $excerpt = !empty($_post->post_excerpt) ? $_post->post_excerpt : $content;
         $_post->post_excerpt = '';
         if (empty($demo_settings['post_list_content_fields']) || $demo_settings['post_list_content_fields'] == 'content') {
-          $_post->post_content = '<div class="intel-demo-post-content">' . $content . '</div>';
+          $_post->post_content = '<div class="intel-demo-post-content">' . $excerpt . '</div>';
         }
         if (empty($demo_settings['post_list_content_fields']) || $demo_settings['post_list_content_fields'] == 'excerpt') {
           $_post->post_excerpt = '<div class="intel-demo-post-content post-excerpt">' . $excerpt . '</div>';
@@ -244,6 +441,7 @@ function intel_demo_posts_alter($posts){
       }
       else {
         $_post->post_content = '<div class="intel-demo-post-content">' . $content . '</div>';
+        $_post->excerpt = '';
       }
 
       $posts[] = $_post;

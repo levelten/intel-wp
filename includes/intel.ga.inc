@@ -1426,6 +1426,7 @@ function intel_get_page_attribute_info_default() {
     'options_description' => Intel_Df::t('Auto generated from entity uid.'),
     'options info callback' => 'intel_page_attribute_author_option_info',
   );
+  /*
   $attributes['rt'] = array(
     'title' => Intel_Df::t('Entity type'),
     'title_plural' => Intel_Df::t('Entity types'),
@@ -1441,6 +1442,7 @@ function intel_get_page_attribute_info_default() {
       )
     ),
   );
+  */
   $attributes['rt2'] = array(
     'title' => Intel_Df::t('Content type'),
     'title_plural' => Intel_Df::t('Content types'),
@@ -1455,6 +1457,7 @@ function intel_get_page_attribute_info_default() {
       )
     ),
   );
+  /*
   $attributes['rk'] = array(
     'title' => Intel_Df::t('Entity id'),
     'title_plural' => Intel_Df::t('Entity ids'),
@@ -1486,6 +1489,7 @@ function intel_get_page_attribute_info_default() {
       )
     ),
   );
+
   $attributes['rl'] = array(
     'title' => Intel_Df::t('Entity path'),
     'title_plural' => Intel_Df::t('Entity path'),
@@ -1553,6 +1557,7 @@ function intel_get_page_attribute_info_default() {
     'options info callback' => 'intel_page_attribute_entity_type_option_info',
   );
   */
+  /*
   $attributes['i'] = array(
     'title' => Intel_Df::t('Page intent'),
     'description' => Intel_Df::t('The role a page plays on the site.'),
@@ -1561,6 +1566,7 @@ function intel_get_page_attribute_info_default() {
     'custom_options' => array(),
     'selectable' => 1,
   );
+  */
   $attributes['pd'] = array(
     'title' => Intel_Df::t('Published date'),
     'description' => Intel_Df::t('The time (unix timestamp) a node was created.'),
@@ -1632,7 +1638,7 @@ function intel_get_page_attribute_info_default() {
   for ($i = 0; $i <= 2400; $i += 100) {
     $attributes['pdt']['index_grouping'][] = $i;
   }
-  */
+  /*
   $attributes['s'] = array(
     'title' => Intel_Df::t('Section'),
     'title_plural' => Intel_Df::t('Sections'),
@@ -1641,6 +1647,21 @@ function intel_get_page_attribute_info_default() {
     'custom_options' => array(),
     'selectable' => 1,
     'access callback' => FALSE,
+  );
+  */
+  $attributes['c'] = array(
+    'title' => Intel_Df::t('Category'),
+    'title_plural' => Intel_Df::t('Categories'),
+    'description' => Intel_Df::t('List of taxomony term ids.'),
+    'type' => 'list',
+    'options_description' => Intel_Df::t('Auto generated from terms in selected taxonomy fields.'),
+    'options info callback' => 'intel_page_attribute_taxomony_term_option_info',
+    'storage' => array(
+      'analytics' => array(
+        'struc' => 'dimension',
+        'index' => 1,
+      )
+    ),
   );
   $attributes['t'] = array(
     'title' => Intel_Df::t('Tag'),
@@ -1903,30 +1924,70 @@ function intel_get_attribute_option_info($mode, $attr_key, $option_id, $data_opt
 }
 
 function intel_page_attribute_author_option_info($option_id, $data_options) {
+
   $data = array(
     'title' => '',
   );
-  $account = user_load($option_id);
-  if (!empty($account)) {
-    $data['title'] = format_username($account);
-    $data['uri'] = 'user/' . $account->uid;
+  if (INTEL_PLATFORM == 'wp') {
+    $option_id = intval($option_id);
+    if ($option_id < 0) {
+      require_once INTEL_DIR . 'includes/intel.demo.inc';
+      $account = intel_demo_user_load($option_id);
+    }
+    else {
+      $account = get_userdata($option_id);
+    }
+
+    if (!empty($account)) {
+      $data['title'] = $account->display_name;
+      if ($option_id < 0) {
+        $data['page_count'] = intel_demo_count_user_posts( $option_id, 'post');
+      }
+      else {
+        $data['page_count'] = count_user_posts( $option_id, 'post', TRUE );
+      }
+    }
+  }
+  elseif(INTEL_PLATFORM == 'drupal') {
+    $account = user_load($option_id);
+    if (!empty($account)) {
+      $data['title'] = format_username($account);
+      $data['uri'] = 'user/' . $account->uid;
+    }
+
+    if (!empty($data_options['page_count'])) {
+      $query = db_query("SELECT count(nid) FROM {node} WHERE uid = :uid", array(
+        ':uid' => $option_id,
+      ));
+
+      $data['page_count'] = $query->fetchField();
+    }
   }
 
-  if (!empty($data_options['page_count'])) {
-    $query = db_query("SELECT count(nid) FROM {node} WHERE uid = :uid", array(
-      ':uid' => $option_id,
-    ));
-
-    $data['page_count'] = $query->fetchField();
-  }
   return $data;
 }
 
 function intel_page_attribute_content_type_option_info($option_id, $data_options) {
+  $content_types = Intel_Df::drupal_static( __FUNCTION__, array());
+
   $data = array(
-    'title' => '',
+    'title' => Intel_Df::t('(unknown)'),
+    'page_count' => 1,
   );
-  $types = node_type_get_types();
+
+  if (empty($content_types[$option_id])) {
+    $content_types[$option_id] = get_post_type_object($option_id);
+    $content_types[$option_id]->count_posts_published = wp_count_posts( $option_id )->publish;
+  }
+
+  if (empty($content_types[$option_id])) {
+    return $data;
+  }
+
+  $data['title'] = $content_types[$option_id]->label;
+  $data['page_count'] = $content_types[$option_id]->count_posts_published;
+
+  return $data;
   //print_r($types);
   $type = '';
   if (isset($types[$option_id])) {
@@ -1979,19 +2040,38 @@ function intel_page_attribute_taxomony_term_option_info($option_id, $data_option
   $data = array(
     'title' => '',
   );
-  $term = taxonomy_term_load($option_id);
-  if (!empty($term)) {
-    $data['title'] = $term->name;
-    $data['uri'] = 'taxonomy/term/' . $option_id;
+
+  if (INTEL_PLATFORM == 'wp') {
+    $option_id = intval($option_id);
+    if ($option_id < 0) {
+      require_once INTEL_DIR . 'includes/intel.demo.inc';
+      $term = intel_demo_term_load($option_id);
+    }
+    else {
+      $term = get_term($option_id);
+    }
+    if (!empty($term)) {
+      $data['title'] = $term->name;
+      $data['page_count'] = $term->count;
+    }
+
+  }
+  elseif (INTEL_PLATFORM == 'drupal') {
+    $term = taxonomy_term_load($option_id);
+    if (!empty($term)) {
+      $data['title'] = $term->name;
+      $data['uri'] = 'taxonomy/term/' . $option_id;
+    }
+
+    if (!empty($data_options['page_count'])) {
+      $query = db_query("SELECT count(nid) FROM {taxonomy_index} WHERE tid = :tid", array(
+        ':tid' => $option_id,
+      ));
+
+      $data['page_count'] = $query->fetchField();
+    }
   }
 
-  if (!empty($data_options['page_count'])) {
-    $query = db_query("SELECT count(nid) FROM {taxonomy_index} WHERE tid = :tid", array(
-      ':tid' => $option_id,
-    ));
-
-    $data['page_count'] = $query->fetchField();
-  }
 
   return $data;
 }
@@ -3021,14 +3101,15 @@ function intel_score_item($data, $divideby = 1, &$score_components = array(), $m
   }
 
   // traffic scoring based on hit on this page/segment
-  $scores['onpage']['traffic'] += ($page['pageviews'] - $entrance['pageviews']) * $scoring['additional_pages'];
+  $scores['onpage']['traffic'] += ($page['pageviews'] - $entrance['entrances']) * $scoring['additional_pages'];
 //dsm($scores);
   // tally up scores from components
   if ($method == 'direct') {
 
   }
   elseif ($method == 'page') {
-    $scores['_all']['goals'] = (1 - $ac) * $scores['entrance']['goals'] + $ac * ($scores['assist']['goals']);
+    // for assist, subtract entrance goals as to not double count them.
+    $scores['_all']['goals'] = (1 - $ac) * $scores['entrance']['goals'] + $ac * ($scores['assist']['goals'] - $scores['entrance']['goals']);
     $scores['_all']['events'] = (1 - $ac) * $scores['onpage']['events'] + $ac * ($scores['entrance']['events']);
     $scores['_all']['traffic'] = $scores['entrance']['traffic'] + $scores['onpage']['traffic'];
   }
@@ -3046,7 +3127,8 @@ function intel_score_item($data, $divideby = 1, &$score_components = array(), $m
     $scores['_all']['events'] = $scores['onpage']['events'];
     // if visitor is filtered, entrance may not be included in filtered item
     // if entrance score is 0, use pageview for traffic
-    $scores['_all']['traffic'] = $scores['entrance']['traffic'] + $scores['onpage']['traffic'];
+    //$scores['_all']['traffic'] = $scores['entrance']['traffic'] + $scores['onpage']['traffic'];
+    $scores['_all']['traffic'] = $scores['entrance']['traffic'];
   }
   else {
     // use entrance, trafficsources

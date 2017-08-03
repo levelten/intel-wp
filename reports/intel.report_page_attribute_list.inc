@@ -6,9 +6,11 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
-function intel_page_attribute_list_report_page($report_params = '-', $report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.reports.inc";
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+function intel_page_attribute_list_report_page($report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
+  $_GET['return_type'] = 'nonajax';
+
+  require_once INTEL_DIR . "includes/intel.reports.inc";
+  require_once INTEL_DIR . "includes/intel.ga.inc";
   $output = '';
 
   $vars = array();
@@ -16,6 +18,7 @@ function intel_page_attribute_list_report_page($report_params = '-', $report_sub
     $vars['entity_type'] = $entity_type;
     $vars['entity'] = $entity;
   }
+  $report_params = !empty($_GET['report_params']) ? $_GET['report_params'] : '-';
   $vars = intel_init_reports_vars('page_attribute_list', 'content', $report_params, $report_subtype, $report_subfilter, $vars);
 
   $output = intel_build_report($vars);
@@ -26,7 +29,7 @@ function intel_page_attribute_list_report_page($report_params = '-', $report_sub
 //function intel_page_attribute_list_report($vars['filters'] = array(), $context = 'site', $sub_index = '-', $mode = '') {
 function intel_page_attribute_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
+  require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
 
   $a = explode(':', $vars['report_modes'][0]);
   $attr_key = $a[1];
@@ -72,17 +75,13 @@ function intel_page_attribute_list_report($vars) {
   $ga_data->setRequestSetting('details', 0);
   $ga_data->setRequestDefaultParam('max_results', 2 * $vars['feed_rows']);
   $ga_data->loadFeedData('pageviews');
-  $ga_data->setDebug(0);
 
   $ga_data->setRequestDefaultParam('max_results', 1 * $vars['feed_rows']);
   $ga_data->loadFeedData('entrances');
-  $ga_data->setDebug(0);
 
 //$ga_data->setDebug(1);
   $ga_data->setRequestDefaultParam('max_results', 2 * $vars['feed_rows']);
   $ga_data->loadFeedData('sessions');
-$ga_data->setDebug(0);
-
   // advanced sort not needed for valued events
   $ga_data->setAdvancedSort(0);
 
@@ -132,7 +131,9 @@ $ga_data->setDebug(0);
       $method = 'page';
     }
     $d[$indexBy][$index]['score'] = intel_score_item($de, 1, $score_components, '', $method);
-
+intel_d($index);
+intel_d($de);
+intel_d($score_components);
     //$d[$indexBy][$index]['score'] = intel_score_page_aggregation($de, 1, $score_components);
     $d[$indexBy][$index]['score_components'] = $score_components;
     if (isset($de['i'])) {

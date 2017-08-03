@@ -180,20 +180,6 @@ class Intel_Public {
 			$wp_admin_bar->add_node( $args );
 		}
 
-		$demo_settings = get_option('intel_demo_settings');
-
-		if (!empty($demo_settings['status'])) {
-			$l_options_admin = Intel_Df::l_options_add_query(array('io-clear-visitor' => 1));
-			$args = array(
-				'parent' => 'intel',
-				'id'    => 'intel-util-clear-visitor',
-				'title' => Intel_Df::t('Util: Clear visitor'),
-				'href'  => Intel_Df::url(Intel_Df::current_path(), $l_options_admin),
-				'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
-			);
-			$wp_admin_bar->add_node( $args );
-		}
-
 		//do_action('intel_admin_bar_menu_alter', $wp_admin_bar);
 
 	}

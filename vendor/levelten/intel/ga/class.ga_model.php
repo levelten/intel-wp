@@ -559,7 +559,7 @@ class GAModel {
    * @param int $details
    * @return array
    */
-  function getRequestArray($type = '', $indexBy = '', $details = 0) {
+  function getRequestArray($type = '', $indexBy = '', $details = NULL) {
     $request = $this->requestDefault;
     $settings = $this->requestSettings;
     $context = $this->context;
@@ -569,7 +569,7 @@ class GAModel {
     $subType = $settings['subType'];
     $indexBy = ($indexBy) ?  $indexBy : $settings['indexBy'];
     $subIndexBy = $settings['subIndexBy'];
-    $details = ($details) ? $details : $settings['details'];
+    $details = isset($details) ? $details : $settings['details'];
     $reportModes = $this->reportModes;
     $filters = array();
     $segments = array();
@@ -774,7 +774,7 @@ class GAModel {
       $request['dimensions'][] = 'ga:' . $this->attrStorage['vtk']['field'];
       // for entrance requests sorting by pageviews is somewhat more effective
       // for visitors
-      if ($types[0] == 'entrances') {
+      if ($types[0] == 'entrances' && (empty($types[1]) || $types[1] != 'events')) {
         $request['sort'] = '-ga:goalValueAll,-ga:pageviews,-ga:entrances';
       }
     }
@@ -915,7 +915,7 @@ class GAModel {
 
     }
 
-    if ($details) {
+    if (!empty($details)) {
       if ($type == 'pageviews' && (!in_array('ga:pagePath', $request['dimensions']))) {
         $request['dimensions'][] = 'ga:pagePath';
       }

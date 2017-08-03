@@ -88,13 +88,13 @@ function intel_scorecard_report($vars) {
 
   $ga_data->setRequestSetting('details', 1);
   $ga_data->setRequestDefaultParam('max_results', 10 *  ($number_of_days+1));
-  $ga_data->loadFeedData('pageviews_events_valued');
+  $ga_data->loadFeedData('pageviews_events_valued', 'date', 1);
 
   //d($ga_data->data);
   //return;
 
   if ($context == 'page' || $context == 'page-attr') {
-    $ga_data->loadFeedData('entrances_events_valued');
+    $ga_data->loadFeedData('entrances_events_valued', 'date', 1);
   }
 
   //$ga_data->setRequestSetting('details', 1);
@@ -138,21 +138,29 @@ function intel_scorecard_report($vars) {
     $ga_data->loadFeedData('sessions_goals', 'date', 0);
   }
 
-  //$ga_data->setDebug(1);
+  // get top content data
   if ($context != 'page') {
-    $ga_data->setRequestDefaultParam('max_results', 200); 
-    $request = $ga_data->loadFeedData('pageviews', 'content'); 
+    $ga_data->setRequestDefaultParam('max_results', 200);
+    $request = $ga_data->loadFeedData('pageviews', 'content', 0);
     
     $ga_data->setRequestDefaultParam('max_results', 50); 
-    $request = $ga_data->loadFeedData('entrances', 'content'); 
+    $request = $ga_data->loadFeedData('entrances', 'content', 0);
     
     $ga_data->setRequestDefaultParam('max_results', 200);
-    $request = $ga_data->loadFeedData('pageviews_events_valued', 'content');
+    $request = $ga_data->loadFeedData('pageviews_events_valued', 'content', 0);
+
+    $ga_data->setRequestDefaultParam('max_results', 200);
+    $request = $ga_data->loadFeedData('entrances_events_valued', 'content', 0);
   }
-  $ga_data->setRequestDefaultParam('max_results', 100);
-  $request = $ga_data->loadFeedData('entrances', 'trafficsources'); 
-  
-  $d = $d = $ga_data->data;;
+
+  // get top traffic source data
+  if ($context != 'trafficsource') {
+    $ga_data->setRequestDefaultParam('max_results', 100);
+    $request = $ga_data->loadFeedData('entrances', 'trafficsources');
+
+    $request = $ga_data->loadFeedData('entrances_events_valued', 'trafficsources');
+  }
+  $d = $d = $ga_data->data;
 
   if (!empty($path)) {
     $created = intel_get_node_created($path);
@@ -217,8 +225,7 @@ function intel_scorecard_report($vars) {
       //$d['content'][$index]['score'] = intel_score_page_aggregation($de, 1, $score_components, '', array('method' => 'direct'));
       //$d['content'][$index]['score'] = intel_score_page_aggregation($de, 1, $score_components);
       $d['content'][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'page');
-
-      $d['content'][$index]['score_components'] = $score_components;  
+      $d['content'][$index]['score_components'] = $score_components;
     }
     $d['content']['_links'] = array(
       'default' => array(),
@@ -237,7 +244,7 @@ function intel_scorecard_report($vars) {
         $score_components = array();
         //$d['trafficsources'][$sub_index][$index]['score'] = intel_score_visit_aggregation($de, 1, $score_components);
         $d['trafficsources'][$sub_index][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'entrance');
-        $d['trafficsources'][$sub_index][$index]['score_components'] = $score_components;  
+        $d['trafficsources'][$sub_index][$index]['score_components'] = $score_components;
       }
       $more_link_options['query'] = intel_build_report_query('trafficsource', $vars['report_params']);
       $d['trafficsources'][$sub_index]['_links'] = array();

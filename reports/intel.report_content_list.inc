@@ -46,7 +46,6 @@ function intel_content_list_report($vars) {
   $ga_data_baseline = intel_get_content_report_ga_data($vars);
   $d = array();
   $d['content'] = !empty($ga_data_baseline->data['content']) ? $ga_data_baseline->data['content'] : array();
-
   // if vars set for comparison data, fetch that data
   if (!empty($vars['comp'])) {
     $vars_comp = $vars['comp'] + $vars;
@@ -67,7 +66,6 @@ function intel_content_list_report($vars) {
     }
     foreach ($d[$dataIndex] AS $index => $de) {
       $score_components = array();
-
       if ($vars['report_modes'][0] == 'seo') {
         //$d['content'][$index]['score'] = intel_score_visit_aggregation($de, 1, $score_components, 'seo');
         $d[$dataIndex][$index]['score'] = intel_score_item($de, 1, $score_components, 'seo', 'entrance');
@@ -85,9 +83,13 @@ function intel_content_list_report($vars) {
           $d[$dataIndex][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'page');
         }
         else {
-          $d[$dataIndex][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'site');
+          $d[$dataIndex][$index]['score'] = intel_score_item($de, 1, $score_components, '', '');
+          //$d[$dataIndex][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'site');
         }
       }
+intel_d($index);
+intel_d($de);
+intel_d($score_components);
       $d[$dataIndex][$index]['score_components'] = $score_components;
     }
   }
@@ -172,7 +174,9 @@ function intel_get_content_report_ga_data($vars = array()) {
   if ($vars['context'] != 'entrance' && ($vars['report_modes'][0] != 'social') && ($vars['report_modes'][0] != 'seo')) {
     $ga_data->setAdvancedSort(1);
     $ga_data->setRequestDefaultParam('max_results', 4 * $vars['feed_rows']);
+$ga_data->setDebug(1);
     $ga_data->loadFeedData('pageviews');
+$ga_data->setDebug(0);
     $ga_data->setAdvancedSort(0);
   }
 
@@ -225,5 +229,6 @@ function intel_get_content_report_ga_data($vars = array()) {
     $ga_data->setRequestSetting('subIndexBy', 'socialNetwork');
     $ga_data->loadFeedData('entrances');
   }
+
   return $ga_data;
 }

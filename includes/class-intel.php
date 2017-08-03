@@ -379,7 +379,7 @@ class Intel {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
-		add_action( 'wp_head', array( $this->tracker, 'tracking_code' ), 10 );
+		add_action( 'wp_head', array( $this->tracker, 'tracking_head' ), 10 );
 
 		$this->loader->add_action( 'init', $this, 'quick_session_init' );
 		$this->loader->add_filter( 'wp_redirect', $this, 'wp_redirect_quick_session_cache', 10, 2 );
@@ -388,7 +388,7 @@ class Intel {
 
 		$this->loader->add_action( 'admin_bar_menu', $plugin_public, 'admin_bar_menu', 100);
 
-		add_action( 'wp_footer', array( $this->tracker, 'tracking_settings' ), 99 );
+		add_action( 'wp_footer', array( $this->tracker, 'tracking_footer' ), 99 );
 
 		//$this->loader->add_action( 'wp_footer', $this, 'process_js_settings' );
 	}

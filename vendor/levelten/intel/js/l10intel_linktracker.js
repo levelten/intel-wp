@@ -80,7 +80,7 @@ function L10iLinkTracker(_ioq, config) {
         };
 
         v = _ioq.getEventArgsFromEvent(event);
-        f.evtDef = ioq.objectMerge({}, v[0]), f.$obj = v[1], f.options = v[3];
+        f.evtDef = v[0], f.$obj = v[1], f.options = v[3];
 
         f.eventType = event.type;
         if (!f.eventType && f.evtDef.onEvent) {

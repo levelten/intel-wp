@@ -827,64 +827,54 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
   //if (!$access) {
   //  drupal_add_css('.intel-static-filter, .intel-related-links {display: none;} #intel-report a.intel-more {display: none;}', array('group' => CSS_THEME, 'type' => 'inline'));
   //}
-  $cookie_vars = !empty($_COOKIE['report_vars']) ? $_COOKIE['report_vars'] : '{}';
-  $cookie_vars = json_decode($cookie_vars, 1);
-  $options = array(
-    'l30d' => Intel_Df::t('Last 30 days'),
-    'l28d' => Intel_Df::t('Last 28 days'),
-    'l7d' => Intel_Df::t('Last 7 days'),
-    'yesterday' => Intel_Df::t('Yesterday'),
-    'thismonth' => Intel_Df::t('This month'),
-    'thisweek' => Intel_Df::t('This week'),
-    'p30d' => Intel_Df::t('Prior 30 days before last'),
-    'p28d' => Intel_Df::t('Prior 28 days before last'),
-    'p7d' => Intel_Df::t('Prior 7 days before last'),
-    'p1d' => Intel_Df::t('Day before yesterday'),
-    'lastmonth' => Intel_Df::t('Last month'),
-    'lastweek' => Intel_Df::t('Last week'),
-    'l30dfn' => Intel_Df::t('Last 30 days from now'),
-    'l28dfn' => Intel_Df::t('Last 28 days from now'),
-    'l7dfn' => Intel_Df::t('Last 7 days from now'),
-    'today' => Intel_Df::t('Today'),
-    'monthtodate' => Intel_Df::t('Month to now'),
-    'weektodate' => Intel_Df::t('Week to now'),
-  );
-  if (date('j') == 1) {
-    unset($options['thismonth']);
-  }
-  if (date('w') == 0) {
-    unset($options['thisweek']);
-  }
-
-  /*
-  $form['markup1'] = array(
-    '#type' => 'markup',
-    '#markup' => '<div class="row"><div class="col-md-6"></div><div class="col-md-6">',
-  );
-  */
-  //$l_options = Intel_Df::l_options_add_class();
-  //$btn =
-  $form['timeframe'] = array(
-    '#type' => 'select',
-    '#title' => Intel_Df::t('Time frame'),
-    '#id' => 'timeframe',
-    '#options' => $options,
-    '#default_value' => $vars['timeframe'],
-    //'#prefix' => '<div class="filter-fieldset filter-fieldset-page">',
-    '#field_prefix' => Intel_Df::format_date($vars['start_date'], 'M j, Y') . ' - ' . Intel_Df::format_date($vars['end_date'], 'M j, Y'),
-  );
-
-  /*
-  $form['markup2'] = array(
-    '#type' => 'markup',
-    '#markup' => '</div></div>',
-  );
-  */
-
-  return $form;
 
   $dynamic_filters = array();
   $context = (!empty($vars['context'])) ? $vars['context'] : '';
+
+  $cur_path = Intel_Df::current_path();
+  $cur_path_args = explode('/', $cur_path);
+  if (count($cur_path_args) != 3 || ($cur_path_args[0] != 'visitor') || ($cur_path_args[2] != 'clickstream')) {
+    $options = array(
+      'l30d' => Intel_Df::t('Last 30 days'),
+      'l28d' => Intel_Df::t('Last 28 days'),
+      'l7d' => Intel_Df::t('Last 7 days'),
+      'yesterday' => Intel_Df::t('Yesterday'),
+      'thismonth' => Intel_Df::t('This month'),
+      'thisweek' => Intel_Df::t('This week'),
+      'p30d' => Intel_Df::t('Prior 30 days before last'),
+      'p28d' => Intel_Df::t('Prior 28 days before last'),
+      'p7d' => Intel_Df::t('Prior 7 days before last'),
+      'p1d' => Intel_Df::t('Day before yesterday'),
+      'lastmonth' => Intel_Df::t('Last month'),
+      'lastweek' => Intel_Df::t('Last week'),
+      'l30dfn' => Intel_Df::t('Last 30 days from now'),
+      'l28dfn' => Intel_Df::t('Last 28 days from now'),
+      'l7dfn' => Intel_Df::t('Last 7 days from now'),
+      'today' => Intel_Df::t('Today'),
+      'monthtodate' => Intel_Df::t('Month to now'),
+      'weektodate' => Intel_Df::t('Week to now'),
+    );
+    if (date('j') == 1) {
+      unset($options['thismonth']);
+    }
+    if (date('w') == 0) {
+      unset($options['thisweek']);
+    }
+
+    //$l_options = Intel_Df::l_options_add_class();
+    //$btn =
+    $form['timeframe'] = array(
+      '#type' => 'select',
+      '#title' => Intel_Df::t('Time frame'),
+      '#id' => 'timeframe',
+      '#options' => $options,
+      '#default_value' => $vars['timeframe'],
+      //'#prefix' => '',
+      '#field_prefix' => Intel_Df::format_date($vars['start_date'], 'M j, Y') . ' - ' . Intel_Df::format_date($vars['end_date'], 'M j, Y'),
+    );
+
+  }
+
   $form['filters'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Filters'),
@@ -1099,9 +1089,9 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
   );
 
   // do not display form if not in extended mode
-  //if (!get_option('intel_extended_mode', 0)) {
-    $form = array();
-  //}
+  if (!intel_is_extended()) {
+    unset($form['filters']);
+  }
 
   $link_keys = array(
     'scorecard' => Intel_Df::t('scorecard'),
@@ -1224,7 +1214,7 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
         }
       }
     }
-    $item = '<div class="intel-static-filter" style="font-size: 112%;">' . $item;
+    $item = '<div class="intel-static-filter">' . $item;
 
     if (!empty($links)) {
       $item .= ' [' . implode(' ', $links) . ']';
@@ -1287,6 +1277,8 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
       '#markup' => '<strong>' . Intel_Df::t('Filters') . '</strong>' . ': ' . implode(', ', $filters_display),
     );
   }
+
+
 
   return $form;
 }

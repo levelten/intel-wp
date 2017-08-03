@@ -11,7 +11,7 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.5');
+define('INTEL_L10IAPI_JS_VER', '0.2.6');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -1194,7 +1194,7 @@ function intel_reports() {
     'title' => Intel_Df::t('Engagement'),
   );
 
-  if (intel_is_extended()) {
+  if (1 || intel_is_extended()) {
     $pa_infos = intel_get_page_attribute_info();
     foreach ($pa_infos AS $key => $info) {
       //if ($info['type'] == 'item' || $info['type'] == 'list') {

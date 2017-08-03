@@ -93,10 +93,10 @@ class Intel_Entity {
 	public static function entity_uri($entity_type, $entity) {
 		//$entity_info = self::entity_info($entity_type);
 		if ($entity_type == 'post') {
-			return ':post:' . $entity->ID;
+			return array('id' => ':post:' . $entity->ID, 'options' => array());
 		}
 		else {
-			return $entity->uri();
+			return array('path' => $entity->uri(), 'options' => array());
 		}
 	}
 

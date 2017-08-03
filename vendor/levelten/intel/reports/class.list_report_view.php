@@ -376,9 +376,9 @@ class ListReportView extends ReportView {
       $entrs_pie_chart->addRow(array($itemLabel, $entrances));
 
       $value_pie_chart->addRow(array($itemLabel, $value));
-      
-      $vpe = ($entrances) ? $value/$entrances : 0;
-      $epd = ($entrances/$days);
+
+      $vpe = $entrances ? $value/$entrances : 0;
+      $epd = $entrances/$days;
       $bubble_chart->addRow(array($itemLabel, round($vpe, 2), round($epd, 1), round($value/$days, 2)));
 
       if ($table->curRowCount >= $this->tableRowCount) {
@@ -391,8 +391,8 @@ class ListReportView extends ReportView {
     $output = '';
     $output .= '<div id="content-section" class="report-section">';
     $output .= '<div class="pane-left-40">';
-    $output .= $entrs_pie_chart->renderOutput();
     $output .= $value_pie_chart->renderOutput();
+    $output .= $entrs_pie_chart->renderOutput();
     $output .= '</div>';
     $output .= '<div class="pane-spacer">&nbsp;</div>';
     $output .= '<div class="pane-right-60">';

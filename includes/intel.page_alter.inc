@@ -142,7 +142,6 @@ function intel_page_alter(&$page) {
 
   // TODO WP
   //$config['pageTitle'] = isset($entity->title) ? $entity->title : drupal_get_title();
-
   if ($entity_type && !empty($entity)) {
     $attrs = intel_get_entity_intel_attributes($entity, $entity_type, 1);
     $page_attrs = $attrs['page'];
@@ -555,7 +554,10 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   // Only load URI if entity has been created (has ID).
   if ($entity_id) {
     $uri = Intel_Entity::entity_uri($entity_type, $entity);
-    if (!empty($uri['path'])) {
+    if (!empty($uri['id'])) {
+      $page_attrs['ri'] = $uri['id'];
+    }
+    elseif (!empty($uri['path'])) {
       $page_attrs['rl'] = $uri['path'];
       $page_ld['@id'] = $base_path . $uri['path'];
       $page_ld['site:route'] = $uri['path'];
@@ -634,55 +636,89 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   $vocab_entity_settings = intel_get_entity_settings_multi('taxonomy');
 
   // process vocabularies with global tracking enabled
-  foreach ($fields_info AS $key => $field) {
-    if (isset($entity->{$key}[$lang][0]['tid'])) {
-      // get field_info to get associated vocabulary
-      $field_info = field_info_field($key);
-      $vocab_name = $field_info['settings']['allowed_values'][0]['vocabulary'];
-      // check if tracking is enabled at the content type level or on globally on the vocabulary
-      if (!empty($page_entity_settings['track_term_fields'][$key]) || !empty($vocab_entity_settings[$vocab_name]['track_page_terms'])) {
-        $page_attr_key = !empty($vocab_entity_settings[$vocab_name]['page_attribute']['key']) ? $vocab_entity_settings[$vocab_name]['page_attribute']['key'] : 't';
-        $page_ld_key = "site:$vocab_name";
-        foreach ($entity->{$key}[$lang] AS $t) {
-          if (!isset($page_attrs[$page_attr_key])) {
-            $page_attrs[$page_attr_key] = array();
-            $page_ld[$page_ld_key] = array();
-          }
-          $page_attrs[$page_attr_key][$t['tid']] = '';
-          $page_ld[$page_ld_key][] = (object)array(
-            '@id' => $base_path . 'taxonomy/term/' . $t['tid'],
-            'site:route' => 'taxonomy/term/' . $t['tid'],
-            'site:entityId' => $t['tid'],
-          );
-          if (!empty($vocab_entity_settings[$vocab_name]['track_page_terms_visitor'])) {
-            $visitor_attr_key = !empty($vocab_entity_settings[$vocab_name]['visitor_attribute']['key']) ? $vocab_entity_settings[$vocab_name]['visitor_attribute']['key'] : $page_attr_key;
-            if (!isset($visitor_attrs[$visitor_attr_key])) {
-              $visitor_attrs[$visitor_attr_key] = array();
+  if (INTEL_PLATFORM == 'drupal') {
+    foreach ($fields_info AS $key => $field) {
+      if (isset($entity->{$key}[$lang][0]['tid'])) {
+        // get field_info to get associated vocabulary
+        $field_info = field_info_field($key);
+        $vocab_name = $field_info['settings']['allowed_values'][0]['vocabulary'];
+        // check if tracking is enabled at the content type level or on globally on the vocabulary
+        if (!empty($page_entity_settings['track_term_fields'][$key]) || !empty($vocab_entity_settings[$vocab_name]['track_page_terms'])) {
+          $page_attr_key = !empty($vocab_entity_settings[$vocab_name]['page_attribute']['key']) ? $vocab_entity_settings[$vocab_name]['page_attribute']['key'] : 't';
+          $page_ld_key = "site:$vocab_name";
+          foreach ($entity->{$key}[$lang] AS $t) {
+            if (!isset($page_attrs[$page_attr_key])) {
+              $page_attrs[$page_attr_key] = array();
+              $page_ld[$page_ld_key] = array();
             }
-            $visitor_attrs[$visitor_attr_key][$t['tid']] = '=+1';
+            $page_attrs[$page_attr_key][$t['tid']] = '';
+            $page_ld[$page_ld_key][] = (object) array(
+              '@id' => $base_path . 'taxonomy/term/' . $t['tid'],
+              'site:route' => 'taxonomy/term/' . $t['tid'],
+              'site:entityId' => $t['tid'],
+            );
+            if (!empty($vocab_entity_settings[$vocab_name]['track_page_terms_visitor'])) {
+              $visitor_attr_key = !empty($vocab_entity_settings[$vocab_name]['visitor_attribute']['key']) ? $vocab_entity_settings[$vocab_name]['visitor_attribute']['key'] : $page_attr_key;
+              if (!isset($visitor_attrs[$visitor_attr_key])) {
+                $visitor_attrs[$visitor_attr_key] = array();
+              }
+              $visitor_attrs[$visitor_attr_key][$t['tid']] = '=+1';
+            }
           }
+        }
+      }
+    }
+  }
+  elseif (INTEL_PLATFORM == 'wp') {
+    $attr_keys = array(
+      'category' => 'c',
+      'post_tag' => 't',
+    );
+    //$taxonomies = get_taxonomies();
+    //intel_d($taxonomies);
+    $taxonomies = get_object_taxonomies( $entity );
+    //intel_d($taxonomies);
+    foreach ($attr_keys as $tax_type => $attr_key) {
+      $terms = $terms = get_the_terms($entity, $tax_type);
+      if (is_array($terms)) {
+        foreach($terms as $term) {
+          $page_attrs[$attr_key][$term->term_id] = '';
+        }
+      }
+    }
+    if (!empty($entity->intel_demo['terms'])) {
+      foreach ($entity->intel_demo['terms'] as $id) {
+        $term = intel_demo_term_load($id);
+        if (!empty($term)) {
+          $page_attrs[$attr_keys[$term->taxonomy]][$term->term_id] = '';
         }
       }
     }
   }
 
   // set custom page attributes if page_attribute_col field exists
-  if (!empty($entity->field_page_attribute_col[$lang]) && is_array($entity->field_page_attribute_col[$lang])) {
-    foreach ($entity->field_page_attribute_col[$lang] AS $i => $e) {
-      $collection = field_collection_item_load($e['value']);
-      $keys = explode('.', $collection->field_page_attribute[$lang][0]['value']);
-      $value = !empty($collection->field_page_attribute_value[$lang][0]['value']) ? $collection->field_page_attribute_value[$lang][0]['value'] : '';
-      if (count($keys) == 1) {  // flag and scalar values
-        $page_attrs[$keys[0]] = $value;
-      }
-      else {
-        if (!isset($page_attrs[$keys[0]])) {
-          $page_attrs[$keys[0]] = array();
+  if (INTEL_PLATFORM == 'drupal') {
+    if (!empty($entity->field_page_attribute_col[$lang]) && is_array($entity->field_page_attribute_col[$lang])) {
+      foreach ($entity->field_page_attribute_col[$lang] AS $i => $e) {
+        $collection = field_collection_item_load($e['value']);
+        $keys = explode('.', $collection->field_page_attribute[$lang][0]['value']);
+        $value = !empty($collection->field_page_attribute_value[$lang][0]['value']) ? $collection->field_page_attribute_value[$lang][0]['value'] : '';
+        if (count($keys) == 1) {  // flag and scalar values
+          $page_attrs[$keys[0]] = $value;
         }
-        $page_attrs[$keys[0]][$keys[1]] = $value;
+        else {
+          if (!isset($page_attrs[$keys[0]])) {
+            $page_attrs[$keys[0]] = array();
+          }
+          $page_attrs[$keys[0]][$keys[1]] = $value;
+        }
       }
     }
   }
+  elseif (INTEL_PLATFORM == 'wp') {
+
+  }
+
 
   // set custom visitor attributes if visitor_attribute_col field exists
   if (!empty($entity->field_visitor_attribute_col[$lang]) && is_array($entity->field_visitor_attribute_col[$lang])) {
@@ -1268,13 +1304,13 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
         $script .= "(w[r].q=w[r].q||[]).push(arguments);" . $terminator;
         $script .= "w[r].t=t" . $terminator;
         $script .= "}," . $terminator;
+        $script .= "s='';" . $terminator;
 
         if ($l10ijs_propdir) {
           $script .= "a='l10i_bt=';" . $terminator;
           $script .= "d.cookie=a+t+';path=/';c=d.cookie;" . $terminator;
           $script .= "if(c&&c.indexOf(a)!=-1){u+=i;$q_script}" . $terminator;
         }
-        $script .= "s='';" . $terminator;
         $script .= "u+=b+s;" . $terminator;
         $script .= "a=d.createElement(o),b=d.getElementsByTagName(o)[0];a.async=1;a.src=u;b.parentNode.insertBefore(a,b)" . $terminator;
         $script .= "})(window,document,'script','//$api_hostpath','$l10ijs_path','$l10ijs_propdir','$io_name');" . $terminator;

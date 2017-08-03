@@ -374,8 +374,8 @@ class ContentListReportView extends ListReportView {
     $output = '';
     $output .= '<div id="content-section" class="report-section">';
     $output .= '<div class="pane-left-40">';
-    $output .= $entrs_pie_chart->renderOutput();
     $output .= $value_pie_chart->renderOutput();
+    $output .= $entrs_pie_chart->renderOutput();
     $output .= '</div>';
     $output .= '<div class="pane-spacer">&nbsp;</div>';
     $output .= '<div class="pane-right-60">';

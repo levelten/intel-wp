@@ -35,6 +35,10 @@ class Intel_Tracker {
 
 	protected $pushes;
 
+	public $settings_placement = 'head';
+
+	public $pageview_placement = 'head';
+
 	/**
 	 * Define the core functionality of the plugin.
 	 *
@@ -102,16 +106,24 @@ class Intel_Tracker {
 		return intel_get_flush_page_intel_pushes();
 	}
 
-	public function get_pushes_script($options = array()) {
-	  $pushes = self::get_intel_pushes();
+	public function get_intel_pushes_js($options = array()) {
+		$pushes = self::get_intel_pushes();
 		$out = '';
-		$out = '<script>' . "\n";
-		if (!empty($options['prefix'])) {
-			$out .= $options['prefix'];
-		}
+
 		foreach ($pushes as $key => $value) {
 			$out .= "  io('$key', " . json_encode($value) . ");\n";
 		}
+
+		return $out;
+	}
+
+	public function get_pushes_script($options = array()) {
+		$out = '';
+		$out .= '<script>' . "\n";
+		if (!empty($options['prefix'])) {
+			$out .= $options['prefix'];
+		}
+		$out .= $this->get_intel_pushes_js($options);
 		if (!empty($options['suffix'])) {
 			$out .= $options['suffix'];
 		}
@@ -172,11 +184,19 @@ class Intel_Tracker {
 	/**
 	 * Generates tracking code
 	 */
-	public function tracking_code() {
+	public function tracking_head() {
 		$io_name = 'io';
 
 		$script = '';
-		$script .= intel_get_js_embed('l10i', 'local');
+		$script .= $this->tracking_code_js();
+
+		if ($this->settings_placement == 'head') {
+			$script .= "\n" . $this->tracking_settings_js();
+		}
+
+		if ($this->pageview_placement == 'head') {
+			$script .= "\n" . "io('pageview');";
+		}
 
 		print '<script>' . $script . '</script>';
 
@@ -192,7 +212,42 @@ class Intel_Tracker {
 		return;
 	}
 
-	public function tracking_settings() {
+	public function tracking_footer() {
+		$io_name = 'io';
+
+
+		$script = '';
+
+		if ($this->settings_placement != 'head') {
+			$script .= "\n" . $this->tracking_settings_js();
+		}
+		else {
+			// if settings processed in head, embed any pushes after page_alter was
+			// run
+			$script .= $this->get_intel_pushes_js();
+		}
+
+		if ($this->pageview_placement != 'head') {
+			$script .= "\n" . "io('pageview');";
+		}
+		//$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
+		//if (!empty($js_settings['intel']['pushes']['events'])) {
+		//	$script .= "$io_name('event', intel_settings.intel.pushes.event);\n";
+		//}
+
+		if ($script) {
+			print '<script>' . $script . '</script>';
+		}
+	}
+
+	public function tracking_code_js() {
+		$script = '';
+		$script .= intel_get_js_embed('l10i', 'local');
+
+		return $script;
+	}
+
+	public function tracking_settings_js() {
 		$io_name = 'io';
 
 		$page = array();
@@ -216,15 +271,9 @@ class Intel_Tracker {
 				}
 			}
 		}
+		//$script .= "$io_name('pageview');\n";
 
-
-		//$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
-		//if (!empty($js_settings['intel']['pushes']['events'])) {
-		//	$script .= "$io_name('event', intel_settings.intel.pushes.event);\n";
-		//}
-
-		print '<script>' . $script . '</script>';
-		return;
+		return $script;
 	}
 
 

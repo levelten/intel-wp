@@ -7,7 +7,7 @@ function L10iAdmin(_ioq, config) {
     var eventBindReported = [];
 
     this.init = function init() {
-        ioq.log('admin:init()');//
+        ioq.log('admin::init()');//
         if (!ioq.settings.admin) {
             return;
         }
@@ -37,14 +37,12 @@ function L10iAdmin(_ioq, config) {
             var evt = {};
             var $value = jQuery(value);
 
-
             var ret = 0;
             // check if default eventHandler is overridden
             if (evtDef.onHandler) {
                 // spoof event for custom handler
                 evt.data = {
                     io: {
-                        eventDef: evtDef,
                         options: options
                     }
                 };

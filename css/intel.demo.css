@@ -36,6 +36,11 @@ div.intel-demo-post-content div.intel-demo-social-profile {
   margin-top: 1em;
 }
 
+div.intel-demo-post-content div.intel-demo-terms {
+  font-size: .9em;
+  margin-bottom: 1em;
+}
+
 div.intel-demo-post-content form textarea#edit-message {
   width: 100%;
 }
