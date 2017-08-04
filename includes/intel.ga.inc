@@ -2437,6 +2437,21 @@ function intel_init_targets() {
     'value' => 8,
     'group' => 'site_kpi_month',
   );
+
+
+  $target['value_per_day'] = array(
+    'title' => Intel_Df::t('Total value / day'),
+    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
+    'value' => 200.00,
+    'group' => 'site_day',
+  );
+  $target['value_per_day_warning'] = array(
+    'title' => Intel_Df::t('Total value / day (warning)'),
+    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
+    'value' => 20.00,
+    'group' => 'site_day',
+  );
+
   $target['entrances_per_day'] = array(
     'title' => Intel_Df::t('Total visitors / day'),
     'description' => Intel_Df::t('Your target for the number of total visitors you want to get to the site.'),
@@ -2446,20 +2461,7 @@ function intel_init_targets() {
   $target['entrances_per_day_warning'] = array(
     'title' => Intel_Df::t('Total visitors / day (warning)'),
     'description' => Intel_Df::t('Your target for the number of total visitors you want to get to the site.'),
-    'value' => 25.00,
-    'group' => 'site_day',
-  );
-
-  $target['value_per_day'] = array(
-    'title' => Intel_Df::t('Total value / day'),
-    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 100.00,
-    'group' => 'site_day',
-  );
-  $target['value_per_day_warning'] = array(
-    'title' => Intel_Df::t('Total value / day (warning)'),
-    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 25.00,
+    'value' => 10.00,
     'group' => 'site_day',
   );
 
@@ -2476,32 +2478,6 @@ function intel_init_targets() {
     'group' => 'site_day',
   );
 
-  $target['value_per_page_per_day'] = array(
-    'title' => Intel_Df::t('Value per page / day'),
-    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 2.00,
-    'group' => 'page',
-  );
-  $target['value_per_page_per_day_warning'] = array(
-    'title' => Intel_Df::t('Value per page / day (warning)'),
-    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 0.20,
-    'group' => 'page',
-  );
-
-  $target['value_per_page_per_entrance'] = array(
-    'title' => Intel_Df::t('Value per page / entry'),
-    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 2.00,
-    'group' => 'page',
-  );
-  $target['value_per_page_per_entrance_warning'] = array(
-    'title' => Intel_Df::t('Value per page / entry (warning)'),
-    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
-    'value' => 0.20,
-    'group' => 'page',
-  );
-
   $target['value_per_visit'] = array(
     'title' => Intel_Df::t('Value / visit'),
     'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
@@ -2514,6 +2490,64 @@ function intel_init_targets() {
     'value' => 0.20,
     'group' => 'visit',
   );
+
+  $target['value_per_page_per_day'] = array(
+    'title' => Intel_Df::t('Value per page / day'),
+    'description' => Intel_Df::t('Your target for the value produced by a page.'),
+    'value' => 2.00,
+    'group' => 'page',
+  );
+  $target['value_per_page_per_day_warning'] = array(
+    'title' => Intel_Df::t('Value per page / day (warning)'),
+    'description' => Intel_Df::t('Your target for the value produced by a page.'),
+    'value' => 0.20,
+    'group' => 'page',
+  );
+
+  /*
+  $target['value_per_page_per_entrance'] = array(
+    'title' => Intel_Df::t('Value per page / entry'),
+    'description' => Intel_Df::t('Your target for the value per entrance produced by a page.'),
+    'value' => 2.00,
+    'group' => 'page',
+  );
+  $target['value_per_page_per_entrance_warning'] = array(
+    'title' => Intel_Df::t('Value per page / entry (warning)'),
+    'description' => Intel_Df::t('Your target for the value per entrance produced by a page.'),
+    'value' => 0.20,
+    'group' => 'page',
+  );
+  */
+
+  $target['value_per_trafficsource_per_day'] = array(
+    'title' => Intel_Df::t('Value per source / day'),
+    'description' => Intel_Df::t('Your target for the value produced by a traffic source.'),
+    'value' => 2.00,
+    'group' => 'trafficsource',
+  );
+  $target['value_per_trafficsource_per_day_warning'] = array(
+    'title' => Intel_Df::t('Value per source / day (warning)'),
+    'description' => Intel_Df::t('Your target for the value produced by a traffic source.'),
+    'value' => 0.20,
+    'group' => 'trafficsource',
+  );
+
+  /*
+  $target['value_per_trafficsource_per_entrance'] = array(
+    'title' => Intel_Df::t('Value per source / entry'),
+    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
+    'value' => 2.00,
+    'group' => 'trafficsource',
+  );
+  $target['value_per_trafficsource_per_entrance_warning'] = array(
+    'title' => Intel_Df::t('Value per source / entry (warning)'),
+    'description' => Intel_Df::t('Your target for the total value of all traffic to the site.'),
+    'value' => 0.20,
+    'group' => 'trafficsource',
+  );
+  */
+
+
 
 
   return $target;
@@ -2535,12 +2569,48 @@ function intel_get_targets() {
       $targets[$k] = $v;
     }
   }
+
+  if (!isset($targets['value_per_entrance'])) {
+    $targets['value_per_entrance'] = $targets['value_per_day'] / $targets['entrances_per_day'];
+  }
+  if (!isset($targets['value_per_entrance_warning'])) {
+    $targets['value_per_entrance_warning'] = $targets['value_per_day_warning'] / $targets['entrances_per_day'];
+  }
+  // page objectives
+  if (!isset($targets['value_per_page_per_entrance'])) {
+    $targets['value_per_page_per_entrance'] = $targets['value_per_visit'];
+  }
+  if (!isset($targets['value_per_page_per_entrance_warning'])) {
+    $targets['value_per_page_per_entrance_warning'] = $targets['value_per_visit_warning'];
+  }
+  if (!isset($targets['entrances_per_page_per_day'])) {
+    $targets['entrances_per_page_per_day'] = $targets['value_per_page_per_entrance'] / $targets['value_per_page_per_day'];
+  }
+  if (!isset($targets['entrances_per_page_per_day_warning'])) {
+    $targets['entrances_per_page_per_day_warning'] = $targets['value_per_page_per_entrance_warning'] / $targets['value_per_page_per_day'];
+  }
+  // trafficsource objectives
+  if (!isset($targets['value_per_trafficsource_per_entrance'])) {
+    $targets['value_per_trafficsource_per_entrance'] = $targets['value_per_visit'];
+  }
+  if (!isset($targets['value_per_trafficsource_per_entrance_warning'])) {
+    $targets['value_per_trafficsource_per_entrance_warning'] = $targets['value_per_visit_warning'];
+  }
+  if (!isset($targets['entrances_per_trafficsource_per_day'])) {
+    $targets['entrances_per_trafficsource_per_day'] = $targets['value_per_trafficsource_per_entrance'] / $targets['value_per_trafficsource_per_day'];
+  }
+  if (!isset($targets['entrances_per_trafficsource_per_day_warning'])) {
+    $targets['entrances_per_trafficsource_per_day_warning'] = $targets['value_per_trafficsource_per_entrance_warning'] / $targets['value_per_trafficsource_per_day'];
+  }
+
+  /*
   if (empty($targets['entrances_per_page_per_day'])) {
     $targets['entrances_per_page_per_day'] = $targets['value_per_page_per_day'] / $targets['value_per_page_per_entrance'];
   }
   if (empty($targets['entrances_per_page_per_day_warning'])) {
     $targets['entrances_per_page_per_day_warning'] = $targets['value_per_page_per_day_warning'] / $targets['value_per_page_per_entrance_warning'];
   }
+  */
   return $targets;
 }
 

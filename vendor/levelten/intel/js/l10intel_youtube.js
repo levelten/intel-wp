@@ -139,7 +139,7 @@ function L10iYouTube(_ioq) {
             this.playerState[id].paused = false;
         }
         else if (event.data == YT.PlayerState.ENDED  && !this.playerState[id].paused) {
-            ga_event.eventCategory = 'Video watched';
+            ga_event.eventCategory = 'Video scroll';
             ga_event.eventValue = 100;
             ga_event.eid = 'videoWatched';
 
@@ -171,7 +171,7 @@ function L10iYouTube(_ioq) {
 
             // copy object for Video watched
             var ga_event2 = jQuery.extend({}, ga_event);
-            ga_event2.eventCategory = 'Video watched';
+            ga_event2.eventCategory = 'Video scroll';
             ga_event2.eventValue = positionPer;
 
             var ga_event3 = {};

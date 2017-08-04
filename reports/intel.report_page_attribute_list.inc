@@ -131,9 +131,9 @@ function intel_page_attribute_list_report($vars) {
       $method = 'page';
     }
     $d[$indexBy][$index]['score'] = intel_score_item($de, 1, $score_components, '', $method);
-intel_d($index);
-intel_d($de);
-intel_d($score_components);
+//intel_d($index);
+//intel_d($de);
+//intel_d($score_components);
     //$d[$indexBy][$index]['score'] = intel_score_page_aggregation($de, 1, $score_components);
     $d[$indexBy][$index]['score_components'] = $score_components;
     if (isset($de['i'])) {

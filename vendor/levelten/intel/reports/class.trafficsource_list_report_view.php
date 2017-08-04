@@ -103,8 +103,8 @@ class TrafficsourceListReportView extends ListReportView {
     $bubble_chart->setOption('chartArea', $chartArea);
 
     $colorAxis = array(
-      'minValue' => $targets['value_per_page_per_day_warning'],
-      'maxValue' => $targets['value_per_page_per_day'],
+      'minValue' => $targets['value_per_trafficsource_per_day_warning'],
+      'maxValue' => $targets['value_per_trafficsource_per_day'],
       'colors' => array(
         $this->chartColors[2],
         $this->chartColors[3],
@@ -138,15 +138,15 @@ class TrafficsourceListReportView extends ListReportView {
       
       $table->addRowItem($pageviews, '', '#,###');
       $table->addRowItem($value, '', '#,###.##');
-        
-      $format = $this->renderValueScore(array('value' => $value, 'type' => 'value_per_page_per_day', 'number_of_days' => $days), $value_str);
+
+      $format = $this->renderValueScore(array('value' => $value, 'type' => 'value_per_trafficsource_per_day', 'number_of_days' => $days), $value_str);
       $table->addRowItem((float)$value_str, $format);
       
       if ($entrances) {
-        $format = $this->renderValueScore(array('value' => $entrances, 'type' => 'entrances_per_page_per_day', 'number_of_days' => $days), $value_str);
+        $format = $this->renderValueScore(array('value' => $entrances, 'type' => 'entrances_per_trafficsource_per_day', 'number_of_days' => $days), $value_str);
         $table->addRowItem((float)$value_str, $format);
         
-        $format = $this->renderValueScore(array('value' => ($value / $entrances), 'type' => 'value_per_page_per_entrance'), $value_str);
+        $format = $this->renderValueScore(array('value' => ($value / $entrances), 'type' => 'value_per_trafficsource_per_entrance'), $value_str);
         $table->addRowItem((float)$value_str, $format);
       }
       else {

@@ -20,9 +20,10 @@ function L10iLinkTracker(_ioq, config) {
 
 
     this.init = function init() {
-        ioq.log('L10iLinkTracker.init()');
+        ioq.log(ioq.name + ':linktracker.init()');
         var ths = this;
         var evtDef = {
+            key: 'linktracker_link_click',
             selector: 'a',
             selectorNot: '.linktracker-0',
             onEvent: 'click',

@@ -317,6 +317,9 @@ class ListReportView extends ReportView {
       if ($indexBy == 'content') {
         $type_mod = '_per_page';
       }
+      elseif ($context == 'trafficsource') {
+        $type_mod = '_per_trafficsource';
+      }
       $vars = array('value' => $value, 'type' => "value{$type_mod}_per_day", 'days' => $days);
       if ($divTargetByItemCount) {
         $vars['target_div'] = $itemCount;

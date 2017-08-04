@@ -383,7 +383,6 @@ function intel_page_alter(&$page) {
     intel_d($js);//
   }
   intel()->add_js($js, 'setting');
-
 }
 
 function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $include_events = 0) {

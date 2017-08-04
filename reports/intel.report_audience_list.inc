@@ -6,16 +6,19 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
-function intel_audience_list_report_page($report_params = '-', $report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-') {
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.reports.inc";
-  require_once drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+function intel_audience_list_report_page($report_subtype = '-', $report_subfilter = '-', $entity_type = '-', $entity = '-', $vars = array()) {
+  // TODO WP hack for debugging
+  $_GET['return_type'] = 'nonajax';
+
+  require_once INTEL_DIR . "includes/intel.reports.inc";
+  require_once INTEL_DIR . "includes/intel.ga.inc";
   $output = '';
 
-  $vars = array();
   if (!empty($entity_type) && $entity_type != '-') {
     $vars['entity_type'] = $entity_type;
     $vars['entity'] = $entity;
   }
+  $report_params = !empty($_GET['report_params']) ? $_GET['report_params'] : '-';
   $vars = intel_init_reports_vars('audience_list', 'audience', $report_params, $report_subtype, $report_subfilter, $vars);
 
   $output = intel_build_report($vars);
@@ -25,12 +28,10 @@ function intel_audience_list_report_page($report_params = '-', $report_subtype =
 //function intel_audience_list_report($vars['filters'] = array(), $vars['context'] = 'site', $sub_index = '-') {
 function intel_audience_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
-
+intel_d($vars);
   if (empty($vars['report_subtype'])) {
     $vars['report_subtype'] = 'address';
   }
-
-
 
   $vars['indexBy'] = $vars['report_modes'][0];
   $vars['indexByLabel'] = $vars['report_info']['title'];
@@ -60,7 +61,7 @@ $ga_data->setDebug(1);
   $ga_data->loadFeedData('entrances_events_valued');
 
   $d = $ga_data->data;
-dsm($d);
+intel_d($d);
   // append array if no data exists
   $d += array(
     'trafficcategory' => array(),

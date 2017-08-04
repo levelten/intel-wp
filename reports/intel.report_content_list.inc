@@ -87,9 +87,9 @@ function intel_content_list_report($vars) {
           //$d[$dataIndex][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'site');
         }
       }
-intel_d($index);
-intel_d($de);
-intel_d($score_components);
+//intel_d($index);
+//intel_d($de);
+//intel_d($score_components);
       $d[$dataIndex][$index]['score_components'] = $score_components;
     }
   }
@@ -174,9 +174,7 @@ function intel_get_content_report_ga_data($vars = array()) {
   if ($vars['context'] != 'entrance' && ($vars['report_modes'][0] != 'social') && ($vars['report_modes'][0] != 'seo')) {
     $ga_data->setAdvancedSort(1);
     $ga_data->setRequestDefaultParam('max_results', 4 * $vars['feed_rows']);
-$ga_data->setDebug(1);
     $ga_data->loadFeedData('pageviews');
-$ga_data->setDebug(0);
     $ga_data->setAdvancedSort(0);
   }
 

@@ -21,6 +21,7 @@ class ReportView {
   protected $dataSourceKey = '';
   protected $params = array();
   protected $dateRange = array();
+  protected $pageCount = NULL;
   protected $chartColors = array(
     '#058DC7',
     '#50B432',
@@ -80,6 +81,7 @@ class ReportView {
   
   function setTargets($targets) {
     $this->targets = $targets;
+    // calculate value/entrance if not set
   }
   
   function setTarget($key, $value) {
@@ -98,6 +100,10 @@ class ReportView {
     $this->dateRange['start'] = $startDate;
     $this->dateRange['end'] = $endDate;
     $this->dateRange['days'] = round(($endDate - $startDate)/60/60/24);  
+  }
+
+  function setPageCount($count) {
+    $this->pageCount = $count;
   }
   
   function setLibraryUri($uri) {
@@ -289,6 +295,7 @@ class ReportView {
     $days = 1;
     $entrances = 1;
     $pages = 1;
+    $trafficsources = 1;
     $visits = 1;
     $target_div = 1;
     if (!empty($vars['days'])) {
@@ -307,7 +314,7 @@ class ReportView {
     if (!isset($targets)) {
       $targets = $this->targets;
     }
-    
+
     $value_status = 'error';
     if ($type == 'value_per_day') {
       $value_str = number_format($value / $days, 2);
@@ -339,17 +346,6 @@ class ReportView {
         $value_status = 'complete';
       }   
     }
-
-    if ($type == 'entrances_per_day') {
-      $decimal = ($days == 1 && $pages == 1) ? 0 : 1;
-      $value_str = number_format($value / $days, $decimal);
-      if (($value / $pages / $days) >= ($targets['entrances_per_day_warning'] / $target_div)) {
-        $value_status = 'warning';
-      }
-      if (($value / $pages / $days) >= ($targets['entrances_per_day'] / $target_div)) {
-        $value_status = 'complete';
-      }
-    }
     
     if ($type == 'entrances_per_page_per_day') {
       $decimal = ($days == 1 && $pages == 1) ? 0 : 1;
@@ -358,6 +354,51 @@ class ReportView {
         $value_status = 'warning';
       }
       if (($value / $pages / $days) >= ($targets['entrances_per_page_per_day'] / $target_div)) {
+        $value_status = 'complete';
+      }
+    }
+
+    // trafficsource scoring
+    if ($type == 'value_per_trafficsource_per_day') {
+      $value_str = number_format($value / $trafficsources / $days, 2);
+      if (($value / $trafficsources / $days) >= ($targets['value_per_trafficsource_per_day_warning'] / $target_div)) {
+        $value_status = 'warning';
+      }
+      if (($value / $trafficsources / $days) >= ($targets['value_per_trafficsource_per_day'] / $target_div)) {
+        $value_status = 'complete';
+      }
+    }
+
+    if ($type == 'value_per_trafficsource_per_entrance') {
+      $value_str = number_format($value / $trafficsources / $entrances, 2);
+      if (($value / $trafficsources / $entrances) >= ($targets['value_per_trafficsource_per_entrance_warning'] / $target_div)) {
+        $value_status = 'warning';
+      }
+      if (($value / $trafficsources / $entrances) >= ($targets['value_per_trafficsource_per_entrance'] / $target_div)) {
+        $value_status = 'complete';
+      }
+    }
+
+    if ($type == 'entrances_per_trafficsource_per_day') {
+      $decimal = ($days == 1 && $trafficsources == 1) ? 0 : 1;
+      $value_str = number_format($value / $trafficsources / $days, $decimal);
+      if (($value / $trafficsources / $days) >= ($targets['entrances_per_trafficsource_per_day_warning'] / $target_div)) {
+        $value_status = 'warning';
+      }
+      if (($value / $trafficsources / $days) >= ($targets['entrances_per_trafficsource_per_day'] / $target_div)) {
+        $value_status = 'complete';
+      }
+    }
+
+    // general scoring
+
+    if ($type == 'entrances_per_day') {
+      $decimal = ($days == 1 && $pages == 1) ? 0 : 1;
+      $value_str = number_format($value / $days, $decimal);
+      if (($value / $pages / $days) >= ($targets['entrances_per_day_warning'] / $target_div)) {
+        $value_status = 'warning';
+      }
+      if (($value / $pages / $days) >= ($targets['entrances_per_day'] / $target_div)) {
         $value_status = 'complete';
       }
     }
@@ -394,7 +435,14 @@ class ReportView {
     if (!empty($vars['href'])) {
       $out = render::link($out, $vars['href'], array('html' => 1));
     }
-    return '<div' . $title_attr . ' class="intel-report-value active ' . $value_status . '">' . $value . '</div>';
+
+    // if large number, set a min-width for div
+    $style = '';
+    if (strlen('' . $value) > 5) {
+      //$style = ' style="min-width: ' . (strlen('' . $value) / 2 + .5) . 'em;"';
+      $style = ' style="min-width: ' . (3 * strlen('' . $value) / 5) . 'em;"';
+    }
+    return '<div' . $title_attr . ' class="intel-report-value active ' . $value_status . '"' . $style . '>' . $value . '</div>';
   }
   
   function setPageMetaCallback($func) {

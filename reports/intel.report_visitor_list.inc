@@ -33,12 +33,15 @@ function intel_visitor_list_report($vars) {
   $output = '';
 
   $vars['indexBy'] = $vars['report_modes'][0];
-
   $timeops = 'l30d';
   if ($vars['report_modes'][1] == 'recent') {
     $vars['timeops'] = 'l30dfn';
     $vars['cache_options'] = array('refresh' => 1);
     list($vars['start_date'], $vars['end_date'], $vars['number_of_days']) = _intel_get_report_dates_from_ops($vars['timeops'], $vars['cache_options']);
+  }
+
+  if ($vars['report_subtype'] == 'geo') {
+    $vars['indexBy'] = 'continent';
   }
 
   $ga_data = new LevelTen\Intel\GAModel();
@@ -69,42 +72,59 @@ function intel_visitor_list_report($vars) {
   $ga_data->loadFeedData('pageviews_events_valued');
   $ga_data->setRequestDefaultParam('max_results', 2 * $vars['feed_rows']);
   */
+  $ga_data->setDebug(1);
   $ga_data->loadFeedData('entrances');
+  $ga_data->setDebug(0);
   $ga_data->loadFeedData('entrances_events_valued');
   $ga_data->loadFeedData('visit_info');
   
   $d = $ga_data->data;
 
-  $vtkids = array();
+  $vals = array();
   $i = 0;
 
+  if (empty($d[$vars['indexBy']])) {
+    $d[$vars['indexBy']] = array();
+  }
   foreach ($d[$vars['indexBy']] AS $index => $de) {
     $score_components = array();
     if ($vars['report_modes'][1] == 'recent') {
       $d[$vars['indexBy']][$index]['entrance']['pageviews'] = $d[$vars['indexBy']][$index]['pageview']['pageviews'];
     }
 
-    $d[$vars['indexBy']][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'trafficsource');
+    $d[$vars['indexBy']][$index]['score'] = intel_score_item($de, 1, $score_components, '', 'entrance');
     $d[$vars['indexBy']][$index]['score_components'] = $score_components;
 
+    $val = '';
     if (!empty($de['i'])) {
       if ($vars['report_modes'][0] == 'visit') {
         $a = explode('-', $de['i']);
-        $vtkid = $a[0];
+        $val = $a[0];
+      }
+      elseif ($vars['report_modes'][0] == 'visitor') {
+        $val = $de['i'];
       }
       else {
-        $vtkid = $de['i'];
+        $val = $de['i'];
       }
-      $vtkids[] = $vtkid;
+      if ($vals) {
+        $vals[] = $val;
+      }
+
       // we only need to load enough for the report
       if ($i++ >= $vars['row_count']) {
         //break;
       }
     }
-    if (isset($vtkid)) {
-      $d[$vars['indexBy']][$index]['vtkid'] = $vtkid;
+    if (isset($val)) {
       $d[$vars['indexBy']][$index]['links'] = array();
-      $filter = 'vtk:' . $vtkid;
+      if ($vars['report_modes'][0] == 'visitor' || $vars['report_modes'][0] == 'visit') {
+        $d[$vars['indexBy']][$index]['vtkid'] = $val;
+        $filter = 'vtk:' . $val;
+      }
+      else {
+        $filter = 'v-' . $vars['indexBy'] . ':' . rawurlencode($val);
+      }
 
       $link_keys = array();
       $link_keys[] = array(
@@ -117,7 +137,10 @@ function intel_visitor_list_report($vars) {
         'type' => 'content',
       );
       $d[$vars['indexBy']][$index]['links'] = intel_build_report_links($link_keys, $filter, $vars['report_params']);
-      $d[$vars['indexBy']][$index]['links'][] = Intel_Df::l(Intel_Df::t('clickstream'), 'visitor/' . $vtkid . '/clickstream');
+      if ($vars['report_modes'][0] == 'visitor' || $vars['report_modes'][0] == 'visit') {
+        $d[$vars['indexBy']][$index]['links'][] = Intel_Df::l(Intel_Df::t('clickstream'), 'visitor/' . $val . '/clickstream');
+      }
+
       //$d[$vars['indexBy']][$index]['links'][] = Intel_Df::l(Intel_Df::t('clickstream'), intel_build_report_path('visitor', array(), 'clickstream', $filter));
 
 /*
@@ -137,12 +160,14 @@ function intel_visitor_list_report($vars) {
 
   //$visitors = intel_visitor_load_multiple($vtkids, array(), FALSE, 'vtkid');
   //dsm($visitors);
-  foreach ($d[$vars['indexBy']] AS $index => $de) {
-    $visitor = intel_visitor_load_or_create($index, TRUE, 'vtkid');
-    $d[$vars['indexBy']][$index]['info'] = array(
-      'title' => $visitor->name(),
-      'uri' => Intel_Df::url('/visitor/' . $index),
-    );
+  if ($vars['report_modes'][0] == 'visitor' || $vars['report_modes'][0] == 'visit') {
+    foreach ($d[$vars['indexBy']] AS $index => $de) {
+      $visitor = intel_visitor_load_or_create($index, TRUE, 'vtkid');
+      $d[$vars['indexBy']][$index]['info'] = array(
+        'title' => $visitor->name(),
+        'uri' => Intel_Df::url('/visitor/' . $index),
+      );
+    }
   }
 
 //dsm($d);

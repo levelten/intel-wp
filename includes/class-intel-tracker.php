@@ -181,6 +181,17 @@ class Intel_Tracker {
 		return $ret;
 	}
 
+	public function enqueue_intel_scripts() {
+		// add intel_scripts
+		$scripts = intel()->intel_script_info();
+		$enabled = get_option('intel_intel_scripts_enabled', array());
+		foreach ($scripts AS $key => $script) {
+			if (!empty($enabled[$key]) || (!isset($enabled[$key]) && !empty($script['enabled']))) {
+				wp_enqueue_script('intel_script_' . $key, $script['path']);
+			}
+		}
+	}
+
 	/**
 	 * Generates tracking code
 	 */
@@ -200,14 +211,7 @@ class Intel_Tracker {
 
 		print '<script>' . $script . '</script>';
 
-		// add intel_scripts
-		$scripts = intel()->intel_script_info();
-		$enabled = get_option('intel_intel_scripts_enabled', array());
-		foreach ($scripts AS $key => $script) {
-			if (!empty($enabled[$key]) || (!isset($enabled[$key]) && !empty($script['enabled']))) {
-				wp_enqueue_script('intel_script_' . $key, $script['path']);
-			}
-		}
+		$this->enqueue_intel_scripts();
 
 		return;
 	}

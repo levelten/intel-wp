@@ -32,7 +32,7 @@ function intel_trafficsource_list_report($vars) {
   if (empty($vars['report_subtype'])) {
     $vars['report_subtype'] = 'trafficcategory';
   }
-
+intel_d($vars);
   $indexBy = $vars['indexBy'] = $vars['report_modes'][0];
   $vars['indexByLabel'] = $vars['report_info']['title'];
   $output = '';

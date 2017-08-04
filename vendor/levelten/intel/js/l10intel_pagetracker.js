@@ -8,7 +8,7 @@ function L10iPageTracker(_ioq, config) {
     var depthEventsSent = 0;
 
     this.init = function init() {
-        ioq.log('PageTracker::init()');
+        ioq.log(ioq.name + ':pagetracker.init()');
         var ths = this;
 
         $ = jQuery;
@@ -39,7 +39,7 @@ function L10iPageTracker(_ioq, config) {
     };
 
     this.handlePageConsumedScroll = function (scroll) {
-        ioq.log('PageTracker::handlePageConsumedScroll()');
+        ioq.log(ioq.name + ':pagetracker.handlePageConsumedScroll()');
         //console.log(scroll.contentBottomMaxPer);
         if (this.isDeepScroll(scroll)) {
             ioq.removeCallback('scroll', this.handlePageConsumedScroll, this);

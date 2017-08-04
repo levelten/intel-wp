@@ -512,13 +512,7 @@ function intel_admin_scoring($form, &$form_state) {
   );
   $form['targets']['site_day'] = array(
     '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Daily site objectives'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['targets']['page'] = array(
-    '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Page objectives'),
+    '#title' => Intel_Df::t('Site objectives'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
@@ -528,6 +522,19 @@ function intel_admin_scoring($form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+  $form['targets']['page'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Page objectives'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['targets']['trafficsource'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Traffic source objectives'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
   $metas = intel_init_targets();
   $targets = get_option('intel_targets', array());
   foreach ($metas AS $i => $m) {

@@ -194,15 +194,34 @@ class ScorecardReportView extends ReportView {
       'data' => $data['date'],
       'linecolor' => $this->chartColors[0],
     );
-  
+
     $value = $datasum['score'] / $analysis_days;
     $status = 'complete';
-    if ($value < $targets['value_per_page_per_day']) {
-      $status = 'warning';
+    if ($context == 'site') {
+      if ($value < $targets['value_per_day']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['value_per_day_warning']) {
+        $status = 'error';
+      }
     }
-    if ($value < $targets['value_per_page_per_day_warning']) {
-      $status = 'error';
+    elseif ($context == 'page') {
+      if ($value < $targets['value_per_page_per_day']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['value_per_page_per_day_warning']) {
+        $status = 'error';
+      }
     }
+    elseif ($context == 'trafficsource') {
+      if ($value < $targets['value_per_trafficsource_per_day']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['value_per_trafficsource_per_day_warning']) {
+        $status = 'error';
+      }
+    }
+
     $e = $init_e;
     $e['linecolor'] = $statusColors[$status];
     $e['bgcolor'] = $statusColorsBg[$status];
@@ -211,15 +230,35 @@ class ScorecardReportView extends ReportView {
     $e['total'] = number_format($value, 2);
     $summary_elements['value_per_day'] = self::renderSparklineValueElement($e);
 
+    // Entrances/Day
     $value = $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]] / $analysis_days;
 
     $status = 'complete';
-    if ($value < $targets['entrances_per_page_per_day']) {
-      $status = 'warning';
+    if ($context == 'site') {
+      if ($value < $targets['entrances_per_day']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['entrances_per_day_warning']) {
+        $status = 'error';
+      }
     }
-    if ($value < $targets['entrances_per_page_per_day_warning']) {
-      $status = 'error';
+    elseif ($context == 'page') {
+      if ($value < $targets['entrances_per_page_per_day']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['entrances_per_page_per_day_warning']) {
+        $status = 'error';
+      }
     }
+    elseif ($context == 'trafficsource') {
+      if ($value < $targets['entrances_per_trafficsource_per_day']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['entrances_per_trafficsource_per_day_warning']) {
+        $status = 'error';
+      }
+    }
+
     $e = $init_e;
     $e['linecolor'] = $statusColors[$status];
     $e['bgcolor'] = $statusColorsBg[$status];
@@ -235,15 +274,35 @@ class ScorecardReportView extends ReportView {
     $e['total'] = number_format($value, 1);
     $summary_elements['entrances_per_day'] = self::renderSparklineValueElement($e);
 
-    !empty($datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) ? ($datasum['score'] / $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) : 0;
+    // Value/Entrance
+    $value = !empty($datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) ? ($datasum['score'] / $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) : 0;
 
     $status = 'complete';
-    if ($value < $targets['value_per_page_per_entrance']) {
-      $status = 'warning';
+    if ($context == 'site') {
+      if ($value < $targets['value_per_entrance']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['value_per_entrance_warning']) {
+        $status = 'error';
+      }
     }
-    if ($value < $targets['value_per_page_per_entrance_warning']) {
-      $status = 'error';
+    elseif ($context == 'page') {
+      if ($value < $targets['value_per_page_per_entrance']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['value_per_page_per_entrance_warning']) {
+        $status = 'error';
+      }
     }
+    elseif ($context == 'trafficsource') {
+      if ($value < $targets['value_per_trafficsource_per_entrance']) {
+        $status = 'warning';
+      }
+      if ($value < $targets['value_per_trafficsource_per_entrance_warning']) {
+        $status = 'error';
+      }
+    }
+
     $e = $init_e;
     $e['linecolor'] = $statusColors[$status];
     $e['bgcolor'] = $statusColorsBg[$status];
@@ -255,8 +314,7 @@ class ScorecardReportView extends ReportView {
       'decimals' => 2,
     );
     $e['title'] = 'Value/' . $visitTitleAbv;
-    $total = !empty($datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) ? ($datasum['score'] / $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]]) : 0;
-    $e['total'] = '$' . number_format($total, 2);
+    $e['total'] = number_format($value, 2);
     $summary_elements['valuePerVisit'] = self::renderSparklineValueElement($e);
 
     $e = $init_e;
@@ -444,6 +502,8 @@ class ScorecardReportView extends ReportView {
     $analysis_days = !empty($this->params['analysis_days']) ?  $this->params['analysis_days'] : $this->dateRange['days'];
     $goals = $this->goals;
 
+    $valueFormat = '#,###.##';
+
     // select which context to get data from
     $goalSrc = 'pageview';
     if ($context == 'page' || $context == 'page-attr') {
@@ -508,12 +568,14 @@ class ScorecardReportView extends ReportView {
       $goals_table->newWorkingRow();
       $goals_table->addRowItem($goals[$d['i']]);
       $goals_table->addRowItem($d['completions']);
-      $goals_table->addRowItem($d['value']);
+      $goals_table->addRowItem($d['value'], '', $valueFormat);
+      //$goals_table->addRowItem($d['value']);
       $goals_table->addRow();
       
       $pie_chart1->newWorkingRow();
       $pie_chart1->addRowItem($goals[$d['i']]);
-      $pie_chart1->addRowItem($d['value']);
+      $pie_chart1->addRowItem($d['value'], '', $valueFormat);
+      //$pie_chart1->addRowItem($d['value']);
       $pie_chart1->addRow();
       if ($i++ >= $rowlimit) {
         break;
@@ -528,19 +590,22 @@ class ScorecardReportView extends ReportView {
       $events_table->newWorkingRow();
       $events_table->addRowItem($d['i']);
       $events_table->addRowItem($d['totalValuedEvents']);
-      $events_table->addRowItem($d['value']);
+      $events_table->addRowItem($d['value'], '', $valueFormat);
+      //$events_table->addRowItem($d['value']);
       $events_table->addRow();
       
       if ($context == 'page' || $context == 'page-attr') {
         $pie_chart1->newWorkingRow();
         $pie_chart1->addRowItem($d['i']);
-        $pie_chart1->addRowItem($d['value']);
+        $pie_chart1->addRowItem($d['value'], '', $valueFormat);
+        //$pie_chart1->addRowItem($d['value']);
         $pie_chart1->addRow();
       }
       else {
         $pie_chart2->newWorkingRow();
         $pie_chart2->addRowItem($d['i']);
-        $pie_chart2->addRowItem($d['value']);
+        $pie_chart2->addRowItem($d['value'], '', $valueFormat);
+        //$pie_chart2->addRowItem($d['value']);
         $pie_chart2->addRow();
       }
       if ($i++ >= $rowlimit) {
@@ -603,6 +668,9 @@ class ScorecardReportView extends ReportView {
   
   function renderContentSection() {
     $output = '';
+
+    $valueFormat = '#,###.##';
+
     $this->data += array(
       'content' => array(),
     );
@@ -663,7 +731,8 @@ class ScorecardReportView extends ReportView {
         $all_pages->addRowItem($pageviews);
         $all_pages->addRowItem($events);
         $all_pages->addRowItem($goals);
-        $all_pages->addRowItem($value);
+        //$all_pages->addRowItem(round($value, 2));
+        $all_pages->addRowItem($value, '', $valueFormat);
         $all_pages->addRow(); 
       }
       
@@ -675,7 +744,7 @@ class ScorecardReportView extends ReportView {
         $attr_pages->addRowItem($pageviews);
         $attr_pages->addRowItem($events);
         $attr_pages->addRowItem($goals);
-        $attr_pages->addRowItem($value);
+        $attr_pages->addRowItem(round($value, 2));
         $attr_pages->addRow(); 
       }
 
@@ -719,6 +788,8 @@ class ScorecardReportView extends ReportView {
     $endDate = $this->dateRange['end'];
     $context = $this->params['context'];
     $context_mode = $this->params['context_mode'];
+
+    $valueFormat = '#,###.##';
    
     $categories = new TableChart('blank');
     $categories->addColumn('string', 'Traffic categories');
@@ -795,13 +866,16 @@ class ScorecardReportView extends ReportView {
       $categories->newWorkingRow();
       $categories->addRowItem($d['i']);        
       $categories->addRowItem($d['entrance']['entrances']);    
-      $categories->addRowItem(round($d['score'], 2)); 
-      $categories->addRowItem(round($d['score'] / $d['entrance']['entrances'], 2)); 
+      $categories->addRowItem($d['score'], '', $valueFormat);
+      $v = ($d['entrance']['entrances'] != 0) ? $d['score'] / $d['entrance']['entrances'] : 0;
+      $categories->addRowItem($v, '', $valueFormat);
+      //$categories->addRowItem(round($v, 2));
       $categories->addRow(); 
       
       $pie_chart->newWorkingRow();
-      $pie_chart->addRowItem($d['i']);        
-      $pie_chart->addRowItem(round($d['score'], 2)); 
+      $pie_chart->addRowItem($d['i']);
+      $pie_chart->addRowItem($d['score'], '', $valueFormat);
+      //$pie_chart->addRowItem(round($d['score'], 2));
       $pie_chart->addRow(); 
       if ($i++ >= $rowlimit) {
         break;
@@ -815,8 +889,10 @@ class ScorecardReportView extends ReportView {
       $mediums->newWorkingRow();
       $mediums->addRowItem($d['i']);        
       $mediums->addRowItem($d['entrance']['entrances']);    
-      $mediums->addRowItem(round($d['score'], 2)); 
-      $mediums->addRowItem(round($d['score'] / $d['entrance']['entrances'], 2)); 
+      $mediums->addRowItem($d['score'], '', $valueFormat);
+      $v = ($d['entrance']['entrances'] != 0) ? $d['score'] / $d['entrance']['entrances'] : 0;
+      $mediums->addRowItem($v, '', $valueFormat);
+      //$mediums->addRowItem(round($v, 2));
       $mediums->addRow(); 
       if ($i++ >= $rowlimit) {
         break;
@@ -830,8 +906,10 @@ class ScorecardReportView extends ReportView {
       $sources->newWorkingRow();
       $sources->addRowItem($d['i']);        
       $sources->addRowItem($d['entrance']['entrances']);    
-      $sources->addRowItem(round($d['score'], 2)); 
-      $sources->addRowItem(round($d['score'] / $d['entrance']['entrances'], 2)); 
+      $sources->addRowItem($d['score'], '', $valueFormat);
+      $v = ($d['entrance']['entrances'] != 0) ? $d['score'] / $d['entrance']['entrances'] : 0;
+      $sources->addRowItem($v, '', $valueFormat);
+      //$sources->addRowItem(round($v, 2));
       $sources->addRow(); 
       if ($i++ >= $rowlimit) {
         break;
@@ -847,8 +925,10 @@ class ScorecardReportView extends ReportView {
       $l = render::link($pathstr, 'http://' . $d['i'], array('attributes' => array('target' => '_blank')));
       $referrals->addRowItem($l);        
       $referrals->addRowItem($d['entrance']['entrances']);    
-      $referrals->addRowItem(round($d['score'], 2)); 
-      $referrals->addRowItem(round($d['score'] / $d['entrance']['entrances'], 2)); 
+      $referrals->addRowItem($d['score'], '', $valueFormat);
+      $v = ($d['entrance']['entrances'] != 0) ? $d['score'] / $d['entrance']['entrances'] : 0;
+      $referrals->addRowItem($v, '', $valueFormat);
+      //$referrals->addRowItem(round($v, 2));
       $referrals->addRow(); 
       if ($i++ >= $rowlimit) {
         break;
@@ -862,8 +942,9 @@ class ScorecardReportView extends ReportView {
       $socials->newWorkingRow();
       $socials->addRowItem($d['i']);        
       $socials->addRowItem($d['entrance']['entrances']);    
-      $socials->addRowItem(round($d['score'], 2)); 
-      $socials->addRowItem(round($d['score'] / $d['entrance']['entrances'], 2)); 
+      $socials->addRowItem($d['score'], '', $valueFormat);
+      $v = ($d['entrance']['entrances'] != 0) ? $d['score'] / $d['entrance']['entrances'] : 0;
+      $referrals->addRowItem($v, '', $valueFormat);
       $socials->addRow(); 
       if ($i++ >= $rowlimit) {
         break;
@@ -877,8 +958,9 @@ class ScorecardReportView extends ReportView {
       $keywords->newWorkingRow();
       $keywords->addRowItem($d['i']);        
       $keywords->addRowItem($d['entrance']['entrances']);    
-      $keywords->addRowItem(round($d['score'], 2)); 
-      $keywords->addRowItem(round($d['score'] / $d['entrance']['entrances'], 2)); 
+      $keywords->addRowItem($d['score'], '', $valueFormat);
+      $v = ($d['entrance']['entrances'] != 0) ? $d['score'] / $d['entrance']['entrances'] : 0;
+      $keywords->addRowItem($v, '', $valueFormat);
       $keywords->addRow(); 
       if ($i++ >= $rowlimit) {
         break;
@@ -892,8 +974,9 @@ class ScorecardReportView extends ReportView {
       $campaigns->newWorkingRow();
       $campaigns->addRowItem($d['i']);        
       $campaigns->addRowItem($d['entrance']['entrances']);    
-      $campaigns->addRowItem(round($d['score'], 2)); 
-      $campaigns->addRowItem(round($d['score'] / $d['entrance']['entrances'], 2)); 
+      $campaigns->addRowItem($d['score'], '', $valueFormat);
+      $v = ($d['entrance']['entrances'] != 0) ? $d['score'] / $d['entrance']['entrances'] : 0;
+      $campaigns->addRowItem($v, '', $valueFormat);
       $campaigns->addRow(); 
       if ($i++ >= $rowlimit) {
         break;

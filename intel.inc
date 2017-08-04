@@ -1160,7 +1160,7 @@ function intel_reports() {
   $reports['content'] = array();
   $reports['content']['-'] = array(
     'key' => 'default.top.combined',
-    'title' => Intel_Df::t('Top pages'),
+    'title' => Intel_Df::t('Pages'),
     'default' => 1,
   );
   $reports['content']['_trend'] = array(
@@ -1181,6 +1181,7 @@ function intel_reports() {
     'access callback' => '_intel_user_access_extended',
   );
   */
+  /*
   $reports['content']['seo'] = array(
     'key' => 'seo.top.entrance',
     'title' => Intel_Df::t('Search attractors'),
@@ -1193,6 +1194,7 @@ function intel_reports() {
     'key' => 'engagement.top.pageview',
     'title' => Intel_Df::t('Engagement'),
   );
+  */
 
   if (1 || intel_is_extended()) {
     $pa_infos = intel_get_page_attribute_info();
@@ -1317,7 +1319,7 @@ function intel_reports() {
   */
   $reports['conversion']['-'] = array(
     'key' => 'landingpage.top',
-    'title' => Intel_Df::t('Top pages'),
+    'title' => Intel_Df::t('Pages'),
     'default' => 1,
   );
 
@@ -1375,23 +1377,117 @@ function intel_reports() {
   $reports['visitor'] = array();
   $reports['visitor']['-'] = array(
     'key' => 'visitor.top',
-    'title' => Intel_Df::t('Top visitors'),
+    'title' => Intel_Df::t('Visitors'),
     'default' => 1,
     //'intel_api_access' => 'pro',
   );
-  if (intel_is_extended()) {
+  if (1 || intel_is_extended()) {
+    /*
     $reports['visitor']['recentvisits'] = array(
       'key' => 'visit.recent',
       'timeframe' => 'l30dfn',
       'title' => Intel_Df::t('Recent visits'),
       //'intel_api_access' => 'pro',
     );
-    $reports['visitor']['geo'] = array(
-      'key' => 'address.top',
-      'title' => Intel_Df::t('Geo'),
-      'page callback' => 'intel_audience_list_report_page',
-      'file' => 'reports/intel.report_audience_list.inc',
+    */
+    $reports['visitor']['country'] = array(
+      'key' => 'country.top',
+      'title' => Intel_Df::t('Geo > Country'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
     );
+    $reports['visitor']['region'] = array(
+      'key' => 'region.top',
+      'title' => Intel_Df::t('Geo > Region'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['metro'] = array(
+      'key' => 'metro.top',
+      'title' => Intel_Df::t('Geo > Metro'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['city'] = array(
+      'key' => 'city.top',
+      'title' => Intel_Df::t('Geo > City'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['networkdomain'] = array(
+      'key' => 'networkDomain.top',
+      'title' => Intel_Df::t('Network > Domain'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['networklocation'] = array(
+      'key' => 'networkLocation.top',
+      'title' => Intel_Df::t('Network > Location'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['browser'] = array(
+      'key' => 'browser.top',
+      'title' => Intel_Df::t('Device > Browser'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['browserversion'] = array(
+      'key' => 'browserVersion.top',
+      'title' => Intel_Df::t('Device > Browser version'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['operatingsystem'] = array(
+      'key' => 'operatingSystem.top',
+      'title' => Intel_Df::t('Device > Operating System'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['operatingsystemversion'] = array(
+      'key' => 'operatingSystemVersion.top',
+      'title' => Intel_Df::t('Device > Operating System Version'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['devicecategory'] = array(
+      'key' => 'deviceCategory.top',
+      'title' => Intel_Df::t('Device > Category'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['browsersize'] = array(
+      'key' => 'browserSize.top',
+      'title' => Intel_Df::t('Device > Browser Size'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['screensize'] = array(
+      'key' => 'screenResolution.top',
+      'title' => Intel_Df::t('Device > Screen Resolution'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['language'] = array(
+      'key' => 'language.top',
+      'title' => Intel_Df::t('Device > Language'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    /*
+    $reports['visitor']['useragebracket'] = array(
+      'key' => 'userAgeBracket.top',
+      'title' => Intel_Df::t('Audience > Age Bracket'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    $reports['visitor']['usergender'] = array(
+      'key' => 'userGender.top',
+      'title' => Intel_Df::t('Audience > Gender'),
+      //'page callback' => 'intel_audience_list_report_page',
+      //'file' => 'reports/intel.report_audience_list.inc',
+    );
+    */
   }
   $reports['visitor']['clickstream'] = array(
     'key' => 'visitor.clickstream',

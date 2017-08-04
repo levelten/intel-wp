@@ -7,7 +7,7 @@ function L10iAdmin(_ioq, config) {
     var eventBindReported = [];
 
     this.init = function init() {
-        ioq.log('admin::init()');//
+        ioq.log(ioq.name + ':admin.init()');//
         if (!ioq.settings.admin) {
             return;
         }
@@ -129,7 +129,7 @@ function L10iAdmin(_ioq, config) {
         //alert("ga.send.event: ");
     };
 
-    this.init();
+    _l10iq.push(['addCallback', 'configReady', this.init, this]);
 }
 
 _ioq.push(['providePlugin', 'admin', L10iAdmin, {}]);

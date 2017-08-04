@@ -5,7 +5,7 @@ function L10iDemo(_ioq, config) {
   var io = _ioq.io;
 
   this.init = function init() {
-    ioq.log('demo:init()');//
+    ioq.log(ioq.name + ':demo.init()');//
   };
 
   this.clearVisitor = function clearVisitor() {

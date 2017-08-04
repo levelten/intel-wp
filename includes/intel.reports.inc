@@ -153,6 +153,7 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
   }
 
   $reports = intel_reports();
+  intel_d($reports);
   $report_subtype = strtolower($report_subtype);
   if (isset($reports[$report_type]) && isset($reports[$report_type][$report_subtype])) {
     $vars['report_info'] = $reports[$report_type][$report_subtype];
@@ -247,12 +248,25 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
     }
     elseif ($vars['report_type'] == 'visitor') {
       $vars['report_subfilter_type'] = 'visitor';
-      if (empty($vars['entity']->id)) {
-        $v = explode(':', $vars['report_subfilter']);
-        $vars['entity'] = intel_visitor_load_or_create($v[1]);
-        $vars['entity_type'] = 'intel_visitor';
+      if (substr($vars['report_subfilter'], 0, 2) == 'v-') {
+        $vars['report_subfilter'] = substr($vars['report_subfilter'], 2);
+        $a = explode(':', $vars['report_subfilter']);
+        if (!isset($vars['filters']['visitor'])) {
+          $vars['filters']['visitor'] = array();
+        }
+        $vars['filters']['visitor'][] = $vars['report_subfilter'];
+        $a[1] = rawurldecode($a[1]);
+        $vars['title'] .= ': ' . $a[1];
       }
-      $vars['title'] .= ': ' . $vars['entity']->label();
+      else {
+        if (empty($vars['entity']->id)) {
+          $v = explode(':', $vars['report_subfilter']);
+          $vars['entity'] = intel_visitor_load_or_create($v[1]);
+          $vars['entity_type'] = 'intel_visitor';
+        }
+        $vars['title'] .= ': ' . $vars['entity']->label();
+      }
+
     }
   }
 
@@ -428,7 +442,7 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
     }
   }
 
-//dsm($vars);
+intel_d($vars);
   return $vars;
 }
 
@@ -621,6 +635,9 @@ function theme_intel_report($vars) {
   else {
     $report_view->setDateRange($vars['start_date'], $vars['end_date'], $vars['number_of_days']);
   }
+  if (!empty($vars['page_count'])) {
+    $report_view->setPageCount($vars['page_count']);
+  }
   $report_view->setPageMetaCallback('intel_get_page_meta_callback');
   $report_view->setTargets(intel_get_targets());
   \LevelTen\Intel\ReportPageHeader::setAddScriptCallback('intel_report_add_js_callback');
@@ -675,7 +692,7 @@ function intel_parse_report_filter_arg($str) {
     'event' => 'event',
     'eventCategory' => 'event',
     'vtk' => 'visitor',
-    'country' => 'geo',
+    'country' => 'visitor',
     'region' => 'geo',
     'city' => 'geo',
     'address' => 'geo',
@@ -716,7 +733,6 @@ function intel_parse_report_filter_arg($str) {
   if ($fd['type'] == 'page' || (strpos($fd['key'], 'referral') === 0)) {
     $fd['value'] = str_replace('|', '/', $fd['value']);
   }
-
 
   return $fd;
 }
@@ -1181,11 +1197,16 @@ function intel_report_filters_form($form, &$form_state, $filters = array(), $var
       }
     }
     elseif ($fd['type'] == 'visitor') {
-      if (isset($vars['entities']['intel_visitor'][$fd['value']])) {
-        $item .= ': ' . $vars['entities']['intel_visitor'][$fd['value']]->label();
+      if ($fd['key'] == 'vtk') {
+        if (isset($vars['entities']['intel_visitor'][$fd['value']])) {
+          $item .= ': ' . $vars['entities']['intel_visitor'][$fd['value']]->label();
+        }
+        else {
+          $item .= ': ' . $fd['value'];
+        }
       }
       else {
-        $item .= ': ' . $fd['value'];
+        $item .= ': ' . $fd['key'] . ": " . $fd['value'];
       }
     }
     else {

@@ -317,7 +317,7 @@ class GAModel {
         }
       }
     }
-
+intel_d($filters);
     if (!empty($filters['location'])) {
       $gafilter['location'] = array();
       foreach ($filters['location'] AS $i => $filter) {
@@ -333,7 +333,13 @@ class GAModel {
       $gafilter['visitor'] = array();
       foreach ($filters['visitor'] AS $i => $filter) {
         $a = explode(":", $filter);
-        $gafilters['visitor'][] = "ga:{$this->attrStorage['vtk']['field']}==" . $a[1];
+        if ($a[0] == 'vtk') {
+          $gafilters['visitor'][] = "ga:{$this->attrStorage['vtk']['field']}==" . $a[1];
+        }
+        else {
+          $gafilters['visitor'][] = "ga:{$a[0]}==" . $a[1];
+        }
+
       }
     }
 
@@ -789,6 +795,12 @@ class GAModel {
         }
       }
       //$request['segment'] = (!empty($request['segment']) ? ';' . $this->gaFilters['paths']['pagePath'] : ''); 
+    }
+    else if ($indexBy == 'country') {
+      $request['dimensions'][] = 'ga:country';
+      if ($types[0] == 'entrances' && (empty($types[1]) || $types[1] != 'events')) {
+        $request['sort'] = '-ga:goalValueAll,-ga:pageviews,-ga:entrances';
+      }
     }
     else if ($indexBy == 'trafficsources') {
       $request['dimensions'][] = 'ga:medium';
@@ -1790,6 +1802,9 @@ class GAModel {
     }
     else if ($indexBy == 'visit') {
       $index = $row[$this->attrStorage['vtk']['field']] . '-' . $row['sessionCount'];
+    }
+    else if ($indexBy == 'country') {
+      $index = $row['country'];
     }
     else if ($indexBy == 'location') {
       if (isset($row['city']) && isset($row['region'])) {
