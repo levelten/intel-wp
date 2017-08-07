@@ -317,7 +317,7 @@ class GAModel {
         }
       }
     }
-intel_d($filters);
+
     if (!empty($filters['location'])) {
       $gafilter['location'] = array();
       foreach ($filters['location'] AS $i => $filter) {

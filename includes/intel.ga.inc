@@ -484,6 +484,23 @@ function intel_get_intel_event_info_default($event = array()) {
     'js_setting' => 1,
   );
 
+  // event mode should be admin configurable
+  $event['wp_user_login'] = array(
+    'title' => Intel_Df::t('WP user login'),
+    'category' => Intel_Df::t('User login'),
+    'description' => Intel_Df::t('WordPress User Login'),
+    'mode' => 'valued',
+    'value' => 10,
+    'trigger_auto' => array(
+      'description' => Intel_Df::t('Triggered automatically when a valid WP login is submitted.')
+    ),
+    'availability_auto' => array(
+      'description' => Intel_Df::t('Automatically available.'),
+    ),
+    'enable' => 1,
+    'js_setting' => 1,
+  );
+
   if (intel_is_extended()) {
     $event['wp_search_form_submission'] = array(
       'title' => Intel_Df::t('WP Search form submission'),
@@ -1649,10 +1666,24 @@ function intel_get_page_attribute_info_default() {
     'access callback' => FALSE,
   );
   */
+  $attributes['b'] = array(
+    'title' => Intel_Df::t('Tag'),
+    'title_plural' => Intel_Df::t('Tags'),
+    'description' => Intel_Df::t('List of tag taxonomy term ids.'),
+    'type' => 'list',
+    'options_description' => Intel_Df::t('Auto generated from terms in selected taxonomy fields.'),
+    'options info callback' => 'intel_page_attribute_taxomony_term_option_info',
+    'storage' => array(
+      'analytics' => array(
+        'struc' => 'dimension',
+        'index' => 1,
+      )
+    ),
+  );
   $attributes['c'] = array(
     'title' => Intel_Df::t('Category'),
     'title_plural' => Intel_Df::t('Categories'),
-    'description' => Intel_Df::t('List of taxomony term ids.'),
+    'description' => Intel_Df::t('List of category taxonomy term ids.'),
     'type' => 'list',
     'options_description' => Intel_Df::t('Auto generated from terms in selected taxonomy fields.'),
     'options info callback' => 'intel_page_attribute_taxomony_term_option_info',
@@ -1664,9 +1695,9 @@ function intel_get_page_attribute_info_default() {
     ),
   );
   $attributes['t'] = array(
-    'title' => Intel_Df::t('Tag'),
-    'title_plural' => Intel_Df::t('Tags'),
-    'description' => Intel_Df::t('List of taxomony term ids.'),
+    'title' => Intel_Df::t('Terms'),
+    'title_plural' => Intel_Df::t('Terms'),
+    'description' => Intel_Df::t('List of general taxonomy term ids.'),
     'type' => 'list',
     'options_description' => Intel_Df::t('Auto generated from terms in selected taxonomy fields.'),
     'options info callback' => 'intel_page_attribute_taxomony_term_option_info',
@@ -2406,12 +2437,19 @@ function _intel_sort_session_steps($a, $b) {
     if ($a['type'] == 'page') {
       return -1;
     }
+
+    if ($a['type'] == $b['type']) {
+      if (isset($a['weight']) && isset($b['weight'])) {
+        return ($a['weight'] < $b['weight']) ? -1 : 1;
+      }
+    }
     if ($a['type'] == 'event' && $b['type'] != 'page') {
       return -1;
     }
     if ($a['type'] == 'goal' && $b['type'] != 'page' && $b['type'] != 'event') {
       return -1;
     }
+
     return 1;
   }
   return ($a['time'] < $b['time']) ? -1 : 1;
@@ -3767,7 +3805,7 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
     }
   }
 
-  $request['dimensions'] = array('ga:dimension5', 'ga:sessionCount', 'ga:medium', 'ga:source', 'ga:referralPath', 'ga:keyword', 'ga:dimension4');
+  $request['dimensions'] = array('ga:dimension5', 'ga:sessionCount', 'ga:sourceMedium', 'ga:referralPath', 'ga:keyword', 'ga:adContent', 'ga:dimension4');
   $request['metrics'] = array('ga:entrances');
   $request['filters'] = 'ga:entrances>0';
   $request['sort_metric'] = '-ga:dimension4';  // note: cant sort by sessionCount as it is treated as a string not an int
@@ -3785,10 +3823,11 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
       $visitor['visits'][$i] = array(
         'trafficsource' => array(),
       );
+      $a = explode(' / ', $row['sourceMedium']);
       $visitor['visits'][$i]['sessionCount'] = $row['sessionCount'];
       $visitor['visits'][$i]['time'] = $vts =  (int)$row['dimension4'];
-      $visitor['visits'][$i]['trafficsource']['medium'] = $row['medium'];
-      $visitor['visits'][$i]['trafficsource']['source'] = $row['source'];
+      $visitor['visits'][$i]['trafficsource']['medium'] = !empty($a[1]) ? $a[1] : '(not set)';
+      $visitor['visits'][$i]['trafficsource']['source'] = !empty($a[0]) ? $a[0] : '(not set)';
       $visitor['visits'][$i]['trafficsource']['referralPath'] = $row['referralPath'];
       $visitor['visits'][$i]['trafficsource']['keyword'] = $row['keyword'];
 

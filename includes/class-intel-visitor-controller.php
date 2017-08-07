@@ -29,7 +29,7 @@
  */
 class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 
-	public $idType = 'vid';
+	public $idType = NULL;
 
 	/*
 	public function __construct($entityClass = 'intel_visitor') {
@@ -147,22 +147,30 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 			$ids = array($ids);
 		}
 
-		$idType = !empty($this->idType) ? $this->idType : 'vid';
-		foreach ($ids as $k => $id) {
-			// if id = user, load the current user using the vtk cookie value
-			if (!$id || ($id == 'user')) {
-				intel_include_library_file('class.visitor.php');
-				$ids[$k] = \LevelTen\Intel\ApiVisitor::extractVtk();
-				$idType = 'vtk';
-			}
-			// check if id is vtk or vtkid
-			elseif (is_string($id) && (strlen($id) >= 20)) {
-				if (strlen($id) == 20) {
-					$idType = 'vtkid';
-				}
-				else {
+		$idType = '';
+		if ($this->idType) {
+		  $idType = $this->idType;
+		}
+		else {
+			foreach ($ids as $k => $id) {
+				// if id = user, load the current user using the vtk cookie value
+				if (!$id || ($id == 'user')) {
+					intel_include_library_file('class.visitor.php');
+					$ids[$k] = \LevelTen\Intel\ApiVisitor::extractVtk();
 					$idType = 'vtk';
 				}
+				// check if id is vtk or vtkid
+				elseif (is_string($id) && (strlen($id) >= 20)) {
+					if (strlen($id) == 20) {
+						$idType = 'vtkid';
+					}
+					else {
+						$idType = 'vtk';
+					}
+				}
+			}
+			if (!$idType) {
+				$idType = 'vid';
 			}
 		}
 
@@ -180,12 +188,6 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 			$sql .= "WHERE {$this->key_id} IN ( $ids_query )";
 			$data = $ids;
 		}
-		elseif ($idType == 'vtk') {
-			//$ids_query = "'" . implode("', ", $ids) . "'";
-			$sql .= "INNER JOIN {$wpdb->prefix}intel_visitor_identifier AS i ON e.vid = i.vid\n";
-			$sql .= "WHERE i.type = 'vtk' AND i.value IN ( $ids_query )";
-			$data = $ids;
-		}
 		elseif ($idType == 'vtkid') {
 			$sql .= "INNER JOIN {$wpdb->prefix}intel_visitor_identifier AS i ON e.vid = i.vid\n";
 			$sql .= "WHERE i.type = 'vtk' AND ( ";
@@ -200,6 +202,13 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 			}
 			$sql .= ' )';
 		}
+		elseif ($idType == 'vtk' || $idType == 'uid') {
+			//$ids_query = "'" . implode("', ", $ids) . "'";
+			$sql .= "INNER JOIN {$wpdb->prefix}intel_visitor_identifier AS i ON e.vid = i.vid\n";
+			$sql .= "WHERE i.type = '$idType' AND i.value IN ( $ids_query )";
+			$data = $ids;
+		}
+
 		$results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
 
 		$entities = array();

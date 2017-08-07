@@ -40,13 +40,21 @@ function intel_help_demo_page() {
   $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path(), $l_options);
   $output .= Intel_Df::l( Intel_Df::t('Demo settings'), 'admin/config/intel/settings/general/demo', $l_options) . '<br><br>';
 
+  $l_options = Intel_Df::l_options_add_target('ga');
+  $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
+  $url = "https://analytics.google.com/analytics/web/#realtime/rt-overview/" . intel_get_ga_profile_slug() . "/%3Fmetric.type%3D5/";
+  $output .= Intel_Df::l( Intel_Df::t('Google Analytics real-time events report'), $url, $l_options) . '<br><br>';
+
   $imapi_host = intel_get_imapi_host();
 
   $ga_tid = get_option('intel_ga_tid', '');
 
-  $l_options = Intel_Df::l_options_add_class('btn btn-info');
+  $l_options = Intel_Df::l_options_add_target('dr', $l_options);
+  $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
   $l_options = Intel_Df::l_options_add_query(array('base_urlpath' => intel()->base_url . intel()->base_path), $l_options);
   $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), '//' . $imapi_host . '/property/' . $ga_tid . '/demo', $l_options) . '<br><br>';
+
+
 
   $output .= Intel_Df::l(Intel_Df::t('Demo Home page'), 'intelligence/demo');
 
@@ -86,7 +94,7 @@ function intel_help_tutorial_page() {
   $l_options = Intel_Df::l_options_add_target('ga');
   $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
   $url = "https://analytics.google.com/analytics/web/#realtime/rt-event/" . intel_get_ga_profile_slug() . "/%3Fmetric.type%3D5/";
-  $output .= '<br>' . Intel_Df::l( Intel_Df::t('Google Analytics realtime events report'), $url, $l_options);
+  $output .= '<br>' . Intel_Df::l( Intel_Df::t('Google Analytics real-time events report'), $url, $l_options);
   $output .= '</p>';
 
   $output .= '<h3>' . Intel_Df::t('Pre-defined events') . '</h3>';

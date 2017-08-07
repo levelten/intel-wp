@@ -4,10 +4,7 @@
  * Main module file for LevelTen Intelligence
  */
 
-require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_alter.inc";
-require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
-require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
-
+// define constants
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
@@ -33,7 +30,10 @@ define('INTEL_STATUS_FORBIDDEN', 403);
 define('INTEL_STATUS_NOT_FOUND', 404);
 define('INTEL_STATUS_SERVER_ERROR', 500);
 
-
+// include required files
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_alter.inc";
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
 
 // add intel_menu to hook_intel_menu_info
 add_filter('intel_menu_info', 'intel_menu');
@@ -1434,7 +1434,7 @@ function intel_reports() {
     );
     $reports['visitor']['browserversion'] = array(
       'key' => 'browserVersion.top',
-      'title' => Intel_Df::t('Device > Browser version'),
+      'title' => Intel_Df::t('Device > Browser Version'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
@@ -2156,7 +2156,7 @@ function intel_get_ApiClientProps() {
   return $apiClientProps;
 }
 
-function intel_visitor_load($id = NULL, $reset = FALSE, $id_type = 'vid') {
+function intel_visitor_load($id = NULL, $reset = FALSE, $id_type = NULL) {
   $visitors = intel_visitor_load_multiple($id, array(), $reset, $id_type);
   if (!empty($visitors)) {
     return array_shift($visitors);
@@ -2170,7 +2170,7 @@ function intel_visitor_load($id = NULL, $reset = FALSE, $id_type = 'vid') {
  * We only need to pass this request along to entity_load(), which
  * will in turn call the load() method of our entity controller class.
  */
-function intel_visitor_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE, $id_type = '') {
+function intel_visitor_load_multiple($ids = FALSE, $conditions = array(), $reset = FALSE, $id_type = NULL) {
 
   $cntrl = intel()->get_entity_controller('intel_visitor');
 

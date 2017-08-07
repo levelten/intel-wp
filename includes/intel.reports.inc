@@ -153,7 +153,6 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
   }
 
   $reports = intel_reports();
-  intel_d($reports);
   $report_subtype = strtolower($report_subtype);
   if (isset($reports[$report_type]) && isset($reports[$report_type][$report_subtype])) {
     $vars['report_info'] = $reports[$report_type][$report_subtype];
@@ -442,7 +441,6 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
     }
   }
 
-intel_d($vars);
   return $vars;
 }
 

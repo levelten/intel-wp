@@ -222,21 +222,24 @@ function intel_visitor_clickstream_report($vars) {
   }  
   
 
-  $request['dimensions'] = array('ga:source', 'ga:referralPath', 'ga:medium', 'ga:keyword', 'ga:socialNetwork', 'ga:campaign', 'ga:dimension4');
-  $request['metrics'] = array('ga:entrances'); 
+  $request['dimensions'] = array('ga:sourceMedium', 'ga:referralPath', 'ga:keyword', 'ga:socialNetwork', 'ga:campaign', 'ga:adContent', 'ga:dimension4');
+  $request['metrics'] = array('ga:entrances');
+  $request['filter'] = 'ga:entrances>0';
   $data = intel_ga_api_data($request);
-//dsm($data);
   $rows = intel_get_ga_feed_rows($data);
+//intel_d($rows);
   if (!empty($rows) && is_array($rows)) {
     foreach ($rows AS $row) {
       $ts = (int)$row['dimension4'];
+      $a = explode(' / ', $row['sourceMedium']);
       $referrer = array(
-        'source' => $row['source'],
+        'source' => !empty($a[0]) ? $a[0] : '(not set)',
+        'medium' => !empty($a[1]) ? $a[1] : '(not set)',
         'referralPath' => $row['referralPath'],
-        'medium' => $row['medium'],
         'keyword' => $row['keyword'],
         'socialNetwork' => $row['socialNetwork'],
         'campaign' => $row['campaign'],
+        'adContent' => !empty($row['adContent']) ? $row['adContent'] : '(not set)',
       );
       $steps[$ts]['referrer'] = $referrer;     
     }
@@ -397,6 +400,7 @@ EOD;
   $visit_ts = 0;
   $page_ts = 0;
   $stick = 0;
+  $weight = 0;
   $tldata = array(
     'visits' => array(),
     'pages' => array(),
@@ -424,6 +428,7 @@ EOD;
         $last_page_hostpath = '';
         $last_page_hostpath_indexes = array();
         $stick = 0;
+        $weight = 0;
         //$col2 .= "        <div style=\"clear: left;\"></div>\n";
         //$col2 .= "      </div>\n";
         $col2 .= "    </div>\n";
@@ -479,20 +484,23 @@ EOD;
       $si = $step['page'];
       $si['time'] = $ts;
       $si['type'] = 'page';
-      //$si['value'] = empty($last_page_hostpath_indexes) ? $scorings['entrance'] : $scorings['additional_pages'];
+      $si['weight'] = $weight++;
+      $si['value'] = empty($last_page_hostpath_indexes) ? $scorings['entrance'] : $scorings['additional_pages'];
       $session_steps[] = $si;
 
       if (!$stick && count($last_page_hostpath_indexes) == 1 && !empty($scorings['stick'])) {
         $si = array();
         $si['time'] = $ts;
         $si['type'] = 'event';
-        $si['category'] = '(' . Intel_Df::t('stick') . ')';
-        $si['action'] = '';
-        $si['value'] = $scorings['stick'];
+        $si['category'] = '[' . Intel_Df::t('Stick') . ']';
+        $si['action'] = 'Page Hit';
+        $si['value'] = intel_event_value_format($scorings['stick'], array('mode' => ['valued']));
         $si['mode'] = 'valued';
         $si['hostname'] = $step['page']['hostname'];
         $si['pagePath'] = $step['page']['pagePath'];
-        //$session_steps[] = $si;
+        $si['weight'] = $weight++;
+        $session_steps[] = $si;
+        $stick = 1;
       }
 
       $vars = array('text' => "time: $time");
@@ -540,6 +548,7 @@ EOD;
         $si['mode'] = $event['mode'];
         $si['hostname'] = $event['hostname'];
         $si['pagePath'] = $event['pagePath'];
+        $si['weight'] = $weight++;
         $session_steps[] = $si;
         $hostpath = $event['hostpath'];
         $item = $event['eventCategory'] . ": " . $event['eventAction'];
@@ -556,6 +565,20 @@ EOD;
         $value = '-';
         if ($event['mode']) {
           $value = intel_event_value_format($event['value'], array('mode' => $event['mode']));
+          if (!$stick && !empty($scorings['stick'])) {
+            $si = array();
+            $si['time'] = $ts;
+            $si['type'] = 'event';
+            $si['category'] = '[' . Intel_Df::t('Stick') . ']';
+            $si['action'] = 'Interaction Event';
+            $si['value'] = intel_event_value_format($scorings['stick'], array('mode' => ['valued']));
+            $si['mode'] = 'valued';
+            $si['hostname'] = $step['page']['hostname'];
+            $si['pagePath'] = $step['page']['pagePath'];
+            $si['weight'] = $weight++;
+            $session_steps[] = $si;
+            $stick = 1;
+          }
           //$value = $value_format['prefix'] . number_format($event['value'], $value_format['decimals']) . $value_format['prefix'];
         }
         $cat = Intel_Df::drupal_clean_css_identifier("event category " . strtolower($event['eventCategory']));

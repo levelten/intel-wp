@@ -557,10 +557,10 @@ function theme_intel_visit_steps_table(&$variables) {
 
   uasort($steps, '_intel_sort_session_steps');
 
-
   $rows = array();
   $start_time = 0;
   $last_page_ts = 0;
+  $last_step_ts = 0;
   foreach ($steps as $i => $step) {
     $ts = $step['time'];
     if (!$start_time) {
@@ -581,15 +581,16 @@ function theme_intel_visit_steps_table(&$variables) {
           (!empty($step['value'])) ? intel_event_value_format($step['value'], array('mode' => 'valued')) : '-',
         );
         $rows[] = $row;
-        $last_page_ts = $ts;
+        $last_step_ts = $last_page_ts = $ts;
       }
     }
     elseif ($step['type'] == 'event') {
       $class = 'event';
-      if (substr($step['category'], -1) == '!') {
+      //if (substr($step['category'], -1) == '!') {
+      if ($step['mode'] == 'valued') {
         $class .= ' valued-event';
       }
-      elseif (substr($step['category'], -1) == '+') {
+      elseif ($step['mode'] == 'goal') {
         $class .= ' goal-event';
       }
       else {
@@ -599,11 +600,12 @@ function theme_intel_visit_steps_table(&$variables) {
         'class' => array($class),
       );
       $row['data'] = array(
-        ($ts == $last_page_ts) ? '"' : '+' . date($tf, $time),
+        ($ts == $last_step_ts) ? '"' : '+' . date($tf, $time),
         '<span class="' . $class . '">' . $step['category'] . ': ' . $step['action'] . '</span>',
         (!empty($step['value'])) ? intel_event_value_format($step['value'], array('mode' => $step['mode'])) : '-',
       );
       $rows[] = $row;
+      $last_step_ts = $ts;
     }
     if (!empty($event_rows)) {
       $rows = array_merge($rows, $event_rows);
@@ -730,35 +732,46 @@ function theme_intel_property_trafficsource($variables) {
     'http://facebook.com' => 'http://www.facebook.com'
   );
 
-  if ($source['medium'] == '(none)') {
-    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source"), $source['source']);
-  }
-  elseif ($source['medium'] == 'referral') {
-    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source"), $source['medium']);
+  if ($source['campaign'] != '(not set)') {
+    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Campaign"), $source['campaign']);
+    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source / Medium"), $source['source'] . ' / ' . $source['medium']);
+    //$items[] = intel_visitor_format_profile_item(Intel_Df::t("Medium"), $source['medium']);
+    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Keyword"), $source['keyword']);
+    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Content"), $source['adContent']);
   }
   else {
-    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source"), $source['medium'] . ' / ' . $source['source']);
-  }
-  if ($source['medium'] != '(none)') {
-    if ($source['medium'] == 'organic') {
-      $keyword = $source['keyword'];
-      if ($source['source'] == 'google') {
-        $keyword = Intel_Df::l($keyword, 'http://google.com/search?q=' . $keyword, array('attributes' => array('target' => $source['source'])));
+    if ($source['medium'] == '(none)') {
+      $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source"), $source['source']);
+    }
+    elseif ($source['medium'] == 'referral') {
+      $items[] = intel_visitor_format_profile_item(Intel_Df::t("Medium"), $source['medium']);
+    }
+    else {
+      $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source / Medium"), $source['source'] . ' / ' . $source['medium']);
+      //$items[] = intel_visitor_format_profile_item(Intel_Df::t("Source"), $source['medium'] . ' / ' . $source['source']);
+    }
+    if ($source['medium'] != '(none)') {
+      if ($source['medium'] == 'organic') {
+        $keyword = $source['keyword'];
+        if ($source['source'] == 'google') {
+          $keyword = Intel_Df::l($keyword, 'http://google.com/search?q=' . $keyword, array('attributes' => array('target' => $source['source'])));
+        }
+        $items[] = intel_visitor_format_profile_item(Intel_Df::t("Keyword"), $keyword);
       }
-      $items[] = intel_visitor_format_profile_item(Intel_Df::t("Keyword"), $keyword);
-    }
-    if ($source['medium'] == 'referral') {
-      $url = $source['source'] . $source['referralPath'];
-      $l = Intel_Df::l($url, "http://" . $url, array('attributes' => array('target' => $source['source'])));
-      $item[] = intel_visitor_format_profile_item(Intel_Df::t("Path"), $l);
-    }
-    if ($source['socialNetwork'] != '(not set)') {
-      $item[] = intel_visitor_format_profile_item(Intel_Df::t("Social network"), $source['socialNetwork']);
-    }
-    if ($source['campaign'] != '(not set)') {
-      $item[] = intel_visitor_format_profile_item(Intel_Df::t("Campaign"), $source['campaign']);
+      if ($source['medium'] == 'referral') {
+        $url = $source['source'] . $source['referralPath'];
+        $l = Intel_Df::l($url, "http://" . $url, array('attributes' => array('target' => $source['source'])));
+        $item[] = intel_visitor_format_profile_item(Intel_Df::t("Path"), $l);
+      }
+      if ($source['socialNetwork'] != '(not set)') {
+        $item[] = intel_visitor_format_profile_item(Intel_Df::t("Social network"), $source['socialNetwork']);
+      }
+      if ($source['campaign'] != '(not set)') {
+        $item[] = intel_visitor_format_profile_item(Intel_Df::t("Campaign"), $source['campaign']);
+      }
     }
   }
+
 
   return Intel_Df::theme('intel_visitor_profile_item_list', array('items' => $items));
 }

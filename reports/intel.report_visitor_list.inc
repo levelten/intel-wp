@@ -72,9 +72,9 @@ function intel_visitor_list_report($vars) {
   $ga_data->loadFeedData('pageviews_events_valued');
   $ga_data->setRequestDefaultParam('max_results', 2 * $vars['feed_rows']);
   */
-  $ga_data->setDebug(1);
+  //$ga_data->setDebug(1);
   $ga_data->loadFeedData('entrances');
-  $ga_data->setDebug(0);
+  //$ga_data->setDebug(0);
   $ga_data->loadFeedData('entrances_events_valued');
   $ga_data->loadFeedData('visit_info');
   

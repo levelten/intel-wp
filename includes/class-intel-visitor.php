@@ -978,7 +978,12 @@ class Intel_Visitor extends Intel_Entity  {
       //$ops[] = Intel_Df::l(__('meta', 'intel'), 'submission/' . $row->sid);
       $title = 'NA';
 
-      if ($row->type == 'gravityform') {
+			if ($row->type == 'intel_form') {
+				if (!empty($row->fid)) {
+					$title = ucwords(str_replace('_', ' ', $row->fid));
+				}
+			}
+      elseif ($row->type == 'gravityform') {
 				$fs = GFAPI::get_entry($row->fsid);
 				if (!empty($fs['form_id'])) {
 					$fd = GFAPI::get_form($fs['form_id']);

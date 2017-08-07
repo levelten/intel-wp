@@ -111,17 +111,94 @@ class Intel_Public {
 			return;
 		}
 
+		$context = '';
+		$label_subjects = array();
+		$id_subjects = array();
+		$filters = array();
+		$contexts = array();
+
+		if (!is_admin()) {
+			global $wp;
+			global $wp_query;
+			$contexts[] = 'page';
+			$label_subjects[] = Intel_Df::t('Page');
+			$id_subjects[] = 'content';
+			$filters[] = 'pagePath:' . Intel_Df::current_pagepath();
+			$queried_obj = get_queried_object();
+			$queried_obj_class = '';
+			if (!empty($queried_obj)) {
+				$queried_obj_class = get_class($queried_obj);
+			}
+
+			if ($queried_obj_class == 'WP_Term') {
+				$attr_key = '';
+				if ($queried_obj->taxonomy == 'post_tag') {
+					$attr_key = 'b';
+					$tax_label = Intel_Df::t('Tag');
+				}
+				elseif ($queried_obj->taxonomy == 'category') {
+					$attr_key = 'c';
+					$tax_label = Intel_Df::t('Category');
+				}
+				if ($attr_key) {
+					$contexts[] = 'page-attr';
+					$label_subjects[] = Intel_Df::t('Content Segment: !taxonomy', array(
+						'!taxonomy' => $tax_label,
+					));
+					$id_subjects[] = 'content-' . $queried_obj->taxonomy;
+					$filters[] = 'pa-' . $attr_key  . ':' . $queried_obj->term_id;
+				}
+			}
+		}
+		else {
+
+			$screen = get_current_screen();
+
+			// enable page context when editing a post
+			if ( $screen->base == 'post' && $screen->action != 'add') {
+				$contexts[] = 'page';
+				$label_subjects[] = Intel_Df::t('Page');
+				$id_subjects[] = 'content';
+				$filters[] = 'pagePath:' . Intel_Df::current_pagepath();
+			}
+			elseif ($screen->base == 'edit' && !empty($screen->post_type)) {
+				$contexts[] = 'page-attr';
+				$label_subjects[] = Intel_Df::t('Content Segment: Content Type');
+				$id_subjects[] = 'page-attr';
+				$filters[] = 'pa-rt2:' . $screen->post_type;
+			}
+			elseif($screen->base == 'user-edit' || $screen->base == 'profile') {
+				$uid = '';
+				if (!empty($_GET['user_id'])) {
+					$uid = $_GET['user_id'];
+				}
+				elseif ($screen->base == 'profile') {
+					$uid = get_current_user_id();
+				}
+				if ($uid) {
+					$visitor = intel_visitor_load($uid, FALSE, 'uid');
+
+					if (!empty($visitor->vtkid)) {
+						$contexts[] = 'visitor';
+						$label_subjects[] = Intel_Df::t('Visitor');
+						$id_subjects[] = 'user-behavior';
+						$filters[] = 'vtk:' . $visitor->vtkid;
+					}
+					$contexts[] = 'page-attr';
+					$label_subjects[] = Intel_Df::t('Content Segment: Author');
+					$id_subjects[] = 'content-author';
+					$filters[] = 'pa-a:' . $uid;
+				}
+			}
+		}
+
 		// only include toolbar link on front end
-		if (is_admin()) {
+		if (empty($contexts)) {
 			return;
 		}
 
 
-		$l_options = array(
-			'query' => array(
-				'report_params' => 'f0=pagePath:' . Intel_Df::current_pagepath(),
-			),
-		);
+
 		$args = array(
 			'id'    => 'intel',
 			'title' => '<span class="icon ab-icon dashicons-before dashicons-analytics"></span>' . Intel_Df::t('Intelligence'),
@@ -130,55 +207,118 @@ class Intel_Public {
 		);
 		$wp_admin_bar->add_node( $args );
 
-		$args = array(
-			'parent' => 'intel',
-			'id'    => 'intel-content-scorecard',
-			'title' => Intel_Df::t('Report: Content scorecard'),
-			'href'  => Intel_Df::url('admin/reports/intel/scorecard', $l_options),
-			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
-		);
-		$wp_admin_bar->add_node( $args );
+		foreach ($contexts as $i => $context) {
+			$label_subject = $label_subjects[$i];
+			$id_subject = $id_subjects[$i];
+			$filter = $filters[$i];
+			$l_options = array(
+				'query' => array(
+					'report_params' => 'f0=' . $filter,
+				),
+			);
 
-		$args = array(
-			'parent' => 'intel',
-			'id'    => 'intel-content-trafficsource',
-			'title' => Intel_Df::t('Report: Content traffic source'),
-			'href'  => Intel_Df::url('admin/reports/intel/trafficsource', $l_options),
-			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
-		);
-		$wp_admin_bar->add_node( $args );
+			if ($context == 'visitor') {
+				$args = array(
+					'parent' => 'intel',
+					'id'    => 'intel-report-' . $id_subject . '-profile',
+					'title' => Intel_Df::t('Report: !subject Profile', array(
+						'!subject' => $label_subject,
+					)),
+					'href'  => Intel_Df::url('visitor/' . $visitor->vid),
+					'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+				);
+				$wp_admin_bar->add_node( $args );
 
-		$args = array(
-			'parent' => 'intel',
-			'id'    => 'intel-content-visitor',
-			'title' => Intel_Df::t('Report: Content visitors'),
-			'href'  => Intel_Df::url('admin/reports/intel/visitor', $l_options),
-			'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
-		);
-		$wp_admin_bar->add_node( $args );
-
-		if (intel_is_intel_script_enabled('admin') && Intel_Df::user_access('admin intel')) {
-			if (!empty($_GET['io-admin'])) {
-				$query = $_GET;
-				unset($query['io-admin']);
-				$l_options_admin = Intel_Df::l_options_add_query($query);
-				$title_mode = Intel_Df::t('disable');
-			}
-			else {
-
-				$l_options_admin = Intel_Df::l_options_add_query(array('io-admin' => 1));
-				$title_mode = Intel_Df::t('enable');
+				$args = array(
+					'parent' => 'intel',
+					'id'    => 'intel-report-' . $id_subject . '-clickstream',
+					'title' => Intel_Df::t('Report: !subject Clickstream', array(
+						'!subject' => $label_subject,
+					)),
+					'href'  => Intel_Df::url('visitor/' . $visitor->vid . '/clickstream'),
+					'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+				);
+				$wp_admin_bar->add_node( $args );
 			}
 
 			$args = array(
 				'parent' => 'intel',
-				'id'    => 'intel-front-end-admin',
-				'title' => Intel_Df::t('Admin: Event explorer') . ' ' . $title_mode,
-				'href'  => Intel_Df::url(Intel_Df::current_path(), $l_options_admin),
+				'id'    => 'intel-report-' . $id_subject . '-scorecard',
+				'title' => Intel_Df::t('Report: !subject Scorecard', array(
+					'!subject' => $label_subject,
+				)),
+				'href'  => Intel_Df::url('admin/reports/intel/scorecard', $l_options),
 				'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
 			);
 			$wp_admin_bar->add_node( $args );
+
+			$args = array(
+				'parent' => 'intel',
+				'id'    => 'intel-report-' . $id_subject . '-trafficsource',
+				'title' => Intel_Df::t('Report: !subject Sources', array(
+					'!subject' => $label_subject,
+				)),
+				'href'  => Intel_Df::url('admin/reports/intel/trafficsource', $l_options),
+				'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+			);
+			$wp_admin_bar->add_node( $args );
+
+			if ($context != 'page') {
+				$args = array(
+					'parent' => 'intel',
+					'id'    => 'intel-report-' . $id_subject . '-content',
+					'title' => Intel_Df::t('Report: !subject Content', array(
+						'!subject' => $label_subject,
+					)),
+					'href'  => Intel_Df::url('admin/reports/intel/content', $l_options),
+					'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+				);
+				$wp_admin_bar->add_node( $args );
+			}
+
+			if ($context != 'visitor') {
+				$args = array(
+					'parent' => 'intel',
+					'id'    => 'intel-report-' . $id_subject . '-visitor',
+					'title' => Intel_Df::t('Report: !subject Visitors', array(
+						'!subject' => $label_subject,
+					)),
+					'href'  => Intel_Df::url('admin/reports/intel/visitor', $l_options),
+					'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+				);
+				$wp_admin_bar->add_node( $args );
+			}
+
+			if (
+				intel_is_intel_script_enabled('admin')
+				&& Intel_Df::user_access('admin intel')
+				&& !is_admin()
+				&& $i == (count($contexts) -1) // append to last if multiple contexts
+			) {
+				if (!empty($_GET['io-admin'])) {
+					$query = $_GET;
+					unset($query['io-admin']);
+					$l_options_admin = Intel_Df::l_options_add_query($query);
+					$title_mode = Intel_Df::t('Disable');
+				}
+				else {
+
+					$l_options_admin = Intel_Df::l_options_add_query(array('io-admin' => 1));
+					$title_mode = Intel_Df::t('Enable');
+				}
+
+				$args = array(
+					'parent' => 'intel',
+					'id'    => 'intel-admin-event-explorer',
+					'title' => Intel_Df::t('Admin: Event Explorer') . ' ' . $title_mode,
+					'href'  => Intel_Df::url(Intel_Df::current_path(), $l_options_admin),
+					'meta'  => array( 'class' => 'intel-toolbar-subitem' ),
+				);
+				$wp_admin_bar->add_node( $args );
+			}
+
 		}
+
 
 		//do_action('intel_admin_bar_menu_alter', $wp_admin_bar);
 

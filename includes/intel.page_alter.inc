@@ -163,6 +163,7 @@ function intel_page_alter(&$page) {
 
   // set user role visitor attribute
   // only when user is logged in (otherwise page caching will cause errors)
+  // TODO WP roles do not have ids.
   if (!empty($user->ID)) {
     $cur = isset($ga_va['r']) ? $ga_va['r'] : array();
     if (!empty($user->roles) && is_array($user->roles)) {
@@ -670,8 +671,8 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   }
   elseif (INTEL_PLATFORM == 'wp') {
     $attr_keys = array(
+      'post_tag' => 'b',
       'category' => 'c',
-      'post_tag' => 't',
     );
     //$taxonomies = get_taxonomies();
     //intel_d($taxonomies);
@@ -713,29 +714,31 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
         }
       }
     }
+
+    // set custom visitor attributes if visitor_attribute_col field exists
+    if (!empty($entity->field_visitor_attribute_col[$lang]) && is_array($entity->field_visitor_attribute_col[$lang])) {
+      foreach ($entity->field_visitor_attribute_col[$lang] AS $i => $e) {
+        $collection = field_collection_item_load($e['value']);
+        $keys = explode('.', $collection->field_visitor_attribute[$lang][0]['value']);
+        $value = !empty($collection->field_visitor_attribute_value[$lang][0]['value']) ? $collection->field_visitor_attribute_value[$lang][0]['value'] : '';
+        if (count($keys) == 1) {  // flag and scalar values
+          $visitor_attrs[$keys[0]] = $value;
+        }
+        else {
+          if (!isset($visitor_attrs[$keys[0]])) {
+            $visitor_attrs[$keys[0]] = array();
+          }
+          $visitor_attrs[$keys[0]][$keys[1]] = $value;
+        }
+      }
+    }
   }
   elseif (INTEL_PLATFORM == 'wp') {
 
   }
 
 
-  // set custom visitor attributes if visitor_attribute_col field exists
-  if (!empty($entity->field_visitor_attribute_col[$lang]) && is_array($entity->field_visitor_attribute_col[$lang])) {
-    foreach ($entity->field_visitor_attribute_col[$lang] AS $i => $e) {
-      $collection = field_collection_item_load($e['value']);
-      $keys = explode('.', $collection->field_visitor_attribute[$lang][0]['value']);
-      $value = !empty($collection->field_visitor_attribute_value[$lang][0]['value']) ? $collection->field_visitor_attribute_value[$lang][0]['value'] : '';
-      if (count($keys) == 1) {  // flag and scalar values
-        $visitor_attrs[$keys[0]] = $value;
-      }
-      else {
-        if (!isset($visitor_attrs[$keys[0]])) {
-          $visitor_attrs[$keys[0]] = array();
-        }
-        $visitor_attrs[$keys[0]][$keys[1]] = $value;
-      }
-    }
-  }
+
 
   // set attached intel events if intel_event_col field exists
   // TODO get page events working
@@ -2073,6 +2076,9 @@ function intel_process_form_submission($vars) {
   }
 
   //$userId = Intel_Visitor::extractUserId();
+
+  intel_set_ga_userid($visitor);
+  /*
   if ($api_level == 'pro' && !empty($visitor->identifiers['vtk'][0])) {
     $vtk = $visitor->identifiers['vtk'][0];
     $data = array(
@@ -2085,6 +2091,7 @@ function intel_process_form_submission($vars) {
       $visitor->deleteIdentifierValue('gacid', intel()->gacid);
     }
   }
+  */
 
   // save visitor
   if (!empty($visitor->vid)) {
@@ -2149,6 +2156,21 @@ function intel_process_form_submission($vars) {
   do_action('intel_form_submission_data_save', $hook_data, $hook_context);
 }
 
+function intel_set_ga_userid($visitor) {
+  if (intel_api_level() == 'pro' && !empty($visitor->identifiers['vtk'][0])) {
+    $vtk = $visitor->identifiers['vtk'][0];
+    $data = array(
+      'userId' => $vtk,
+    );
+    intel_add_page_intel_push(array('setUserId', $data));
+    // if visitor already exists (with original vtk), clear out identifiers
+    if ($vtk != intel()->vtk) {
+      $visitor->deleteIdentifierValue('vtk', intel()->vtk);
+      $visitor->deleteIdentifierValue('gacid', intel()->gacid);
+    }
+  }
+}
+
 /**
  * Determines of redirect has been set on
  * @param $lp_node - the landing page node
@@ -2194,38 +2216,54 @@ function intel_session_cookie_merge() {
   $_SESSION['l10i_cookie'] = $_COOKIE + $c0;
 }
 
+/**
+ * Syncs CMS user with visitor
+ * @param $account
+ */
 function intel_visitor_sync_user($account) {
-return; // TODO: disabled
-  global $user;
 
+  if (INTEL_PLATFORM == 'drupal') {
+    global $user;
 
-  // TODO build a more configurable version for blocking user roles
-  // Don't create visitor with identifier merges for accounts where muliple people might login
+    $uid = $user->uid;
+    $email = $user->mail;
+    $name = $account->name;
+    // TODO build a more configurable version for blocking user roles
+    // Don't create visitor with identifier merges for accounts where muliple people might login
 
-  // Don't autocreate visitor for user 1
-  if ($user->uid == 1) {
-    return;
-  }
+    // Don't autocreate visitor for user 1
+    if ($user->uid == 1) {
+      return;
+    }
 
-  // Don't autocreate visitor for admininistrators
-  if (is_array($user)) {
-    foreach ($user->roles AS $role) {
-      if ($role == 'administrator') {
-        return;
+    // Don't autocreate visitor for admininistrators
+    if (is_array($user)) {
+      foreach ($user->roles AS $role) {
+        if ($role == 'administrator') {
+          return;
+        }
       }
     }
+
+    // if account is currently logged in user, set $vtk
+    // otherwise another user is saving user data
+    $vtk = ($uid && ($user->uid == $account->uid)) ? Intel_Visitor::extractVtk() : '';
+  }
+  elseif (INTEL_PLATFORM == 'wp') {
+    $uid = $account->ID;
+    $email = $account->user_email;
+    $name = $account->display_name;
+    $vtk = Intel_Visitor::extractVtk();
   }
 
 
-  // if account is currently logged in user, set $vtk
-  // otherwise another user is saving user data
-  $vtk = ($user->uid && ($user->uid == $account->uid)) ? Intel_Visitor::extractVtk() : '';
+
   // try loading by uid
-  $visitor = intel_visitor_load($account->uid, FALSE, 'uid');
+  $visitor = intel_visitor_load($uid, FALSE, 'uid');
 
   if (!$visitor) {
     // try loading by email
-    $visitor = intel_visitor_load($account->mail, FALSE, 'email');
+    $visitor = intel_visitor_load($email, FALSE, 'email');
   }
 
   if (!$visitor && $vtk) {
@@ -2239,87 +2277,126 @@ return; // TODO: disabled
   }
 
   // set identifiers
-  $visitor->setIdentifier('uid', $account->uid);
-  $visitor->setIdentifier('email', $account->mail);
+  $visitor->setIdentifier('uid', $uid);
+  $visitor->setIdentifier('email', $email);
   if ($vtk) {
     $visitor->setIdentifier('vtk', $vtk);
     $visitor->last_activity = REQUEST_TIME;
   }
   if (empty($visitor->name)) {
-    $visitor->setName($account->name);
+    $visitor->setName($name);
   }
   $visitor->save();
 }
 
-/**
- * Implements hook_user_login()
- * @param $edit
- * @param $account
- */
+
+
+// handle user login / registration
+if (INTEL_PLATFORM == 'drupal') {
+
+  /**
+   * Implements hook_user_login()
+   * @param $edit
+   * @param $account
+   */
 // TODO: This causes problems with user session management.
 // for some odd reason the intel_add_page_intel_push causes the user to be logged out
-function intel_user_login(&$edit, &$account) {
-  return;
+  function intel_user_login(&$edit, &$account) {
+    return;
 
 
-  $visitor = intel_visitor_load($account->uid, FALSE, 'uid');
+    $visitor = intel_visitor_load($account->uid, FALSE, 'uid');
 
-  if (!$visitor) {
-    intel_visitor_sync_user($account);
-  }
-  else {
-    $visitor->last_activity = REQUEST_TIME;
-    $visitor->save();
-  }
+    if (!$visitor) {
+      intel_visitor_sync_user($account);
+    }
+    else {
+      $visitor->last_activity = REQUEST_TIME;
+      $visitor->save();
+    }
 
 
-  $call = array(
-    'eventCategory' => 'User login',
-    'eventAction' => 'User login form',
-    'eventLabel' => 'user/' . $account->uid,
-    'eventValue' => 0,
-    'nonInteraction' => FALSE,
-    'location' => 'user',
-  );
-  intel_add_page_intel_push(array('event', $call));
+    $call = array(
+      'eventCategory' => 'User login',
+      'eventAction' => 'User login form',
+      'eventLabel' => 'user/' . $account->uid,
+      'eventValue' => 0,
+      'nonInteraction' => FALSE,
+      'location' => 'user',
+    );
+    intel_add_page_intel_push(array('event', $call));
 
 //$pushes = intel_get_page_intel_pushes();
 //watchdog('intel_user_login', print_r($pushes, 1));
+  }
+
+  /**
+   * Implements hook_user_insert()
+   */
+  function intel_user_insert(&$edit, $account, $category) {
+    intel_visitor_sync_user($account);
+  }
+
+  /**
+   * Implements hook_user_update()
+   */
+  function intel_user_update(&$edit, $account, $category) {
+    intel_visitor_sync_user($account);
+  }
+
+  function intel_form_user_register_form_alter(&$form, &$form_state) {
+    // add submit handler
+    $form['#submit'][] = 'intel_user_register_form_submit';
+  }
+
+  function intel_user_register_form_submit(&$form, &$form_state) {
+    // create form submission intel event
+    $call = array(
+      'eventCategory' => 'User registration',
+      'eventAction' => 'User registration form',
+      'eventLabel' => 'user',
+      'eventValue' => 0,
+      'nonInteraction' => FALSE,
+      'location' => 'user',
+    );
+    intel_add_page_intel_push(array('event', $call));
+    $pushes = intel_get_page_intel_pushes();
+    //watchdog('intel_user_register_form_submit', print_r($pushes, 1));
+  }
+}
+elseif (INTEL_PLATFORM == 'wp') {
+
+  /**
+   * Implements hook_wp_login()
+   * @param $user_login
+   * @param $account
+   */
+  function intel_user_login($user_login, $account) {
+    $visitor = intel_visitor_load($account->ID, FALSE, 'uid');
+
+    if (!$visitor) {
+      intel_visitor_sync_user($account);
+    }
+    else {
+      $visitor->last_activity = REQUEST_TIME;
+      $visitor->save();
+    }
+
+    $event = intel_intel_event_load('wp_user_login');
+
+    $call = intel_filter_event_for_push($event);
+    $call['eventAction'] = Intel_Df::t('User login form');
+    $call['eventLabel'] = ':user/' . $account->ID;
+
+    intel_add_page_intel_push(array('event', $call));
+
+    // combine visitor sessions
+    intel_set_ga_userid($visitor);
+  }
+  // register hook_wp_login()
+  add_action('wp_login', 'intel_user_login', 10, 2);
 }
 
-/**
- * Implements hook_user_insert()
- */
-function intel_user_insert(&$edit, $account, $category) {
-  intel_visitor_sync_user($account);
-}
-
-/**
- * Implements hook_user_update()
- */
-function intel_user_update(&$edit, $account, $category) {
-  intel_visitor_sync_user($account);
-}
-
-function intel_form_user_register_form_alter(&$form, &$form_state) {
-  // add submit handler
-  $form['#submit'][] = 'intel_user_register_form_submit';
-}
-
-function intel_user_register_form_submit(&$form, &$form_state) {
-  // create form submission intel event
-  $call = array(
-    'eventCategory' => 'User registration',
-    'eventAction' => 'User registration form',
-    'eventLabel' => 'user',
-    'eventValue' => 0,
-    'nonInteraction' => FALSE,
-    'location' => 'user',
-  );
-  intel_add_page_intel_push(array('event', $call));
-  $pushes = intel_get_page_intel_pushes();
-  //watchdog('intel_user_register_form_submit', print_r($pushes, 1));
-}
 
 /**
  * Implements hook_comment_post

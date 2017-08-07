@@ -198,11 +198,11 @@ function intel_demo_post_load($id = NULL, $options = array()) {
 
     $post['-4']['post_content'] = $post['-4']['post_excerpt'] = $ipsums[0];
     $post['-5']['post_content'] = $post['-5']['post_excerpt'] = $ipsums[4];
-    $post['-6']['post_content'] = $post['-6']['post_excerpt'] = '[embed]https://www.youtube.com/watch?v=A__S2YudnFI[/embed]';
+    $post['-6']['post_content'] = $post['-6']['post_excerpt'] = $ipsums[1];
 
     $post['-4']['post_content'] .= "\n\n" . $ipsums[1] . "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3];
-    $post['-5']['post_content'] .= "\n\n" . $ipsums[3] . "\n\n" . $ipsums[2]  . "\n\n" . $ipsums[1] . "\n\n" . $ipsums[0] . "\n\n" . $ipsums[4] . "\n\n" . $ipsums[3];
-    $post['-6']['post_content'] .= "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3]  . "\n\n" . $ipsums[4];
+    $post['-5']['post_content'] .= "\n\n" . '[embed]https://www.youtube.com/watch?v=A__S2YudnFI[/embed]' . "\n\n" . $ipsums[3] . "\n\n" . $ipsums[2]  . "\n\n" . $ipsums[1];
+    $post['-6']['post_content'] .= "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3]  . "\n\n" . $ipsums[4] . "\n\n" . $ipsums[0] . "\n\n" . $ipsums[1] . "\n\n" . $ipsums[2];
 
     foreach ($post as $i => $p) {
       $posts[$i] = (object)($p + $post_defaults);
