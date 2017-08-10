@@ -524,6 +524,165 @@ function template_preprocess_intel_visitor_browser_location(&$variables) {
   $entity = $variables['entity'];
 }
 
+function theme_intel_visit_hits_table(&$variables) {
+  $output = '';
+
+  $hits = $variables['hits'];
+
+  $header = array(
+    __('Time', 'intel'),
+    __('Page/Event', 'intel'),
+    __('Value', 'intel'),
+  );
+
+  uasort($hits, '_intel_sort_by_rtime');
+
+  // make sure pageviews are fired first
+  $weight = 0;
+  foreach ($hits as $i => $hit) {
+    $hits[$i]['weight'] = $weight += 2;
+    if ($hit['type'] == 'pageview') {
+      $hits[$i]['weight']--;
+    }
+  }
+
+  uasort($hits, '_intel_sort_by_weight');
+
+  $pageviews = array();
+  $pageviews_i = array();
+  foreach ($hits as $i => $hit) {
+
+    if ($hit['type'] == 'pageview') {
+      $pageviews_i[$hit['hostpath']] = count($pageviews);
+      $a = array(
+        'time' => $hit['time'],
+        'pageview' => $hit,
+        'hits' => array(),
+      );
+      $pageviews[] = $a;
+    }
+    else if ($hit['type'] == 'event') {
+      $pageview_i = $pageviews_i[$hit['hostpath']];
+      $pageviews[$pageview_i]['hits'][] = $hit;
+    }
+  }
+  // pass sorted hits back for clickstream timeline
+  $variables['hit_pageviews'] = $pageviews;
+
+  $scorings = intel_get_scorings();
+  $rows = array();
+  $start_time = 0;
+  $stick = 0;
+  foreach ($pageviews as $i => $pageview) {
+    $ts = $pageview['time'];
+    if (!$start_time) {
+      $start_time = $ts;
+    }
+    $time = $ts - $start_time;
+    $tf = ($time > 3600) ? 'H:i:s' : 'i:s';
+    $row = array(
+      'class' => array('page'),
+    );
+    $row['data'] = array(
+      array(
+        'class' => array('col-time'),
+        'data' => '+' . date($tf, $time),
+      ),
+      array(
+        'class' => array('col-title'),
+        'data' => Intel_Df::l($pageview['pageview']['pageTitle'], '//' . $pageview['pageview']['hostname'] . $pageview['pageview']['pagePath']),
+      ),
+      array(
+        'class' => array('col-value'),
+        'data' => (!empty($pageview['pageview']['value'])) ? intel_event_value_format($pageview['pageview']['value'], array('mode' => 'valued')) : '-',
+      ),
+    );
+    $rows[] = $row;
+    if ($i == 1 && !$stick && !empty($scorings['stick'])) {
+      $stick++;
+      $row = array(
+        'class' => array('event', 'valued-event'),
+      );
+       $row['data'] = array(
+         array(
+           'class' => array('col-time'),
+           'data' => '+' . date($tf, $time),
+         ),
+         array(
+           'class' => array('col-title'),
+           'data' => '[' . Intel_Df::t('Stick') . ']: ' . Intel_Df::t('Page hit'),
+         ),
+         array(
+           'class' => array('col-value'),
+           'data' => '+' . intel_event_value_format($scorings['stick'], array('mode' => 'valued')),
+         ),
+      );
+      $rows[] = $row;
+    }
+    foreach ($pageview['hits'] as $j => $hit) {
+      $ts = $hit['time'];
+      $time = $ts - $start_time;
+      $tf = ($time > 3600) ? 'H:i:s' : 'i:s';
+      $row = array(
+        'class' => array('event'),
+      );
+      $row['class'][] = (!empty($hit['eventMode']) ? $hit['eventMode'] : 'standard')  . '-event';
+      $value = !empty($hit['eventValue']) ? $hit['eventValue'] : '-';
+      if (!empty($hit['eventMode'])) {
+        $value = intel_event_value_format($hit['eventValue'], array('mode' => 'valued'));
+      }
+      $row['data'] = array(
+        array(
+          'class' => array('col-time'),
+          'data' => '+' . date($tf, $time),
+        ),
+        array(
+          'class' => array('col-title'),
+          'data' => $hit['eventCategory'] . ': ' . $hit['eventAction'],
+        ),
+        array(
+          'class' => array('col-value'),
+          'data' => $value,
+        ),
+      );
+      $rows[] = $row;
+      if (!empty($hit['eventMode']) && !$stick && !empty($scorings['stick'])) {
+        $stick++;
+        $row = array(
+          'class' => array('event', 'valued-event'),
+        );
+        $row['data'] = array(
+          array(
+            'class' => array('col-time'),
+            'data' => '+' . date($tf, $time),
+          ),
+          array(
+            'class' => array('col-title'),
+            'data' => '[' . Intel_Df::t('Stick') . ']: ' . Intel_Df::t('Page hit'),
+          ),
+          array(
+            'class' => array('col-value'),
+            'data' => '+' . intel_event_value_format($scorings['stick'], array('mode' => 'valued')),
+          ),
+        );
+        $rows[] = $row;
+      }
+    }
+  }
+
+
+  $vars = array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array(
+      'class' => array(
+        'visit-steps'
+      )
+    ),
+  );
+  return Intel_Df::theme('table', $vars);
+}
+
 function theme_intel_visit_steps_table(&$variables) {
   $output = '';
 
@@ -736,8 +895,12 @@ function theme_intel_property_trafficsource($variables) {
     $items[] = intel_visitor_format_profile_item(Intel_Df::t("Campaign"), $source['campaign']);
     $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source / Medium"), $source['source'] . ' / ' . $source['medium']);
     //$items[] = intel_visitor_format_profile_item(Intel_Df::t("Medium"), $source['medium']);
-    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Keyword"), $source['keyword']);
-    $items[] = intel_visitor_format_profile_item(Intel_Df::t("Content"), $source['adContent']);
+    if (isset($source['keyword'])) {
+      $items[] = intel_visitor_format_profile_item(Intel_Df::t("Keyword"), $source['keyword']);
+    }
+    if (isset($source['adContent'])) {
+      $items[] = intel_visitor_format_profile_item(Intel_Df::t("Content"), $source['adContent']);
+    }
   }
   else {
     if ($source['medium'] == '(none)') {

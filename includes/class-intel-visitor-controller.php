@@ -29,7 +29,7 @@
  */
 class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 
-	public $idType = NULL;
+	public $idType = '';
 
 	/*
 	public function __construct($entityClass = 'intel_visitor') {
@@ -202,7 +202,7 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 			}
 			$sql .= ' )';
 		}
-		elseif ($idType == 'vtk' || $idType == 'uid') {
+		elseif ($idType == 'vtk') {
 			//$ids_query = "'" . implode("', ", $ids) . "'";
 			$sql .= "INNER JOIN {$wpdb->prefix}intel_visitor_identifier AS i ON e.vid = i.vid\n";
 			$sql .= "WHERE i.type = '$idType' AND i.value IN ( $ids_query )";

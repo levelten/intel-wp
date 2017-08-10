@@ -2428,7 +2428,17 @@ function _intel_sort_by_eventcategory($a, $b) {
 }
 
 function _intel_sort_by_rtime($a, $b) {
+  if (!isset($a['time']) || !isset($b['time'])) {
+    return 1;
+  }
   return ($a['time'] < $b['time']) ? 1 : -1;
+}
+
+function _intel_sort_by_weight($a, $b) {
+  if (!isset($a['weight']) || !isset($b['weight'])) {
+    return 1;
+  }
+  return ($a['weight'] < $b['weight']) ? 1 : -1;
 }
 
 function _intel_sort_session_steps($a, $b) {
@@ -2440,7 +2450,7 @@ function _intel_sort_session_steps($a, $b) {
 
     if ($a['type'] == $b['type']) {
       if (isset($a['weight']) && isset($b['weight'])) {
-        return ($a['weight'] < $b['weight']) ? -1 : 1;
+        //return ($a['weight'] < $b['weight']) ? -1 : 1;
       }
     }
     if ($a['type'] == 'event' && $b['type'] != 'page') {
@@ -3390,19 +3400,73 @@ function _intel_get_report_dates_from_ops($ops = 'l30d', &$cache_options = array
 }
 
 function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1 day", $return_hash = FALSE) {
+  $timezone_info = Intel_Df::drupal_static( __FUNCTION__, array());
+  if (empty($timezone_info)) {
+    $timezone_info['wp_timezone'] = get_option('timezone_string', '');
+    $ga_profile = get_option('intel_ga_profile', array());
+    $timezone_info['ga_timezone'] = !empty($ga_profile['timezone']) ? $ga_profile['timezone'] : '';
+    if (!empty($timezone_info['wp_timezone'])) {
+      $timezone_info['timezone'] = $timezone_info['wp_timezone'];
+    }
+    elseif (!empty($timezone_info['ga_timezone'])) {
+      $timezone_info['timezone'] = $timezone_info['ga_timezone'];
+    }
+    else {
+      $timezone_info['timezone'] = 'UTC';
+    }
+
+  }
+  $timezone = $timezone_info['timezone'];
   if (!empty($_GET['dates'])) {
     $a = explode(":", $_GET['dates']);
     $_GET['start_date'] = $a[0];
     $_GET['end_date'] = $a[1];
   }
-  $start_date = (!empty($_GET['start_date'])) ? strtotime($_GET['start_date']) : strtotime($start_default);
-  $end_date = (!empty($_GET['end_date'])) ? strtotime($_GET['end_date']) : strtotime($end_default);
+  $start = (!empty($_GET['start_date'])) ? $_GET['start_date'] : $start_default;
+  $end = (!empty($_GET['end_date'])) ? $_GET['end_date'] : $end_default;
+
+  // do this to correct for CMS timezone.
+  $timezone_obj = new DateTimeZone($timezone);
+  $start_date_obj = new DateTime($start, $timezone_obj);
+  $start_date = $start_date_obj->format('U');
+  $end_date_obj = new DateTime($end, $timezone_obj);
+  $end_date = $end_date_obj->format('U');
+
+  $offset = $timezone_obj->getOffset($end_date_obj);
+
+  //intel_d($offset);
+
+  //intel_d(date('Y-m-d G:i', $end_date_strtotime) . " {$end_date_strtotime}");
+  //intel_d(date('Y-m-d G:i', $start_date) . " {$start_date}");
+  //intel_d(date('Y-m-d G:i', $end_date) . " {$end_date}");
+
+
+  //intel_d(Intel_Df::format_date($end_date_strtotime, 'Y-m-d G:i') . " {$end_date_strtotime}");
+  //intel_d(Intel_Df::format_date($end_date, 'Y-m-d G:i') . " {$end_date}");
+
+  $start_date_local = $start_date + $offset;
+  $end_date_local = $end_date + $offset;
+
+  //intel_d(date('Y-m-d G:i', $start_date_local) . " {$start_date_local}");
+  //intel_d(date('Y-m-d G:i', $end_date_local) . " {$end_date_local}");
+  //intel_d(Intel_Df::format_date($end_date_local, 'Y-m-d G:i') . " {$end_date_local}");
+
+  //$start_date = (!empty($_GET['start_date'])) ? strtotime($_GET['start_date']) : strtotime($start_default);
+  //$end_date = (!empty($_GET['end_date'])) ? strtotime($_GET['end_date']) : strtotime($end_default);
   $number_of_days = round(($end_date - $start_date)/60/60/24);
   if (!$return_hash) {
+    return array(
+      $start_date_local,
+      $end_date_local,
+      $number_of_days,
+      $offset,
+    );
     return array(
       $start_date,
       $end_date,
       $number_of_days,
+      $start_date_local,
+      $end_date_local,
     );
   }
   else {
@@ -3410,6 +3474,7 @@ function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1
       'start_date' => $start_date,
       'end_date' => $end_date,
       'number_of_days' => $number_of_days,
+      'timezone_offset' => $offset,
     );
   }
 }
@@ -3439,6 +3504,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   $projectId = get_option('intel_ga_view');
   $from = date("Y-m-d", $request['start_date']);
   $to = date("Y-m-d", $request['end_date']);
+  //intel_d("$from - $to");
   //$from = $request['start_date'];
   //$to = $request['end_date'];
   $metrics = implode(',', $request['metrics']);
@@ -3593,6 +3659,8 @@ function intel_ga_feed_request_callback($request, $args) {
   return $feed;
 }
 
+
+
 function intel_report_add_js_callback($script, $type = 'file') {
   if ($type == 'inline') {
     drupal_add_js($script, array('type' => 'inline', 'scope' => 'header'));
@@ -3625,6 +3693,10 @@ function intel_get_ga_feed_rows($feed) {
   }
   $rows = (is_array($feed->results)) ? $feed->results : $feed->results->rows;
   return $rows;
+}
+
+function intel_get_ga_feed_rows_callback($feed) {
+  return intel_get_ga_feed_rows($feed);
 }
 
 /**
@@ -3671,6 +3743,50 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
   $cache = array(
     'refresh' => 1,
   );
+
+
+  $options = array(
+    'start_date' => $start_date,
+    'end_date' => $end_date,
+    'cache_options' => $cache,
+    'mode' => 'visitor',
+    'segment' => 'sessions::condition::ga:dimension5==' . implode(',ga:dimension5==', $vtkids),
+  );
+  $visits = intel_fetch_analytics_visits($options);
+
+  $score_components = '';
+  $score = 0;
+  if (is_array($visits)) {
+    foreach ($visits as $index => $visit) {
+      if (substr($index, 0, 1) == '_') {
+        continue;
+      }
+      //$visitor['visits'][$index]['score'] = intel_score_visit_aggregation($visitor['visits'][$index], 1, $score_components);
+      $visits[$index]['score'] = intel_score_item($visits[$index], 1, $score_components, '', 'entrance');
+      $visits['_all']['score'] += $visits[$index]['score'];
+      if (!empty($visit['location'])) {
+        $visitor['location'] = $visit['location'];
+      }
+      if (!empty($visit['device'])) {
+        $visitor['environment'] = $visit['device'];
+      }
+    }
+    $visits['_totals']['score'] = intel_score_item($visits['_totals'], 1, $score_components, '', 'entrance');
+    if (!empty($visits['_lasthit'])) {
+      $visitor['lasthit'] = $visits['_lasthit'];
+      $visitor['visits'] = $visits;
+    }
+  }
+
+  if ($visitor['lasthit']) {
+    return $visitor;
+  }
+  else {
+    return FALSE;
+  }
+
+  return;
+
 
   //$segment = 'dynamic::ga:customVarValue5==' . implode(',dynamic::ga:customVarValue5==', $vtkids);
   //$segment = 'users::condition::ga:customVarValue5==' . implode(',ga:customVarValue5==', $vtkids); // users has a limit of 90 days time frame
@@ -3805,7 +3921,7 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
     }
   }
 
-  $request['dimensions'] = array('ga:dimension5', 'ga:sessionCount', 'ga:sourceMedium', 'ga:referralPath', 'ga:keyword', 'ga:adContent', 'ga:dimension4');
+  $request['dimensions'] = array('ga:dimension5', 'ga:sessionCount', 'ga:sourceMedium', 'ga:referralPath', 'ga:keyword', 'ga:socialNetwork', 'ga:dimension4');
   $request['metrics'] = array('ga:entrances');
   $request['filters'] = 'ga:entrances>0';
   $request['sort_metric'] = '-ga:dimension4';  // note: cant sort by sessionCount as it is treated as a string not an int
@@ -3830,6 +3946,7 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
       $visitor['visits'][$i]['trafficsource']['source'] = !empty($a[0]) ? $a[0] : '(not set)';
       $visitor['visits'][$i]['trafficsource']['referralPath'] = $row['referralPath'];
       $visitor['visits'][$i]['trafficsource']['keyword'] = $row['keyword'];
+      $visitor['visits'][$i]['trafficsource']['socialNetwork'] = $row['socialNetwork'];
 
       //$visitor['visits'][$i]['trafficsource']['socialNetwork'] = $row['socialNetwork'];
       //$visitor['visits'][$ts]['trafficsource']['campaign'] = $row['campaign'];
@@ -3839,18 +3956,11 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
     }
   }
 
-  $request['dimensions'] = array('ga:landingPagePath','ga:dimension5', 'ga:sessionCount', 'ga:socialNetwork', 'ga:campaign', 'ga:dimension4');
+  $request['dimensions'] = array('ga:landingPagePath','ga:dimension5', 'ga:campaign', 'ga:adContent', 'ga:dimension4');
   $request['metrics'] = array('ga:entrances', 'ga:pageviews', 'ga:bounces', 'ga:timeOnPage', 'ga:goalValueAll');
   $request['sort_metric'] = 'ga:dimension4';
   $request['filters'] = 'ga:pageviews>0;' . LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dimension4', ($tsMin-1));
   $request['max_results'] = 1000;
-
-  /*
-  $request['dimensions'] = array('ga:dimension5', 'ga:sessionCount', 'ga:socialNetwork', 'ga:campaign');
-  $request['metrics'] = array('ga:pageviews', 'ga:bounces', 'ga:timeOnPage', 'ga:goalValueAll');
-  $request['sort_metric'] = '';
-  $request['filters'] = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dimension4', ($tsMin-1));
-  */
 
   $data = intel_ga_api_data($request, $cache);
   $rows = intel_get_ga_feed_rows($data);
@@ -3865,12 +3975,6 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
       if ($entrances) {
         $visitCountMax++;
         $i = $row['dimension5'] . '-' . $row['dimension4'];
-
-        $sessions[] = array(
-          'ts' => intval($row['dimension4']),
-          'i' => $i,
-        );
-
 
         $visitor['visits'][$i]['entrance'] = array(
           'entrances' => 0,
@@ -3977,6 +4081,483 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
   else {
     return FALSE;
   }
+}
+
+
+
+function intel_fetch_analytics_visits($options = array()) {
+
+  intel_include_library_file('ga/class.ga_model.php');
+
+  $cache_options = !empty($options['cache_options']) ? $options['cache_options'] : array();
+  $start_date = !empty($options['start_date']) ? $options['start_date'] : '';
+  $end_date = !empty($options['end_date']) ? $options['end_date'] : '';
+  $max_visits = !empty($options['max_visits']) ? $options['max_visits'] : 10;
+
+  $mode = !empty($options['mode']) ? $options['mode'] : 'visitor';
+
+  if (!$start_date || !$end_date) {
+    return FALSE;
+  }
+
+  $visits = array();
+  $visits['_firsthit'] = 0;
+  $visits['_lasthit'] = 0;
+  $visits['_all'] = array(
+    'score' => 0,
+    'entrance' => array(
+      'entrances' => 0,
+      'pageviews' => 0,
+      'sticks' => 0,
+      'sessionDuration' => 0,
+      'timeOnPage' => 0,
+      'goalValueAll' => 0,
+      'goalCompletionsAll' => 0,
+      'score' => 0,
+    ),
+  );
+
+  if ($mode == 'visitor') {
+    $visits['_totals'] = array(
+      'entrance' => array(
+        'entrances' => 0,
+        'pageviews' => 0,
+        'timeOnPage' => 0,
+        'sticks' => 0,
+        'goalValueAll' => 0,
+        'events' => array(),
+        'score' => 0,
+      ),
+    );
+  }
+
+
+  $request = array(
+    'dimensions' => array(),
+    'metrics' => array(),
+    'sort_metric' => '',
+    'filters' => '',
+    'segment' => !empty($options['segment']) ? $options['segment'] : '',
+    'start_date' => $start_date,
+    'end_date' => $end_date,
+    'max_results' => $max_visits,
+  );
+
+  if ($mode == 'visitor') {
+    // get totals
+    $request['dimensions'] = array();
+    $request['metrics'] = array(
+      'ga:entrances',
+      'ga:pageviews',
+      'ga:bounces',
+      'ga:timeOnPage',
+      'ga:goalValueAll'
+    );
+    $request['sort_metric'] = '';
+
+    $data = intel_ga_api_data($request, $cache_options);
+    //dsm($request); dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+    if (!empty($rows) && is_array($rows)) {
+      foreach ($rows AS $row) {
+        $visits['_totals']['entrance']['entrances'] += intval($row['entrances']);
+        $visits['_totals']['entrance']['pageviews'] += intval($row['pageviews']);
+        $visits['_totals']['entrance']['sticks'] += (intval($row['entrances']) - intval($row['bounces']));
+        $visits['_totals']['entrance']['timeOnPage'] += intval($row['timeOnPage']);
+        $visits['_totals']['entrance']['goalValueAll'] += floatval($row['goalValueAll']);
+      }
+    }
+
+    $request['metrics'] = array(
+      'ga:totalEvents',
+      'ga:uniqueEvents',
+      'ga:eventValue',
+      'ga:metric2'
+    );
+    $request['filters'] = 'ga:eventCategory=~^*!$';
+    $data = intel_ga_api_data($request, $cache_options);
+    //dsm($request); dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+    if (!empty($rows) && is_array($rows)) {
+      foreach ($rows AS $row) {
+        $visits['_totals']['entrance']['events'] = array(
+          '_totals' => array(
+            'value' => !empty($row['metric2']) ? floatval($row['metric2']) : floatval($row['eventValue']),
+            'totalValuedEvents' => intval($row['totalEvents']),
+            'uniqueValuedEvents' => intval($row['uniqueEvents']),
+          ),
+        );
+      }
+    }
+  }
+
+  $sessions = array();
+
+  $request['dimensions'] = array('ga:dimension5', 'ga:sourceMedium', 'ga:referralPath', 'ga:keyword', 'ga:socialNetwork', 'ga:dimension4');
+  $request['metrics'] = array('ga:entrances');
+  $request['filters'] = 'ga:entrances>0';
+  $request['sort_metric'] = '-ga:dimension4';  // note: cant sort by sessionCount as it is treated as a string not an int
+  $request['max_results'] = $max_visits;
+
+  $data = intel_ga_api_data($request, $cache_options);
+//dsm($request); dsm($data);
+  $visitCountMin = 0;
+  $visitCountMax = 0;
+  $tsMin = REQUEST_TIME;
+  $rows = intel_get_ga_feed_rows($data);
+  if (!empty($rows) && is_array($rows)) {
+    foreach ($rows AS $row) {
+      $ts = intval($row['dimension4']);
+      $i = $row['dimension5'] . '-' . $row['dimension4'];
+      if (!$visits['_firsthit']) {
+        $visits['_firsthit'] = $ts;
+      }
+      if ($ts > $visits['_lasthit']) {
+        $visits['_lasthit'] = $ts;
+      }
+      $visits[$i] = array(
+        'trafficsource' => array(),
+        'entrance' => array(
+          'entrances' => 0,
+          'pageviews' => 0,
+          'sticks' => 0,
+          'timeOnPage' => 0,
+          'sessionDuration' => 0,
+          'goalValueAll' => 0,
+          'goalCompletionsAll' => 0,
+        ),
+      );
+
+      $a = explode(' / ', $row['sourceMedium']);
+      $visits[$i]['time'] = $vts =  (int)$row['dimension4'];
+      $visits[$i]['trafficsource']['medium'] = !empty($a[1]) ? $a[1] : '(not set)';
+      $visits[$i]['trafficsource']['source'] = !empty($a[0]) ? $a[0] : '(not set)';
+      $visits[$i]['trafficsource']['referralPath'] = $row['referralPath'];
+      $visits[$i]['trafficsource']['keyword'] = $row['keyword'];
+      $visits[$i]['trafficsource']['socialNetwork'] = $row['socialNetwork'];
+
+      if ($vts < $tsMin) {
+        $tsMin = $vts;
+      }
+    }
+  }
+
+  $request['dimensions'] = array('ga:landingPagePath','ga:dimension5', 'ga:campaign', 'ga:adContent', 'ga:dimension4');
+  $request['metrics'] = array('ga:entrances', 'ga:pageviews', 'ga:bounces', 'ga:timeOnPage', 'ga:sessionDuration', 'ga:goalValueAll', 'ga:goalCompletionsAll');
+  $request['sort_metric'] = 'ga:dimension4';
+  // dont filter by entrances>0 because we need the pageviews to calc the
+  // # of pageviews in a entrance
+  $request['filters'] = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dimension4', ($tsMin-1));
+  //$request['filters'] = 'ga:entrances>0';
+  $request['max_results'] = $max_visits * 50;
+
+  $data = intel_ga_api_data($request, $cache_options);
+  $rows = intel_get_ga_feed_rows($data);
+
+  if (!empty($rows) && is_array($rows)) {
+    $i = '';
+    foreach ($rows AS $row) {
+
+      $entrances = intval($row['entrances']);
+      $goalCompletionsAll = intval($row['goalCompletionsAll']);
+
+      if ($entrances) {
+        $i = $row['dimension5'] . '-' . $row['dimension4'];
+
+        $sessions[] = array(
+          'ts' => intval($row['dimension4']),
+          'i' => $i,
+        );
+
+        $visits[$i]['trafficsource']['campaign'] = $row['campaign'];
+        $visits[$i]['trafficsource']['adContent'] = $row['adContent'];
+        $visits[$i]['entrance']['landingPagePath'] = $row['landingPagePath'];
+        $visits[$i]['entrance']['entrances'] += $entrances;
+        $visits[$i]['entrance']['pageviews'] += intval($row['pageviews']);
+        $visits[$i]['entrance']['sticks'] += ($entrances - intval($row['bounces']));
+        $visits[$i]['entrance']['sessionDuration'] += intval($row['sessionDuration']);
+        $visits[$i]['entrance']['timeOnPage'] += intval($row['timeOnPage']);
+
+        $visits['_all']['entrance']['entrances'] += $entrances;
+        $visits['_all']['entrance']['pageviews'] += intval($row['pageviews']);
+        $visits['_all']['entrance']['sticks'] += ($entrances - intval($row['bounces']));
+        $visits['_all']['entrance']['sessionDuration'] += intval($row['sessionDuration']);
+        $visits['_all']['entrance']['timeOnPage'] += intval($row['timeOnPage']);
+      }
+
+      if ($i) {
+        $visits[$i]['entrance']['pageviews'] += intval($row['pageviews']);
+      }
+
+      if ($goalCompletionsAll && $i) {
+        $visits[$i]['entrance']['goalValueAll'] += floatval($row['goalValueAll']);
+        $visits[$i]['entrance']['goalCompletionsAll'] += intval($row['goalCompletionsAll']);
+
+        $visits['_all']['entrance']['goalValueAll'] += floatval($row['goalValueAll']);
+        $visits['_all']['entrance']['goalCompletionsAll'] += intval($row['goalCompletionsAll']);
+      }
+    }
+  }
+
+  if (1 || $mode == 'clickstream') {
+    $request['dimensions'] = array('ga:browser', 'ga:browserVersion', 'ga:operatingSystem', 'ga:operatingSystemVersion', 'ga:language', 'ga:screenResolution', 'ga:dimension4');
+    $request['metrics'] = array('ga:entrances');
+    $request['filters'] = 'ga:entrances>0;' . LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dimension4', ($tsMin-1));
+    $request['max_results'] = $max_visits;
+
+    $data = intel_ga_api_data($request, $cache_options);
+    $rows = intel_get_ga_feed_rows($data);
+
+    if (!empty($rows) && is_array($rows)) {
+      $session_i = 0;
+      foreach ($rows AS $row) {
+        $ts = intval($row['dimension4']);
+        if ($ts < $sessions[0]['ts']) {
+          continue;
+        }
+        if (isset($sessions[$session_i + 1]) && ($ts >= $sessions[$session_i + 1]['ts'])) {
+          $session_i++;
+        }
+        $i = $sessions[$session_i]['i'];
+        $visits[$i]['device'] = array();
+        $visits[$i]['device']['browser'] = $row['browser'];
+        $visits[$i]['device']['browserVersion'] = $row['browserVersion'];
+        $visits[$i]['device']['operatingSystem'] = $row['operatingSystem'];
+        $visits[$i]['device']['operatingSystemVersion'] = $row['operatingSystemVersion'];
+        $visits[$i]['device']['language'] = $row['language'];
+        $visits[$i]['device']['screenResolution'] = $row['screenResolution'];
+      }
+    }
+
+    $request['dimensions'] = array('ga:deviceCategory', 'ga:browserSize', 'ga:dimension4');
+    $request['metrics'] = array('ga:entrances');
+    $data = intel_ga_api_data($request);
+//dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+    if (!empty($rows) && is_array($rows)) {
+      $session_i = 0;
+      foreach ($rows AS $row) {
+        $ts = intval($row['dimension4']);
+        if ($ts < $sessions[0]['ts']) {
+          continue;
+        }
+        if (isset($sessions[$session_i + 1]) && ($ts >= $sessions[$session_i + 1]['ts'])) {
+          $session_i++;
+        }
+        $i = $sessions[$session_i]['i'];
+
+        $visits[$i]['device']['deviceCategory'] = $row['deviceCategory'];
+        $visits[$i]['device']['browserSize'] = $row['browserSize'];
+      }
+    }
+
+    $request['dimensions'] = array('ga:mobileDeviceBranding', 'ga:mobileDeviceModel', 'ga:mobileDeviceInfo', 'ga:dimension4');
+    $request['metrics'] = array('ga:entrances');
+    $data = intel_ga_api_data($request);
+//dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+    if (!empty($rows) && is_array($rows)) {
+      $session_i = 0;
+      foreach ($rows AS $row) {
+        $ts = intval($row['dimension4']);
+        if ($ts < $sessions[0]['ts']) {
+          continue;
+        }
+        if (isset($sessions[$session_i + 1]) && ($ts >= $sessions[$session_i + 1]['ts'])) {
+          $session_i++;
+        }
+        $i = $sessions[$session_i]['i'];
+
+        $visits[$i]['device']['mobileDeviceBranding'] = $row['mobileDeviceBranding'];
+        $visits[$i]['device']['mobileDeviceModel'] = $row['mobileDeviceModel'];
+        $visits[$i]['device']['mobileDeviceInfo'] = $row['mobileDeviceInfo'];
+        $visits[$i]['device']['browserSize'] = $row['browserSize'];
+      }
+    }
+
+
+    $request['dimensions'] = array('ga:country', 'ga:region', 'ga:city', 'ga:metro', 'ga:latitude', 'ga:longitude', 'ga:dimension4');
+    $request['metrics'] = array('ga:entrances');
+    $data = intel_ga_api_data($request);
+//dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+    if (!empty($rows) && is_array($rows)) {
+      $session_i = 0;
+      foreach ($rows AS $row) {
+        $ts = intval($row['dimension4']);
+        if ($ts < $sessions[0]['ts']) {
+          continue;
+        }
+        if (isset($sessions[$session_i + 1]) && ($ts >= $sessions[$session_i + 1]['ts'])) {
+          $session_i++;
+        }
+        $i = $sessions[$session_i]['i'];
+        $visits[$i]['location'] = array();
+        $visits[$i]['location']['country'] = $row['country'];
+        $visits[$i]['location']['region'] = $row['region'];
+        $visits[$i]['location']['city'] = $row['city'];
+        $visits[$i]['location']['metro'] = $row['metro'];
+        $visits[$i]['location']['latitude'] = $row['latitude'];
+        $visits[$i]['location']['longitude'] = $row['longitude'];
+      }
+    }
+  }
+
+  if ($mode == 'visitor') {
+    // get valued events
+    $request['dimensions'] = array(
+      'ga:dimension5',
+      'ga:dimension4'
+    );
+    $request['metrics'] = array(
+      'ga:entrances',
+      'ga:totalEvents',
+      'ga:uniqueEvents',
+      'ga:eventValue',
+      'ga:metric2'
+    );
+    $request['sort_metric'] = 'ga:dimension4';
+    $request['filters'] = 'ga:eventCategory=~^*!$' . ';' . LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dimension4', ($tsMin - 1));
+    $request['max_results'] = $max_visits;
+
+    $data = intel_ga_api_data($request, $cache_options);
+    //dsm($request); dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+
+    if (!empty($rows) && is_array($rows)) {
+      $session_i = 0;
+      foreach ($rows AS $row) {
+        $ts = intval($row['dimension4']);
+        if ($ts < $sessions[0]['ts']) {
+          continue;
+        }
+        $ts1 = isset($sessions[$session_i + 1]) ? $sessions[$session_i + 1]['ts'] : 999999999999;
+        if ($ts >= $ts1) {
+          $session_i++;
+        }
+        $i = $sessions[$session_i]['i'];
+
+        $visitor['visits'][$i]['entrance']['events'] = array(
+          '_all' => array(
+            'value' => 0,
+            'totalValuedEvents' => 0,
+            'uniqueValuedEvents' => 0
+          ),
+        );
+
+        $visitor['visits'][$i]['entrance']['events']['_all']['value'] += isset($row['metric2']) ? floatval($row['metric2']) : floatval($row['eventValue']);
+        $visitor['visits'][$i]['entrance']['events']['_all']['totalValuedEvents'] += intval($row['totalEvents']);
+        $visitor['visits'][$i]['entrance']['events']['_all']['uniqueValuedEvents'] += intval($row['uniqueEvents']);
+      }
+    }
+  }
+
+  if ($mode == 'clickstream') {
+    $request['dimensions'] = array('ga:hostname', 'ga:pagePath', 'ga:pageTitle', 'ga:dimension5', 'ga:dimension4');
+    $request['metrics'] = array('ga:entrances', 'ga:pageviews', 'ga:bounces', 'ga:timeOnPage', 'ga:goalValueAll');
+    $request['filters'] = 'ga:pageviews>0' . ';' . LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dimension4', ($tsMin - 1));
+    $request['max_results'] = $max_visits * 50;
+
+    $data = intel_ga_api_data($request, $cache_options);
+    //dsm($request); dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+    $session_i = 0;
+    if (!empty($rows) && is_array($rows)) {
+      $i = '';
+      foreach ($rows AS $row) {
+        //$i = (int)$row['sessionCount'];
+        $ts = intval($row['dimension4']);
+        $entrances = intval($row['entrances']);
+        if ($entrances) {
+          $i = $row['dimension5'] . '-' . $row['dimension4'];
+        }
+        if ($i) {
+          if (!isset($visits[$i])) {
+            $visits[$i]['hits'] = array();
+          }
+
+          $hit = array(
+            'type' => 'pageview',
+            'time' => $ts,
+            'hostname' => $row['hostname'],
+            'pagePath' => $row['pagePath'],
+            'hostpath' => $row['hostname'] . $row['pagePath'],
+            'pageTitle' => $row['pageTitle'],
+            'entrances' => intval($row['entrances']),
+            'pageviews' => intval($row['pageviews']),
+            'timeOnPage' => intval($row['timeOnPage']),
+            'goalValueAll' => intval($row['goalValueAll']),
+          );
+          $visits[$i]['hits'][] = $hit;
+          if ($ts < $visits['_firsthit']) {
+            $visits['_firsthit'] = $ts;
+          }
+          if ($ts > $visits['_lasthit']) {
+            $visits['_lasthit'] = $ts;
+          }
+        }
+      }
+    }
+
+    $request['dimensions'] = array('ga:hostname', 'ga:pagePath', 'ga:eventCategory', 'ga:eventAction', 'ga:eventLabel', 'ga:dimension5', 'ga:dimension4');
+    $request['metrics'] = array('ga:totalEvents', 'ga:uniqueEvents', 'ga:eventValue', 'ga:metric2');
+    $request['filters'] = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dimension4', ($tsMin - 1));
+    $request['max_results'] = $max_visits * 200;
+
+    $data = intel_ga_api_data($request, $cache_options);
+    //dsm($request); dsm($data);
+    $rows = intel_get_ga_feed_rows($data);
+    if (!empty($rows) && is_array($rows)) {
+      $session_i = 0;
+      foreach ($rows AS $row) {
+        $ts = intval($row['dimension4']);
+        if ($ts < $sessions[0]['ts']) {
+          continue;
+        }
+        $ts1 = isset($sessions[$session_i + 1]) ? $sessions[$session_i + 1]['ts'] : 999999999999;
+        if ($ts >= $ts1) {
+          $session_i++;
+        }
+
+        $i = $sessions[$session_i]['i'];
+
+        if (!isset($visits[$i])) {
+          $visits[$i]['hits'] = array();
+        }
+        $hit = array(
+          'type' => 'event',
+          'time' => $ts,
+          'hostname' => $row['hostname'],
+          'pagePath' => $row['pagePath'],
+          'hostpath' => $row['hostname'] . $row['pagePath'],
+          'eventCategory' => $row['eventCategory'],
+          'eventAction' => $row['eventAction'],
+          'eventLabel' => $row['eventLabel'],
+          'totalEvents' => intval($row['totalEvents']),
+          'uniqueEvents' => intval($row['uniqueEvents']),
+          'eventValue' => intval($row['eventValue']),
+          'eventMode' => '',
+        );
+        if (substr($row['eventCategory'], -1) == '!') {
+          $hit['eventMode'] = 'valued';
+          $hit['eventValue'] = isset($row['metric2']) ? floatval($row['metric2']) : $hit['eventValue'];
+        }
+        elseif (substr($row['eventCategory'], -1) == '+') {
+          $hit['eventMode'] = 'goal';
+        }
+        $visits[$i]['hits'][] = $hit;
+        if ($ts < $visits['_firsthit']) {
+          $visits['_firsthit'] = $ts;
+        }
+        if ($ts > $visits['_lasthit']) {
+          $visits['_lasthit'] = $ts;
+        }
+      }
+    }
+
+  }
+
+  return $visits;
 }
 
 function intel_fetch_ga_profiles() {

@@ -479,3 +479,18 @@ form#intel_report_filters_form {
 #intel-report table.visit-steps .standard-event {
   color: #888;
 }
+
+#intel-report table.visit-steps .event td.col-title {
+  padding-left: 2em;
+
+}
+
+.bootstrap-wrapper #main-timeline .header {
+  font-weight: bold;
+  font-size: 120%;
+  margin-bottom: .4em;
+}
+
+.bootstrap-wrapper #main-timeline dl dt {
+  font-weight: bold;
+}

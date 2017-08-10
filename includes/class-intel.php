@@ -313,6 +313,11 @@ class Intel {
 
 		// plugin action links
 		$this->loader->add_action( 'plugin_action_links_' . plugin_basename(INTEL_DIR . 'intel.php'), $plugin_admin, 'plugin_action_links', 10, 2 );
+
+		// add tracker processing
+		add_action( 'admin_head', array( $this->tracker, 'tracking_admin_head' ), 10 );
+		add_action( 'admin_footer', array( $this->tracker, 'tracking_admin_footer' ), 99 );
+
 	}
 
 	public function setup_cron() {
@@ -379,7 +384,9 @@ class Intel {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
+		// add tracker processing
 		add_action( 'wp_head', array( $this->tracker, 'tracking_head' ), 10 );
+		add_action( 'wp_footer', array( $this->tracker, 'tracking_footer' ), 99 );
 
 		$this->loader->add_action( 'init', $this, 'quick_session_init' );
 		$this->loader->add_filter( 'wp_redirect', $this, 'wp_redirect_quick_session_cache', 10, 2 );
@@ -388,7 +395,7 @@ class Intel {
 
 		$this->loader->add_action( 'admin_bar_menu', $plugin_public, 'admin_bar_menu', 100);
 
-		add_action( 'wp_footer', array( $this->tracker, 'tracking_footer' ), 99 );
+
 
 		//$this->loader->add_action( 'wp_footer', $this, 'process_js_settings' );
 	}

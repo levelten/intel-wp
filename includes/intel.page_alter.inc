@@ -2157,11 +2157,13 @@ function intel_process_form_submission($vars) {
 }
 
 function intel_set_ga_userid($visitor) {
+  //Intel_Df::watchdog('intel_set_ga_userid vtks', print_r($visitor->identifiers['vtk'], 1));
   if (intel_api_level() == 'pro' && !empty($visitor->identifiers['vtk'][0])) {
     $vtk = $visitor->identifiers['vtk'][0];
     $data = array(
       'userId' => $vtk,
     );
+    //Intel_Df::watchdog('intel_set_ga_userid vtk', print_r($vtk, 1));
     intel_add_page_intel_push(array('setUserId', $data));
     // if visitor already exists (with original vtk), clear out identifiers
     if ($vtk != intel()->vtk) {
@@ -2259,11 +2261,12 @@ function intel_visitor_sync_user($account) {
 
 
   // try loading by uid
-  $visitor = intel_visitor_load($uid, FALSE, 'uid');
+  //$visitor = intel_visitor_load($uid, FALSE, 'uid');
+  $visitor = intel_visitor_load_by_identifiers(array('uid' => $uid));
 
   if (!$visitor) {
     // try loading by email
-    $visitor = intel_visitor_load($email, FALSE, 'email');
+    $visitor = intel_visitor_load_by_identifiers(array('email' => $email));
   }
 
   if (!$visitor && $vtk) {
@@ -2372,26 +2375,37 @@ elseif (INTEL_PLATFORM == 'wp') {
    * @param $account
    */
   function intel_user_login($user_login, $account) {
-    $visitor = intel_visitor_load($account->ID, FALSE, 'uid');
+    //Intel_Df::watchdog('intel_user_login $user_login', print_r($user_login, 1));
 
-    if (!$visitor) {
-      intel_visitor_sync_user($account);
+    // TODO intentionally disabled till GA tracking on WP admin pages issue can
+    // be resolved.
+    if (empty($account->ID)) {
+      return;
     }
-    else {
-      $visitor->last_activity = REQUEST_TIME;
-      $visitor->save();
+    $api_level = intel_api_level();
+
+    if ($api_level == 'pro') {
+      $visitor = intel_visitor_load_by_identifiers(array('uid' => $account->ID));
+
+      if (!$visitor) {
+        intel_visitor_sync_user($account);
+      }
+      else {
+        $visitor->last_activity = REQUEST_TIME;
+        $visitor->save();
+      }
+
+      // combine visitor sessions
+      intel_set_ga_userid($visitor);
     }
 
     $event = intel_intel_event_load('wp_user_login');
 
     $call = intel_filter_event_for_push($event);
     $call['eventAction'] = Intel_Df::t('User login form');
-    $call['eventLabel'] = ':user/' . $account->ID;
+    $call['eventLabel'] = ':user:' . $account->ID;
 
     intel_add_page_intel_push(array('event', $call));
-
-    // combine visitor sessions
-    intel_set_ga_userid($visitor);
   }
   // register hook_wp_login()
   add_action('wp_login', 'intel_user_login', 10, 2);

@@ -264,6 +264,16 @@ function intel_admin_settings($form, &$form_state) {
     '#description' => $desc,
   );
 
+  /*
+  $desc = Intel_Df::t('Enables tracking of admin pages.');
+  $form['tracking']['intel_admin_tracking_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Enable admin tracking'),
+    '#default_value' => get_option('intel_admin_tracking_enabled', ''),
+    '#description' => $desc,
+  );
+  */
+
   $form['intl_scripts'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Intel Scripts'),

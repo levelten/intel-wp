@@ -26,15 +26,18 @@ function intel_help_page() {
 function intel_help_demo_page() {
   $output = '';
 
+  $demo_mode = get_option('intel_demo_mode', 0);
   $demo_settings = get_option('intel_demo_settings', array());
 
-  if (!empty($demo_settings['status'])) {
-
-  }
-  else {
+  if (empty($demo_mode)) {
     $msg = Intel_Df::t('Demo is currently disabled. Go to demo settings to enable.');
     Intel_Df::drupal_set_message($msg, 'warning');
   }
+
+  $output .= '<p class="lead">';
+  $output .= Intel_Df::t('This demo generates a small website using spoofed pages enabling you to explore how Intelligence works.');
+  //$output .= ' ' . Intel_Df::t('This tutorial will walk you through the essentials of extending Google Analytics using Intelligence to create results oriented analytics.');
+  $output .= '</p>';
 
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path(), $l_options);
@@ -43,7 +46,7 @@ function intel_help_demo_page() {
   $l_options = Intel_Df::l_options_add_target('ga');
   $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
   $url = "https://analytics.google.com/analytics/web/#realtime/rt-overview/" . intel_get_ga_profile_slug() . "/%3Fmetric.type%3D5/";
-  $output .= Intel_Df::l( Intel_Df::t('Google Analytics real-time events report'), $url, $l_options) . '<br><br>';
+  $output .= Intel_Df::l( Intel_Df::t('Google Analytics real-time reports'), $url, $l_options) . '<br><br>';
 
   $imapi_host = intel_get_imapi_host();
 
@@ -54,11 +57,11 @@ function intel_help_demo_page() {
   $l_options = Intel_Df::l_options_add_query(array('base_urlpath' => intel()->base_url . intel()->base_path), $l_options);
   $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), '//' . $imapi_host . '/property/' . $ga_tid . '/demo', $l_options) . '<br><br>';
 
+  $l_options = Intel_Df::l_options_add_target('wpd', $l_options);
+  $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
+  $output .= Intel_Df::l(Intel_Df::t('Demo Home Page'), 'intelligence/demo', $l_options);
 
-
-  $output .= Intel_Df::l(Intel_Df::t('Demo Home page'), 'intelligence/demo');
-
-  $output .= '<br><br>' . Intel_Df::l(Intel_Df::t('Demo Blog Post A'), 'intelligence/demo/blog/alpha');
+  //$output .= '<br><br>' . Intel_Df::l(Intel_Df::t('Demo Blog Post A'), 'intelligence/demo/blog/alpha');
 
   return $output;
 }

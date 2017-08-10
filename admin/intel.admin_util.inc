@@ -30,7 +30,44 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  //$pattern = (["'])(\\?.)*?\1;
+  $vars = array(
+    'cache_options' => array()
+  );
+  list($vars['start_date'], $vars['end_date'], $vars['number_of_days']) = _intel_get_report_dates_from_ops('today', $vars['cache_options']);
+
+return '';
+
+  $vars['start_date_local'] = gmdate('U', $vars['start_date']);
+  intel_d($vars);
+  intel_d(date('Y-m-d G:i', $vars['start_date']) . " {$vars['start_date']}");
+  intel_d(date('Y-m-d G:i', $vars['end_date']) . " {$vars['end_date']}");
+  intel_d(date('Y-m-d G:i', $vars['start_date_local']) . " {$vars['start_date_local']}");
+
+  return '';
+
+  $options = array(
+    'start_date' => $start_date,
+    'end_date' => $end_date,
+    'mode' => 'clickstream',
+    'segment' => 'sessions::condition::ga:dimension5==' . implode(',ga:dimension5==', array('f7beb6a9379601580001')),
+  );
+  $visits = intel_fetch_analytics_visits($options);
+
+  uasort($visits, '_intel_sort_by_rtime');
+
+  intel_d($visits);
+
+  $output = '';
+  foreach ($visits as $i => $visit) {
+    if (substr($i, 0, 1) == '_') {
+      continue;
+    }
+    $output .= Intel_Df::theme('intel_visit_hits_table', array('hits' => $visit['hits']));
+  }
+
+
+
+  return $output;
 
   $string = '<script type="text/javascript"> function gformRedirect(){document.location.href=\'http://intlwp.localhost/thank-you/\';}gformRedirect();</script>';
 
@@ -581,6 +618,10 @@ function intel_util_dev() {
 }
 
 function intel_util_reset_site() {
+
+  if (!intel_is_test() && !intel_is_demo()) {
+    return esc_html__('Must be in test or demo mode.', 'intel');
+  }
   if (empty($_GET['pw']) || $_GET['pw'] != 'please') {
     return esc_html__('What is the password?', 'intel');
   }
@@ -590,15 +631,19 @@ function intel_util_reset_site() {
 
   $flags = $_GET['flags'];
 
-  if ($flags == '_' || $flags == 'installtest') {
+  if ($flags == 'installtest') {
     $mode = $flags;
-    $flags = 'c,v,f';
+    $flags = '_c,_v,_f,_is';
     $sys_meta = get_option('intel_system_meta', array());
 
     // clear setup status/data
     unset($sys_meta['setup_successes']);
     unset($sys_meta['setup_step']);
     update_option('intel_system_meta', $sys_meta);
+  }
+  if ($flags == 'demo') {
+    $mode = $flags;
+    $flags = '_c,_v,_f,_is';
   }
   $flags = explode(',', $flags);
   global $wpdb;
@@ -629,14 +674,14 @@ function intel_util_reset_site() {
   }
 
   // clear comments
-  if (in_array('c', $flags)) {
+  if (in_array('_c', $flags)) {
     $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}comments");
     $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}commentmeta");
     Intel_Df::drupal_set_message(Intel_Df::t('Comments truncated.'));
   }
 
   // clear visitor data
-  if (in_array('v', $flags)) {
+  if (in_array('_v', $flags)) {
     $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}intel_visitor");
     $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}intel_visitor_identifier");
     $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}intel_submission");
@@ -648,7 +693,7 @@ function intel_util_reset_site() {
   }
 
   // clear form data
-  if (in_array('f', $flags)) {
+  if (in_array('_f', $flags)) {
     if (is_plugin_active( 'gravityforms/gravityforms.php' )) {
       $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}rg_incomplete_submissions");
       $delete = $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}rg_lead");
@@ -708,7 +753,8 @@ function intel_util_reset_site() {
     }
   }
 
-  $del_options = array(
+  $del_mode_options = array();
+  $del_mode_options['inteltest'] = array(
     'intel_addons_enabled',
     'intel_api_level',
     'intel_apikey',
@@ -723,6 +769,7 @@ function intel_util_reset_site() {
     'intel_goals',
     'intel_icon_urls',
     //'intel_imapi_url',
+    'intel_intel_events_custom',
     'intel_intel_scripts_enabled',
     'intel_l10iapi_connector',
     'intel_l10ipai_custom_params',
@@ -738,23 +785,31 @@ function intel_util_reset_site() {
     'intel_track_realtime',
   );
 
-  if (in_array('is', $flags)) {
-    if (!empty($plugins_enabled['gadwp'])) {
-      // see google-analytics-dashboard-for-wp/install/install.php
-      $del_keys = array(
-        'ga_dash_tableid_jail' => '',
-        'ga_dash_token' => '',
-        'ga_dash_profile_list' => array(),
-      );
-      $gadwp_options = get_option('gadash_options', '{}');
-      $gadwp_options = json_decode($gadwp_options, 1);
-      foreach ($del_keys as $k => $v) {
-        $gadwp_options[$k] = $v;
-      }
-      update_option('gadash_options', json_encode( $gadwp_options) );
+  $del_mode_options['demo'] = array(
+    'intel_intel_events_custom',
+  );
 
-      Intel_Df::drupal_set_message(Intel_Df::t('GADWP options cleared.'));
+  if (!empty($del_mode_options[$mode]) && in_array('_is', $flags)) {
+    $del_options = $del_mode_options[$mode];
+    if ($mode == 'installtest') {
+      if (!empty($plugins_enabled['gadwp'])) {
+        // see google-analytics-dashboard-for-wp/install/install.php
+        $del_keys = array(
+          'ga_dash_tableid_jail' => '',
+          'ga_dash_token' => '',
+          'ga_dash_profile_list' => array(),
+        );
+        $gadwp_options = get_option('gadash_options', '{}');
+        $gadwp_options = json_decode($gadwp_options, 1);
+        foreach ($del_keys as $k => $v) {
+          $gadwp_options[$k] = $v;
+        }
+        update_option('gadash_options', json_encode( $gadwp_options) );
+
+        Intel_Df::drupal_set_message(Intel_Df::t('GADWP options cleared.'));
+      }
     }
+
 
     foreach ($del_options as $option) {
       $wpdb->delete( $wpdb->prefix . 'options', array( 'option_name' => $option ), array( '%s') );

@@ -104,6 +104,7 @@ function intel_demo_term_load($id = NULL) {
 function intel_demo_post_load($id = NULL, $options = array()) {
   $posts = Intel_Df::drupal_static( __FUNCTION__, array());
 
+  $demo_settings = get_option('intel_demo_settings', array());
   if (empty($posts)) {
     $post = array();
 
@@ -121,12 +122,26 @@ function intel_demo_post_load($id = NULL, $options = array()) {
       'post_content' => 'Page content',
     );
 
+    $content =  '<div class="contact-wrapper">' . "\n";
+    $content .= '  <div class="col-left">' . "\n";
+    $content .= '    <h3>Inquiry Form</h3>' . "\n";
+    $content .= '      [intel_form name="intel_demo_contact_form"]' . "\n";
+    $content .= '    </div>' . "\n";
+    $content .= '    <div class="col-right">' . "\n";
+    $content .= '      <h3>Contact Info</h3>' . "\n";
+    $content .= '      <strong>' . Intel_Df::t('Email') . ':</strong><br>' . Intel_Df::l('info@example.com', 'mailto:info@example.com') . '<br><br>' . "\n";
+    $content .= '      <strong>' . Intel_Df::t('Telephone') . ':</strong><br> ' . Intel_Df::l('214.555.1212', 'tel:214.555.1212') . '<br><br>' . "\n";
+    $content .= '      <strong>' . Intel_Df::t('Address') . ':</strong><br> ' . Intel_Df::t('123 Easy Street') . '<br>' . Intel_Df::t('Dallas, TX 75201') . '<br><br>' . "\n";
+    $content .= '    </div>' . "\n";
+    $content .= '</div>' . "\n";
     $post['-3'] = array(
       'ID' => '-3',
       'post_type' => 'page',
       'post_title' => 'Demo Contact',
-      'post_content' => '[intel_form name="intel_demo_contact_form"]',
+      'post_content' => $content,
     );
+
+
 
     $post['-4'] = array(
       'ID' => -4,
@@ -136,7 +151,7 @@ function intel_demo_post_load($id = NULL, $options = array()) {
       'guid' => 'intelligence/demo/blog/alpha',
       'post_title' => Intel_Df::t('Demo Post A'),
       'post_content' => 'Alpha content',
-      'comment_status' => 'open',
+      //'comment_status' => 'open',
       'intel_demo' => array(
         'terms' => array(-1, -11, -12)
       ),
@@ -149,7 +164,7 @@ function intel_demo_post_load($id = NULL, $options = array()) {
       'post_name' => 'intelligence/demo/blog/beta',
       'post_title' => Intel_Df::t('Demo Post B'),
       'post_content' => 'Beta content',
-      'comment_status' => 'open',
+      //'comment_status' => 'open',
       'intel_demo' => array(
         'terms' => array(-1, -2, -11)
       ),
@@ -162,7 +177,7 @@ function intel_demo_post_load($id = NULL, $options = array()) {
       'post_name' => 'intelligence/demo/blog/charlie',
       'post_title' => Intel_Df::t('Demo Post C'),
       'post_content' => 'Beta content',
-      'comment_status' => 'open',
+      //'comment_status' => 'open',
       'intel_demo' => array(
         'terms' => array(-1, -2, -3, -12)
       ),
@@ -205,7 +220,14 @@ function intel_demo_post_load($id = NULL, $options = array()) {
     $post['-6']['post_content'] .= "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3]  . "\n\n" . $ipsums[4] . "\n\n" . $ipsums[0] . "\n\n" . $ipsums[1] . "\n\n" . $ipsums[2];
 
     foreach ($post as $i => $p) {
-      $posts[$i] = (object)($p + $post_defaults);
+      $posts[$i] = ($p + $post_defaults);
+      if (!empty($demo_settings['posts'][$i]) && is_array($demo_settings['posts'][$i])) {
+        //if (!empty($demo_settings['posts'][$i]['post_content'])) {
+          //$demo_settings['posts'][$i]['post_content'] = stripslashes($demo_settings['posts'][$i]['post_content']);
+        //}
+        $posts[$i] = $demo_settings['posts'][$i] + $posts[$i];
+      }
+      $posts[$i] = (object)$posts[$i];
     }
   }
 
@@ -358,6 +380,9 @@ function intel_demo_posts_alter($posts){
 
       $content = '';
       $excerpt = '';
+      if ($post_count > 1) {
+        $wp_query->query_vars['title'] = 'bob';
+      }
       if ($i == 0) {
         $content .= '<div class="intel-demo-menu">' . $menu . '</div>';
         $excerpt .= '<div class="intel-demo-menu">' . $menu . '</div>';
@@ -419,14 +444,18 @@ function intel_demo_posts_alter($posts){
             'html' => 1
           );
           $l_options = Intel_Df::l_options_add_class(array('track-cta'), $l_options);
-          $content .= '<div class="intel-demo-cta">' . Intel_Df::l('<img src="http://via.placeholder.com/1280x360&text=Call+To+Action">', 'intelligence/demo/contact', $l_options) . '</div>';
+          $content .= '<div class="intel-demo-cta">' . Intel_Df::l('<img src="http://via.placeholder.com/1280x360&text=Call+To+Action" width="1280" height="360">', 'intelligence/demo/contact', $l_options) . '</div>';
         }
       }
 
 
+      $content .= '<div class="intel-demo-footer">';
+
       if ($post_count == 1) {
         $content .= '<div class="intel-demo-social-profile social-wrapper social-profile">' . intel_demo_social_profile_buttons($post) . '</div>';
       }
+
+      $content .= '</div>';
 
       // if post list page, set content/excerpt fields based on settings
       if ($post_count > 1) {
@@ -475,6 +504,16 @@ function intel_demo_posts_alter($posts){
 
   return $posts;
 }
+
+/* couldnt get this to work
+function intel_demo_wp_title($title, $sep, $seplocation = NULL) {
+  intel_d($title);
+  intel_d($sep);
+  intel_d($seplocation);
+  return $title;
+}
+//add_filter('wp_title', 'intel_demo_wp_title', 10, 3);
+*/
 
 function intel_demo_social_share_buttons($post) {
   $urls_info = array(

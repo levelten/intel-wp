@@ -39,6 +39,7 @@ class GAModel {
   );
   private $requestCallback = '';
   private $requestCallbackOptions = array();
+  private $feedRowsCallback = '';
   private $dataIndexCallbacks = array();
   private $debug = 0;
   // flag to enable
@@ -73,9 +74,9 @@ class GAModel {
       'format' => 'single',
     ),
     'ts' => array(
-      'struc' => 'metric',
-      'index' => 2,
-      'field' => 'metric2',
+      'struc' => 'dimension',
+      'index' => 4,
+      'field' => 'dimension4',
       'format' => 'single',
     ),
   );
@@ -106,6 +107,10 @@ class GAModel {
 
   function setDataIndexCallback($index, $callback) {
     $this->dataIndexCallbacks[$index] = $callback;
+  }
+
+  function setFeedRowsCallback($callback) {
+    $this->feedRowsCallback = $callback;
   }
 
   function setReportModes($modes) {
@@ -453,7 +458,12 @@ class GAModel {
       $func = $this->requestCallback;
       $feed = $func($request, $this->requestCallbackOptions);
     }
-    if ($this->debug) { Debug::printVar($feed); }
+    if ($this->debug) {
+      Debug::printVar($feed);
+      if ($this->feedRowsCallback) {
+        Debug::printVar(call_user_func($this->feedRowsCallback, $feed));
+      }
+    }
 
     /*
     if ($type == 'entrances' && $this->context_mode == 'subsite' && $indexBy == 'trafficsources') {

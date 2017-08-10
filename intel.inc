@@ -1382,14 +1382,14 @@ function intel_reports() {
     //'intel_api_access' => 'pro',
   );
   if (1 || intel_is_extended()) {
-    /*
+
     $reports['visitor']['recentvisits'] = array(
       'key' => 'visit.recent',
       'timeframe' => 'l30dfn',
       'title' => Intel_Df::t('Recent visits'),
       //'intel_api_access' => 'pro',
     );
-    */
+
     $reports['visitor']['country'] = array(
       'key' => 'country.top',
       'title' => Intel_Df::t('Geo > Country'),
@@ -3716,6 +3716,16 @@ function intel_unserialize($string) {
   return $ret;
 }
 
+function intel_is_demo() {
+
+  return intel_demo_mode();
+}
+
+function intel_demo_mode() {
+
+  return get_option('intel_demo_mode', 0);
+}
+
 function intel_is_test($mode = '') {
 
   return intel_test_mode($mode);
@@ -3985,6 +3995,16 @@ function intel_theme($themes = array()) {
   $themes['intel_visitor_visits_table'] = array(
     'variables' => array('entity' => NULL),
     'template' => 'intel-visitor-profile-block',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['intel_visit_hits_table'] = array(
+    'render element' => 'element',
+    'variables' => array(
+      'visit' => array(),
+      'hits' => array(),
+      'attributes' => array(),
+    ),
+    'callback' => 'theme_intel_visit_hits_table',
     'file' => 'intel.pages.inc',
   );
   $themes['intel_visit_steps_table'] = array(
@@ -4310,9 +4330,7 @@ function intel_posts_alter($posts) {
 //intel_d( $posts[0] );
 //$excerpt = get_the_excerpt( $posts[0] );
 //intel_d($excerpt);
-
-  $demo_settings = get_option('intel_demo_settings', array());
-  if (!empty($demo_settings['status'])) {
+  if (!empty(get_option('intel_demo_mode', 0))) {
     include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
     $posts = intel_demo_posts_alter($posts);
   }
@@ -4320,7 +4338,4 @@ function intel_posts_alter($posts) {
   return $posts;
 }
 add_filter('the_posts', 'intel_posts_alter', -10);
-
-
-
 

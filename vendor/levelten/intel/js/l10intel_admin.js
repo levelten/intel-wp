@@ -65,7 +65,33 @@ function L10iAdmin(_ioq, config) {
     };
 
     this.setBindTarget = function ($target) {
-        $target.css('outline', '3px solid #44FF44');
+        /*
+        var overlay = document.createElement('div');
+        var rect = $target.get(0).getBoundingClientRect();
+        overlay.className = 'io-bind-target-overlay';
+        overlay.style.top = rect.top +'px';
+        overlay.style.left = rect.left +'px';
+        overlay.style.width = rect.width +'px';
+        overlay.style.height = rect.height +'px';
+        document.body.appendChild( overlay );
+        console.log(overlay);
+        */
+
+        // sometimes an element does not assume the dimensions of its children. This loop will find the widest element
+        // and set it to be highlighted
+        var $highlight = $target;
+        var maxWidth = $target.width();
+        $highlight = $target.children().each( function (index, value) {
+          var $value = jQuery(value);
+          if ($value.width() > maxWidth) {
+             $hightlight = $value;
+             maxWidth = $value.width();
+          }
+          return $highlight;
+        });
+
+        $highlight.css('outline', '3px solid #44FF44');
+        //$target.css('border', '2px solid #44FF44');
         if (ioq.isDebug()) {
             $target.addClass('io-admin-bind-target');
         }

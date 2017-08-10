@@ -915,7 +915,7 @@ class Intel_Df  {
 			'' => 'Y-m-d G:i:s',
 			'short' => 'm/d/Y - H:i',
 			'medium' => 'Y-m-d G:i',
-			'long' => 'l, F j, Y - H:i',
+			'long' => 'l, F j, Y - g:i a',
 			'duration' => ($time > 3600) ? 'G:m:s' : 'm:s',
 		);
 		if (!empty($formats[$format])) {
@@ -1225,7 +1225,23 @@ class Intel_Df  {
 		}
 	}
 
+	/*
+	 * theme function that can be called with array arguments
+	 */
 	public static function theme($hook, $variables = array()) {
+		return self::theme_ref($hook, $variables);
+	}
+
+	/**
+	 * Main theme function
+	 *
+	 * $variables processed as reference
+	 *
+	 * @param $hook
+	 * @param array $variables
+	 * @return mixed|string
+	 */
+	public static function theme_ref($hook, &$variables) {
 		$output = '';
 		$theme_info = intel()->theme_info();
 

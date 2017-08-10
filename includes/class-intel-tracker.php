@@ -195,7 +195,7 @@ class Intel_Tracker {
 	/**
 	 * Generates tracking code
 	 */
-	public function tracking_head() {
+	public function tracking_head($is_admin = 0) {
 		$io_name = 'io';
 
 		$script = '';
@@ -211,12 +211,14 @@ class Intel_Tracker {
 
 		print '<script>' . $script . '</script>';
 
-		$this->enqueue_intel_scripts();
+		//if (!$is_admin) {
+			$this->enqueue_intel_scripts();
+		//}
 
 		return;
 	}
 
-	public function tracking_footer() {
+	public function tracking_footer($is_admin = 0) {
 		$io_name = 'io';
 
 
@@ -242,6 +244,22 @@ class Intel_Tracker {
 		if ($script) {
 			print '<script>' . $script . '</script>';
 		}
+	}
+
+	public function tracking_admin_head() {
+		$this->tracking_head(1);
+		return;
+		// TODO for now I am just embeding the _ioq object without config and
+		// push commands. Need to develop config for admin side. E.g. most front
+		// side intel events aren't relevant to admin side.
+		$script = '';
+		$script .= $this->tracking_code_js();
+		print '<script>' . $script . '</script>';
+		//$this->tracking_head();
+	}
+
+	public function tracking_admin_footer() {
+		$this->tracking_footer(1);
 	}
 
 	public function tracking_code_js() {

@@ -40,7 +40,6 @@ function intel_scorecard_report_page($report_subtype = '-', $report_subfilter = 
 
 //function intel_scorecard_report($filters = array(), $context = '-', $sub_index = '-', $mode = '') {
 function intel_scorecard_report($vars) {
-//dsm($vars);
   intel_include_library_file('ga/class.ga_model.php');
   require_once INTEL_DIR . "includes/intel.page_data.inc";
 
@@ -68,6 +67,7 @@ function intel_scorecard_report($vars) {
   $ga_data->buildFilters($filters, $vars['subsite']);
   $ga_data->setDateRange($start_date, $end_date);
   $ga_data->setRequestCallback('intel_ga_feed_request_callback', array('cache_options' => $cache_options));
+  $ga_data->setFeedRowsCallback('intel_get_ga_feed_rows_callback');
 
   $ga_data->setRequestSetting('indexBy', 'date');
   $ga_data->setRequestSetting('details', 0);
@@ -78,7 +78,9 @@ function intel_scorecard_report($vars) {
   $ga_data->loadFeedData('pageviews');
   //$ga_data->setDebug(0);
 
+  //$ga_data->setDebug(1);
   $ga_data->loadFeedData('entrances');
+  //$ga_data->setDebug(0);
 
   //$ga_data->loadFeedData('visitors');
 
@@ -160,7 +162,7 @@ function intel_scorecard_report($vars) {
 
     $request = $ga_data->loadFeedData('entrances_events_valued', 'trafficsources');
   }
-  $d = $d = $ga_data->data;
+  $d = $ga_data->data;
 
   if (!empty($path)) {
     $created = intel_get_node_created($path);
@@ -256,7 +258,8 @@ function intel_scorecard_report($vars) {
     ksort($d['date']);
   }
   else {
-    return Intel_Df::t('No data found.');
+    $d['_empty'] = 1;
+    //return Intel_Df::t('No data found.');
   }
 
   /*

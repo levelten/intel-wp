@@ -45,6 +45,8 @@ function intel_trafficsource_list_report($vars) {
   $ga_data->buildFilters($vars['filters'], $vars['subsite']);
   $ga_data->setDateRange($vars['start_date'], $vars['end_date']);
   $ga_data->setRequestCallback('intel_ga_feed_request_callback', array('cache_options' => $vars['cache_options']));
+  $ga_data->setFeedRowsCallback('intel_get_ga_feed_rows_callback');
+
 //$ga_data->setDebug(1);
   $ga_data->setRequestSetting('indexBy', $indexBy);
   $ga_data->setRequestSetting('details', 0);

@@ -176,7 +176,7 @@ class Intel_Public {
 					$uid = get_current_user_id();
 				}
 				if ($uid) {
-					$visitor = intel_visitor_load($uid, FALSE, 'uid');
+					$visitor = intel_visitor_load_by_identifiers(array('uid' => $uid));
 
 					if (!empty($visitor->vtkid)) {
 						$contexts[] = 'visitor';

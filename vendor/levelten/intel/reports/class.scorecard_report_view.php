@@ -105,7 +105,7 @@ class ScorecardReportView extends ReportView {
     $main_chart->addColumn('number', 'Goal value');
     $main_chart->addColumn('number', 'Event value');
     $main_chart->addColumn('number', 'Traffic value');
-      
+
     foreach ($data['date'] AS $day => $d) {
       if (substr($day, 0 ,1) == '_') {
         continue;
@@ -195,7 +195,7 @@ class ScorecardReportView extends ReportView {
       'linecolor' => $this->chartColors[0],
     );
 
-    $value = $datasum['score'] / $analysis_days;
+    $value = !empty($analysis_days) ? $datasum['score'] / $analysis_days : 0;
     $status = 'complete';
     if ($context == 'site') {
       if ($value < $targets['value_per_day']) {
@@ -231,7 +231,7 @@ class ScorecardReportView extends ReportView {
     $summary_elements['value_per_day'] = self::renderSparklineValueElement($e);
 
     // Entrances/Day
-    $value = $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]] / $analysis_days;
+    $value = !empty($analysis_days) ? $datasum[$visitDataIndexes[0]][$visitDataIndexes[1]] / $analysis_days : 0;
 
     $status = 'complete';
     if ($context == 'site') {
@@ -415,7 +415,7 @@ class ScorecardReportView extends ReportView {
       'decimals' => 2,
     );
     $e['title'] = 'Value/Day';
-    $e['total'] = number_format($data['date']['_all']['score'] / $analysis_days, 2);
+    $e['total'] =  number_format(!empty($analysis_days) ? $data['date']['_all']['score'] / $analysis_days : 0, 2);
     
     $e = $init_e;
     $ib = ($context_mode == 'subsite') ? 'pageview' : 'entrance';

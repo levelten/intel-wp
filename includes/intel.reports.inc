@@ -410,7 +410,7 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
   if (empty($vars['timeframe'])) {
     $vars['timeframe'] = 'l30d';
   }
-  list($vars['start_date'], $vars['end_date'], $vars['number_of_days']) = _intel_get_report_dates_from_ops($vars['timeframe'], $vars['cache_options']);
+  list($vars['start_date'], $vars['end_date'], $vars['number_of_days'], $vars['timezone_offset']) = _intel_get_report_dates_from_ops($vars['timeframe'], $vars['cache_options']);
 
   if (!empty($_GET['refresh'])) {
     $vars['cache_options']['refresh'] = 1;
@@ -606,40 +606,47 @@ function theme_intel_report($vars) {
 
   $output = '';
   // create class name - translate _ format to class cammel case
-  $class = str_replace('_', ' ', $vars['report_name']);
-  $class = ucwords($class);
-  $class = 'levelten\intel\\' . str_replace(' ', '', $class) . 'ReportView';
-  $report_view = new $class();
-  $report_view->setData($vars['data']);
-  $report_view->setTableRowCount($vars['row_count']);
-  $report_view->setModes($vars['report_modes']);
-  $report_view->setParam('context', $vars['context']);
-  $report_view->setParam('context_mode', $vars['context_mode']);
-  if (isset($vars['goals'])) {
-    $report_view->setGoals($vars['goals']);
-  }
-  if (isset($vars['indexBy'])) {
-    $report_view->setParam('indexBy', $vars['indexBy']);
-  }
-  if (isset($vars['indexByLabel'])) {
-    $report_view->setParam('indexByLabel', $vars['indexByLabel']);
-  }
-  if (isset($vars['report_attribute_info'])) {
-    $report_view->setAttributeInfo($vars['report_attribute_info']);
-  }
-  if (isset($vars['comp']['start_date']) && isset($vars['comp']['end_date'])) {
-    $report_view->setDateRange($vars['comp']['start_date'], $vars['comp']['end_date'], $vars['comp']['number_of_days']);
+  if (empty($vars['data']['_empty'])) {
+    $class = str_replace('_', ' ', $vars['report_name']);
+    $class = ucwords($class);
+    $class = 'levelten\intel\\' . str_replace(' ', '', $class) . 'ReportView';
+    $report_view = new $class();
+    $report_view->setData($vars['data']);
+    $report_view->setTableRowCount($vars['row_count']);
+    $report_view->setModes($vars['report_modes']);
+    $report_view->setParam('context', $vars['context']);
+    $report_view->setParam('context_mode', $vars['context_mode']);
+    if (isset($vars['goals'])) {
+      $report_view->setGoals($vars['goals']);
+    }
+    if (isset($vars['indexBy'])) {
+      $report_view->setParam('indexBy', $vars['indexBy']);
+    }
+    if (isset($vars['indexByLabel'])) {
+      $report_view->setParam('indexByLabel', $vars['indexByLabel']);
+    }
+    if (isset($vars['report_attribute_info'])) {
+      $report_view->setAttributeInfo($vars['report_attribute_info']);
+    }
+    if (isset($vars['comp']['start_date']) && isset($vars['comp']['end_date'])) {
+      $report_view->setDateRange($vars['comp']['start_date'], $vars['comp']['end_date'], $vars['comp']['number_of_days']);
+    }
+    else {
+      $report_view->setDateRange($vars['start_date'], $vars['end_date'], $vars['number_of_days']);
+    }
+    if (!empty($vars['page_count'])) {
+      $report_view->setPageCount($vars['page_count']);
+    }
+    $report_view->setPageMetaCallback('intel_get_page_meta_callback');
+    $report_view->setTargets(intel_get_targets());
+    \LevelTen\Intel\ReportPageHeader::setAddScriptCallback('intel_report_add_js_callback');
+    $output .= $report_view->renderReport();
+
+
   }
   else {
-    $report_view->setDateRange($vars['start_date'], $vars['end_date'], $vars['number_of_days']);
+    $output .= '<div class="alert alert-warning">' . Intel_Df::t('No data found.') . '</div>';
   }
-  if (!empty($vars['page_count'])) {
-    $report_view->setPageCount($vars['page_count']);
-  }
-  $report_view->setPageMetaCallback('intel_get_page_meta_callback');
-  $report_view->setTargets(intel_get_targets());
-  \LevelTen\Intel\ReportPageHeader::setAddScriptCallback('intel_report_add_js_callback');
-  $output .= $report_view->renderReport();
 
   $output .= Intel_Df::t("Time frame: %start_date - %end_date", array(
     '%start_date' => date("Y-m-d H:i", $vars['start_date']),
@@ -647,9 +654,9 @@ function theme_intel_report($vars) {
   ));
   if (isset($vars['comp']['start_date'])) {
     $output .= ', ' . Intel_Df::t("Comp timeframe: %start_date - %end_date", array(
-      '%start_date' => date("Y-m-d H:i", $vars['comp']['start_date']),
-      '%end_date' => date("Y-m-d H:i", $vars['comp']['end_date']),
-    ));
+        '%start_date' => date("Y-m-d H:i", $vars['comp']['start_date']),
+        '%end_date' => date("Y-m-d H:i", $vars['comp']['end_date']),
+      ));
   }
   if (!empty($vars['cache_options']['refresh'])) {
     $output .= ' (' . Intel_Df::t('refresh') . ')';
@@ -668,10 +675,11 @@ function theme_intel_report($vars) {
     }
 
     $output .= ' ' . Intel_Df::t("(cache: %start_date - %end_date)", array(
-      '%start_date' => date("Y-m-d H:i", $start),
-      '%end_date' => date("Y-m-d H:i", $end),
-    ));
+        '%start_date' => date("Y-m-d H:i", $start),
+        '%end_date' => date("Y-m-d H:i", $end),
+      ));
   }
+
 
   $query = $_GET;
   $query['refresh'] = 1;

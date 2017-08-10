@@ -54,6 +54,7 @@ function intel_visitor_list_report($vars) {
 //$ga_data->setDebug(1);
   $ga_data->setDateRange($vars['start_date'], $vars['end_date']);
   $ga_data->setRequestCallback('intel_ga_feed_request_callback', array('cache_options' => $vars['cache_options']));
+  $ga_data->setFeedRowsCallback('intel_get_ga_feed_rows_callback');
   $ga_data->setRequestSetting('indexBy', $vars['indexBy']);
   $ga_data->setRequestSetting('details', 0);
 
@@ -77,8 +78,9 @@ function intel_visitor_list_report($vars) {
   //$ga_data->setDebug(0);
   $ga_data->loadFeedData('entrances_events_valued');
   $ga_data->loadFeedData('visit_info');
-  
+
   $d = $ga_data->data;
+
 
   $vals = array();
   $i = 0;

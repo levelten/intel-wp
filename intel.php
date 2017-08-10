@@ -16,7 +16,7 @@
  * Plugin Name:       Intelligence
  * Plugin URI:        http://intelligencewp.com
  * Description:       Provides behavior and visitor intelligence.
- * Version:           1.2.0-dev
+ * Version:           1.2.0
  * Minimum PHP:       5.3
  * Author:            LevelTen
  * Author URI:        http://getlevelten.com
@@ -33,7 +33,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define('INTEL_VER', '1.2.0-dev');
+define('INTEL_VER', '1.2.0');
 
 
 /**
