@@ -48,6 +48,8 @@ class Intel_Admin {
 
 	public $args = array();
 
+	public $admin_notices = array();
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -615,12 +617,48 @@ class Intel_Admin {
 		return $links;
 	}
 
-	public function admin_setup_notice() {
-
+	/**
+	 * Implements hook_admin_notices()
+	 */
+	public function admin_notices() {
+		$output = '';
 		// Don't show the connect notice anywhere but the plugins.php after activating
 		$current = get_current_screen();
+		if (!intel_is_installed('min') && 'plugins' === $current->parent_base  ) {
+			$l_options = Intel_Df::l_options_add_class('btn btn-info');
+			$output .= '  <div class="panel panel-info m-t-1">';
+			$output .= '    <h2 class="panel-heading m-t-0">' . __( 'Get Intelligence!', 'intel' ) . '</h2>';
+			$output .= '    <div class="panel-body">';
+			$output .= '      <p>' . __( 'To complete the installation of Intelligence launch the setup wizard using the button below.', 'intel' ) . '</p>';
+			$output .= '      <p>' . Intel_Df::l( Intel_Df::t('Launch Setup Wizard'), 'admin/config/intel/settings/setup', $l_options) . '</p>' ;
+			$output .= '    </div>';
+			$output .= '  </div>';
+		}
+		$intel = intel();
+
+		if (!empty($intel->system_meta['needed_updates'])) {
+			$l_options = Intel_Df::l_options_add_class('btn btn-info');
+			$output .= '<div class="alert alert-danger">';
+			$output .= __( 'Intelligence plugin has requires updates. ', 'intel' );
+			$output .= Intel_Df::l(Intel_Df::t('Click here to view and run updates'), 'admin/util/update') . '.';
+			$output .= '</div>';
+		}
+
+		if ($output) {
+			$this->enqueue_scripts();
+			$this->enqueue_styles();
+			print '<div id="intel-admin-notices" class="bootstrap-wrapper wrap">' . $output . '</div>';
+		}
+	}
+
+	public function admin_setup_notice() {
+
+	}
+
+	public function admin_update_notice() {
+		$current = get_current_screen();
 		if ( 'plugins' !== $current->parent_base ) {
-			return;
+			//return;
 		}
 
 		if (intel_is_installed('min')) {
@@ -630,17 +668,12 @@ class Intel_Admin {
 		$this->enqueue_scripts();
 		$this->enqueue_styles();
 		?>
-		<div id="message" class="bootstrap-wrapper wrap">
-			<div class="panel panel-info m-t-1">
-				<h2 class="panel-heading m-t-0"><?php print __( 'Get Intelligence!', 'intel' ); ?></h2>
-				<div class="panel-body">
+				<div class="alert alert-danger">
 					<p><?php print __( 'To complete the installation of Intelligence launch the setup wizard using the button below.', 'intel' ); ?></p>
 					<p>
-						<a href="<?php print Intel_Df::url('admin/config/intel/settings/setup'); ?>" class="btn btn-info">Launch Setup Wizard</a>
+						<a href="<?php print Intel_Df::url('admin/config/intel/utilities/update'); ?>" class="btn btn-info">Updates</a>
 					</p>
 				</div>
-			</div>
-		</div>
 
 		<?php
 	}

@@ -171,6 +171,64 @@ function intel_util_temp_form_submit($form, &$form_state) {
   $defaults = update_option('intel_test_form', $values);
 }
 
+function intel_util_update() {
+  $output = '';
+
+  require_once INTEL_DIR . 'includes/class-intel-activator.php';
+  $intel = intel();
+  $updates = $intel->system_meta['needed_updates'];
+
+  $run_update = !empty($_GET['run_update']) ? $_GET['run_update'] : '';
+  if ($run_update) {
+    if (!empty($updates[$run_update])) {
+      $func = array('Intel_Activator', 'update_' . $run_update);
+      if (is_callable($func)) {
+        $status = call_user_func($func);
+        Intel_Df::drupal_set_message(Intel_Df::t('Update %i was run successfully.', array(
+          '%i' => $run_update
+        )), 'success');
+
+      }
+      else {
+        Intel_Df::drupal_set_message(Intel_Df::t('Function Intel_Activator::update_%i not found.', array(
+          '%i' => $run_update
+        )), 'warning');
+      }
+      unset($intel->system_meta['needed_updates'][$run_update]);
+      $intel->system_meta['schema_version'] = $run_update;
+      update_option('intel_system_meta', $intel->system_meta);
+      Intel_Df::drupal_goto('admin/util/update');
+    }
+    else {
+      Intel_Df::drupal_set_message(Intel_Df::t('Update %i is not needed.', array(
+        '%i' => $run_update
+      )), 'warning');
+    }
+  }
+
+  if (!empty($updates)) {
+    foreach ($updates as $i => $v) {
+      $text = Intel_Df::t('Run update %i', array(
+        '%i' => $i,
+      ));
+      $l_options = Intel_Df::l_options_add_class('btn btn-info');
+      $l_options = Intel_Df::l_options_add_query(array('run_update' => $i), $l_options);
+      $output .= Intel_Df::l($text, 'admin/util/update', $l_options) . '<br><br>';
+      // only show one update at a time
+      break;
+    }
+  }
+  else {
+    Intel_Df::drupal_set_message(Intel_Df::t('No updates are needed.', array(
+      '%i' => $run_update
+    )), 'status');
+  }
+
+
+
+  return $output;
+}
+
 function intel_util_environment() {
   if (!intel_is_test() || !intel_is_debug()) {
     return '';

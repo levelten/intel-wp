@@ -866,6 +866,26 @@ function intel_menu($items = array()) {
     'weight' => $w++,
   );
 
+  $items['admin/util/update'] = array(
+    'title' => 'Update',
+    'description' => 'View and run plugin updates',
+    'page callback' => 'intel_util_update',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
+  $items['admin/util/update/run'] = array(
+    'title' => 'Run update',
+    'description' => 'View and run plugin updates',
+    'page callback' => 'intel_util_update_run',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+
   $items['admin/util/ga_explorer'] = array(
     'title' => 'GA Explorer',
     'description' => 'Add a new cta block.',
@@ -1919,7 +1939,7 @@ function intel_is_installed($level = 'min') {
   return !empty($sys_meta['setup_complete']);
 }
 
-add_filter('intel_entity_info', 'intel_entity_info');
+
 /**
  * Implements hook_entity_info().
  *
@@ -2071,6 +2091,7 @@ function intel_entity_info($info = array()) {
 
   return $info;
 }
+add_filter('intel_entity_info', 'intel_entity_info');
 
 function intel_post_created_formatter($time) {
   return strtotime($time);
@@ -2824,7 +2845,7 @@ function intel_entity_attr_save($entity_attr) {
 
 
 /**
- * Determines is a entity_attr value should be stored as a string or number
+ * Determines if a entity_attr value should be stored as a string or number
  * @param $value - either the value of a primitive type or entity_attr object
  * @param null $value_type
  * @return string
@@ -2951,11 +2972,11 @@ function intel_entity_attr_entity_count($attr_key = null, $value0 = null, $value
       $query->condition($value_field, $value1, $op1);
     }
   }
-  dsm("$value0, " . $query);
+  intel_d("$value0, " . $query);
 
   $count = $query->execute()->rowCount();
 
-  dsm($count);
+  intel_d($count);
 
   return $count;
 }

@@ -104,6 +104,8 @@ class Intel {
 
 	private $session_hash;
 
+	public $system_meta;
+
 	/**
 	 * Define the core functionality of the plugin.
 	 *
@@ -159,6 +161,16 @@ class Intel {
 		$this->define_global_hooks();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+
+		// check if updates needed
+		$this->system_meta = get_option('intel_system_meta');
+		if (empty($this->system_meta['intel_ver']) || $this->system_meta['intel_ver'] != INTEL_VER) {
+			require_once INTEL_DIR . 'includes/class-intel-activator.php';
+
+			$this->system_meta['needed_updates'] = Intel_Activator::get_needed_updates();
+			$this->system_meta['intel_ver'] = INTEL_VER;
+			update_option('intel_system_meta', $this->system_meta);
+		}
 	}
 
 	public static function getInstance() {
@@ -309,7 +321,7 @@ class Intel {
 		$this->loader->add_filter('manage_intelligence_page_intel_visitor_columns', $plugin_admin, 'contacts_column_headers');
 
 		// admin notices
-  	$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_setup_notice' );
+  	$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notices' );
 
 		// plugin action links
 		$this->loader->add_action( 'plugin_action_links_' . plugin_basename(INTEL_DIR . 'intel.php'), $plugin_admin, 'plugin_action_links', 10, 2 );

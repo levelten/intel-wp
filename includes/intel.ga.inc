@@ -1708,6 +1708,86 @@ function intel_get_page_attribute_info_default() {
       )
     ),
   );
+
+  $attributes['cw'] = array(
+    'title' => Intel_Df::t('Word count'),
+    'title_plural' => Intel_Df::t('Word counts'),
+    'description' => Intel_Df::t('Number of words in the node body.'),
+    'type' => 'scalar',
+    'options_description' => Intel_Df::t('Auto generated from readability module.'),
+    'options info callback' => 'contentoptimizer_page_attribute_cw_option_info',
+    'storage' => array(
+      'analytics' => array(
+        'struc' => 'dimension',
+        'index' => 11,
+      ),
+    ),
+    'index_grouping' => array(
+      0,
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000,
+      1200,
+      1400,
+      1600,
+      1800,
+      2000,
+    ),
+  );
+  $attributes['ctw'] = array(
+    'title' => Intel_Df::t('Title word count'),
+    'title_plural' => Intel_Df::t('Title word counts'),
+    'description' => Intel_Df::t('Number of words in the meta page title.'),
+    'type' => 'scalar',
+    'options_description' => Intel_Df::t('Auto generated from readability module.'),
+    'options info callback' => 'contentoptimizer_page_attribute_ctw_option_info',
+    'storage' => array(
+      'analytics' => array(
+        'struc' => 'dimension',
+        'index' => 11,
+      ),
+    ),
+  );
+  $attributes['ctc'] = array(
+    'title' => Intel_Df::t('Title character count'),
+    'title_plural' => Intel_Df::t('Title character counts'),
+    'description' => Intel_Df::t('Number of characters in the meta page title.'),
+    'type' => 'scalar',
+    'options_description' => Intel_Df::t('Auto generated from readability module.'),
+    'options info callback' => 'contentoptimizer_page_attribute_ctc_option_info',
+    'storage' => array(
+      'analytics' => array(
+        'struc' => 'dimension',
+        'index' => 11,
+      ),
+    ),
+    'index_grouping' => array(
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      120,
+      140,
+      160,
+      180,
+      200,
+    ),
+  );
+
   return $attributes;
 }
 
@@ -3405,7 +3485,7 @@ function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1
     $timezone_info['wp_timezone'] = get_option('timezone_string', '');
     $ga_profile = get_option('intel_ga_profile', array());
     $timezone_info['ga_timezone'] = !empty($ga_profile['timezone']) ? $ga_profile['timezone'] : '';
-    if (!empty($timezone_info['wp_timezone'])) {
+    if (0 && !empty($timezone_info['wp_timezone'])) {
       $timezone_info['timezone'] = $timezone_info['wp_timezone'];
     }
     elseif (!empty($timezone_info['ga_timezone'])) {

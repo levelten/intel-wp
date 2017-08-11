@@ -649,13 +649,13 @@ function theme_intel_report($vars) {
   }
 
   $output .= Intel_Df::t("Time frame: %start_date - %end_date", array(
-    '%start_date' => date("Y-m-d H:i", $vars['start_date']),
-    '%end_date' => date("Y-m-d H:i", $vars['end_date']),
+    '%start_date' => Intel_Df::format_date($vars['start_date'], "M j, Y G:i"),
+    '%end_date' => Intel_Df::format_date($vars['end_date'], "M j, Y G:i"),
   ));
   if (isset($vars['comp']['start_date'])) {
     $output .= ', ' . Intel_Df::t("Comp timeframe: %start_date - %end_date", array(
-        '%start_date' => date("Y-m-d H:i", $vars['comp']['start_date']),
-        '%end_date' => date("Y-m-d H:i", $vars['comp']['end_date']),
+        '%start_date' => Intel_Df::format_date($vars['comp']['start_date'], "M j, Y G:i"),
+        '%end_date' => Intel_Df::format_date($vars['comp']['end_date'], "M j, Y G:i"),
       ));
   }
   if (!empty($vars['cache_options']['refresh'])) {
@@ -675,8 +675,8 @@ function theme_intel_report($vars) {
     }
 
     $output .= ' ' . Intel_Df::t("(cache: %start_date - %end_date)", array(
-        '%start_date' => date("Y-m-d H:i", $start),
-        '%end_date' => date("Y-m-d H:i", $end),
+        '%start_date' => Intel_Df::format_date($start, "M j, Y G:i"),
+        '%end_date' => Intel_Df::format_date($end, "M j, Y G:i"),
       ));
   }
 

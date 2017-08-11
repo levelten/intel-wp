@@ -30,8 +30,20 @@ class Intel_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
+		intel_d('activate');
 		self::setup_database();
 		self::setup_cron();
+		$schema_ver = 1000;
+		$updates = get_needed_updates();
+		foreach ($updates as $v) {
+			if ($v > $schema_ver) {
+				$schema_ver = $v;
+			}
+		}
+		$system_meta = get_option('intel_system_meta', array());
+		$system_meta['schema_version'] = $schema_ver;
+		$system_meta['intel_ver'] = INTEL_VER;
+		update_option('intel_system_meta', $system_meta);
 	}
 
 	public static function setup_database() {
@@ -108,19 +120,102 @@ class Intel_Activator {
 		) $charset_collate;";
 
 		dbDelta( $sql );
+
+		$table_name = $wpdb->prefix . "intel_entity_attr";
+
+		$sql = "CREATE TABLE $table_name (
+			entity_type varchar(64) DEFAULT '',
+			entity_id int(10) UNSIGNED DEFAULT NULL,
+			path varchar(255) DEFAULT '',
+			alias varchar(255) DEFAULT '',
+			attr_key varchar(64) NOT NULL DEFAULT '',
+			vsid int(10) UNSIGNED DEFAULT NULL,
+			value_num float DEFAULT NULL,
+			KEY entity (entity_type, entity_id),
+			KEY path (path(18)),
+  		KEY alias (alias(18)),
+  		KEY attr_key (attr_key(4)),
+  		KEY vsid (vsid)
+		) $charset_collate;";
+
+		dbDelta( $sql );
+
+		$table_name = $wpdb->prefix . "intel_value_str";
+
+		$sql = "CREATE TABLE $table_name (
+			vsid int(10) UNSIGNED NOT NULL,
+			value_str varchar(255) NOT NULL,
+			PRIMARY KEY (vsid),
+      KEY value_str (value_str(16))
+		) $charset_collate;";
+
+		dbDelta( $sql );
+
+	}
+
+	public static function get_needed_updates() {
+		$system_meta = get_option('intel_system_meta', array());
+
+		$schema_ver = !empty($system_meta['schema_version']) ? $system_meta['schema_version'] : 1000;
+		$updates = array();
+		for ($i = $schema_ver + 1; $i < 2000; $i++) {
+			if (!is_callable(array("self", "update_$i"))) {
+				break;
+			}
+			$updates[$i] = 1;
+		}
+		return $updates;
+  }
+
+	public static function update_1001() {
+		global $wpdb;
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+		$charset_collate = $wpdb->get_charset_collate();
+
+		$table_name = $wpdb->prefix . "intel_entity_attr";
+
+		$sql = "CREATE TABLE $table_name (
+			entity_type varchar(64) DEFAULT '',
+			entity_id int(10) UNSIGNED DEFAULT NULL,
+			path varchar(255) DEFAULT '',
+			alias varchar(255) DEFAULT '',
+			attr_key varchar(64) NOT NULL DEFAULT '',
+			vsid int(10) UNSIGNED DEFAULT NULL,
+			value_num float DEFAULT NULL,
+			KEY entity (entity_type, entity_id),
+			KEY path (path(18)),
+  		KEY alias (alias(18)),
+  		KEY attr_key (attr_key(4)),
+  		KEY vsid (vsid)
+		) $charset_collate;";
+
+		dbDelta( $sql );
+
+		$table_name = $wpdb->prefix . "intel_value_str";
+
+		$sql = "CREATE TABLE $table_name (
+			vsid int(10) UNSIGNED NOT NULL,
+			value_str varchar(255) NOT NULL,
+			PRIMARY KEY (vsid),
+      KEY value_str (value_str(16))
+		) $charset_collate;";
+
+		dbDelta( $sql );
 	}
 
 	public static function setup_cron() {
 		// setup intel_cron_hook
 		$timestamp = wp_next_scheduled( 'intel_cron_hook' );
-Intel_Df::watchdog('setup_cron cron_hook ts', $timestamp);
+//Intel_Df::watchdog('setup_cron cron_hook ts', $timestamp);
 		if ($timestamp == FALSE) {
 			wp_schedule_event( time(), 'intel_cron_interval', 'intel_cron_hook' );
 		}
 
 		// setup intel_cron_queue_hook
 		$timestamp = wp_next_scheduled( 'intel_cron_queue_hook' );
-Intel_Df::watchdog('setup_cron cron_queue_hook ts', $timestamp);
+//Intel_Df::watchdog('setup_cron cron_queue_hook ts', $timestamp);
 		if ($timestamp == FALSE) {
 			wp_schedule_event( time(), 'intel_cron_queue_interval', 'intel_cron_queue_hook' );
 		}

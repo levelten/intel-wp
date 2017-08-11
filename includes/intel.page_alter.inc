@@ -163,23 +163,45 @@ function intel_page_alter(&$page) {
 
   // set user role visitor attribute
   // only when user is logged in (otherwise page caching will cause errors)
-  // TODO WP roles do not have ids.
   if (!empty($user->ID)) {
-    $cur = isset($ga_va['r']) ? $ga_va['r'] : array();
-    if (!empty($user->roles) && is_array($user->roles)) {
-      foreach ($user->roles AS $i => $l) {
-        // don't send anonymous role
-        if ($i == 1) {
-          continue;
-        }
-        if (!isset($cur[$i])) {
-          if (!isset($visitor_attrs['r'])) {
-            $visitor_attrs['r'] = array();
+    if (INTEL_PLATFORM == 'wp') {
+      // WP roles do not have ids, so we create them
+      $role_index = get_option('intel_role_index', array());
+      $cur = isset($ga_va['r']) ? $ga_va['r'] : array();
+      if (!empty($user->roles) && is_array($user->roles)) {
+        foreach ($user->roles AS $i => $l) {
+          if (!isset($role_index[$l])) {
+            $role_index[$l] = count($role_index);
+            update_option('intel_role_index', $role_index);
           }
-          $visitor_attrs['r'][$i] = '';
+          $id = $role_index[$l];
+          if (!isset($cur[$id])) {
+            if (!isset($visitor_attrs['r'])) {
+              $visitor_attrs['r'] = array();
+            }
+            $visitor_attrs['r'][$id] = '';
+          }
         }
       }
     }
+    elseif (INTEL_PLATFORM == 'drupal') {
+      $cur = isset($ga_va['r']) ? $ga_va['r'] : array();
+      if (!empty($user->roles) && is_array($user->roles)) {
+        foreach ($user->roles AS $i => $l) {
+          // don't send anonymous role
+          if ($i == 1) {
+            continue;
+          }
+          if (!isset($cur[$i])) {
+            if (!isset($visitor_attrs['r'])) {
+              $visitor_attrs['r'] = array();
+            }
+            $visitor_attrs['r'][$i] = '';
+          }
+        }
+      }
+    }
+
   }
 
   $page_attrs_info = intel_get_page_attribute_info();
@@ -434,7 +456,7 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   $entity_attrs = array();
 
   $page_attr_info = intel_get_page_attribute_info();
-
+intel_d($page_attr_info);
   // resource type = entity_type
   $page_ld['site:entityType'] = $page_attrs['rt'] = $entity_type;
   // resource sub type = entity bundle
@@ -445,9 +467,19 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   // resource id = entity_id
   if (isset($entity_info['entity keys']['id']) && isset($entity->{$entity_info['entity keys']['id']})) {
     $page_ld['site:entityId'] = $page_attrs['rk'] = $entity->{$entity_info['entity keys']['id']};
+    $entity_attrs_default = array();
+    if ($entity_type == 'post') {
+      $entity_attrs_default = intel_get_post_entity_attr_default();
+    }
+intel_d($entity_attrs_default);
     $entity_attrs = intel_entity_attr_load_by_params($entity_type, $page_attrs['rk']);
-
+    if (!is_array($entity_attrs)) {
+      $entity_attrs = array();
+    }
+    $entity_attrs += $entity_attrs_default;
+intel_d($entity_attrs);
     if (is_array($entity_attrs)) {
+
       foreach ($entity_attrs AS $ea) {
         if (!isset($page_attr_info[$ea->attr_key])) {
           continue;
@@ -483,6 +515,7 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
           }
         }
       }
+      intel_d($page_attrs);
     }
 
     // create an empty entity_attr in case some attr needs to be saved
@@ -775,6 +808,50 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   }
 
   return $attrs;
+}
+
+function intel_page_footer_alter() {
+  return;
+  global $post;
+  if (!empty($post)) {
+    $stats = intel_get_post_stats($post);
+  }
+}
+
+function intel_get_post_entity_attr_default($post = NULL) {
+  if (!isset($post)) {
+    global $post;
+  }
+  $entity_attr = array();
+  // code inspired
+  //Variable: Additional characters which will be considered as a 'word'
+  $char_list = ''; /** MODIFY IF YOU LIKE.  Add characters inside the single quotes. **/
+  //$char_list = '0123456789'; /** If you want to count numbers as 'words' **/
+  //$char_list = '&@'; /** If you want count certain symbols as 'words' **/
+  //intel_d($post->post_content);
+
+  $content = do_shortcode($post->post_content );
+  //intel_d($content);
+  //Intel_Df::watchdog('content', $content);
+  $ea = (object)array(
+    'attr_key' => 'cw',
+    'value' => str_word_count(strip_tags($content), 0, $char_list),
+  );
+  $entity_attr[] = $ea;
+  $ea = (object)array(
+    'attr_key' => 'ctw',
+    'value' => str_word_count(strip_tags($post->post_title), 0, $char_list),
+  );
+  $entity_attr[] = $ea;
+  $ea = (object)array(
+    'attr_key' => 'ctc',
+    'value' => strlen(strip_tags($post->post_title)),
+  );
+  $entity_attr[] = $ea;
+  //$entity_attr['cw'] = str_word_count(strip_tags($content), 0, $char_list);
+  //$entity_attr['ctw'] = str_word_count(strip_tags($post->post_title), 0, $char_list);
+  //$entity_attr['ctc'] = strlen(strip_tags($post->post_title));
+  return $entity_attr;
 }
 
 function intel_add_attrs_config($attrs, $type = 'page') {
@@ -2472,4 +2549,3 @@ function intel_pre_get_posts($query) {
     }
   }
 }
-

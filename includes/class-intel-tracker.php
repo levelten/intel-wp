@@ -233,6 +233,8 @@ class Intel_Tracker {
 			$script .= $this->get_intel_pushes_js();
 		}
 
+		intel_page_footer_alter();
+
 		if ($this->pageview_placement != 'head') {
 			$script .= "\n" . "io('pageview');";
 		}
