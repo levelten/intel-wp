@@ -138,6 +138,40 @@ function intel_visitor_list_report($vars) {
       $link_keys[] = array(
         'type' => 'content',
       );
+
+      if ($vars['report_subtype'] == 'country') {
+        $link_keys[] = array(
+          'type' => 'visitor',
+          'subtype' => 'region',
+        );
+        $link_keys[] = array(
+          'type' => 'visitor',
+          'subtype' => 'metro',
+        );
+      }
+      elseif ($vars['report_subtype'] == 'region') {
+        $link_keys[] = array(
+          'type' => 'visitor',
+          'subtype' => 'city',
+        );
+        $link_keys[] = array(
+          'type' => 'visitor',
+          'subtype' => 'metro',
+        );
+      }
+      elseif ($vars['report_subtype'] == 'browser') {
+        $link_keys[] = array(
+          'type' => 'visitor',
+          'subtype' => 'browserversion',
+        );
+      }
+      elseif ($vars['report_subtype'] == 'operatingsystem') {
+        $link_keys[] = array(
+          'type' => 'visitor',
+          'subtype' => 'operatingsystemversion',
+        );
+      }
+
       $d[$vars['indexBy']][$index]['links'] = intel_build_report_links($link_keys, $filter, $vars['report_params']);
       if ($vars['report_modes'][0] == 'visitor' || $vars['report_modes'][0] == 'visit') {
         $d[$vars['indexBy']][$index]['links'][] = Intel_Df::l(Intel_Df::t('clickstream'), 'visitor/' . $val . '/clickstream');

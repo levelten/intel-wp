@@ -58,6 +58,10 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
     'start_date' => 0,
     // unix timestamp for report data ending date
     'end_date' => 0,
+    // number of days in analysis
+    'number_of_days' => 0,
+    // number of seconds local timezone if off from UTC
+    'timezone_offset' => 0,
     // GA start_date and end_date only pull data for complete days. To get
     // data for only part of a day, hit timestamp filtering must be used.
     // flags to determine if fractional days are used in reports. Set start=1
@@ -499,7 +503,7 @@ function intel_build_report_path($report_type, $report_params = '', $report_subt
     $path .= '/' . $report_subtype;
   }
   if ($report_subfilter) {
-    $path .= '/' . $report_subfilter;
+    //$path .= '/' . $report_subfilter;
   }
 
 
@@ -522,8 +526,9 @@ function intel_build_report_links($link_keys, $filter, $report_params) {
   $params = $report_params;
   foreach ($link_keys AS $def) {
     if (!empty($def['subtype'])) {
+      $params['_filter_only'] = $filter;
       $text = (isset($trans[$def['subtype']])) ? $trans[$def['subtype']] : $def['subtype'];
-      $item = Intel_Df::l($text, intel_build_report_path($def['type'], array(), $def['subtype'], $filter), array('query' => intel_build_report_query($def['type'], array(), $def['subtype'], $filter)));
+      $item = Intel_Df::l($text, intel_build_report_path($def['type'], $params, $def['subtype'], $filter), array('query' => intel_build_report_query($def['type'], $params, $def['subtype'], $filter)));
     }
     else {
       $params['_filter_only'] = $filter;
@@ -534,6 +539,7 @@ function intel_build_report_links($link_keys, $filter, $report_params) {
     if (count($report_params) > 0) {
       $params = $report_params;
       if (!empty($def['subtype'])) {
+        $params['_filter_add'] = $filter;
         $item .= Intel_Df::l('+', intel_build_report_path($def['type'], $params, $def['subtype'], $filter), array('query' => intel_build_report_query($def['type'], $params, $def['subtype'], $filter)));
       }
       else {
@@ -698,11 +704,6 @@ function intel_parse_report_filter_arg($str) {
     'event' => 'event',
     'eventCategory' => 'event',
     'vtk' => 'visitor',
-    'country' => 'visitor',
-    'region' => 'geo',
-    'city' => 'geo',
-    'address' => 'geo',
-    'georadius' => 'geo',
   );
 
   $a = explode(':', $str, 2);
@@ -721,6 +722,9 @@ function intel_parse_report_filter_arg($str) {
   }
   elseif ($b[0] == 'va') {
     $fd['type'] = 'visitor-attr';
+  }
+  elseif ($b[0] == 'v') {
+    $fd['type'] = 'visitor';
   }
   elseif ($b[0] == 'ts') {
     $fd['type'] = 'trafficsource';

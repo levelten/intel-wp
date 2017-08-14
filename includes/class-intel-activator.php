@@ -30,19 +30,19 @@ class Intel_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-		intel_d('activate');
 		self::setup_database();
 		self::setup_cron();
 		$schema_ver = 1000;
-		$updates = get_needed_updates();
-		foreach ($updates as $v) {
-			if ($v > $schema_ver) {
-				$schema_ver = $v;
+		$updates = self::get_needed_updates();
+		foreach ($updates as $i => $v) {
+			if (intval($i) > $schema_ver) {
+				$schema_ver = $i;
 			}
 		}
 		$system_meta = get_option('intel_system_meta', array());
 		$system_meta['schema_version'] = $schema_ver;
 		$system_meta['intel_ver'] = INTEL_VER;
+		//$system_meta['activated'] = time();
 		update_option('intel_system_meta', $system_meta);
 	}
 

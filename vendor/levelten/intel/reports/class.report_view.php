@@ -99,7 +99,7 @@ class ReportView {
   function setDateRange($startDate, $endDate, $days = null) {
     $this->dateRange['start'] = $startDate;
     $this->dateRange['end'] = $endDate;
-    $this->dateRange['days'] = round(($endDate - $startDate)/60/60/24);  
+    $this->dateRange['days'] = !empty($days) ? $days : ceil(($endDate - $startDate)/60/60/24);
   }
 
   function setPageCount($count) {

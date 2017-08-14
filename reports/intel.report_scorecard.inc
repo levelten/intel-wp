@@ -164,6 +164,8 @@ function intel_scorecard_report($vars) {
   }
   $d = $ga_data->data;
 
+  //intel_d($d['date']);
+
   if (!empty($path)) {
     $created = intel_get_node_created($path);
     $start = ($created > $start_date) ? $created : $start_date;

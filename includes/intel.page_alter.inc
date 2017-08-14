@@ -456,7 +456,6 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   $entity_attrs = array();
 
   $page_attr_info = intel_get_page_attribute_info();
-intel_d($page_attr_info);
   // resource type = entity_type
   $page_ld['site:entityType'] = $page_attrs['rt'] = $entity_type;
   // resource sub type = entity bundle
@@ -467,17 +466,8 @@ intel_d($page_attr_info);
   // resource id = entity_id
   if (isset($entity_info['entity keys']['id']) && isset($entity->{$entity_info['entity keys']['id']})) {
     $page_ld['site:entityId'] = $page_attrs['rk'] = $entity->{$entity_info['entity keys']['id']};
-    $entity_attrs_default = array();
-    if ($entity_type == 'post') {
-      $entity_attrs_default = intel_get_post_entity_attr_default();
-    }
-intel_d($entity_attrs_default);
     $entity_attrs = intel_entity_attr_load_by_params($entity_type, $page_attrs['rk']);
-    if (!is_array($entity_attrs)) {
-      $entity_attrs = array();
-    }
-    $entity_attrs += $entity_attrs_default;
-intel_d($entity_attrs);
+
     if (is_array($entity_attrs)) {
 
       foreach ($entity_attrs AS $ea) {
@@ -515,7 +505,6 @@ intel_d($entity_attrs);
           }
         }
       }
-      intel_d($page_attrs);
     }
 
     // create an empty entity_attr in case some attr needs to be saved
@@ -817,6 +806,7 @@ function intel_page_footer_alter() {
     $stats = intel_get_post_stats($post);
   }
 }
+
 
 function intel_get_post_entity_attr_default($post = NULL) {
   if (!isset($post)) {
@@ -1748,7 +1738,10 @@ function intel_process_form_submission($vars) {
   if ($api_level == 'pro') {
     if (!empty($visitor->vtk)) {
       try {
-        $visitor->apiVisitorLoad();
+        // don't load apiVisitor until conversion analytics is implemented
+        if (INTEL_PLATFORM == 'drupal') {
+          $visitor->apiVisitorLoad();
+        }
       }
       catch (Exception $e) {
         // do nothing
@@ -2245,7 +2238,9 @@ function intel_set_ga_userid($visitor) {
     // if visitor already exists (with original vtk), clear out identifiers
     if ($vtk != intel()->vtk) {
       $visitor->deleteIdentifierValue('vtk', intel()->vtk);
-      $visitor->deleteIdentifierValue('gacid', intel()->gacid);
+      // don't delete gacid, may be needed to update visitor attributes for
+      // prior cids.
+      //$visitor->deleteIdentifierValue('gacid', intel()->gacid);
     }
   }
 }

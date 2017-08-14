@@ -4360,3 +4360,54 @@ function intel_posts_alter($posts) {
 }
 add_filter('the_posts', 'intel_posts_alter', -10);
 
+/**
+ * Implements hook_save_post()
+ */
+function intel_save_post($post_id, $post, $update) {
+  // TODO re-enable once entity_attr load/save functions have been converted for
+  // WP.
+  return;
+  $entity_attrs = intel_get_extended_post_entity_attrs($post);
+  if (!empty($entity_attrs) && is_array($entity_attrs)) {
+    foreach ($entity_attrs as $entity_attr) {
+      intel_entity_attr_save($entity_attr);
+    }
+  }
+}
+//add_action( 'save_post', 'intel_save_post', 10, 3);
+
+function intel_get_extended_post_entity_attrs($post) {
+  $entity_attrs = array();
+  $ea_defaults = array(
+    'entity_type' => 'post',
+    'entity_id' => $post->ID,
+  );
+  // code inspired
+  //Variable: Additional characters which will be considered as a 'word'
+  $char_list = ''; /** MODIFY IF YOU LIKE.  Add characters inside the single quotes. **/
+  //$char_list = '0123456789'; /** If you want to count numbers as 'words' **/
+  //$char_list = '&@'; /** If you want count certain symbols as 'words' **/
+  //intel_d($post->post_content);
+
+  $content = do_shortcode($post->post_content );
+
+  $ea = array(
+    'attr_key' => 'cw',
+    'value' => str_word_count(strip_tags($content), 0, $char_list),
+  ) + $ea_defaults;
+  $entity_attrs[] = (object)$ea;
+
+  $ea = array(
+    'attr_key' => 'ctw',
+    'value' => str_word_count(strip_tags($post->post_title), 0, $char_list),
+  ) + $ea_defaults;
+  $entity_attrs[] = (object)$ea;
+
+  $ea = array(
+    'attr_key' => 'ctc',
+    'value' => strlen(strip_tags($post->post_title)),
+  ) + $ea_defaults;
+  $entity_attrs[] = (object)$ea;
+
+  return $entity_attrs;
+}
