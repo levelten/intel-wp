@@ -18,7 +18,7 @@ function intel_admin_demo_settings($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.demo.inc';
 
   $demo_mode = get_option('intel_demo_mode', '');
-  $demo_settings = get_option('intel_demo_settings', array());
+  $demo_settings = get_option('intel_demo_settings', intel_demo_settings_default());
   $form_state['demo_settings'] = $demo_settings;
 
   $form['general']['intel_demo_mode'] = array(
@@ -28,31 +28,9 @@ function intel_admin_demo_settings($form, &$form_state) {
     '#description' => Intel_Df::t('Enables spoof demo pages to be displayed on site. These pages are created programmatically and do not alter your database.'),
   );
 
-  $form['post_display'] = array(
-    '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Content display'),
-    //'#description' => Intel_Df::t('Warning: do not use these settings unless you really know what you are doing.'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-
-  $options = array(
-    '' => Intel_Df::t('Content and excerpt'),
-    'content' => Intel_Df::t('Content only'),
-    'excerpt' => Intel_Df::t('Excerpt only'),
-    'title' => Intel_Df::t('Title only (neither content or excerpt)'),
-  );
-  $form['post_display']['post_list_content_fields'] = array(
-    '#type' => 'select',
-    '#title' => Intel_Df::t('Post list content fields'),
-    '#options' => $options,
-    '#default_value' => !empty($demo_settings['post_list_content_fields']) ? $demo_settings['post_list_content_fields'] : '',
-    '#description' => Intel_Df::t('Set to the content fields to set on the post list page, intelligence/demo/blog.'),
-  );
-
   $form['posts'] = array(
     '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Posts'),
+    '#title' => Intel_Df::t('Edit Posts'),
     //'#description' => Intel_Df::t('Warning: do not use these settings unless you really know what you are doing.'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
@@ -79,6 +57,46 @@ function intel_admin_demo_settings($form, &$form_state) {
       //'#description' => Intel_Df::t('Enter any goals that can be triggered by a form submission. Enter one goal per line as name,ga_goal_id (e.g. <em>Contact form,1</em>). Note in order for goals to track, they must also be setup properly in Google Analytics.'),
     );
   }
+
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Advanced'),
+    //'#description' => Intel_Df::t('Warning: do not use these settings unless you really know what you are doing.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $options = array(
+    '' => Intel_Df::t('Content and excerpt'),
+    'content' => Intel_Df::t('Content only'),
+    'excerpt' => Intel_Df::t('Excerpt only'),
+    'title' => Intel_Df::t('Title only (neither content or excerpt)'),
+  );
+  $form['advanced']['post_list_content_fields'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Post list content fields'),
+    '#options' => $options,
+    '#default_value' => !empty($demo_settings['post_list_content_fields']) ? $demo_settings['post_list_content_fields'] : '',
+    '#description' => Intel_Df::t('Set to the content fields to set on the post list page, intelligence/demo/blog.'),
+  );
+
+  $form['advanced']['css_injection'] = array(
+    '#type' => 'textarea',
+    '#title' => Intel_Df::t('CSS injection'),
+    '#default_value' => !empty($demo_settings['css_injection']) ? $demo_settings['css_injection'] : '',
+    '#description' => Intel_Df::t('Custom CSS to inject into head on demo pages.'),
+    '#html' => 1,
+  );
+
+  $form['advanced']['js_injection'] = array(
+    '#type' => 'textarea',
+    '#title' => Intel_Df::t('JavaScript injection'),
+    '#default_value' => !empty($demo_settings['js_injection']) ? $demo_settings['js_injection'] : '',
+    '#description' => Intel_Df::t('Custom JavaScript to inject into head on demo pages.'),
+    '#html' => 1,
+  );
+
+
 
 
 /*
@@ -129,6 +147,10 @@ function intel_admin_demo_settings_submit($form, &$form_state) {
       }
       else {
         $demo_settings[$k] = $v;
+      }
+
+      if ($k == 'js_injection' || $k == 'css_injection') {
+        $demo_settings[$k] = stripslashes($v);
       }
 
     }

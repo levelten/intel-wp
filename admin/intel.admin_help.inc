@@ -52,12 +52,12 @@ function intel_help_demo_page() {
 
   $ga_tid = get_option('intel_ga_tid', '');
 
-  $l_options = Intel_Df::l_options_add_target('dr', $l_options);
+  $l_options = Intel_Df::l_options_add_target('dr');
   $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
   $l_options = Intel_Df::l_options_add_query(array('base_urlpath' => intel()->base_url . intel()->base_path), $l_options);
   $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), '//' . $imapi_host . '/property/' . $ga_tid . '/demo', $l_options) . '<br><br>';
 
-  $l_options = Intel_Df::l_options_add_target('wpd', $l_options);
+  $l_options = Intel_Df::l_options_add_target('wpd');
   $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
   $output .= Intel_Df::l(Intel_Df::t('Demo Home Page'), 'intelligence/demo', $l_options);
 

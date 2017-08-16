@@ -310,6 +310,11 @@ class Intel_Admin {
 							$load_type = 'intel_goal';
 							$bc_title = $load_title = Intel_Df::t('Goal');
 						}
+						elseif ($path_args[4] == 'taxonomy') {
+							$load_index = 5;
+							$load_type = 'intel_taxonomy';
+							$bc_title = $load_title = Intel_Df::t('Taxonomy');
+						}
 						if ($load_index) {
 							$func = $load_type . '_load';
 							$path_args_t[$load_index] = $func($path_args[$load_index]);

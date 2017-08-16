@@ -76,19 +76,21 @@ function L10iAdmin(_ioq, config) {
         document.body.appendChild( overlay );
         console.log(overlay);
         */
-
         // sometimes an element does not assume the dimensions of its children. This loop will find the widest element
         // and set it to be highlighted
         var $highlight = $target;
         var maxWidth = $target.width();
-        $highlight = $target.children().each( function (index, value) {
-          var $value = jQuery(value);
-          if ($value.width() > maxWidth) {
-             $hightlight = $value;
-             maxWidth = $value.width();
-          }
-          return $highlight;
-        });
+        var $children = $target.children();
+        if ($children.length) {
+            $highlight = $children.each( function (index, value, $highlight) {
+                var $value = jQuery(value);
+                if ($value.width() > maxWidth) {
+                    $hightlight = $value;
+                    maxWidth = $value.width();
+                }
+                return $highlight;
+            });
+        }
 
         $highlight.css('outline', '3px solid #44FF44');
         //$target.css('border', '2px solid #44FF44');

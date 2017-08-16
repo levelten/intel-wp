@@ -30,6 +30,29 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
+  $page_attrs = intel_get_page_attribute_info();
+
+  intel_d($page_attrs);
+
+  return '';
+
+  $vars = array(
+    'page_intent' => 'i',
+    'track_page_terms' => 1,
+    'page_attribute' => array(
+      'key' => 'b',
+    ),
+    'visitor_attribute' => array(
+    ),
+  );
+  update_option('intel_entity_settings_taxonomy__post_tag', $vars);
+
+  $vars['page_attribute']['key'] = 'c';
+  update_option('intel_entity_settings_taxonomy__category', $vars);
+
+  $vars['page_attribute']['key'] = 'd';
+  update_option('intel_entity_settings_taxonomy__post_format', $vars);
+
   $vars = array(
     'cache_options' => array()
   );
@@ -176,7 +199,7 @@ function intel_util_update() {
 
   require_once INTEL_DIR . 'includes/class-intel-activator.php';
   $intel = intel();
-  $updates = $intel->system_meta['needed_updates'];
+  $updates = Intel_Activator::get_needed_updates();
 
   $run_update = !empty($_GET['run_update']) ? $_GET['run_update'] : '';
   if ($run_update) {
@@ -205,6 +228,11 @@ function intel_util_update() {
       )), 'warning');
     }
   }
+  // update intel_system_meta options if not up to date
+  elseif (count($updates) != count($intel->system_meta['needed_updates'])) {
+    $intel->system_meta['needed_updates'] = $updates;
+    update_option('intel_system_meta', $intel->system_meta);
+  }
 
   if (!empty($updates)) {
     foreach ($updates as $i => $v) {
@@ -219,7 +247,7 @@ function intel_util_update() {
     }
   }
   else {
-    Intel_Df::drupal_set_message(Intel_Df::t('No updates are needed.', array(
+    Intel_Df::drupal_set_message(Intel_Df::t('No updates are currently needed.', array(
       '%i' => $run_update
     )), 'status');
   }

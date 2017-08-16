@@ -28,7 +28,7 @@ function intel_audience_list_report_page($report_subtype = '-', $report_subfilte
 //function intel_audience_list_report($vars['filters'] = array(), $vars['context'] = 'site', $sub_index = '-') {
 function intel_audience_list_report($vars) {
   intel_include_library_file('ga/class.ga_model.php');
-intel_d($vars);
+//intel_d($vars);
   if (empty($vars['report_subtype'])) {
     $vars['report_subtype'] = 'address';
   }
@@ -46,7 +46,7 @@ intel_d($vars);
   $ga_data->buildFilters($vars['filters'], $vars['subsite']);
   $ga_data->setDateRange($vars['start_date'], $vars['end_date']);
   $ga_data->setRequestCallback('intel_ga_feed_request_callback', array('cache_options' => $vars['cache_options']));
-$ga_data->setDebug(1);
+//$ga_data->setDebug(1);
 
   $details = 0;
   if ($vars['report_subfilter_type'] == 'address') {
@@ -61,7 +61,7 @@ $ga_data->setDebug(1);
   $ga_data->loadFeedData('entrances_events_valued');
 
   $d = $ga_data->data;
-intel_d($d);
+//intel_d($d);
   // append array if no data exists
   $d += array(
     'trafficcategory' => array(),

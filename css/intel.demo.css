@@ -58,3 +58,19 @@ div.intel-demo-post-content .contact-wrapper .col-right  {
 div.intel-demo-post-content .intel-demo-footer  {
   clear: both ;
 }
+
+div.intel-demo-post-content p.lead {
+  font-size: 1.6em;
+}
+
+div.intel-demo-post-content a.icon-link {
+  box-shadow: none;
+  text-decoration: none;
+}
+
+/* hack to hide post-thumbnails set by the absolute value of post->ID */
+/*
+img.attachment-post-thumbnail {
+  display: none !important;
+}
+*/

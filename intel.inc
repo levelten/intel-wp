@@ -8,7 +8,7 @@
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.6');
+define('INTEL_L10IAPI_JS_VER', '0.2.7');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -161,6 +161,20 @@ function intel_menu($items = array()) {
     'weight' => $w++,
     'file' => 'admin/intel.admin_config.inc',
   );
+
+  $items['admin/config/intel/settings/taxonomy'] = array(
+    'title' => 'Taxonomies',
+    'description' => 'Taxonomy configuration.',
+    'page callback' => 'intel_admin_taxonomy_list_page',
+    'access callback' => 'user_access',
+    //'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
+
   $items['admin/config/intel/settings/page_attribute'] = array(
     'title' => 'Page attributes',
     'description' => 'Page attribute configuration.',
@@ -257,6 +271,38 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_NORMAL_ITEM,
     'file' => 'admin/intel.admin_config.inc',
   );
+
+
+  $items['admin/config/intel/settings/taxonomy/%intel_taxonomy'] = array(
+    'title' => 'View taxonomy',
+    'page callback' => 'intel_admin_taxonomy_view_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  /*
+  $items['admin/config/intel/settings/taxonomy/add'] = array(
+    'title' => 'Add taxonomy',
+    'page callback' => 'intel_admin_taxonomy_add_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_ACTION,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+  */
+  $items['admin/config/intel/settings/taxonomy/%intel_taxonomy/edit'] = array(
+    'title' => 'Edit taxonomy',
+    'page callback' => 'intel_admin_taxonomy_edit_page',
+    'page arguments' => array(5),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_NORMAL_ITEM,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
+
   $items['admin/config/intel/settings/visitor_attribute/add'] = array(
     'title' => 'Add attribute',
     'page callback' => 'intel_admin_visitor_attribute_add_page',
@@ -1234,7 +1280,7 @@ function intel_reports() {
     }
   }
 
-  if (intel_is_extended()) {
+  if (0 && intel_is_extended()) {
     $reports['event'] = array();
     $reports['event']['-'] = array(
       'key' => 'default.top.pageview',
@@ -2972,11 +3018,11 @@ function intel_entity_attr_entity_count($attr_key = null, $value0 = null, $value
       $query->condition($value_field, $value1, $op1);
     }
   }
-  intel_d("$value0, " . $query);
+  //intel_d("$value0, " . $query);
 
   $count = $query->execute()->rowCount();
 
-  intel_d($count);
+  //intel_d($count);
 
   return $count;
 }

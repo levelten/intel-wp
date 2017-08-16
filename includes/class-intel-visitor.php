@@ -653,7 +653,7 @@ class Intel_Visitor extends Intel_Entity  {
 			$where = array(
 				'vid' => $from_vid,
 			);
-			$wpdb->update($wpdb->prefix . 'intel_submissions', $data, $where );
+			$wpdb->update($wpdb->prefix . 'intel_submission', $data, $where );
 			// TODO WP
 			/*
 			// update form submission vids

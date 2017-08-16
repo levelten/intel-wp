@@ -154,7 +154,7 @@ function intel_page_alter(&$page) {
   }
 
   // check if page intent is landing page
-  if (isset($page_attrs['i']) && isset($page_attrs['i']['l'])) {
+  if (isset($page_attrs['pi']) && isset($page_attrs['pi']['l'])) {
     $config['isLandingpage'] = 1;
     if ($api_level == 'pro') {
       //$page_events['landing_page_view'] = $intel_events['landing_page_view'];
@@ -165,27 +165,31 @@ function intel_page_alter(&$page) {
   // only when user is logged in (otherwise page caching will cause errors)
   if (!empty($user->ID)) {
     if (INTEL_PLATFORM == 'wp') {
+      $tracking_exclude_roles = get_option('intel_tracking_exclude_role', array('administrator' => 'administrator'));
       // WP roles do not have ids, so we create them
       $role_index = get_option('intel_role_index', array());
-      $cur = isset($ga_va['r']) ? $ga_va['r'] : array();
+      $cur = isset($ga_va['ur']) ? $ga_va['ur'] : array();
       if (!empty($user->roles) && is_array($user->roles)) {
-        foreach ($user->roles AS $i => $l) {
-          if (!isset($role_index[$l])) {
-            $role_index[$l] = count($role_index);
+        foreach ($user->roles AS $i => $role) {
+          if (!empty($tracking_exclude_roles[$role])) {
+            $config['trackAnalytics'] = 0;
+          }
+          if (!isset($role_index[$role])) {
+            $role_index[$role] = count($role_index);
             update_option('intel_role_index', $role_index);
           }
-          $id = $role_index[$l];
+          $id = $role_index[$role];
           if (!isset($cur[$id])) {
-            if (!isset($visitor_attrs['r'])) {
-              $visitor_attrs['r'] = array();
+            if (!isset($visitor_attrs['ur'])) {
+              $visitor_attrs['ur'] = array();
             }
-            $visitor_attrs['r'][$id] = '';
+            $visitor_attrs['ur'][$id] = '';
           }
         }
       }
     }
     elseif (INTEL_PLATFORM == 'drupal') {
-      $cur = isset($ga_va['r']) ? $ga_va['r'] : array();
+      $cur = isset($ga_va['ur']) ? $ga_va['ur'] : array();
       if (!empty($user->roles) && is_array($user->roles)) {
         foreach ($user->roles AS $i => $l) {
           // don't send anonymous role
@@ -193,10 +197,10 @@ function intel_page_alter(&$page) {
             continue;
           }
           if (!isset($cur[$i])) {
-            if (!isset($visitor_attrs['r'])) {
-              $visitor_attrs['r'] = array();
+            if (!isset($visitor_attrs['ur'])) {
+              $visitor_attrs['ur'] = array();
             }
-            $visitor_attrs['r'][$i] = '';
+            $visitor_attrs['ur'][$i] = '';
           }
         }
       }
@@ -649,14 +653,14 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
     $intent = $entity->field_page_intent[$lang][0]['value'];
   }
   if ($intent) {
-    $page_attrs['i'] = array(
+    $page_attrs['pi'] = array(
       $intent => '',
     );
     $page_ld['oei:pageIntent'] = $intent;
   }
 
   $vocab_entity_settings = intel_get_entity_settings_multi('taxonomy');
-
+//intel_d($vocab_entity_settings);
   // process vocabularies with global tracking enabled
   if (INTEL_PLATFORM == 'drupal') {
     foreach ($fields_info AS $key => $field) {
@@ -692,31 +696,39 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
     }
   }
   elseif (INTEL_PLATFORM == 'wp') {
-    $attr_keys = array(
-      'post_tag' => 'b',
-      'category' => 'c',
-    );
+    $taxonomies = get_object_taxonomies( $entity );
     //$taxonomies = get_taxonomies();
     //intel_d($taxonomies);
-    $taxonomies = get_object_taxonomies( $entity );
+
     //intel_d($taxonomies);
-    foreach ($attr_keys as $tax_type => $attr_key) {
-      $terms = $terms = get_the_terms($entity, $tax_type);
-      if (is_array($terms)) {
+    //intel_d($taxonomies);
+    foreach ($taxonomies as $tax_type) {
+      if (empty($vocab_entity_settings[$tax_type])) {
+        continue;
+      }
+      $vocab_es = $vocab_entity_settings[$tax_type];
+      if (!empty($vocab_es['page_attribute']['key'])) {
+        $attr_key = $vocab_es['page_attribute']['key'];
+        $terms = get_the_terms($entity, $tax_type);
+        if (!is_array($terms)) {
+          $terms = array();
+        }
+        // process demo terms
+        if (!empty($entity->intel_demo['terms'])) {
+          foreach ($entity->intel_demo['terms'] as $id) {
+            $term = intel_demo_term_load($id);
+            if (!empty($term->taxonomy) && $term->taxonomy == $tax_type) {
+              $terms[] = $term;
+            }
+          }
+        }
         foreach($terms as $term) {
           $page_attrs[$attr_key][$term->term_id] = '';
         }
       }
     }
-    if (!empty($entity->intel_demo['terms'])) {
-      foreach ($entity->intel_demo['terms'] as $id) {
-        $term = intel_demo_term_load($id);
-        if (!empty($term)) {
-          $page_attrs[$attr_keys[$term->taxonomy]][$term->term_id] = '';
-        }
-      }
-    }
   }
+  //intel_d($page_attrs);
 
   // set custom page attributes if page_attribute_col field exists
   if (INTEL_PLATFORM == 'drupal') {
@@ -2194,7 +2206,7 @@ function intel_process_form_submission($vars) {
 
   // add known attribute to visitor
   if (!empty($visitor->contact_created)) {
-    intel_add_page_intel_push(array('set', "va.k", ''));
+    intel_add_page_intel_push(array('set', "va.kn", ''));
   }
 
   /*

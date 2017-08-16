@@ -32,6 +32,35 @@ class Intel_Activator {
 	public static function activate() {
 		self::setup_database();
 		self::setup_cron();
+		self::setup_options();
+	}
+
+	public static function setup_options() {
+		// add entity_settings for WP standard taxonomies
+		$vars = array(
+			'page_intent' => '',
+			'track_page_terms' => 1,
+			'page_attribute' => array(
+				'key' => 'b',
+				'title' => Intel_Df::t('Tag'),
+				'title_plural' => Intel_Df::t('Tags'),
+			),
+			'visitor_attribute' => array(
+			),
+		);
+		update_option('intel_entity_settings_taxonomy__post_tag', $vars);
+
+		$vars['page_attribute']['key'] = 'c';
+		$vars['page_attribute']['title'] = Intel_Df::t('Category');
+		$vars['page_attribute']['title_plural'] = Intel_Df::t('Categories');
+		update_option('intel_entity_settings_taxonomy__category', $vars);
+
+		$vars['page_attribute']['key'] = 'd';
+		$vars['page_attribute']['title'] = Intel_Df::t('Post format');
+		$vars['page_attribute']['title_plural'] = Intel_Df::t('Post formats');
+		update_option('intel_entity_settings_taxonomy__post_format', $vars);
+
+		// initialize system meta for updates
 		$schema_ver = 1000;
 		$updates = self::get_needed_updates();
 		foreach ($updates as $i => $v) {
@@ -203,6 +232,31 @@ class Intel_Activator {
 		) $charset_collate;";
 
 		dbDelta( $sql );
+	}
+
+	public static function update_1002() {
+		$vars = array(
+			'page_intent' => '',
+			'track_page_terms' => 1,
+			'page_attribute' => array(
+				'key' => 'b',
+				'title' => Intel_Df::t('Tag'),
+				'title_plural' => Intel_Df::t('Tags'),
+			),
+			'visitor_attribute' => array(
+			),
+		);
+		update_option('intel_entity_settings_taxonomy__post_tag', $vars);
+
+		$vars['page_attribute']['key'] = 'c';
+		$vars['page_attribute']['title'] = Intel_Df::t('Category');
+		$vars['page_attribute']['title_plural'] = Intel_Df::t('Categories');
+		update_option('intel_entity_settings_taxonomy__category', $vars);
+
+		$vars['page_attribute']['key'] = 'd';
+		$vars['page_attribute']['title'] = Intel_Df::t('Post format');
+		$vars['page_attribute']['title_plural'] = Intel_Df::t('Post formats');
+		update_option('intel_entity_settings_taxonomy__post_format', $vars);
 	}
 
 	public static function setup_cron() {

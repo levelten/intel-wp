@@ -1334,29 +1334,33 @@ function intel_get_visitor_attribute_info_default() {
       'title' => $role,
     );
   }
-  $attributes['r'] = array(
+  $attributes['ur'] = array(
     'title' => Intel_Df::t('User roles'),
     'description' => Intel_Df::t('Set to Drupal user roles for authenticated visitors.'),
     'type' => 'list',
     'static_options' => $options,
   );
-  $attributes['k'] = array(
+
+  $attributes['kn'] = array(
     'title' => Intel_Df::t('Known'),
     'description' => Intel_Df::t('If a visitor has submitted an email address.'),
     'type' => 'flag',
   );
-  $attributes['s'] = array(
+  $attributes['sc'] = array(
     'title' => Intel_Df::t('Score'),
     'description' => Intel_Df::t('Sum of valued events and goals triggered by visitor.'),
     'type' => 'scalar',
     'selectable' => 1,
   );
+  /*
   $attributes['l'] = array(
     'title' => Intel_Df::t('Lead score'),
     'description' => Intel_Df::t('Used to value visitors customer potential.'),
     'type' => 'scalar',
     'selectable' => 1,
   );
+  */
+  /*
   $attributes['g'] = array(
     'title' => Intel_Df::t('Groups'),
     'description' => Intel_Df::t('Used to categorize visitors by a defining characteristics.'),
@@ -1371,6 +1375,8 @@ function intel_get_visitor_attribute_info_default() {
     'custom_options' => array(),
     'selectable' => 1,
   );
+  */
+  /*
   $attributes['e1l'] = array(
     'title' => Intel_Df::t('First entrance page'),
     'title_plural' => Intel_Df::t('First entrance pages'),
@@ -1429,6 +1435,7 @@ function intel_get_visitor_attribute_info_default() {
       )
     ),
   );
+  */
   return $attributes;
 }
 
@@ -1584,6 +1591,16 @@ function intel_get_page_attribute_info_default() {
     'selectable' => 1,
   );
   */
+  /*
+  $attributes['pi'] = array(
+    'title' => Intel_Df::t('Page intent'),
+    'description' => Intel_Df::t('The role a page plays on the site.'),
+    'type' => 'list',
+    'static_options' => intel_get_page_intents_default('config'),
+    'custom_options' => array(),
+    'selectable' => 1,
+  );
+  */
   $attributes['pd'] = array(
     'title' => Intel_Df::t('Published date'),
     'description' => Intel_Df::t('The time (unix timestamp) a node was created.'),
@@ -1666,6 +1683,8 @@ function intel_get_page_attribute_info_default() {
     'access callback' => FALSE,
   );
   */
+
+  /*
   $attributes['b'] = array(
     'title' => Intel_Df::t('Tag'),
     'title_plural' => Intel_Df::t('Tags'),
@@ -1863,9 +1882,25 @@ function intel_get_attribute_info($name = NULL, $mode = 'visitor') {
     if ((isset($v[$mode . '_attribute']) && !empty($v[$mode . '_attribute']['key']))
       || (($mode == 'visitor') && !empty($v['track_page_terms_visitor']))
     ) {
-      $vocab_info = taxonomy_vocabulary_machine_name_load($k);
-      if (empty($vocab_info->vid)) {
-        continue;
+      if (INTEL_PLATFORM == 'wp') {
+        $vocab_info = get_taxonomy($k);
+        //intel_d($vocab_info);
+        if (empty($vocab_info->name)) {
+          continue;
+        }
+        $vocab_title = $vocab_info->label;
+        $vocab_desc = $vocab_info->description;
+        $vocab_mn = $k;
+      }
+      elseif (INTEL_PLATFORM == 'drupal') {
+        $vocab_info = taxonomy_vocabulary_machine_name_load($k);
+        if (empty($vocab_info->vid)) {
+          continue;
+        }
+        $vocab_title = $vocab_info->name;
+        $vocab_desc = $vocab_info->description;
+        $vocab_mn = $vocab_info->machine_name;
+
       }
 
       // if mode == visitor,
@@ -1880,21 +1915,28 @@ function intel_get_attribute_info($name = NULL, $mode = 'visitor') {
       }
       else {
         $key = $v[$mode . '_attribute']['key'];
-        $prop = $v[$mode . '_attribute']['prop'];
+        if (!empty($v[$mode . '_attribute']['prop'])) {
+          $prop = $v[$mode . '_attribute']['prop'];
+        }
       }
 
       $attrs[$key] = $v[$mode . '_attribute'];
       if (empty($attrs[$key]['title'])) {
-        $attrs[$key]['title'] = $vocab_info->name;
+        $attrs[$key]['title'] = $vocab_title;
       }
       if (empty($attrs[$key]['description'])) {
-        $attrs[$key]['description'] = $vocab_info->description;
+        $attrs[$key]['description'] = $vocab_desc;
+      }
+      $url = 'admin/structure/taxonomy/' . $k . '/edit';
+      if (INTEL_PLATFORM == 'wp') {
+        $url = 'admin/config/intel/settings/taxonomy/' . $k . '/edit';
       }
       $attrs[$key]['options_description'] = Intel_Df::t('Generated from taxonomy vocabulary !link.',
         array(
-          '!link' => l($vocab_info->name, 'admin/structure/taxonomy/' . $k . '/edit'),
+          '!link' => Intel_Df::l($vocab_title, $url),
         )
       );
+
       $attrs[$key]['key'] = $key;
       $attrs[$key]['type'] = ($mode == 'visitor') ? 'vector' : 'list';
       $attrs[$key]['module']  = 'intel';
@@ -1902,7 +1944,7 @@ function intel_get_attribute_info($name = NULL, $mode = 'visitor') {
       $attrs[$key]['options info callback']  = 'intel_page_attribute_taxomony_term_option_info';
       $attrs[$key]['module']  = 'intel';
       $attrs[$key]['options'] = array();
-      if ($prop) {
+      if (!empty($prop)) {
         $attrs[$key]['prop'] = $prop;
       }
       if (!isset($attrs[$key]['storage'])) {
@@ -1913,10 +1955,12 @@ function intel_get_attribute_info($name = NULL, $mode = 'visitor') {
           )
         );
       }
+      /*
       $attrs[$key]['storage']['analytics'] = array(
         'siteType' => 'taxonomy_term',
-        'siteBundle' => $vocab_info->machine_name,
+        'siteBundle' => $vocab_mn,
       );
+      */
     }
   }
 
@@ -2057,7 +2101,7 @@ function intel_page_attribute_author_option_info($option_id, $data_options) {
     if (!empty($account)) {
       $data['title'] = $account->display_name;
       if ($option_id < 0) {
-        $data['page_count'] = intel_demo_count_user_posts( $option_id, 'post');
+        $data['page_count'] = intel_demo_count_user_posts( $option_id );
       }
       else {
         $data['page_count'] = count_user_posts( $option_id, 'post', TRUE );
@@ -2537,25 +2581,63 @@ function intel_get_page_attributes_custom_multi($mode = 'visitor') {
 }
 
 function intel_get_entity_settings_multi($entity_type, $bundle = '') {
-  return array(); // TODO WP
-
-  $query = db_select('variable', 'v')
-    ->fields('v');
-
-  if ($bundle == '') {
-    $query->condition('name', 'intel_entity_settings_' . $entity_type . '__%', 'LIKE');
-  }
-  else {
-    $query->condition('name', 'intel_entity_settings_' . $entity_type . '__' . $bundle);
-  }
-  $result = $query->execute();
 
   $data = array();
-  while ($row = $result->fetchObject()) {
-    $a = explode('_', $row->name, 6);
-    $data[$a[5]] = unserialize($row->value);
+  if (INTEL_PLATFORM == 'wp') {
+    global $wpdb;
+
+    $values = array();
+    $sql = "
+		  SELECT *
+		  FROM {$wpdb->prefix}options
+		";
+    if ($bundle == '') {
+      $sql .= "WHERE option_name LIKE %s";
+      $values[] = 'intel_entity_settings_' . $entity_type . '__%';
+    }
+    else {
+      $sql .= "WHERE option_name = %s";
+      $values[] = 'intel_entity_settings_' . $entity_type . '__' . $bundle;
+    }
+    $results = $wpdb->get_results( $wpdb->prepare($sql, $values) );
+
+    foreach ($results as  $row) {
+      $a = explode('_', $row->option_name, 6);
+      $data[$a[5]] = unserialize($row->option_value);
+    }
   }
+  elseif (INTEL_PLATFORM == 'drupal') {
+    $query = db_select('variable', 'v')
+      ->fields('v');
+
+    if ($bundle == '') {
+      $query->condition('name', 'intel_entity_settings_' . $entity_type . '__%', 'LIKE');
+    }
+    else {
+      $query->condition('name', 'intel_entity_settings_' . $entity_type . '__' . $bundle);
+    }
+    $result = $query->execute();
+
+    while ($row = $result->fetchObject()) {
+      $a = explode('_', $row->name, 6);
+      $data[$a[5]] = unserialize($row->value);
+    }
+  }
+
   return $data;
+}
+
+function intel_taxonomy_load($tax_type) {
+  $tax = get_taxonomy($tax_type);
+  if (empty($tax)) {
+    return FALSE;
+  }
+  $entity = array(
+    'title' => $tax->label,
+    'taxonomy' => $tax,
+    'intel_entity_settings' => get_option('intel_entity_settings_taxonomy__' . $tax_type, array()),
+  );
+  return $entity;
 }
 
 function intel_index_encode($base10) {
