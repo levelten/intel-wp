@@ -1240,6 +1240,13 @@ function intel_reports() {
     'key' => 'default.top.entrance',
     'title' => Intel_Df::t('Entrance pages'),
   );
+  if (intel_is_extended()) {
+    $reports['content']['avgpageload'] = array(
+      'key' => 'avgPageLoad.top',
+      'title' => Intel_Df::t('Timing: Avg. Page Load'),
+    );
+  }
+
   /*
   $reports['content']['attraction'] = array(
     'key' => 'page_attribute:i-t.top.entrance',
@@ -1268,7 +1275,7 @@ function intel_reports() {
       //if ($info['type'] == 'item' || $info['type'] == 'list') {
       $reports['content']['pa-' . $key] = array(
         'key' => 'page_attribute:' . $key . '.top.entrance',
-        'title' => Intel_Df::t('Segment') . ': ' . ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
+        'title' => Intel_Df::t('Attribute') . ': ' . ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
         'page callback' => 'intel_page_attribute_list_report_page',
         //'intel_api_access' => 'basic',
         'file' => 'reports/intel.report_page_attribute_list.inc'
@@ -1458,85 +1465,85 @@ function intel_reports() {
 
     $reports['visitor']['country'] = array(
       'key' => 'country.top',
-      'title' => Intel_Df::t('Geo > Country'),
+      'title' => Intel_Df::t('Geo: Country'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['region'] = array(
       'key' => 'region.top',
-      'title' => Intel_Df::t('Geo > Region'),
+      'title' => Intel_Df::t('Geo: Region'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['metro'] = array(
       'key' => 'metro.top',
-      'title' => Intel_Df::t('Geo > Metro'),
+      'title' => Intel_Df::t('Geo: Metro'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['city'] = array(
       'key' => 'city.top',
-      'title' => Intel_Df::t('Geo > City'),
+      'title' => Intel_Df::t('Geo: City'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['networkdomain'] = array(
       'key' => 'networkDomain.top',
-      'title' => Intel_Df::t('Network > Domain'),
+      'title' => Intel_Df::t('Network: Domain'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['networklocation'] = array(
       'key' => 'networkLocation.top',
-      'title' => Intel_Df::t('Network > Location'),
+      'title' => Intel_Df::t('Network: Location'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['browser'] = array(
       'key' => 'browser.top',
-      'title' => Intel_Df::t('Device > Browser'),
+      'title' => Intel_Df::t('Device: Browser'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['browserversion'] = array(
       'key' => 'browserVersion.top',
-      'title' => Intel_Df::t('Device > Browser Version'),
+      'title' => Intel_Df::t('Device: Browser Version'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['operatingsystem'] = array(
       'key' => 'operatingSystem.top',
-      'title' => Intel_Df::t('Device > Operating System'),
+      'title' => Intel_Df::t('Device: Operating System'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['operatingsystemversion'] = array(
       'key' => 'operatingSystemVersion.top',
-      'title' => Intel_Df::t('Device > Operating System Version'),
+      'title' => Intel_Df::t('Device: Operating System Version'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['devicecategory'] = array(
       'key' => 'deviceCategory.top',
-      'title' => Intel_Df::t('Device > Category'),
+      'title' => Intel_Df::t('Device: Category'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['browsersize'] = array(
       'key' => 'browserSize.top',
-      'title' => Intel_Df::t('Device > Browser Size'),
+      'title' => Intel_Df::t('Device: Browser Size'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['screensize'] = array(
       'key' => 'screenResolution.top',
-      'title' => Intel_Df::t('Device > Screen Resolution'),
+      'title' => Intel_Df::t('Device: Screen Resolution'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['language'] = array(
       'key' => 'language.top',
-      'title' => Intel_Df::t('Device > Language'),
+      'title' => Intel_Df::t('Device: Language'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
@@ -4397,14 +4404,15 @@ function intel_posts_alter($posts) {
 //intel_d( $posts[0] );
 //$excerpt = get_the_excerpt( $posts[0] );
 //intel_d($excerpt);
-  if (!empty(get_option('intel_demo_mode', 0))) {
+  $intel_demo_mode = get_option('intel_demo_mode', 0);
+  if (!empty($intel_demo_mode)) {
     include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
     $posts = intel_demo_posts_alter($posts);
   }
 
   return $posts;
 }
-add_filter('the_posts', 'intel_posts_alter', -10);
+add_filter('the_posts', 'intel_posts_alter');
 
 /**
  * Implements hook_save_post()

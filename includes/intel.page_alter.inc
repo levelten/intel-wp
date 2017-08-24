@@ -646,11 +646,14 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   // track page intent
   $intent = INTEL_PAGE_INTENT_DEFAULT;
 
+
   if (!empty($page_entity_settings['page_intent'])) {
     $intent = $page_entity_settings['page_intent'];
   }
-  if (!empty($entity->field_page_intent[$lang][0]['value']) && ($entity->field_page_intent[$lang][0]['value'] != '_default')) {
-    $intent = $entity->field_page_intent[$lang][0]['value'];
+  if (INTEL_PLATFORM == 'drupal') {
+    if (!empty($entity->field_page_intent[$lang][0]['value']) && ($entity->field_page_intent[$lang][0]['value'] != '_default')) {
+      $intent = $entity->field_page_intent[$lang][0]['value'];
+    }
   }
   if ($intent) {
     $page_attrs['pi'] = array(

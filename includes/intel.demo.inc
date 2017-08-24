@@ -523,7 +523,10 @@ function intel_demo_posts_alter($posts){
       if ($_post->post_type == 'post') {
         if ($post_count == 1) {
           $l_options = array(
-            'html' => 1
+            'html' => 1,
+            'attributes' => array(
+              'title' => Intel_Df::t('Call To Action'),
+            ),
           );
           $l_options = Intel_Df::l_options_add_class(array('track-cta'), $l_options);
           //$content .= '<div class="intel-demo-cta">' . Intel_Df::l('<img src="http://via.placeholder.com/1280x360&text=Call+To+Action" width="1280" height="360">', 'intelligence/demo/contact', $l_options) . '</div>';

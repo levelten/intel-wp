@@ -761,12 +761,12 @@ function intel_admin_setup_intel_api_key($form, &$form_state) {
     'gaviewid' => $form_state['intel_ga_profile']['viewId'],
   );
   $items[] = '<br><br><label>' . Intel_Df::t('First') . '</label><br>';
-  $items[] = Intel_Df::l(Intel_Df::t('Login to the Intelligence admin'), "http://$imapi_domain", $l_options);
+  $items[] = Intel_Df::l(Intel_Df::t('Login to the Intelligence admin'), "https://$imapi_domain", $l_options);
 
   $items[] = '<br><br><label>' . Intel_Df::t('Then') . '</label><br>';
   $items[] = Intel_Df::l(Intel_Df::t('Setup a new property with your GA tracking id: @tid', array(
       '@tid' => $form_state['intel_ga_profile']['propertyId'],
-    )), "http://$imapi_domain/property/add", $l_options);
+    )), "https://$imapi_domain/property/add", $l_options);
 
   $items[] = '<br><br>';
 
@@ -836,7 +836,7 @@ function intel_admin_setup_check_intel_api_key($form, &$form_state) {
       $status['error_type'] = 'property_not_configured';
       $l_options = Intel_Df::l_options_add_target('imapi');
       $status['error_msg'] = Intel_Df::t('GA property configuration is not complete. !link', array(
-        '!link' => Intel_Df::l(Intel_Df::t('Click here to configure property.'), 'http://intl.getlevelten.com/property/' . $tid . '/ga_config', $l_options),
+        '!link' => Intel_Df::l(Intel_Df::t('Click here to configure property.'), 'https://intl.getlevelten.com/property/' . $tid . '/ga_config', $l_options),
       ));
     }
   }

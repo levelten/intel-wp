@@ -1,35 +1,36 @@
-=== Plugin Name ===
+=== Intelligence ===
 Contributors: tomdude
 Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.8.1
-Stable tag: 1.2.1
+Stable tag: 1.2.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Integrates results oriented analytics and visitor intelligence gathering into WordPress.
+Results-Oriented Google Analytics and visitor intelligence for WordPress.
 
 == Description ==
 
-Intelligence's goal is to provide impactful and actionable data. It focuses on two areas, analytics and visitor data.
+Intelligence's goal is to provide truely actionable insight that enable teams to make better, data-driven decisions and create more impactful web experiences. 
 
-The analytics side is designed to enable smarter, empirical web development and content strategy. Intelligence streamlines
-creation and management of a results oriented analytics measurement plan focused on goals and valued events. WordPress
-integrated reports provide insight into the value a website and its various components are generating enabling teams
-to better inspect and adapt to optimzed returns.
+Intelligence adds results oriented events, custom dimensions and metrics, and reporting to Google Analytics directly from WordPress. It is designed to enable smarter, empirical web development, UX, content strategy and marketing. Intelligence streamlines creation and management of a results oriented analytics measurement plan focused on goals and valued events. WordPress integrated reports provide insight into the value a website and its various components are generating enabling teams to better inspect and adapt to optimzed returns.
 
-The visitor intelligence side integrates data about site visitors to drive deeper engagement and accelerate sales cycles.
+Intelligence also adds individual visitor insight to drive deeper engagement and accelerate sales cycles.
 
-The Intelligence for WordPress plugin integrates the LevelTen Intelligence API service ([intl.getlevelten.com](http://intl.getlevelten.com))
-into WordPress. The Intelligence API provides a SAAS platform to integrate and extend Google Analytics and other
-3rd party services. To review the Intelligence API Terms of Use visit: [intl.getlevelten.com/legal](http://intl.getlevelten.com/legal)
+= Bug Reports =
+Bug reports for Intelligence should be [submitted on GitHub](https://github.com/levelten/wp-intelligence/issues).
 
-To learn more about Intelligence for WordPress visit [intelligencewp.com](http://intelligencewp.com)
+= Intelligence API =
+The Intelligence for WordPress plugin integrates the Intelligence API service ([intl.getlevelten.com](https://intl.getlevelten.com))
+into WordPress. The Intelligence API provides a SAAS platform to integrate and extend Google Analytics and other 3rd party services. To review the Intelligence API Terms of Use visit: [intl.getlevelten.com/legal](https://intl.getlevelten.com/legal)
+
+= Learn more =
+To learn more about Intelligence for WordPress visit [intelligencewp.com](https://intelligencewp.com)
 
 == Installation ==
 
-For installation instructions, visit [intelligencewp.com/wiki/installation](http://www.intelligencewp.com/wiki/installation)
+For installation instructions, visit [intelligencewp.com/wiki/installation](https://intelligencewp.com/docs/installation)
 
 == Changelog ==
 
@@ -47,8 +48,8 @@ For installation instructions, visit [intelligencewp.com/wiki/installation](http
 * Time interval JS API
 * Page scroll JS API
 * Page visibility change API
-* Page consume event
-* Video consume event
+* Page consumed event
+* Video consumed event
 
 = 1.1.5 =
 * Migrate to GAPI v4
