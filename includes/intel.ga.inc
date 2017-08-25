@@ -25,7 +25,7 @@ function intel_goal_load($key = '', $options = array()) {
   else if ($key && is_numeric($key)) {
     $index_by = 'ga_id';
   }
-  $goal_static = Intel_Df::drupal_static(__FUNCTION__, array());
+  $goal_static = &Intel_Df::drupal_static(__FUNCTION__, array());
 
   $rebuild_cache = 0;
 
@@ -2128,7 +2128,7 @@ function intel_page_attribute_author_option_info($option_id, $data_options) {
 }
 
 function intel_page_attribute_content_type_option_info($option_id, $data_options) {
-  $content_types = Intel_Df::drupal_static( __FUNCTION__, array());
+  $content_types = &Intel_Df::drupal_static( __FUNCTION__, array());
 
   $data = array(
     'title' => Intel_Df::t('(unknown)'),
@@ -3638,7 +3638,7 @@ function _intel_get_report_dates_from_ops($ops = 'l30d', &$cache_options = array
 }
 
 function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1 day", $return_hash = FALSE) {
-  $timezone_info = Intel_Df::drupal_static( __FUNCTION__, array());
+  $timezone_info = &Intel_Df::drupal_static( __FUNCTION__, array());
   if (empty($timezone_info)) {
     $timezone_info['wp_timezone'] = get_option('timezone_string', '');
     $ga_profile = get_option('intel_ga_profile', array());

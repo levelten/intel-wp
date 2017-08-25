@@ -121,8 +121,8 @@ class Intel_Activator {
 
 		$sql = "CREATE TABLE $table_name (
 			sid int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-			vid int(10) UNSIGNED NOT NULL,
-			submitted int(11) NOT NULL,
+			vid int(10) UNSIGNED NOT NULL DEFAULT '0',
+			submitted int(10) UNSIGNED NOT NULL DEFAULT '0',
 			type varchar(32) NOT NULL,
 			fid varchar(64) NOT NULL,
 			fsid varchar(128) NOT NULL,
@@ -139,13 +139,13 @@ class Intel_Activator {
 			KEY vid (vid),
 			KEY fid (fid),
 			KEY fsid (fsid),
-			KEY form_page_id (form_page_id),
-			KEY form_page_uri (form_page_uri),
-			KEY response_page_id (response_page_id),
-			KEY response_page_uri (response_page_uri),
-			KEY cta_id (cta_id),
-			KEY cta_page_id (cta_page_id),
-			KEY cta_page_uri (cta_page_uri)
+			KEY response_page_uri (response_page_uri(32)),
+			KEY response_page_id (response_page_id(8)),
+			KEY form_page_uri (form_page_uri(32)),
+			KEY form_page_id (form_page_id(8)),
+			KEY cta_page_uri (cta_page_uri(32)),
+			KEY cta_page_id (cta_page_id(8)),
+			KEY cta_id (cta_id(32))
 		) $charset_collate;";
 
 		dbDelta( $sql );

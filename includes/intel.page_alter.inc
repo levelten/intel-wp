@@ -1142,7 +1142,7 @@ function intel_trigger_intel_event_by_name($event_name, $values = array()) {
 }
 
 function intel_cache_busting_url($url) {
-  $enable = Intel_Df::drupal_static( __FUNCTION__ );
+  $enable = &Intel_Df::drupal_static( __FUNCTION__ );
   if (!isset($enable)) {
     $enable = get_option('intel_cache_busting', INTEL_CACHE_BUSTING_DEFAULT);
   }

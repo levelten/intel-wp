@@ -50,7 +50,7 @@ function intel_demo_count_user_posts($userid, $post_type = '') {
 }
 
 function intel_demo_term_load($id = NULL) {
-  $terms = Intel_Df::drupal_static( __FUNCTION__, array());
+  $terms = &Intel_Df::drupal_static( __FUNCTION__, array());
 
   if (empty($terms)) {
     $term = array();
@@ -112,7 +112,7 @@ function intel_demo_term_load($id = NULL) {
 }
 
 function intel_demo_post_load($id = NULL, $options = array()) {
-  $posts = Intel_Df::drupal_static( __FUNCTION__, array());
+  $posts = &Intel_Df::drupal_static( __FUNCTION__, array());
 
   $demo_settings = get_option('intel_demo_settings', intel_demo_settings_default());
   if (empty($posts)) {

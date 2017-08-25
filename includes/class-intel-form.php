@@ -71,7 +71,7 @@ class Intel_Form  {
 	 * @see drupal_build_form()
 	 */
 	public static function drupal_get_form($form_id) {
-		$count = Intel_Df::drupal_static(__FUNCTION__, 0);
+		$count = &Intel_Df::drupal_static(__FUNCTION__, 0);
 
 		if ($count == 0) {
 			wp_enqueue_script( 'intel_form', INTEL_URL . 'admin/js/intel-form.js', array( 'jquery' ), intel()->get_version(), false );
@@ -1619,7 +1619,7 @@ class Intel_Form  {
 			foreach ($element['#process'] as $process) {
 				if (is_callable($process)) {
 					//$element = $process($element, $form_state, $form_state['complete form']);
-					$element = call_user_func( $process, $element, $form_state, $form_state['complete form']);
+					$element = call_user_func_array( $process, array(&$element, &$form_state, $form_state['complete form']));
 				}
 			}
 			$element['#processed'] = TRUE;
