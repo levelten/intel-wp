@@ -8,7 +8,7 @@
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.7');
+define('INTEL_L10IAPI_JS_VER', '0.2.8');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -911,6 +911,18 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
     'weight' => $w++,
   );
+
+  /*
+  $items['admin/util/log'] = array(
+    'title' => 'Messages',
+    'description' => 'View messages log',
+    'page callback' => 'intel_util_log_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+  */
 
   $items['admin/util/update'] = array(
     'title' => 'Update',
@@ -4289,7 +4301,16 @@ function intel_form_shortcode($vars) {
       include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
     }
     if (is_callable($vars['name'])) {
-      $form = Intel_Form::drupal_get_form($vars['name']);
+      $options = array(
+        'shortcode' => $vars
+      );
+      if (!empty($vars['redirect'])) {
+        $options['redirect'] = $vars['redirect'];
+      }
+      if (!empty($vars['title'])) {
+        $options['form_title'] = $vars['title'];
+      }
+      $form = Intel_Form::drupal_get_form($vars['name'], $options);
     }
   }
   if (!empty($form)) {

@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.8.1
-Stable tag: 1.2.1.3
+Stable tag: 1.2.1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,9 +22,9 @@ Intelligence also adds individual visitor insight to drive deeper engagement and
 Bug reports for Intelligence should be [submitted on GitHub](https://github.com/levelten/wp-intelligence/issues).
 
 = Intelligence API =
-The Intelligence for WordPress plugin integrates the ([Intelligence API service](https://intl.getlevelten.com)) into WordPress. The Intelligence API provides a SAAS platform to integrate and extend Google Analytics and other 3rd party services. 
+The Intelligence for WordPress plugin integrates the [Intelligence API service](https://intl.getlevelten.com) into WordPress. The Intelligence API provides a SAAS platform to integrate and extend Google Analytics and other 3rd party services.
 
-In order to install Intelligence you will need to create an account and get an API key. There are free and premium versions of the API. [Intelligence API Terms of Use](https://intl.getlevelten.com/legal)
+In order to install Intelligence you will need to create an account and API key. There are free and premium versions of the API. [Intelligence API Terms of Use](https://intl.getlevelten.com/legal)
 
 = Learn more =
 To learn more about Intelligence for WordPress visit [intelligencewp.com](https://intelligencewp.com)

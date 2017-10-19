@@ -88,6 +88,8 @@ class Intel {
 	// whether or not url schema is https
 	public $is_https;
 
+	public $domain;
+
 	public $base_url;
 
 	public $base_secure_url;
@@ -129,6 +131,7 @@ class Intel {
 
 		// Create base URL.
 		$http_protocol = $this->is_https ? 'https' : 'http';
+		$this->domain = $_SERVER['HTTP_HOST'];
 		$this->base_root = $http_protocol . '://' . $_SERVER['HTTP_HOST'];
 
 		$this->base_url = $this->base_root;

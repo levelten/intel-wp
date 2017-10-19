@@ -108,6 +108,7 @@ class Intel_Tracker {
 
 	public function get_intel_pushes_js($options = array()) {
 		$pushes = self::get_intel_pushes();
+
 		$out = '';
 
 		foreach ($pushes as $key => $value) {

@@ -251,6 +251,28 @@ class Intel_Admin {
 		if (empty($info)) {
 			if (!empty($menu_info[$q])) {
 				$info = $menu_info[$q];
+				// special exceptions for admin/config/intel/settings/*/add
+				if (!empty($path_args[1]) && $path_args[1] == 'config') {
+					if (!empty($path_args[5]) && $path_args[5] == 'add') {
+						if ($path_args[4] == 'intel_event') {
+							$bc_title = Intel_Df::t('Events');
+						}
+						elseif ($path_args[4] == 'goal') {
+							$bc_title = Intel_Df::t('Goals');
+						}
+						elseif ($path_args[4] == 'taxonomy') {
+							$bc_title = Intel_Df::t('Taxonomies');
+						}
+						if (!empty($bc_title)) {
+							$a = array_slice($path_args, 0, 5);
+							$breadcrumbs[] = array(
+								'text' => $bc_title,
+								'path' => Intel_Df::url(implode('/', $a)),
+							);
+						}
+
+					}
+				}
 			}
 			else {
 				if (in_array($path_args[0], $entities)) {
@@ -315,6 +337,7 @@ class Intel_Admin {
 							$load_type = 'intel_taxonomy';
 							$bc_title = $load_title = Intel_Df::t('Taxonomy');
 						}
+
 						if ($load_index) {
 							$func = $load_type . '_load';
 							$path_args_t[$load_index] = $func($path_args[$load_index]);

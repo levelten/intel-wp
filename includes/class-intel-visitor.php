@@ -157,6 +157,7 @@ class Intel_Visitor extends Intel_Entity  {
 		}
 		catch (Exception $e) {
 			$this->apiPersonLoadError = $e;
+			$obj = FALSE;
 			//throw new Exception('Unable to load api visitor: ' . $e);
 		}
 		return $obj;

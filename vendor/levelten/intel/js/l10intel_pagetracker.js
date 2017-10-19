@@ -21,7 +21,10 @@ function L10iPageTracker(_ioq, config) {
         ioq.addCallback('timeInterval.900', ths.handlePageAbandoned, this);
 
         // add beforeunload callback to trigger page time and page scroll events
-        $win.on('beforeunload', function (event) { ths.handleUnload(event); });
+        $win.on('beforeunload', function (event) {
+            ths.handleUnload(event);
+        });
+
     };
 
     this.handlePageConsumedTime = function () {
@@ -98,7 +101,6 @@ function L10iPageTracker(_ioq, config) {
     };
 
     this.handleUnload = function handleUnload() {
-        ga('set', 'transport', 'beacon');
         this.sendPageDepthEvents();
     };
 
@@ -160,6 +162,7 @@ function L10iPageTracker(_ioq, config) {
             eventLabel: '' + tdr,
             eventValue: tdr,
             nonInteraction: true,
+            transport: 'beacon'
             //metric8: tdr,
             //metric9: 1
         };
@@ -185,6 +188,7 @@ function L10iPageTracker(_ioq, config) {
                 eventLabel: '' + sd,
                 eventValue: sd,
                 nonInteraction: true,
+                transport: 'beacon',
                 metric8: 1,
                 metric9: tdr,
                 metric10: scroll.pageMax,

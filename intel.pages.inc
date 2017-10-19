@@ -546,12 +546,11 @@ function theme_intel_visit_hits_table(&$variables) {
     }
   }
 
-  uasort($hits, '_intel_sort_by_weight');
+  usort($hits, '_intel_sort_by_weight');
 
   $pageviews = array();
   $pageviews_i = array();
   foreach ($hits as $i => $hit) {
-
     if ($hit['type'] == 'pageview') {
       $pageviews_i[$hit['hostpath']] = count($pageviews);
       $a = array(
@@ -563,9 +562,12 @@ function theme_intel_visit_hits_table(&$variables) {
     }
     else if ($hit['type'] == 'event') {
       $pageview_i = $pageviews_i[$hit['hostpath']];
-      $pageviews[$pageview_i]['hits'][] = $hit;
+      if (isset($pageviews[$pageview_i]['hits'])) {
+        $pageviews[$pageview_i]['hits'][] = $hit;
+      }
     }
   }
+
   // pass sorted hits back for clickstream timeline
   $variables['hit_pageviews'] = $pageviews;
 
