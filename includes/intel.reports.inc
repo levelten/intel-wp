@@ -585,7 +585,8 @@ function intel_build_report($vars) {
     require_once INTEL_DIR . 'includes/class-intel-form.php';
     //$filter_form = Intel_Form::drupal_get_form('intel_report_filters_form', $vars['filters'], $vars);
     //$output .= Intel_Df::render($filter_form);
-    $output .= Intel_Form::drupal_get_form('intel_report_filters_form', $vars['filters'], $vars);
+    $form = Intel_Form::drupal_get_form('intel_report_filters_form', $vars['filters'], $vars);
+    $output .= Intel_Df::render($form);
   }
 
   if ($error) {

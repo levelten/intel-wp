@@ -2751,6 +2751,48 @@ function _intel_sort_by_rtime($a, $b) {
   return ($a['time'] < $b['time']) ? 1 : -1;
 }
 
+function _intel_sort_ga_hits($a, $b) {
+  if (!isset($a['time']) || !isset($b['time'])) {
+    return 1;
+  }
+  if ($a['time'] == $b['time']) {
+    if (isset($a['type']) && isset($b['type'])) {
+      // if a is a pageview
+      if ($a['type'] == 'pageview') {
+        // TODO, this is hackish to sort Page scroll and time.
+        if (
+          !empty($b['eventCategory'])
+          && ($b['eventCategory'] == 'Page scroll' || $b['eventCategory'] == 'Page time')
+        ) {
+          return -1;
+        }
+        return 1;
+      }
+      // if b is a pageview
+      if ($b['type'] == 'pageview') {
+        if (
+          !empty($a['eventCategory'])
+          && ($a['eventCategory'] == 'Page scroll' || $a['eventCategory'] == 'Page time')
+        ) {
+          return 1;
+        }
+        return -1;
+      }
+      // if neither a nor b is a pageview
+      if (
+        !empty($b['eventCategory'])
+        && ($b['eventCategory'] == 'Page scroll' || $b['eventCategory'] == 'Page time')
+      ) {
+        return -1;
+      }
+      else {
+        return 1;
+      }
+    }
+  }
+  return ($a['time'] < $b['time']) ? 1 : -1;
+}
+
 function _intel_sort_by_weight($a, $b) {
   if (!isset($a['weight']) || !isset($b['weight'])) {
     return 1;

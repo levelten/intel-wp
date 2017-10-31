@@ -126,7 +126,7 @@ function theme_intel_visitor_clickstream($variables) {
     $vout .= '  <h3 class="card-header">' . Intel_Df::t('Visit');
     $vout .= ': ' . Intel_Df::format_date($ts + $timezone_offset, 'long') . "</h3>\n";
     $vout .= '  <div class="row">';
-    $col1 =  '    <div class="col-md-3 pull-left">' . "\n";
+    $col1 =  '    <div class="col-md-3">' . "\n";
     $col1 .= Intel_Df::theme('intel_trafficsource_block', array('trafficsource' => $visit['trafficsource']));
     if (!empty($visit['location'])) {
       $col1 .= Intel_Df::theme('intel_location_block', array(

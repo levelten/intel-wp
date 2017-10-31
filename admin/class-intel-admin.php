@@ -491,6 +491,7 @@ class Intel_Admin {
 				$page_func = 'Intel_Form::drupal_get_form';
 			}
 			$vars['markup'] = call_user_func_array($page_func, $page_args);
+			$vars['markup'] = Intel_Df::render($vars['markup']);
 		}
 
 

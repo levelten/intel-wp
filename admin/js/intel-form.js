@@ -33,6 +33,8 @@ var _intel_form = (function( $ ) {
 				event.stopPropagation();
 				$('.collapsible-fieldset-icon-' + i).addClass('glyphicon-triangle-right').removeClass('glyphicon-triangle-bottom');
 			});
+
+
 		});
 
 		// transform field descriptions into tooltips
@@ -59,7 +61,12 @@ var _intel_form = (function( $ ) {
 			});
 		};
 
-
+		// check highlight
+		if (0 && _ioq) {
+			var urlObj = _ioq.parseUrl(window.location);
+			urlObj.params = _ioq.parseUrlSearch(urlObj.search);
+			//console.log(urlObj);
+		}
 
 
 		/*

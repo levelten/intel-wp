@@ -2351,7 +2351,7 @@ function intel_setcookie($name, $value, $time = 0, $path = '/', $domain = '', $r
     $domain = '.' . intel()->domain;
   }
 
-  //Intel_Df::watchdog('intel_setcookie', "$name\n$value\n$time\n$path\n$domain");
+  //Intel_Df::watchdog('intel_setcookie', "$name\n$value\n$time\n$path\n$domain\n$raw");
 
   // the setcookie function encodes spaces to +, which are not decoded properly
   // the setrawcookie with the rawurlencode filter solves this problem.

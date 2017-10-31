@@ -40,6 +40,8 @@ function L10iLinkTracker(_ioq, config) {
         track: 1
     };
 
+    this.linkClicks = [];
+
 
     this.init = function init() {
         ioq.log(ioq.name + ':linktracker.init()');
@@ -120,7 +122,12 @@ function L10iLinkTracker(_ioq, config) {
         }
     };
 
+    this.getLinkClicks = function() {
+        return this.linkClicks;
+    };
+
     this.handleLinkEvent = function handleLinkEvent(event) {
+
         var i, v, attributes = {};
         var f = {
             event: event,
@@ -194,6 +201,13 @@ function L10iLinkTracker(_ioq, config) {
             // force re-construct
             delete(f.evtDef.const);
         }
+
+        v = {
+            event: f.event,
+            hrefType: f.hrefType,
+            timeDelta: ioq.getTimeDelta()
+        };
+        this.linkClicks.push(v);
 
         if (f.evtDef.eventCategory) {
             return _ioq.defEventHandler(f.evtDef, f.$obj, f.event, f.options);

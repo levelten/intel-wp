@@ -125,7 +125,8 @@ function intel_visitor_add() {
   // Create a basic entity structure to be used and passed to the validation
   // and submission functions.
   $entity = entity_get_controller('intel_visitor')->create();
-  return drupal_get_form('intel_visitor_edit_form', $entity);
+  $form = drupal_get_form('intel_visitor_edit_form', $entity);
+  return Intel_Df::render($form);
 }
 
 /**

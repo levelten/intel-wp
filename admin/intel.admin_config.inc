@@ -849,7 +849,10 @@ function intel_admin_goal_list_page() {
 
   $header = array(
     Intel_Df::t('Id'),
-    Intel_Df::t('Goal name'),
+    array(
+      'data' => Intel_Df::t('Goal name'),
+      'class' => array('nowrap'),
+    ),
     Intel_Df::t('Type'),
     Intel_Df::t('Description'),
     //t('Type'),
@@ -873,25 +876,49 @@ function intel_admin_goal_list_page() {
 
     $row = array(
       $key,
-      Intel_Df::t('(unknown)'),
-      Intel_Df::t('(unknown)'),
+      array(
+        'data' => Intel_Df::t('(unknown)'),
+        'class' => array('nowrap'),
+      ),
+      array(
+        'data' => Intel_Df::t('(unknown)'),
+        'class' => array('nowrap'),
+      ),
       '',
     );
     if (empty($goal)) {
       continue;
     }
     // check if goal or ga_goal is missing data, i.e. out of sync
-    $row[1] = $goal['title'];
-    $row[2] = $type_titles[$goal['type']];
+    $row[1]['data'] = $goal['title'];
+    $row[2]['data'] = $type_titles[$goal['type']];
     $row[3] = $goal['description'];
 
     $row[] = implode(' ', $ops);
     $rows[] = $row;
   }
 
+
   $vars = array(
     'header' => $header,
     'rows' => $rows,
+  );
+  $vars['colgroup'] = array(
+    // COLGROUP with one COL element.
+    array(
+      array(
+        'class' => array('test-1'), // Attribute for the COL element.
+      ),
+    ),
+    // Colgroup with attributes and inner COL elements.
+    array(
+      'data' => array(
+        array(
+          'class' => array('test-2'), // Attribute for the COL element.
+        ),
+      ),
+      'class' => array('test-3'), // Attribute for the COLGROUP element.
+    ),
   );
 
   $output = Intel_Df::theme('table', $vars);
@@ -907,14 +934,13 @@ function intel_admin_goal_list_page() {
 function intel_admin_goal_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_goal_form', array());
-  return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_goal_edit_page($goal) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $goal['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_goal_form', $goal);
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
@@ -1130,14 +1156,14 @@ function intel_admin_intel_event_view_page($event) {
 function intel_admin_intel_event_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_form', array());
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_intel_event_edit_page($event) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $event['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_form', $event);
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
@@ -1705,8 +1731,8 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
 function intel_admin_intel_event_delete_page($event) {
   Intel_Df::drupal_set_title(Intel_DF::t('Are you sure you want to delete @title?', array('@title' => $event['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_delete_form', $event);
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_intel_event_delete_form($form, &$form_state, $event) {
@@ -1810,14 +1836,14 @@ function intel_admin_link_type_list_page() {
 function intel_admin_link_type_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', array());
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_link_type_edit_page($taxonomy_data) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $taxonomy_data['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', $taxonomy_data);
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
@@ -2085,14 +2111,14 @@ function intel_admin_taxonomy_list_page() {
 function intel_admin_taxonomy_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', array());
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_taxonomy_edit_page($taxonomy_data) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $taxonomy_data['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', $taxonomy_data);
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
@@ -2351,29 +2377,29 @@ function intel_admin_attribute_list_page($scope = 'visitor') {
 function intel_admin_visitor_attribute_add_page() {
   Intel_Df::drupal_set_title(Intel_Df::t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', array(), 'visitor');
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_visitor_attribute_edit_page($attribute) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title visitor attribute', array('@title' => $attribute['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', $attribute, 'visitor');
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_page_attribute_add_page() {
   Intel_Df::drupal_set_title(Intel_Df::t('Add page attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', array(), 'page');
-  return $form;
-  return drupal_render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_page_attribute_edit_page($attribute) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title page attribute', array('@title' => $attribute['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', $attribute, 'page');
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_attribute_form($form, &$form_state, $attribute = array(), $scope = 'visitor') {
@@ -2686,13 +2712,13 @@ function intel_admin_phonenumber_list_page() {
 function intel_admin_phonenumber_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = drupal_get_form('intel_admin_phonenumber_form', array());
-  return render($form);
+  return Intel_Df::render($form);
 }
 
 function intel_admin_phonenumber_edit_page($event) {
   drupal_set_title(t('Edit @title event', array('@title' => $event['title'])));
   $form = drupal_get_form('intel_admin_phonenumber_form', $event);
-  return render($form);
+  return Intel_Df::render($form);
 }
 
 

@@ -198,12 +198,12 @@ class ReportView {
 
       $value = $d;
       foreach ($keys AS $key) {
-        $value = $value[$key];
+        $value = isset($value[$key]) ? $value[$key] : 0;
       }
       if ($keys2) {
         $value2 = $d;
         foreach ($keys2 AS $key) {
-          $value2 = $value2[$key];
+          $value2 = isset($value[$key]) ? $value2[$key] : 0;
         }      
         $value = self::evalValueExpression($value, $value2, $keys_operator);
       }

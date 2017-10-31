@@ -89,8 +89,8 @@ class Intel_Form  {
 		$form = self::drupal_build_form($form_id, $form_state);
 
 		//$out = self::form_render($form);
-		$out = Intel_Df::render($form);
-		return $out;
+		//$out = Intel_Df::render($form);
+		return $form;
 	}
 
 	public static function drupal_build_form($form_id, &$form_state) {
@@ -847,14 +847,16 @@ class Intel_Form  {
 
 		// Invoke hook_form_alter(), hook_form_BASE_FORM_ID_alter(), and
 		// hook_form_FORM_ID_alter() implementations.
-		//$hooks = array('form');
-		apply_filters('intel_form_alter', $form, $form_state, $form_id);
+
+		do_action_ref_array( 'intel_form_alter', array(&$form, &$form_state, $form_id) );
+
 		if (isset($form_state['build_info']['base_form_id'])) {
 			//$hooks[] = 'form_' . $form_state['build_info']['base_form_id'];
-			apply_filters('intel_form_' . $form_state['build_info']['base_form_id'] . '_alter', $form, $form_state, $form_id);
+			//apply_filters('intel_form_' . $form_state['build_info']['base_form_id'] . '_alter', $form, $form_state, $form_id);
+			do_action_ref_array( 'intel_form_' . $form_state['build_info']['base_form_id'] . '_alter', array(&$form, &$form_state, $form_id) );
 		}
 		//$hooks[] = 'form_' . $form_id . '_alter';
-		apply_filters('intel_form_' . $form_id . '_alter', $form, $form_state, $form_id);
+		do_action_ref_array('intel_form_' . $form_id . '_alter', array(&$form, &$form_state, $form_id) );
 	}
 
 	/**

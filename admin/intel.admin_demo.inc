@@ -12,17 +12,25 @@ include_once INTEL_DIR . 'includes/class-intel-form.php';
  * @return array
  * A structured array for use with Forms API.
  */
-function intel_admin_demo_settings($form, &$form_state) {
+function intel_admin_demo_settings($form, &$form_state, $options = array()) {
   //global $base_url;
 
   include_once INTEL_DIR . 'includes/intel.demo.inc';
+
+  $focus = array();
+  if (!empty($_GET['focus'])) {
+    $focus = explode('.', $_GET['focus']);
+  }
+  // padding empty elements
+  $focus[] = '';
+  $focus[] = '';
 
   $demo_mode = get_option('intel_demo_mode', '');
   $demo_settings = get_option('intel_demo_settings', intel_demo_settings_default());
   $form_state['demo_settings'] = $demo_settings;
 
   $form['general']['intel_demo_mode'] = array(
-    '#type' => 'checkbox',
+    '#type' => !empty($options['tutorial']) ? 'hidden' : 'checkbox',
     '#title' => Intel_Df::t('Enable demo'),
     '#default_value' => !empty($demo_mode) ? $demo_mode : '',
     '#description' => Intel_Df::t('Enables spoof demo pages to be displayed on site. These pages are created programmatically and do not alter your database.'),

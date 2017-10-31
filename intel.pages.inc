@@ -532,10 +532,15 @@ function theme_intel_visit_hits_table(&$variables) {
   $header = array(
     __('Time', 'intel'),
     __('Page/Event', 'intel'),
-    __('Value', 'intel'),
+    array(
+      'data' => __('Value', 'intel'),
+      'class' => array('numeric-cell'),
+    )
   );
 
-  uasort($hits, '_intel_sort_by_rtime');
+  //uasort($hits, '_intel_sort_by_rtime');
+
+  uasort($hits, '_intel_sort_ga_hits');
 
   // make sure pageviews are fired first
   $weight = 0;
@@ -575,6 +580,7 @@ function theme_intel_visit_hits_table(&$variables) {
   $rows = array();
   $start_time = 0;
   $stick = 0;
+  $pageview_count = 0;
   foreach ($pageviews as $i => $pageview) {
     $ts = $pageview['time'];
     if (!$start_time) {
@@ -585,6 +591,11 @@ function theme_intel_visit_hits_table(&$variables) {
     $row = array(
       'class' => array('page'),
     );
+    $value = 0;
+    $scorings_type = $pageview_count ? 'additional_pages' : 'entrance';
+    if (!empty($scorings[$scorings_type])) {
+      $value = $scorings[$scorings_type];
+    }
     $row['data'] = array(
       array(
         'class' => array('col-time'),
@@ -595,29 +606,31 @@ function theme_intel_visit_hits_table(&$variables) {
         'data' => Intel_Df::l($pageview['pageview']['pageTitle'], '//' . $pageview['pageview']['hostname'] . $pageview['pageview']['pagePath']),
       ),
       array(
-        'class' => array('col-value'),
-        'data' => (!empty($pageview['pageview']['value'])) ? intel_event_value_format($pageview['pageview']['value'], array('mode' => 'valued')) : '-',
+        'class' => array('col-value numeric-cell'),
+        'data' => $value ? intel_event_value_format($value, array('mode' => 'valued')) : '-',
+        //'data' => (!empty($pageview['pageview']['value'])) ? intel_event_value_format($pageview['pageview']['value'], array('mode' => 'valued')) : '-',
       ),
     );
+    $pageview_count++;
     $rows[] = $row;
     if ($i == 1 && !$stick && !empty($scorings['stick'])) {
       $stick++;
       $row = array(
         'class' => array('event', 'valued-event'),
       );
-       $row['data'] = array(
-         array(
-           'class' => array('col-time'),
-           'data' => '+' . date($tf, $time),
-         ),
-         array(
-           'class' => array('col-title'),
-           'data' => '[' . Intel_Df::t('Stick') . ']: ' . Intel_Df::t('Page hit'),
-         ),
-         array(
-           'class' => array('col-value'),
-           'data' => '+' . intel_event_value_format($scorings['stick'], array('mode' => 'valued')),
-         ),
+      $row['data'] = array(
+        array(
+          'class' => array('col-time'),
+          'data' => '+' . date($tf, $time),
+        ),
+        array(
+          'class' => array('col-title'),
+          'data' => '[' . Intel_Df::t('Stick') . ']: ' . Intel_Df::t('Page hit'),
+        ),
+        array(
+          'class' => array('col-value numeric-cell'),
+          'data' => intel_event_value_format($scorings['stick'], array('mode' => 'valued')),
+        ),
       );
       $rows[] = $row;
     }
@@ -643,11 +656,13 @@ function theme_intel_visit_hits_table(&$variables) {
           'data' => $hit['eventCategory'] . ': ' . $hit['eventAction'],
         ),
         array(
-          'class' => array('col-value'),
+          'class' => array('col-value numeric-cell'),
           'data' => $value,
         ),
       );
-      $rows[] = $row;
+      if (!isset($_GET['standard_events']) || $_GET['standard_events']) {
+        $rows[] = $row;
+      }
       if (!empty($hit['eventMode']) && !$stick && !empty($scorings['stick'])) {
         $stick++;
         $row = array(
@@ -660,11 +675,11 @@ function theme_intel_visit_hits_table(&$variables) {
           ),
           array(
             'class' => array('col-title'),
-            'data' => '[' . Intel_Df::t('Stick') . ']: ' . Intel_Df::t('Page hit'),
+            'data' => '[' . Intel_Df::t('Stick') . ']: ' . Intel_Df::t('Event'),
           ),
           array(
-            'class' => array('col-value'),
-            'data' => '+' . intel_event_value_format($scorings['stick'], array('mode' => 'valued')),
+            'class' => array('col-value numeric-cell'),
+            'data' => intel_event_value_format($scorings['stick'], array('mode' => 'valued')),
           ),
         );
         $rows[] = $row;

@@ -68,6 +68,22 @@ div.intel-demo-post-content a.icon-link {
   text-decoration: none;
 }
 
+div.intel-demo-nav-links {
+  padding: 1em 0;
+}
+
+div.intel-demo-nav-links .intel-demo-nav-previous {
+  float: left;
+  width: 50%;
+
+}
+
+div.intel-demo-nav-links .intel-demo-nav-next {
+  float: right;
+  text-align: right;
+  width: 50%;
+}
+
 /* hack to hide post-thumbnails set by the absolute value of post->ID */
 /*
 img.attachment-post-thumbnail {

@@ -1054,8 +1054,14 @@ function intel_admin_setup_submit_basic_config($form, &$form_state) {
     }
     if (!$intel_goal) {
       intel_goal_save($goal_defaults['general']);
+      // sleep to avoid api flood limits
+      usleep(250);
       intel_goal_save($goal_defaults['contact']);
     }
+
+    // rebuild intel_goal option
+    intel_sync_goals_ga_goals();
+
     $sys_meta = get_option('intel_system_meta', array());
     if (!in_array('basic_config', $sys_meta['setup_successes'])) {
       $sys_meta['setup_successes'][] = 'basic_config';
@@ -2428,6 +2434,21 @@ function intel_admin_setup_finish($form, &$form_state) {
   $items[] = '</p>';
 
 
+  $items[] = '<p>';
+  $items[] = Intel_Df::t('Automated valued interactions are now being tracked and value based reports are gathering data.');
+  //$items[] = Intel_Df::t('Repo.');
+  //$items[] = Intel_Df::t('Valued interactions are now being tracked based on your settings.');
+  $items[] = '</p>';
+
+  $items[] = '<p>';
+  $items[] = '<strong>' . Intel_Df::t('To get the most out of your analytics and unleash the full power of Intelligence:') . '</strong>';
+  $l_options = Intel_Df::l_options_add_class('btn btn-info');
+  $items[] = '<br>' . Intel_Df::l( Intel_Df::t('Launch the Intelligence JumpStart'), 'admin/help/start', $l_options);
+  //$items[] = '<br>' . Intel_Df::t('(click on tracked links and forms to trigger events)');
+  $items[] = '</p>';
+
+
+  /*
 
   $items[] = '<p>';
   $items[] = Intel_Df::t('Valued interactions are now being tracked on your site based on your settings.');
@@ -2445,6 +2466,8 @@ function intel_admin_setup_finish($form, &$form_state) {
       '!link' => Intel_Df::l( Intel_Df::t('visit the Getting Started Tutorial'), 'admin/help/tutorial', $l_options)
     ));
   $items[] = '</p>';
+
+  */
 
   $items[] = '</div>';
 

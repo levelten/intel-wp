@@ -263,7 +263,7 @@ function intel_util_log_page() {
   include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
   $form = Intel_Form::drupal_get_form('intel_util_log_form');
 
-  $output .= $form;
+  $output .= Intel_Df::render($form);
 
   return $output;
 }
@@ -391,7 +391,7 @@ function intel_util_test_webform_page() {
   include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
 
   $form = Intel_Form::drupal_get_form('intel_util_test_webform_form');
-  return $form;
+  return Intel_Df::render($form);
 }
 
 /**
@@ -536,7 +536,7 @@ function intel_util_test_form_page() {
   include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
 
   $form = Intel_Form::drupal_get_form('intel_util_test_form');
-  return $form;
+  return Intel_Df::render($form);
 }
 
 /**
@@ -915,7 +915,7 @@ function intel_util_reset_site() {
   }
 
   $del_mode_options = array();
-  $del_mode_options['inteltest'] = array(
+  $del_mode_options['installtest'] = array(
     'intel_addons_enabled',
     'intel_api_level',
     'intel_apikey',
@@ -927,6 +927,7 @@ function intel_util_reset_site() {
     'intel_ga_profile',
     'intel_ga_tid',
     'intel_ga_view',
+    'intel_ga_goals',
     'intel_goals',
     'intel_icon_urls',
     //'intel_imapi_url',
