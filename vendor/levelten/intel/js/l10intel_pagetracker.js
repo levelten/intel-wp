@@ -6,6 +6,7 @@ function L10iPageTracker(_ioq, config) {
     var $;
     var $win;
     var depthEventsSent = 0;
+    this.linkClicksIgnored = [];
 
     this.init = function init() {
         ioq.log(ioq.name + ':pagetracker.init()');
@@ -21,7 +22,10 @@ function L10iPageTracker(_ioq, config) {
         ioq.addCallback('timeInterval.900', ths.handlePageAbandoned, this);
 
         // add beforeunload callback to trigger page time and page scroll events
-        $win.on('beforeunload', function (event) { ths.handleUnload(event); });
+        $win.on('beforeunload', function (event) {
+            ths.handleUnload(event);
+        });
+
     };
 
     this.handlePageConsumedTime = function () {
@@ -80,8 +84,8 @@ function L10iPageTracker(_ioq, config) {
         }
         var evtDef = {
             eventCategory: 'Page consumed!',
-            eventAction: '[[pageTitle]]',
-            eventLabel: '[[pageUri]]',
+            eventAction: '[[title]]',
+            eventLabel: '[[uri]]',
             eventValue: ioq.get('c.scorings.events.pagetracker_page_consumed', 0),
             nonInteraction: false
         };
@@ -97,8 +101,28 @@ function L10iPageTracker(_ioq, config) {
         return this.sendPageDepthEvents();
     };
 
-    this.handleUnload = function handleUnload() {
-        ga('set', 'transport', 'beacon');
+    this.handleUnload = function handleUnload(event) {
+        // don't send page depth events if mailto or tel link click
+        var linkClicks = [], lastI, lastClick;
+        if (_ioq.plugins.linktracker && _ioq.isFunction(_ioq.plugins.linktracker.getLinkClicks)) {
+            linkClicks = _ioq.plugins.linktracker.getLinkClicks();
+        }
+        if (lastI = linkClicks.length) {
+            lastI--;
+            lastClick = linkClicks[lastI];
+
+            if (
+              lastClick.hrefType && lastClick.timeDelta
+              && (lastClick.hrefType == 'mailto' || lastClick.hrefType == 'tel')
+              && (ioq.getTimeDelta() - lastClick.timeDelta < 2)
+            ) {
+                if (this.linkClicksIgnored.indexOf(lastI) == -1) {
+                    this.linkClicksIgnored.push(lastI);
+                    return;
+                }
+            }
+        }
+
         this.sendPageDepthEvents();
     };
 
@@ -160,6 +184,8 @@ function L10iPageTracker(_ioq, config) {
             eventLabel: '' + tdr,
             eventValue: tdr,
             nonInteraction: true,
+            transport: 'beacon',
+            domEventType: 'beforeunload'
             //metric8: tdr,
             //metric9: 1
         };
@@ -185,6 +211,8 @@ function L10iPageTracker(_ioq, config) {
                 eventLabel: '' + sd,
                 eventValue: sd,
                 nonInteraction: true,
+                transport: 'beacon',
+                domEventType: 'beforeunload',
                 metric8: 1,
                 metric9: tdr,
                 metric10: scroll.pageMax,

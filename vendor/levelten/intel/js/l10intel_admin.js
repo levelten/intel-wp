@@ -79,17 +79,23 @@ function L10iAdmin(_ioq, config) {
         // sometimes an element does not assume the dimensions of its children. This loop will find the widest element
         // and set it to be highlighted
         var $highlight = $target;
+        var $wide_child;
         var maxWidth = $target.width();
         var $children = $target.children();
+
         if ($children.length) {
-            $highlight = $children.each( function (index, value, $highlight) {
+            $wide_child = $children.each( function (index, value) {
                 var $value = jQuery(value);
                 if ($value.width() > maxWidth) {
-                    $hightlight = $value;
+                    $wide_child = $value;
                     maxWidth = $value.width();
                 }
-                return $highlight;
+                return $wide_child;
             });
+        }
+
+        if ($wide_child && $wide_child.width() > $highlight.width()) {
+            $highlight = $wide_child;
         }
 
         $highlight.css('outline', '3px solid #44FF44');

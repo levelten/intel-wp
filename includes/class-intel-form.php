@@ -71,7 +71,7 @@ class Intel_Form  {
 	 * @see drupal_build_form()
 	 */
 	public static function drupal_get_form($form_id) {
-		$count = Intel_Df::drupal_static(__FUNCTION__, 0);
+		$count = &Intel_Df::drupal_static(__FUNCTION__, 0);
 
 		if ($count == 0) {
 			wp_enqueue_script( 'intel_form', INTEL_URL . 'admin/js/intel-form.js', array( 'jquery' ), intel()->get_version(), false );
@@ -89,8 +89,8 @@ class Intel_Form  {
 		$form = self::drupal_build_form($form_id, $form_state);
 
 		//$out = self::form_render($form);
-		$out = Intel_Df::render($form);
-		return $out;
+		//$out = Intel_Df::render($form);
+		return $form;
 	}
 
 	public static function drupal_build_form($form_id, &$form_state) {
@@ -847,14 +847,16 @@ class Intel_Form  {
 
 		// Invoke hook_form_alter(), hook_form_BASE_FORM_ID_alter(), and
 		// hook_form_FORM_ID_alter() implementations.
-		//$hooks = array('form');
-		apply_filters('intel_form_alter', $form, $form_state, $form_id);
+
+		do_action_ref_array( 'intel_form_alter', array(&$form, &$form_state, $form_id) );
+
 		if (isset($form_state['build_info']['base_form_id'])) {
 			//$hooks[] = 'form_' . $form_state['build_info']['base_form_id'];
-			apply_filters('intel_form_' . $form_state['build_info']['base_form_id'] . '_alter', $form, $form_state, $form_id);
+			//apply_filters('intel_form_' . $form_state['build_info']['base_form_id'] . '_alter', $form, $form_state, $form_id);
+			do_action_ref_array( 'intel_form_' . $form_state['build_info']['base_form_id'] . '_alter', array(&$form, &$form_state, $form_id) );
 		}
 		//$hooks[] = 'form_' . $form_id . '_alter';
-		apply_filters('intel_form_' . $form_id . '_alter', $form, $form_state, $form_id);
+		do_action_ref_array('intel_form_' . $form_id . '_alter', array(&$form, &$form_state, $form_id) );
 	}
 
 	/**
@@ -1619,7 +1621,7 @@ class Intel_Form  {
 			foreach ($element['#process'] as $process) {
 				if (is_callable($process)) {
 					//$element = $process($element, $form_state, $form_state['complete form']);
-					$element = call_user_func( $process, $element, $form_state, $form_state['complete form']);
+					$element = call_user_func_array( $process, array(&$element, &$form_state, $form_state['complete form']));
 				}
 			}
 			$element['#processed'] = TRUE;

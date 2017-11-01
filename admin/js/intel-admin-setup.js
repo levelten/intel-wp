@@ -35,27 +35,10 @@ var intel_admin_setup = (function( $ ) {
 		// check if goal list table exists
 		if ($('#goal-list-table').length) {
 			$('#goal-add-btn').on('click', ths.goal_add);
+		}
 
-			/*
-			var $elm, i = 1;
-			var $obj = $('#goal-list-table tr');
-			$obj.each(function (index, value) {
-				var $elm = $('#edit-goal-' + i + '-name', this);
-				if ($elm.length) {
-					if ($elm.val()) {
-						//$(this).show();
-						$(this).removeClass('row-hide');
-						$(this).addClass('row-show');
-					}
-					else {
-						//$(this).hide();
-						$(this).removeClass('row-show');
-						$(this).addClass('row-hide');
-					}
-					i++;
-				}
-			});
-			*/
+		if ($('.plugin-install').length) {
+
 		}
 
 

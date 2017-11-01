@@ -199,3 +199,8 @@
   margin-bottom: 0;
 }
 
+/* helper classes */
+td.nowrap {
+    white-space: nowrap;
+}
+

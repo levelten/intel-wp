@@ -18,6 +18,30 @@ function L10iLinkTracker(_ioq, config) {
         title: 'Tel link'
     };
 
+    this.linkTypeDefs = {};
+    this.linkTypeDefs.internal = {
+        title: 'Internal link',
+        track: 0
+    };
+    this.linkTypeDefs.external = {
+        title: 'External link',
+        track: 1
+    };
+    this.linkTypeDefs.download = {
+        title: 'Download link',
+        track: 1
+    };
+    this.linkTypeDefs.mailto = {
+        title: 'Mailto link',
+        track: 1
+    };
+    this.linkTypeDefs.tel = {
+        title: 'Tel link',
+        track: 1
+    };
+
+    this.linkClicks = [];
+
 
     this.init = function init() {
         ioq.log(ioq.name + ':linktracker.init()');
@@ -25,7 +49,7 @@ function L10iLinkTracker(_ioq, config) {
         var evtDef = {
             key: 'linktracker_link_click',
             selector: 'a',
-            selectorNot: '.linktracker-0',
+            selectorNot: '.io-link-ignore',
             onEvent: 'click',
             //onEvent: 'contextmenu',
             onHandler: function (event) { ths.handleLinkEvent(event) },
@@ -36,7 +60,7 @@ function L10iLinkTracker(_ioq, config) {
         return;
 
         /*
-        var $target = $('a.temp').not('.linktracker-0');
+        var $target = $('a.temp').not('.io-link-ignore');
         var evtDef = {
             onHandler: function (ed, $t, e) {
                 var e2 = {};
@@ -63,6 +87,31 @@ function L10iLinkTracker(_ioq, config) {
         */
     };
 
+    this.setLinkTypeDef = function setLinkTypeDef(name, obj) {
+        var i;
+        if (ioq.isArray(name)) {
+            for(i = 0; i < name.length; i++) {
+                obj = name[i];
+                if (obj._i) {
+                    obj.track = obj.track || {};
+                    this.linkTypeDefs[obj._i] = obj;
+                }
+            }
+        }
+        else {
+            obj._i = name;
+            obj.track = obj.track || {};
+            this.linkTypeDefs[name] = obj;
+        }
+    };
+
+    this.getLinkTypeDef = function setLinkTypeDef(name, defaultValue) {
+        if (this.linkTypeDefs[name] === undefined) {
+            return defaultValue;
+        }
+        return this.linkTypeDefs[name];
+    };
+
     this.addHrefType = function addHrefType(name, obj) {
       this.hrefTypeDefs[name] = obj;
     };
@@ -73,11 +122,17 @@ function L10iLinkTracker(_ioq, config) {
         }
     };
 
+    this.getLinkClicks = function() {
+        return this.linkClicks;
+    };
+
     this.handleLinkEvent = function handleLinkEvent(event) {
-        var i, v;
+
+        var i, v, attributes = {};
         var f = {
             event: event,
-            hrefTypeDefs: this.hrefTypeDefs
+            hrefTypeDefs: this.hrefTypeDefs,
+            linkTypeDefs: this.linkTypeDefs
         };
 
         v = _ioq.getEventArgsFromEvent(event);
@@ -88,33 +143,20 @@ function L10iLinkTracker(_ioq, config) {
             f.eventType = f.evtDef.onEvent;
         }
 
+
         f.href = f.$obj.attr('href');
 
         if (!f.href) {
             return;
         }
 
-        if (f.$obj.hasClass('prevent-linktracker')) {
-          return;
+        f.$obj.objSettings = f.$obj.objSettings || ioq.getObjSettings(f.$obj);
+
+        if (f.$obj.objSettings['link-ignore'] || f.$obj.objSettings['link-' + f.eventType + 'ignore']) {
+            return;
         }
 
         f.hrefType = '';
-
-        // check for hrefType specified via class track-link-[type id]
-        var classes = f.$obj.attr('class');
-        classes = classes ? classes.split(' ') : [];
-        for (i = 0; i < classes.length; i++) {
-            v = classes[i];
-            if (v.substr(0, 11) == 'track-link-') {
-                v = v.substr(11);
-                if (v == 'mode-valued') {
-                    f.evtDef.mode = 'valued';
-                }
-                else {
-                    f.hrefType = v;
-                }
-            }
-        }
 
         if (!f.hrefType) {
             var downloadPattern = /\.(zip|exe|dmg|pdf|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav|png|jpg|jpeg|gif)$/i;
@@ -140,16 +182,32 @@ function L10iLinkTracker(_ioq, config) {
             }
         }
 
+        f.linkType = f.hrefType;
+
+        if (f.$obj.objSettings['link-type']) {
+            f.linkType = f.$obj.objSettings['link-type'];
+        }
+
         // trigger callbacks
         ioq.triggerCallbacks('handleLinkEventAlter', f);
-        if (f.hrefTypeDefs[f.hrefType]) {
-            f.evtDef.eventCategory = f.hrefTypeDefs[f.hrefType].title;
+        if (
+          f.linkTypeDefs[f.linkType]
+          && (f.linkTypeDefs[f.linkType].track || f.$obj.objSettings['link-track'] || f.$obj.objSettings['link-' + f.eventType + '-track'])
+        ) {
+            f.evtDef.eventCategory = f.linkTypeDefs[f.linkType].title;
             if (f.eventType) {
                 f.evtDef.eventCategory += ' ' + f.eventType
             }
             // force re-construct
             delete(f.evtDef.const);
         }
+
+        v = {
+            event: f.event,
+            hrefType: f.hrefType,
+            timeDelta: ioq.getTimeDelta()
+        };
+        this.linkClicks.push(v);
 
         if (f.evtDef.eventCategory) {
             return _ioq.defEventHandler(f.evtDef, f.$obj, f.event, f.options);

@@ -8,7 +8,7 @@
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.7');
+define('INTEL_L10IAPI_JS_VER', '0.2.8');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -912,6 +912,18 @@ function intel_menu($items = array()) {
     'weight' => $w++,
   );
 
+  /*
+  $items['admin/util/log'] = array(
+    'title' => 'Messages',
+    'description' => 'View messages log',
+    'page callback' => 'intel_util_log_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.inc',
+  );
+  */
+
   $items['admin/util/update'] = array(
     'title' => 'Update',
     'description' => 'View and run plugin updates',
@@ -1107,16 +1119,38 @@ function intel_menu($items = array()) {
   $items['admin/help'] = array(
     'title' => 'Help',
     'description' => 'Guides and docs.',
-    'page callback' => 'intel_help_tutorial_page',
+    'page callback' => 'intel_help_start_page',
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_CALLBACK,
     'file' => 'admin/intel.admin_help.inc',
   );
-  $items['admin/help/tutorial'] = array(
-    'title' => 'Tutorial',
+  $items['admin/help/start'] = array(
+    'title' => 'JumpStart',
     'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
   );
+
+  $items['admin/help/tutorial'] = array(
+    'title' => 'Tutorial',
+    //'description' => 'Tutorial.',
+    'page callback' => 'intel_help_tutorial_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_help.inc',
+  );
+  if (intel_is_extended()) {
+    $items['admin/help/tutorial/2'] = array(
+      'title' => 'Tutorial 2',
+      //'description' => 'Tutorial.',
+      'page callback' => 'intel_help_tutorial_2_page',
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_help.inc',
+    );
+  }
+
   $items['admin/help/demo'] = array(
     'title' => 'Demo',
     //'description' => 'Tutorial.',
@@ -1240,6 +1274,13 @@ function intel_reports() {
     'key' => 'default.top.entrance',
     'title' => Intel_Df::t('Entrance pages'),
   );
+  if (intel_is_extended()) {
+    $reports['content']['avgpageload'] = array(
+      'key' => 'avgPageLoad.top',
+      'title' => Intel_Df::t('Timing: Avg. Page Load'),
+    );
+  }
+
   /*
   $reports['content']['attraction'] = array(
     'key' => 'page_attribute:i-t.top.entrance',
@@ -1268,7 +1309,7 @@ function intel_reports() {
       //if ($info['type'] == 'item' || $info['type'] == 'list') {
       $reports['content']['pa-' . $key] = array(
         'key' => 'page_attribute:' . $key . '.top.entrance',
-        'title' => Intel_Df::t('Segment') . ': ' . ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
+        'title' => Intel_Df::t('Attribute') . ': ' . ((isset($info['title_plural'])) ? $info['title_plural'] : $info['title']),
         'page callback' => 'intel_page_attribute_list_report_page',
         //'intel_api_access' => 'basic',
         'file' => 'reports/intel.report_page_attribute_list.inc'
@@ -1458,85 +1499,85 @@ function intel_reports() {
 
     $reports['visitor']['country'] = array(
       'key' => 'country.top',
-      'title' => Intel_Df::t('Geo > Country'),
+      'title' => Intel_Df::t('Geo: Country'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['region'] = array(
       'key' => 'region.top',
-      'title' => Intel_Df::t('Geo > Region'),
+      'title' => Intel_Df::t('Geo: Region'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['metro'] = array(
       'key' => 'metro.top',
-      'title' => Intel_Df::t('Geo > Metro'),
+      'title' => Intel_Df::t('Geo: Metro'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['city'] = array(
       'key' => 'city.top',
-      'title' => Intel_Df::t('Geo > City'),
+      'title' => Intel_Df::t('Geo: City'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['networkdomain'] = array(
       'key' => 'networkDomain.top',
-      'title' => Intel_Df::t('Network > Domain'),
+      'title' => Intel_Df::t('Network: Domain'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['networklocation'] = array(
       'key' => 'networkLocation.top',
-      'title' => Intel_Df::t('Network > Location'),
+      'title' => Intel_Df::t('Network: Location'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['browser'] = array(
       'key' => 'browser.top',
-      'title' => Intel_Df::t('Device > Browser'),
+      'title' => Intel_Df::t('Device: Browser'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['browserversion'] = array(
       'key' => 'browserVersion.top',
-      'title' => Intel_Df::t('Device > Browser Version'),
+      'title' => Intel_Df::t('Device: Browser Version'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['operatingsystem'] = array(
       'key' => 'operatingSystem.top',
-      'title' => Intel_Df::t('Device > Operating System'),
+      'title' => Intel_Df::t('Device: Operating System'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['operatingsystemversion'] = array(
       'key' => 'operatingSystemVersion.top',
-      'title' => Intel_Df::t('Device > Operating System Version'),
+      'title' => Intel_Df::t('Device: Operating System Version'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['devicecategory'] = array(
       'key' => 'deviceCategory.top',
-      'title' => Intel_Df::t('Device > Category'),
+      'title' => Intel_Df::t('Device: Category'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['browsersize'] = array(
       'key' => 'browserSize.top',
-      'title' => Intel_Df::t('Device > Browser Size'),
+      'title' => Intel_Df::t('Device: Browser Size'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['screensize'] = array(
       'key' => 'screenResolution.top',
-      'title' => Intel_Df::t('Device > Screen Resolution'),
+      'title' => Intel_Df::t('Device: Screen Resolution'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
     $reports['visitor']['language'] = array(
       'key' => 'language.top',
-      'title' => Intel_Df::t('Device > Language'),
+      'title' => Intel_Df::t('Device: Language'),
       //'page callback' => 'intel_audience_list_report_page',
       //'file' => 'reports/intel.report_audience_list.inc',
     );
@@ -3354,6 +3395,7 @@ function intel_youtube_addon_enable($enable) {
   update_option('intel_intel_scripts_enabled', $enabled);
 }
 
+add_action('intel_form_alter', 'intel_form_alter', 10, 3);
 function intel_form_alter(&$form, &$form_state, $form_id) {
   if (substr($form_id, 0, 20) == 'webform_client_form_') {
     $form['referrer'] = array(
@@ -3369,6 +3411,7 @@ function intel_form_alter(&$form, &$form_state, $form_id) {
     require_once Intel_Df:: drupal_get_path('module', 'intel') . "/admin/intel.admin_entity.inc";
     intel_admin_entity_type_form_alter($form, $form_state, $form_id);
   }
+
 }
 
 
@@ -3585,7 +3628,7 @@ function intel_sync_visitordata_page($visitor = null, $count = 5) {
 }
 
 function intel_sync_visitordata($visitor, $options = array()) {
-  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
+  require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.inc";
 
   if (!empty($_GET['debug'])) {
     intel_d($visitor);//
@@ -4269,28 +4312,97 @@ function intel_setup_auto_shortcode($vars) {
   return '<img scr="' . INTEL_URL . 'images/clear.png" id="intel-setup-auto-img" style="height: 100px;">';
 }
 
+/**
+ * intel_form shortcode processing.
+ *
+ * There is a lot of crazyness to make sure when a form is submitted it is processed
+ * before the form headers go out rather than being triggered by the shortcode
+ */
 add_shortcode('intel_form', 'intel_form_shortcode');
 function intel_form_shortcode($vars) {
-  include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
+  $form = intel_form_shortcode_get_form($vars['name'], $vars);
+
+  if (!empty($form)) {
+    $tvars = array();
+    $tvars['markup'] = Intel_Df::render($form);
+    return Intel_Df::theme('intel_shortcode', $tvars);
+  }
+}
+
+function intel_form_shortcode_get_form($form_id, $vars) {
+  $forms = &Intel_Df::drupal_static( __FUNCTION__, array());
+
+  if (isset($forms[$form_id])) {
+    return $forms[$form_id];
+  }
 
   $name_arr = explode('_', $vars['name']);
   if ($name_arr[0] == 'intel' && !empty($name_arr[1])) {
     if ($name_arr[1] == 'util') {
-      include_once ( INTEL_DIR . 'admin/intel.admin_util.inc' );
+      include_once(INTEL_DIR . 'admin/intel.admin_util.inc');
     }
     if ($name_arr[1] == 'demo') {
-      include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
-    }
-    if (is_callable($vars['name'])) {
-      $form = Intel_Form::drupal_get_form($vars['name']);
+      include_once(INTEL_DIR . 'includes/intel.demo.inc');
     }
   }
-  if (!empty($form)) {
-    $tvars = array();
-    $tvars['markup'] = $form;
-    return Intel_Df::theme('intel_shortcode', $tvars);
+
+  if (is_callable($vars['name'])) {
+    include_once(INTEL_DIR . 'includes/class-intel-form.php');
+    $options = array(
+      'shortcode' => $vars
+    );
+    if (!empty($vars['redirect'])) {
+      $options['redirect'] = $vars['redirect'];
+    }
+    if (!empty($vars['title'])) {
+      $options['form_title'] = $vars['title'];
+    }
+    intel_form_shortcode_vars('set', $vars['name'], $vars);
+    $forms[$form_id] = Intel_Form::drupal_get_form($form_id, $options);
+  }
+  else {
+    $forms[$form_id] = FALSE;
+  }
+  return $forms[$form_id];
+}
+
+function intel_form_shortcode_vars($action = 'get', $name = '', $vars = 1) {
+  $ids = &Intel_Df::drupal_static( __FUNCTION__, array());
+  if (empty($ids)) {
+    add_action('intel_form_alter', 'intel_form_shortcode_alter', 10, 3);
+  }
+  if ($action == 'set') {
+    $ids[$name] = $vars;
+  }
+  if ($name) {
+    return !empty($ids[$name]) ? $ids[$name] : 0;
+  }
+  return $ids;
+}
+
+function intel_form_shortcode_alter(&$form, &$form_state, $form_id) {
+  if ($vars = intel_form_shortcode_vars('get', $form_id)) {
+    $form['form_shortcode'] = array(
+      '#type' => 'hidden',
+      '#value' => json_encode($vars),
+    );
   }
 }
+
+if(!is_admin() && !empty($_POST)){} {
+  add_action('init', 'intel_form_shortcode_post');
+  function intel_form_shortcode_post() {
+    // check if a intel_form was submitted
+    if (!empty($_POST['form_id']) && !empty($_POST['form_build_id']) && !empty($_POST['form_shortcode'])) {
+      $vars = $_POST['form_shortcode'];
+      $vars = stripcslashes($vars);
+      $vars = json_decode($vars, 1);
+      $form = intel_form_shortcode_get_form($_POST['form_id'], $vars);
+    }
+  }
+}
+
+
 
 add_shortcode('io-wrapper', 'intel_io_wrapper_shortcode');
 function intel_io_wrapper_shortcode($vars, $content) {
@@ -4397,14 +4509,15 @@ function intel_posts_alter($posts) {
 //intel_d( $posts[0] );
 //$excerpt = get_the_excerpt( $posts[0] );
 //intel_d($excerpt);
-  if (!empty(get_option('intel_demo_mode', 0))) {
+  $intel_demo_mode = get_option('intel_demo_mode', 0);
+  if (!empty($intel_demo_mode)) {
     include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
     $posts = intel_demo_posts_alter($posts);
   }
 
   return $posts;
 }
-add_filter('the_posts', 'intel_posts_alter', -10);
+add_filter('the_posts', 'intel_posts_alter');
 
 /**
  * Implements hook_save_post()
@@ -4457,3 +4570,4 @@ function intel_get_extended_post_entity_attrs($post) {
 
   return $entity_attrs;
 }
+

@@ -190,6 +190,7 @@ function intel_admin_settings($form, &$form_state) {
     '#default_value' => get_option('intel_extended_mode', 0),
     '#description' => Intel_Df::t('Turns on extended experimental features that are still in development.'),
   );
+
   $form['l10iapi']['advanced']['intel_track_phonecalls'] = array(
     '#type' => 'checkbox',
     '#title' => Intel_Df::t('Track phone calls'),
@@ -201,6 +202,17 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Track email clicks'),
     '#default_value' => get_option('intel_track_emailclicks', INTEL_TRACK_EMAILCLICKS_DEFAULT),
     '#description' => Intel_Df::t('Enables email click tracking features.'),
+  );
+  $options = array(
+    '' => Intel_Df::t('Database'),
+    'cookie' => Intel_Df::t('Cookie'),
+  );
+  $form['l10iapi']['advanced']['intel_save_push_storage'] = array(
+    '#type' => 'radios',
+    '#title' => Intel_Df::t('Redirect push storage'),
+    '#options' => $options,
+    '#default_value' => get_option('intel_save_push_storage', ''),
+    '#description' => Intel_Df::t('Set how to store intel pushes when a page redirects.'),
   );
   $form['l10iapi']['advanced']['intel_cache_busting'] = array(
     '#type' => 'checkbox',
@@ -837,7 +849,10 @@ function intel_admin_goal_list_page() {
 
   $header = array(
     Intel_Df::t('Id'),
-    Intel_Df::t('Goal name'),
+    array(
+      'data' => Intel_Df::t('Goal name'),
+      'class' => array('nowrap'),
+    ),
     Intel_Df::t('Type'),
     Intel_Df::t('Description'),
     //t('Type'),
@@ -861,25 +876,49 @@ function intel_admin_goal_list_page() {
 
     $row = array(
       $key,
-      Intel_Df::t('(unknown)'),
-      Intel_Df::t('(unknown)'),
+      array(
+        'data' => Intel_Df::t('(unknown)'),
+        'class' => array('nowrap'),
+      ),
+      array(
+        'data' => Intel_Df::t('(unknown)'),
+        'class' => array('nowrap'),
+      ),
       '',
     );
     if (empty($goal)) {
       continue;
     }
     // check if goal or ga_goal is missing data, i.e. out of sync
-    $row[1] = $goal['title'];
-    $row[2] = $type_titles[$goal['type']];
+    $row[1]['data'] = $goal['title'];
+    $row[2]['data'] = $type_titles[$goal['type']];
     $row[3] = $goal['description'];
 
     $row[] = implode(' ', $ops);
     $rows[] = $row;
   }
 
+
   $vars = array(
     'header' => $header,
     'rows' => $rows,
+  );
+  $vars['colgroup'] = array(
+    // COLGROUP with one COL element.
+    array(
+      array(
+        'class' => array('test-1'), // Attribute for the COL element.
+      ),
+    ),
+    // Colgroup with attributes and inner COL elements.
+    array(
+      'data' => array(
+        array(
+          'class' => array('test-2'), // Attribute for the COL element.
+        ),
+      ),
+      'class' => array('test-3'), // Attribute for the COLGROUP element.
+    ),
   );
 
   $output = Intel_Df::theme('table', $vars);
@@ -895,14 +934,13 @@ function intel_admin_goal_list_page() {
 function intel_admin_goal_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_goal_form', array());
-  return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_goal_edit_page($goal) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $goal['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_goal_form', $goal);
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
@@ -922,6 +960,12 @@ function intel_admin_goal_form($form, &$form_state, $goal) {
   if ($add) {
     if (!empty($_GET['title'])) {
       $goal['title'] = $_GET['title'];
+    }
+    if (!empty($_GET['description'])) {
+      $goal['description'] = $_GET['description'];
+    }
+    if (!empty($_GET['value'])) {
+      $goal['value'] = $_GET['value'];
     }
   }
 
@@ -1112,14 +1156,14 @@ function intel_admin_intel_event_view_page($event) {
 function intel_admin_intel_event_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_form', array());
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_intel_event_edit_page($event) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $event['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_form', $event);
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
@@ -1405,7 +1449,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     $form['trigger'][$key] = array(
       '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textfield' : 'item',
       '#title' => Intel_Df::t('On event'),
-      '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+      '#default_value' => !empty($event[$key]) ? $event[$key] : 'pageview',
       '#description' => Intel_Df::t('Input a jQuery event to trigger this event. If left blank the even will trigger on showpage. Executed as jQuery(\'selector\').on(\'on event\').'),
       '#size' => 64,
       '#disabled' => !($custom || !empty($overridable[$key])),
@@ -1687,8 +1731,8 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
 function intel_admin_intel_event_delete_page($event) {
   Intel_Df::drupal_set_title(Intel_DF::t('Are you sure you want to delete @title?', array('@title' => $event['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_intel_event_delete_form', $event);
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_intel_event_delete_form($form, &$form_state, $event) {
@@ -1719,6 +1763,282 @@ function intel_admin_intel_event_delete_form_submit($form, &$form_state) {
   Intel_Df::drupal_set_message($msg);
   Intel_Df::drupal_goto('admin/config/intel/settings/intel_event');
 }
+
+function intel_admin_link_type_list_page() {
+  require_once INTEL_DIR . "includes/intel.ga.inc";
+
+  $output = '';
+
+  $link_types = get_option('intel_link_types_custom', array());
+
+  $taxonomies = get_taxonomies();
+  //intel_d($taxonomies);
+
+  $entity_settings = intel_get_entity_settings_multi('taxonomy');
+
+  //$custom_taxonomies = get_option('intel_taxonomies_custom', array());
+
+  //intel_d($entity_settings);
+
+  if (!empty($_GET['debug'])) {
+    intel_d($taxonomies);//
+  }
+
+  $header = array(
+    Intel_Df::t('Title'),
+    Intel_Df::t('Page attribute'),
+    Intel_Df::t('key'),
+    //t('Type'),
+    //Intel_Df::t('Module'),
+    Intel_Df::t('Ops'),
+  );
+  $rows = array();
+
+  $options = array();
+  $custom_default_value = '';
+  $link_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
+  foreach ($taxonomies AS $mn => $tax) {
+    $tax = get_taxonomy($mn);
+    $entity_setting = !empty($entity_settings[$mn]) ? $entity_settings[$mn] : array();
+    $tax_custom = !empty($custom_taxonomies[$mn]) ? $custom_taxonomies[$mn] : array();
+    $ops = array();
+    $ops[] = Intel_Df::l(Intel_Df::t('edit'), 'admin/config/intel/settings/taxonomy/' . $mn . '/edit', $link_options);
+    if (!empty($tax->custom)) {
+      $ops[] = Intel_Df::l(Intel_Df::t('delete'), 'admin/config/intel/settings/taxonomy/' . $mn . '/delete', $link_options);
+    }
+    else {
+      //$ops[] = Intel_Df::t('NA');
+    }
+    $pa_title = '-';
+    $pa_key = '';
+    if (!empty($entity_setting['page_attribute']['key'])) {
+      $pa_title = !empty($entity_setting['page_attribute']['title']) ? $entity_setting['page_attribute']['title'] : $tax->label;
+      $pa_key = $entity_setting['page_attribute']['key'];
+    }
+    $rows[] = array(
+      $tax->label,
+      $pa_title,
+      $pa_key,
+      implode(' ', $ops),
+    );
+  }
+
+  $vars = array(
+    'header' => $header,
+    'rows' => $rows,
+  );
+
+  $output = Intel_Df::theme('table', $vars);
+
+  return $output;
+}
+
+function intel_admin_link_type_add_page() {
+  //drupal_set_title(t('Add visitor attribute'));
+  $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', array());
+  //return $form;
+  return Intel_Df::render($form);
+}
+
+function intel_admin_link_type_edit_page($taxonomy_data) {
+  Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $taxonomy_data['title'])));
+  $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', $taxonomy_data);
+  //return $form;
+  return Intel_Df::render($form);
+}
+
+function intel_admin_link_type_form($form, &$form_state, $taxonomy_data) {
+  require_once INTEL_DIR . "includes/intel.ga.inc";
+
+  $add = 0;
+  $custom = 0; // is editable in CMS
+  if (!is_array($taxonomy_data) || empty($taxonomy_data)) {
+    $add = 1;
+    $custom = 1;
+  }
+  else {
+    //$custom = ($goal['type'] == 'INTEL' || $goal['type'] == 'INTL') ? 1 : 0;
+  }
+
+  if ($add) {
+    if (!empty($_GET['title'])) {
+      $taxonomy_data['title'] = $_GET['title'];
+    }
+  }
+//intel_d($taxonomy_data);
+  $taxonomy = !empty($taxonomy_data['taxonomy']) ? $taxonomy_data['taxonomy'] : array();
+  $entity_settings = !empty($taxonomy_data['intel_entity_settings']) ? $taxonomy_data['intel_entity_settings'] : array();
+//intel_d($entity_settings);
+  $form_state['taxonomy'] = $taxonomy;
+  $form_state['intel_entity_settings'] = $entity_settings;
+
+  $form['general'] = array(
+    '#type' => 'fieldset',
+    //'#title' => Intel_Df::t('General'),
+    '#title' => Intel_Df::t('Taxonomy'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    //'#description' => Intel_Df::t('The parameters sent to Google Analtyics when the event is triggered.'),
+  );
+
+  $key = 'label';
+  $desc = Intel_Df::t('The taxonomy label.');
+  if (!$custom) {
+    $desc .= ' ' . Intel_Df::t('Set in Google Analytics');
+  }
+  $form['general'][$key] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Title'),
+    '#default_value' => !empty($taxonomy->$key) ? $taxonomy->$key : '',
+    '#description' => $desc,
+    '#size' => 32,
+    '#required' => 1,
+    '#disabled' => !($custom),
+  );
+
+  $key = 'name';
+  $form['general'][$key] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Id'),
+    '#markup' => !empty($taxonomy->$key) ? $taxonomy->$key : '',
+    '#description' => Intel_Df::t('The machine name of taxonomy.'),
+    '#size' => 32,
+    '#required' => 1,
+  );
+
+  /*
+  $key = 'name';
+  $form['general'][$key] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Id'),
+    '#default_value' => !empty($event[$key]) ? $event[$key] : '',
+    '#description' => Intel_Df::t('A unique identifier (machine name) for the event. Should only include letters, numbers and underscores.'),
+    '#size' => 32,
+    '#required' => 1,
+  );
+  */
+
+  /*
+  $key = 'description';
+  $form['general'][$key] = array(
+    '#type' => 'textarea',
+    '#title' => Intel_Df::t('Description'),
+    '#default_value' => !empty($entity_settings['description']) ? $entity_settings['description'] : '',
+    '#description' => Intel_Df::t('Description of the goal.'),
+    //'#disabled' => !($custom || !empty($overridable[$key])),
+    '#rows' => 2,
+  );
+  */
+
+  $form['intel'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Intelligence settings'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+    '#description' => Intel_Df::t('To track this taxonomy in Google Analytics set a Page attribute key or set to None to disable tracking.'),
+  );
+
+  $page_attrs = intel_get_page_attribute_info();
+//intel_d($page_attrs);
+  $options = 'abcdefghijklmnopqrstuvwxyz';
+  $options = str_split($options);
+  $options = Intel_Df::drupal_map_assoc($options);
+  foreach ($page_attrs as $k => $v) {
+    if (isset($options[$k])) {
+      unset($options[$k]);
+    }
+  }
+  $options[''] = Intel_Df::t('-- None --');
+  if (!empty($entity_settings['page_attribute']['key'])) {
+    $options[$entity_settings['page_attribute']['key']] = $entity_settings['page_attribute']['key'];
+  }
+
+  ksort($options);
+
+  //intel_d($options);
+  $form['intel']['intel_page_attribute_key'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Page attribute key'),
+    '#default_value' => !empty($entity_settings['page_attribute']['key']) ? $entity_settings['page_attribute']['key'] : '',
+    '#options' => $options,
+    //'#description' => Intel_Df::t('Select a key for tracking the '),
+  );
+
+
+  $form['intel']['intel_page_attribute_title'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Page attribute title'),
+    '#default_value' => !empty($entity_settings['page_attribute']['title']) ? $entity_settings['page_attribute']['title'] : '',
+    //'#description' => $desc,
+    '#size' => 32,
+  );
+
+  $form['intel']['intel_page_attribute_title_plural'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Page attribute title plural'),
+    '#default_value' => !empty($entity_settings['page_attribute']['title_plural']) ? $entity_settings['page_attribute']['title_plural'] : '',
+    //'#description' => $desc,
+    '#size' => 32,
+  );
+
+  $form['intel']['intel_page_attribute_description'] = array(
+    '#type' => 'textarea',
+    '#title' => Intel_Df::t('Description'),
+    '#default_value' => !empty($entity_settings['page_attribute']['description']) ? $entity_settings['page_attribute']['description'] : '',
+    //'#description' => Intel_Df::t('Description of the page attribute.'),
+    //'#disabled' => !($custom || !empty($overridable[$key])),
+    '#rows' => 2,
+  );
+
+
+
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => $add ? Intel_Df::t('Add taxonomy') : Intel_Df::t('Save taxonomy'),
+  );
+
+
+  return $form;
+}
+
+
+
+function intel_admin_link_type_form_submit(&$form, &$form_state) {
+  $values = $form_state['values'];
+
+  $taxonomy = $form_state['taxonomy'];
+  $entity_settings = $form_state['intel_entity_settings'];
+
+  $entity_settings['description'] = $values['description'];
+  if (!isset($entity_settings['page_attribute'])) {
+    $entity_settings['page_attribute'] = array();
+  }
+
+  if (!empty($values['intel_page_attribute_key'])) {
+    $entity_settings['page_attribute']['key'] = $values['intel_page_attribute_key'];
+  }
+
+  if (!empty($values['intel_page_attribute_title'])) {
+    $entity_settings['page_attribute']['title'] = $values['intel_page_attribute_title'];
+  }
+
+  if (!empty($values['intel_page_attribute_title_plural'])) {
+    $entity_settings['page_attribute']['title_plural'] = $values['intel_page_attribute_title_plural'];
+  }
+
+  if (!empty($values['intel_page_attribute_description'])) {
+    $entity_settings['page_attribute']['description'] = $values['intel_page_attribute_description'];
+  }
+
+  update_option('intel_entity_settings_taxonomy__' . $taxonomy->name, $entity_settings);
+
+  $msg = Intel_Df::t('Taxonomy settings have been updated for %name.', array(
+    '%name' => $taxonomy->label,
+  ));
+  Intel_Df::drupal_set_message(Intel_Df::t($msg), 'status');
+}
+
+
 
 function intel_admin_taxonomy_list_page() {
   require_once INTEL_DIR . "includes/intel.ga.inc";
@@ -1791,14 +2111,14 @@ function intel_admin_taxonomy_list_page() {
 function intel_admin_taxonomy_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', array());
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
 function intel_admin_taxonomy_edit_page($taxonomy_data) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title event', array('@title' => $taxonomy_data['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_taxonomy_form', $taxonomy_data);
-  return $form;
+  //return $form;
   return Intel_Df::render($form);
 }
 
@@ -2057,29 +2377,29 @@ function intel_admin_attribute_list_page($scope = 'visitor') {
 function intel_admin_visitor_attribute_add_page() {
   Intel_Df::drupal_set_title(Intel_Df::t('Add visitor attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', array(), 'visitor');
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_visitor_attribute_edit_page($attribute) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title visitor attribute', array('@title' => $attribute['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', $attribute, 'visitor');
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_page_attribute_add_page() {
   Intel_Df::drupal_set_title(Intel_Df::t('Add page attribute'));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', array(), 'page');
-  return $form;
-  return drupal_render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_page_attribute_edit_page($attribute) {
   Intel_Df::drupal_set_title(Intel_Df::t('Edit @title page attribute', array('@title' => $attribute['title'])));
   $form = Intel_Form::drupal_get_form('intel_admin_attribute_form', $attribute, 'page');
-  return $form;
-  return render($form);
+  //return $form;
+  return Intel_Df::render($form);
 }
 
 function intel_admin_attribute_form($form, &$form_state, $attribute = array(), $scope = 'visitor') {
@@ -2392,13 +2712,13 @@ function intel_admin_phonenumber_list_page() {
 function intel_admin_phonenumber_add_page() {
   //drupal_set_title(t('Add visitor attribute'));
   $form = drupal_get_form('intel_admin_phonenumber_form', array());
-  return render($form);
+  return Intel_Df::render($form);
 }
 
 function intel_admin_phonenumber_edit_page($event) {
   drupal_set_title(t('Edit @title event', array('@title' => $event['title'])));
   $form = drupal_get_form('intel_admin_phonenumber_form', $event);
-  return render($form);
+  return Intel_Df::render($form);
 }
 
 

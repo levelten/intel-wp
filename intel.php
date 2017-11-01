@@ -16,7 +16,7 @@
  * Plugin Name:       Intelligence
  * Plugin URI:        http://intelligencewp.com
  * Description:       Provides behavior and visitor intelligence.
- * Version:           1.2.1
+ * Version:           1.2.2
  * Minimum PHP:       5.3
  * Author:            LevelTen
  * Author URI:        http://getlevelten.com
@@ -33,7 +33,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define('INTEL_VER', '1.2.1');
+define('INTEL_VER', '1.2.2');
 
 
 /**
@@ -54,8 +54,16 @@ function deactivate_intel() {
 	Intel_Deactivator::deactivate();
 }
 
+function uninstall_intel() {
+	require_once plugin_dir_path( __FILE__ ) . 'uninstall.php';
+	intel_uninstall();
+}
+
 register_activation_hook( __FILE__, 'activate_intel' );
 register_deactivation_hook( __FILE__, 'deactivate_intel' );
+register_uninstall_hook( __FILE__, 'uninstall_intel' );
+
+//register_uninstall_hook('uninstall.php', 'intel_uninstall');
 
 /**
  * required shims

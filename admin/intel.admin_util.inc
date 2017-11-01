@@ -257,6 +257,81 @@ function intel_util_update() {
   return $output;
 }
 
+function intel_util_log_page() {
+  $output = '';
+
+  include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
+  $form = Intel_Form::drupal_get_form('intel_util_log_form');
+
+  $output .= Intel_Df::render($form);
+
+  return $output;
+}
+
+function intel_util_log_form($form, &$form_state) {
+
+  $watchdog_mode = get_option('intel_watchdog_mode', '');
+
+  $form['settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Settings'),
+    '#description' => Intel_Df::t('Watchdog configuration settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $options = array(
+    '' => Intel_Df::t('None'),
+    'log' => Intel_Df::t('Log'),
+    'db' => Intel_Df::t('Database'),
+  );
+  $form['settings']['watchdog_mode'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Write to'),
+    '#description' => Intel_Df::t('Set where you would like to write data to'),
+    '#default_value' => $watchdog_mode,
+    '#options' => $options,
+  );
+
+  $form['settings']['submit_settings'] = array(
+    '#type' => 'submit',
+    '#name' => 'submit_settings',
+    '#value' => Intel_Df::t('Change settings'),
+  );
+
+  if ($watchdog_mode == 'db') {
+    $form['clear'] = array(
+      '#type' => 'fieldset',
+      '#title' => Intel_Df::t('Clear messages'),
+      '#description' => Intel_Df::t('This will permanently remove the log messages from the database.'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['clear']['submit_clear'] = array(
+      '#type' => 'submit',
+      '#name' => 'submit_clear',
+      '#value' => Intel_Df::t('Clear messages'),
+    );
+  }
+
+  return $form;
+}
+
+function intel_util_log_form_submit($form, &$form_state) {
+  //intel_d($form_state);
+  $values = $form_state['values'];
+  //intel_d($values); //
+
+  if (!empty($form_state['input']['submit_settings'])) {
+    update_option('intel_watchdog_mode', $values['watchdog_mode']);
+    Intel_Df::drupal_set_message(Intel_Df::t('Settings have been updated.'));
+  }
+
+  if (!empty($form_state['input']['submit_clear'])) {
+    Intel_Df::drupal_set_message(Intel_Df::t('Log has been cleared.'));
+  }
+}
+
 function intel_util_environment() {
   if (!intel_is_test() || !intel_is_debug()) {
     return '';
@@ -316,7 +391,7 @@ function intel_util_test_webform_page() {
   include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
 
   $form = Intel_Form::drupal_get_form('intel_util_test_webform_form');
-  return $form;
+  return Intel_Df::render($form);
 }
 
 /**
@@ -461,7 +536,7 @@ function intel_util_test_form_page() {
   include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
 
   $form = Intel_Form::drupal_get_form('intel_util_test_form');
-  return $form;
+  return Intel_Df::render($form);
 }
 
 /**
@@ -840,7 +915,7 @@ function intel_util_reset_site() {
   }
 
   $del_mode_options = array();
-  $del_mode_options['inteltest'] = array(
+  $del_mode_options['installtest'] = array(
     'intel_addons_enabled',
     'intel_api_level',
     'intel_apikey',
@@ -852,6 +927,7 @@ function intel_util_reset_site() {
     'intel_ga_profile',
     'intel_ga_tid',
     'intel_ga_view',
+    'intel_ga_goals',
     'intel_goals',
     'intel_icon_urls',
     //'intel_imapi_url',

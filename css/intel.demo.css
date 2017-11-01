@@ -47,12 +47,12 @@ div.intel-demo-post-content form textarea#edit-message {
 
 div.intel-demo-post-content .contact-wrapper .col-left  {
   float: left;
-  width: 70%;
+  width: 66.6%;
   padding-right: 32px;
 }
 div.intel-demo-post-content .contact-wrapper .col-right  {
   float: left;
-  width: 30%;
+  width: 33.3%;
 
 }
 div.intel-demo-post-content .intel-demo-footer  {
@@ -66,6 +66,22 @@ div.intel-demo-post-content p.lead {
 div.intel-demo-post-content a.icon-link {
   box-shadow: none;
   text-decoration: none;
+}
+
+div.intel-demo-nav-links {
+  padding: 1em 0;
+}
+
+div.intel-demo-nav-links .intel-demo-nav-previous {
+  float: left;
+  width: 50%;
+
+}
+
+div.intel-demo-nav-links .intel-demo-nav-next {
+  float: right;
+  text-align: right;
+  width: 50%;
 }
 
 /* hack to hide post-thumbnails set by the absolute value of post->ID */

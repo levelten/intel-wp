@@ -1364,6 +1364,11 @@ class Intel_Df  {
 			return '';
 		}
 
+		// if already rendered as string, return the string
+		if (is_string($elements)) {
+			return $elements;
+		}
+
 		// Try to fetch the element's markup from cache and return.
 		//if (isset($elements['#cache'])) {
 		//	$cached_output = drupal_render_cache_get($elements);

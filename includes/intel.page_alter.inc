@@ -272,7 +272,6 @@ function intel_page_alter(&$page) {
     }
   }
 
-
   //intel_check_user_login($page);
 
   intel_check_form_submission($page);
@@ -646,11 +645,14 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   // track page intent
   $intent = INTEL_PAGE_INTENT_DEFAULT;
 
+
   if (!empty($page_entity_settings['page_intent'])) {
     $intent = $page_entity_settings['page_intent'];
   }
-  if (!empty($entity->field_page_intent[$lang][0]['value']) && ($entity->field_page_intent[$lang][0]['value'] != '_default')) {
-    $intent = $entity->field_page_intent[$lang][0]['value'];
+  if (INTEL_PLATFORM == 'drupal') {
+    if (!empty($entity->field_page_intent[$lang][0]['value']) && ($entity->field_page_intent[$lang][0]['value'] != '_default')) {
+      $intent = $entity->field_page_intent[$lang][0]['value'];
+    }
   }
   if ($intent) {
     $page_attrs['pi'] = array(
@@ -895,9 +897,29 @@ function intel_get_flush_page_intel_pushes() {
   return intel_page_intel_pushes('get_flush');
 }
 
+/**
+ * Used to store intel pushes for redirects.
+ * @return mixed
+ */
+
 function intel_save_flush_page_intel_pushes() {
-  return intel_page_intel_pushes('save_flush');
+  $push_storage = get_option('intel_save_push_storage', '');
+  if ($push_storage == 'cookie') {
+    return intel_page_intel_pushes('save_cookie_flush');
+  }
+  else {
+    return intel_page_intel_pushes('save_db_flush');
+  }
 }
+
+function intel_save_db_flush_page_intel_pushes() {
+  return intel_page_intel_pushes('save_db_flush');
+}
+
+function intel_save_cookie_flush_page_intel_pushes() {
+  return intel_page_intel_pushes('save_cookie_flush');
+}
+
 
 function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') {
   if (!isset($_SESSION['intel'])) {
@@ -949,11 +971,23 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
 
   $ret = $_SESSION['intel']['page_pushes'];
 
-  if ($action == 'save_flush') {
+  if ($action == 'save_flush' || $action == 'save_db_flush') {
     intel()->quick_session_cache();
     unset($_SESSION['intel']['page_pushes']);
   }
-  if ($action == 'get_flush') {
+  elseif ($action == 'save_cookie_flush') {
+    // format pushes into an array
+    $pushes = array();
+
+    foreach ($_SESSION['intel']['page_pushes'] as $k => $v) {
+      $a = array('');
+      $pushes[] = array($k, $v);
+    }
+    $json = json_encode($pushes);
+    intel_setrawcookie('l10i_push', $json);
+    unset($_SESSION['intel']['page_pushes']);
+  }
+  elseif ($action == 'get_flush') {
     unset($_SESSION['intel']['page_pushes']);
   }
 
@@ -1139,7 +1173,7 @@ function intel_trigger_intel_event_by_name($event_name, $values = array()) {
 }
 
 function intel_cache_busting_url($url) {
-  $enable = Intel_Df::drupal_static( __FUNCTION__ );
+  $enable = &Intel_Df::drupal_static( __FUNCTION__ );
   if (!isset($enable)) {
     $enable = get_option('intel_cache_busting', INTEL_CACHE_BUSTING_DEFAULT);
   }
@@ -2024,6 +2058,9 @@ function intel_process_form_submission($vars) {
     }
   }
 
+  // note track['value'] logic for $track['value_contact_exists'] is below
+  // with logic to determine if $visitor is a new contact
+
   // if value is not set in track, enable scorings value to override
   if (!isset($track['value']) && isset($track['name'])) {
     $k = 'event_' . $track['name'];
@@ -2111,6 +2148,10 @@ function intel_process_form_submission($vars) {
   
   if (empty($visitor->contact_created) && !empty($visitor->email)) {
     $visitor->setContactCreated(time());
+  }
+  // check if alternate value for contact exists is set
+  elseif (isset($track['value_contact_exists'])) {
+    $track['value'] = intval($track['value_contact_exists']);
   }
   $visitor->setLastActivity(time());
   
@@ -2301,6 +2342,49 @@ function intel_session_cookie_merge() {
   }
   $_SESSION['l10i_cookie'] = $_COOKIE + $c0;
 }
+
+function intel_setcookie($name, $value, $time = 0, $path = '/', $domain = '', $raw = 0) {
+  if (!$domain) {
+    $domain = get_option('intel_domain_name', '');
+  }
+  if (!$domain) {
+    $domain = '.' . intel()->domain;
+  }
+
+  //Intel_Df::watchdog('intel_setcookie', "$name\n$value\n$time\n$path\n$domain\n$raw");
+
+  // the setcookie function encodes spaces to +, which are not decoded properly
+  // the setrawcookie with the rawurlencode filter solves this problem.
+  if ($raw) {
+    setrawcookie($name, rawurlencode($value), $time, $path, $domain);
+  }
+  else {
+    setcookie($name, $value, $time, $path, $domain);
+  }
+}
+
+function intel_setrawcookie($name, $value, $time = 0, $path = '/', $domain = '') {
+  intel_setcookie($name, $value, $time, $path, $domain, 1);
+}
+
+/*
+add_action('init', 'intel_test_init');
+function intel_test_init() {
+  $a = array(
+    array(
+      'event',
+      array(
+        'eventCategory' => 'Test A',
+        'eventAction' => 'Test',
+      ),
+    ),
+  );
+  $json = json_encode($a);
+  //$json = str_replace(' ', '%20', $json);
+  //$json = htmlentities($json);
+  intel_setrawcookie('l10i_push', $json);
+}
+*/
 
 /**
  * Syncs CMS user with visitor

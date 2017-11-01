@@ -24,7 +24,7 @@ function intel_author_list_report_page($sub_index = '-', $filter_type = '', $fil
     drupal_set_title(t('Author report', array('@title' => $reports['team'][$sub_index]['title'])), PASS_THROUGH);
     $filters += $_GET;
     $filter_form = drupal_get_form('intel_report_filters_form', $filters, $context);
-    $output .= drupal_render($filter_form);  
+    $output .= Intel_Df::render($filter_form);
   }
   
   if (empty($_GET['return_type'])) {

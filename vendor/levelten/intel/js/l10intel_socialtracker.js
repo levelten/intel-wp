@@ -99,49 +99,66 @@ function L10iSocialTracker(_ioq, config) {
     };
 
     this.handleLinkEventAlter = function handleLinkEventAlter(f) {
+
+        var action, net, def, hostname, i, v;
+
         // check if hrefType is external
-        if(f.hrefType != 'external') {
-            return f;
-        }
+        if(f.hrefType == 'external') {
+            if (!f.hrefObj) {
+                f.hrefObj = ioq.parseUrl(f.href);
+            }
 
-        if (!f.hrefObj) {
-            f.hrefObj = ioq.parseUrl(f.href);
-        }
+            // remove www. if on hostname
+            hostname = (f.hrefObj.hostname.substr(0, 4) == 'www.') ? f.hrefObj.hostname.substring(4) : f.hrefObj.hostname;
 
-        // remove www. if on hostname
-        var hostname = (f.hrefObj.hostname.substr(0, 4) == 'www.') ? f.hrefObj.hostname.substring(4) : f.hrefObj.hostname;
+            if (this.socialHostnames[hostname] != undefined) {
+                var def = this.socialDefs[this.socialHostnames[hostname]];
 
-        if (this.socialHostnames[hostname] == undefined) {
-            return f;
-        }
+                if (f.hrefObj.pathname.substr(-1) == '/') {
+                    f.hrefObj.pathname = f.hrefObj.pathname.slice(0, -1);
+                }
 
-        var i, v;
-
-        var def = this.socialDefs[this.socialHostnames[hostname]];
-
-        if (f.hrefObj.pathname.substr(-1) == '/') {
-            f.hrefObj.pathname = f.hrefObj.pathname.slice(0, -1);
-        }
-
-        var action = 'profile';
-        if (def.share && ioq.isArray(def.share)) {
-            for (i = 0; i < def.share.length; i++) {
-                v = def.share[i];
-                if (v.pathname && (v.pathname == f.hrefObj.pathname)) {
-                    action = 'share';
-                    break;
+                var action = 'profile';
+                if (def.share && ioq.isArray(def.share)) {
+                    for (i = 0; i < def.share.length; i++) {
+                        v = def.share[i];
+                        if (v.pathname && (v.pathname == f.hrefObj.pathname)) {
+                            action = 'share';
+                            break;
+                        }
+                    }
                 }
             }
+        }
+
+        // process object settings
+        if (f.$obj.objSettings['social-action']) {
+            action = f.$obj.objSettings['social-action'];
+        }
+
+        if (!action) {
+            return f;
+        }
+
+        if (f.$obj.objSettings['social-network']) {
+            net = f.$obj.objSettings['social-network'];
         }
 
         var eventKey = 'socialtracker_social_' + action + '_' + f.eventType;
         if (ioq.eventDefsIndex[eventKey]) {
             f.evtDef = ioq.eventDefs[ioq.eventDefsIndex[eventKey]];
-            f.evtDef.eventAction = f.evtDef.socialNetwork = def.title;
+            f.evtDef.eventAction = f.evtDef.socialNetwork = net || def.title;
             f.evtDef.socialAction = action;
-            f.hrefType = 'social';
+            f.linkType = 'social';
         }
-
+        else if (action && net) {
+            f.evtDef = {};
+            f.evtDef.eventCategory = 'Social ' + action + ' ' + f.eventType;
+            f.evtDef.eventCategory = 'Social ' + action + ' ' + f.eventType;
+            f.evtDef.eventAction = f.evtDef.socialNetwork = net;
+            f.evtDef.socialAction = action;
+            f.linkType = 'social';
+        }
         //f.hrefType = 'social';
         //f.hrefTypeDefs.social = {
         //    title: 'Social ' + action

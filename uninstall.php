@@ -26,6 +26,32 @@
  */
 
 // If uninstall not called from WordPress, then exit.
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-	exit;
+//if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+//	exit;
+//}
+
+function intel_uninstall() {
+	global $wpdb;
+
+	// delete tables
+	$tables = array(
+		"intel_visitor",
+		"intel_visitor_identifier",
+		"intel_submission",
+		"intel_entity_attr",
+		"intel_value_str",
+	);
+	foreach ($tables as $table) {
+		$table_name = $wpdb->prefix . $table;
+		$sql = "DROP TABLE IF EXISTS $table_name";
+		$wpdb->query( $sql );
+	}
+
+	// delete options
+	$table_name = $wpdb->prefix . "options";
+	$sql = "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'intel_%'";
+	$wpdb->query( $sql );
+
+
+	update_option('intel_uninstall', 1);
 }
