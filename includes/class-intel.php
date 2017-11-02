@@ -88,15 +88,23 @@ class Intel {
 	// whether or not url schema is https
 	public $is_https;
 
+	// domain of website, e.g. sub.example.com (no protocol)
 	public $domain;
 
+	// url to reach domain where CMS is installed, e.g. https://sub.example.com
 	public $base_url;
 
+	// https: version of base_url
 	public $base_secure_url;
 
+	// http: version of base_url
 	public $base_insecure_url;
 
+	// path after domain where the CMS is installed
 	public $base_path;
+
+	// path after domain where the front pages are accessed
+	public $base_path_front;
 
 	public $base_root;
 
@@ -136,9 +144,23 @@ class Intel {
 
 		$this->base_url = $this->base_root;
 
+		$this->base_secure_url = str_replace('http://', 'https://', $this->base_url);
+		$this->base_insecure_url = str_replace('https://', 'http://', $this->base_url);
+
 		// $_SERVER['SCRIPT_NAME'] can, in contrast to $_SERVER['PHP_SELF'], not
 		// be modified by a visitor.
-		if ($dir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/')) {
+		$this->base_path = '';
+		$this->base_path_front = '';
+		if (defined('WP_HOME') && defined('WP_SITEURL')) {
+			$a = explode(WP_HOME, WP_SITEURL);
+			if (isset($a[1])) {
+				$this->base_path = $a[1];
+			}
+			if (substr($this->base_path, -1) != '/') {
+				$this->base_path .= '/';
+			}
+		}
+		elseif ($dir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/')) {
 			if ($dir == '/wp-admin') {
 				$dir = '';
 			}
@@ -146,11 +168,15 @@ class Intel {
 			$this->base_url .= $this->base_path;
 			$this->base_path .= '/';
 		}
-		else {
-			$this->base_path = '/';
+
+		if (!$this->base_path || substr($this->base_path, -1) != '/') {
+			$this->base_path .= '/';
 		}
-		$this->base_secure_url = str_replace('http://', 'https://', $this->base_url);
-		$this->base_insecure_url = str_replace('https://', 'http://', $this->base_url);
+		if (!$this->base_path_front || substr($this->base_path_front , -1) != '/') {
+			$this->base_path_front .= '/';
+		}
+
+
 
 		// initialize constants
 		self::setup();

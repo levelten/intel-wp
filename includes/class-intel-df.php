@@ -1043,9 +1043,11 @@ class Intel_Df  {
 		$path = ltrim($path, '/');
 
 		//global $base_url, $base_secure_url, $base_insecure_url;
-		$base_url = intel()->base_url;
-		$base_secure_url = intel()->base_secure_url;
-		$base_insecure_url = intel()->base_insecure_url;
+		$intel = intel();
+		$base_url = $intel->base_url;
+		$base_secure_url = $intel->base_secure_url;
+		$base_insecure_url = $intel->base_insecure_url;
+
 
 		// The base_url might be rewritten from the language rewrite in domain mode.
 		if (!isset($options['base_url'])) {
@@ -1076,9 +1078,6 @@ class Intel_Df  {
 			//}
 		}
 
-		$base = $options['absolute'] ? $options['base_url'] . '/' : '/';
-		$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
-
 		// WP shim start
 		$admin_page = '';
 		if (strpos($path, 'admin/intel') === 0) {
@@ -1107,6 +1106,20 @@ class Intel_Df  {
 			$options['query']['q'] = $path;
 			$path = 'wp-admin/admin.php';
 		}
+
+		if (substr($path, 0, 9) == 'wp-admin/') {
+			$base = $options['absolute'] ? $options['base_url'] . $intel->base_path : $intel->base_path;
+			$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
+		}
+		else {
+			$base = $options['absolute'] ? $options['base_url'] . '/' : '/';
+			$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
+		}
+
+		//$base = $options['absolute'] ? $options['base_url'] . '/' : '/';
+
+
+
 
 		if ($options['query']) {
 			return $base . $path . '?' . self::drupal_http_build_query($options['query']) . $options['fragment'];
