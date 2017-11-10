@@ -421,7 +421,7 @@ function intel_admin_setup_start($form, &$form_state) {
     )
   );
   $items[] = Intel_Df::t('For an overview of the process, see the !link.', array(
-    '!link' => Intel_Df::l( Intel_Df::t('Installation Guide'), 'https://intelligencewp.com/docs/installation', $l_options)
+    '!link' => Intel_Df::l( Intel_Df::t('Installation Guide'), 'https://intelligencewp.com/doc/installation', $l_options)
   ));
   $items[] = '</p>';
 

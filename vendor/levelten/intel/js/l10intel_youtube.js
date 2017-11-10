@@ -12,6 +12,7 @@ function L10iYouTube(_ioq) {
     this.playerState = {};
     this.players = {};
     this.playerEvents = {};
+    this.playerObjSettings = {};
     this.domReady = false;
     this.apiReady = false;
     this.ready = false;
@@ -33,7 +34,7 @@ function L10iYouTube(_ioq) {
         }
     };
 
-    this.trackPlayer = function (player, videoId) {
+    this.trackPlayer = function (player, videoId, objSettings) {
         player.addEventListener('onReady', function (event) { io('youtube:onPlayerReady', event); });
         player.addEventListener('onStateChange', function (event) { io('youtube:onPlayerStateChange', event); });
         this.players[videoId] = player;
@@ -45,7 +46,7 @@ function L10iYouTube(_ioq) {
             play: 0,
             consumed: 0
         };
-
+        this.playerObjSettings[videoId] = objSettings || {};
     };
 
     this.trackYouTube = function () {
@@ -59,6 +60,7 @@ function L10iYouTube(_ioq) {
                 if(matches && matches.length > 1){
                     // add a anchor link to support report links
                     video.before('<a name="video-' + matches[1] + '"></a>');
+//console.log(ioq.getObjSettings(video));
                     video.attr('id', matches[1]);
                     var width = video.width();
                     var height = video.height();
@@ -75,7 +77,8 @@ function L10iYouTube(_ioq) {
                         }
                         */
                     });
-                    io('youtube:trackPlayer', player, matches[1]);
+
+                    io('youtube:trackPlayer', player, matches[1], ioq.getObjSettings(video));
 
                     if (ioq.location.params['io-admin'] && ioq.hasPlugin('admin')) {
                         $target = jQuery('iframe#' + matches[1]);
@@ -93,11 +96,26 @@ function L10iYouTube(_ioq) {
     };
 
     this.onPlayerStateChange = function (event) {
+//console.log('onPlayerStateChange');
+//console.log(event);
         // check if YouTube API event data struc is correct
-        if (event.target == undefined || event.target.getVideoData == undefined) {
+        if (event.target == undefined) {
             return;
         }
-        var videoData = event.target.getVideoData();
+        var videoData = {};
+        // getVideoData was the method for getting data. But stopped working on 11/9/17
+        if (event.target.getVideoData) {
+            videoData = event.target.getVideoData();
+        }
+        // on 11/9/17 data was available on .j element. Not sure if this is permanent
+        else if (event.target.j && event.target.j.videoData) {
+            videoData = event.target.j.videoData;
+        }
+//console.log(videoData);
+
+        if (!videoData.video_id) {
+            return;
+        }
 
         var id = videoData.video_id;
         //var title = (videoData.author) ? videoData.author : '(not set)';
@@ -106,13 +124,15 @@ function L10iYouTube(_ioq) {
 
         var player = this.players[id];
         var playerEvents = this.playerEvents[id];
+        //var objSettings = this.playerObjSettings[id];
         var ga_event = {
-            'eventCategory': "Video event",
-            'eventAction': "YouTube: " + title,
+            eventCategory: "Video event",
+            eventAction: "YouTube: " + title,
             //'eventLabel': "::youtube:" + id,
-            'eventLabel': ":youtube:" + id,
-            'eventValue': 0,
-            'nonInteraction': false
+            eventLabel: ":youtube:" + id,
+            eventValue: 0,
+            nonInteraction: false,
+            objSettings: this.playerObjSettings[id]|| {}
         };
         ga_event.oa = {
             rs: 'youtube',
@@ -120,6 +140,8 @@ function L10iYouTube(_ioq) {
             rk: id,
             domi: id
         };
+//console.log(ga_event);
+        var $target_obj = jQuery(event.target);
         var duration = player.getDuration();
         var playTime = player.getCurrentTime();
         var positionPer = Math.round(100 * playTime / duration);
@@ -132,16 +154,19 @@ function L10iYouTube(_ioq) {
                 ga_event.eventValue = io('get', 'c.scorings.events.youtube_video_play', 0);
             }
             ga_event.eid = 'videoPlay';
-            //_l10iq.push(['_trackIntelEvent', jQuery(this), ga_event, '']);
-            io('event', ga_event);
+
+            event.type = 'play';
+            ioq.defEventHandler(ga_event, $target_obj, event);
+            //io('event', ga_event);
 
             this.playerEvents[id].play++;
             this.playerState[id].paused = false;
         }
         else if (event.data == YT.PlayerState.ENDED  && !this.playerState[id].paused) {
+console.log('ENDED');
             ga_event.eventCategory = 'Video scroll';
             ga_event.eventValue = 100;
-            ga_event.eid = 'videoWatched';
+            ga_event.eid = 'videoScroll';
 
             var ga_event3 = {};
 
@@ -159,13 +184,18 @@ function L10iYouTube(_ioq) {
             ga_event.metric11 = 100;
             ga_event.metric12 = 0;
 
-            io('event', ga_event);
+            event.type = 'scroll';
+            ioq.defEventHandler(ga_event, $target_obj, event);
+            //io('event', ga_event);
             if (ga_event3.eid) {
-                io('event', ga_event3);
+                event.type = 'consumed';
+                ioq.defEventHandler(ga_event3, $target_obj, event);
+                //io('event', ga_event3);
                 this.playerEvents[id].consumed++;
             }
         }
         else if (event.data == YT.PlayerState.PAUSED && !this.playerState[id].paused){
+console.log('Paused');
             ga_event.eventCategory = 'Video stop';
             ga_event.eid = 'videoStop';
 
@@ -184,17 +214,24 @@ function L10iYouTube(_ioq) {
                 ga_event3.eid = 'videoConsumed';
             }
 
-            ga_event2.eid = 'videoWatched';
+            ga_event2.eid = 'videoScroll';
             ga_event2.metric8 = 1;
             ga_event2.metric9 = Math.round(positionPer);
             ga_event2.metric10 = Math.round(duration);
             ga_event2.metric11 = Math.round(positionPer);
             ga_event2.metric12 = 0;
 
-            io('event', ga_event);
-            io('event', ga_event2);
+
+            event.type = 'stop';
+            ioq.defEventHandler(ga_event, $target_obj, event);
+            event.type = 'scroll';
+            ioq.defEventHandler(ga_event2, $target_obj, event);
+            //io('event', ga_event);
+            //io('event', ga_event2);
             if (ga_event3.eid) {
-                io('event', ga_event3);
+                //io('event', ga_event3);
+                event.type = 'consumed';
+                ioq.defEventHandler(ga_event3, $target_obj, event);
                 this.playerEvents[id].consumed++;
             }
 

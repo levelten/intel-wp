@@ -20,10 +20,11 @@ img.attachment-post-thumbnail {
     'tracking_event_name' => !empty($goals['contact']) ? 'form_submission__contact' : 'form_submission',
   );
   $settings['forms']['intel_demo_offer_form'] = array(
-    'tracking_event_name' => 'form_submission',
+    //'tracking_event_name' => 'form_submission',
+    'tracking_event_name' => '',
   );
   $settings['shortcodes'] = array();
-  $settings['shortcodes']['contact_email'] = Intel_Df::l('contact@example.com', 'mailto:contact@example.com');
+  $settings['shortcodes']['contact_email'] = Intel_Df::l('info@example.com', 'mailto:info@example.com');
   $settings['shortcodes']['contact_telephone'] = Intel_Df::l('214.555.1212', 'tel:214.555.1212');
   $settings['shortcodes']['contact_downloads'] = Intel_Df::l('Demo Brochure', INTEL_URL . 'files/demo_brochure.pdf');
   $settings['shortcodes']['contact_sites'] = Intel_Df::l('IntelligenceWP.com', '//intelligencewp.com');
@@ -229,7 +230,7 @@ function intel_demo_post_load($id = NULL, $options = array()) {
       'ID' => $i,
       'post_type' => 'page',
       'post_title' => Intel_Df::t('Demo Home'),
-      'post_content' => 'Page content',
+      'post_content' => '<div class="intel-demo-featured-image"><img src="http://via.placeholder.com/1280x720&text=Welcome"></div>' . "\n\n" . $ipsums[0] . "\n\n" . $ipsums[1],
     );
 
     $i--;
@@ -237,7 +238,8 @@ function intel_demo_post_load($id = NULL, $options = array()) {
       'ID' => $i,
       'post_type' => 'page',
       'post_title' => 'Demo Page',
-      'post_content' => 'Page content',
+      'post_content' => $ipsums[0] . "\n\n" . '<strong>' . Intel_Df::t('Sales Demo Video') . '</strong>'  . "\n" . '[embed]https://www.youtube.com/watch?v=3H0aBxXzgKg[/embed]' . "\n\n" . $ipsums[1] . "\n\n" . $ipsums[2] . "\n\n" . $ipsums[3] . "\n\n" . $ipsums[4],
+      //'post_content' => '<h3>' . Intel_Df::t('Sales Demo') . '</h3>' . '[embed title="test title" data-io-play-value=".55" data-io-consumed-value="1.11"]https://www.youtube.com/watch?v=3H0aBxXzgKg[/embed]',
     );
 
 

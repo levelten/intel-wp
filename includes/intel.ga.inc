@@ -106,6 +106,7 @@ function intel_goal_const($goal, $ga_goal = array()) {
     return FALSE;
   }
 
+
   $defaults = array(
     'ga_id' => $goal['ga_id'],
     'name' => str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($goal['title']))),
@@ -119,6 +120,10 @@ function intel_goal_const($goal, $ga_goal = array()) {
       'phonecall' => 1,
     ),
   );
+  // non intel goals should not have a context
+  if (!empty($goal['type']) && $goal['type'] != 'INTL' && $goal['type'] != 'INTEL') {
+    $defaults['context'] = array();
+  }
   $goal = Intel_Df::drupal_array_merge_deep($defaults, $goal);
 
   return $goal;
@@ -433,41 +438,69 @@ function intel_get_goal_categories() {
 add_filter('intel_link_type_info', 'intel_get_link_type_info_default');
 function intel_get_link_type_info_default($info = array()) {
   $info['mailto'] = array(
-    'title' => Intel_Df::t('Mailto'),
+    'title' => Intel_Df::t('Mailto link'),
+    'track' => 1,
   );
   $info['tel'] = array(
-    'title' => Intel_Df::t('Tel'),
+    'title' => Intel_Df::t('Tel link'),
+    'track' => 1,
   );
   $info['download'] = array(
-    'title' => Intel_Df::t('Download'),
+    'title' => Intel_Df::t('Download link'),
+    'track' => 1,
   );
   $info['external'] = array(
-    'title' => Intel_Df::t('External'),
+    'title' => Intel_Df::t('External link'),
+    'track' => 1,
   );
   $info['internal'] = array(
-    'title' => Intel_Df::t('Internal'),
+    'title' => Intel_Df::t('Internal link'),
+    'track' => 0,
   );
 
   return $info;
 }
 
 function intel_get_link_type_info($name = '', $options = array()) {
-  $link_type = &Intel_Df::drupal_static(__FUNCTION__, array());
+  $link_type = &Intel_Df::drupal_static(__FUNCTION__);
 
-  if (count($link_type)) {
-    if (isset($name)) {
-      if (isset($link_type[$name])) {
-        return $link_type[$name];
+  if (!isset($link_type)) {
+    $link_type = array();
+    $link_type = apply_filters('intel_link_type_info', $link_type);
+
+    // merge in settings on the events
+    $events = intel_get_intel_event_info();
+    $scorings = intel_get_scorings();
+    foreach ($link_type as $k => $v) {
+      $event_k = "linktracker_{$k}_click";
+      if (!empty($events[$event_k])) {
+        $event = $events[$event_k];
+        if (!empty($event['value'])) {
+          $link_type[$k]['click_value'] = $event['value'];
+        }
+        if (!empty($event['mode'])) {
+          $link_type[$k]['click_mode'] = ($event['mode'] == 'goal') ? $event['ga_id'] : $event['mode'];
+          if (!empty($scorings['event_' . $event_k])) {
+            $link_type[$k]['click_value'] = $scorings['event_' . $event_k];
+          }
+        }
+
+
       }
     }
-    else {
-      return $link_type;
-    }
+
+    //$custom = get_option('intel_link_types_custom', array());
   }
 
-  $link_type = apply_filters('intel_link_type_info', $link_type);
 
-  $custom = get_option('intel_link_types_custom', array());
+  if (!empty($name)) {
+    if (isset($link_type[$name])) {
+      return $link_type[$name];
+    }
+    else {
+      return FALSE;
+    }
+  }
 
   return $link_type;
 }
@@ -576,7 +609,6 @@ function intel_get_intel_event_info_default($event = array()) {
       'selector_not' => '.post-edit-link',
       'on_event' => 'click',
       'transport' => 'beacon',
-      'overridable' => 0,
       'ga_event_auto' => array(
         'description' => Intel_Df::t('Automatically generated on site search results links.'),
       ),
@@ -636,47 +668,6 @@ function intel_get_intel_event_info_default($event = array()) {
   */
 
   if (intel_is_intel_script_enabled('linktracker')) {
-    $event['linktracker_mailto_click'] = array(
-      'title' => Intel_Df::t('Mailto link click'),
-      'description' => Intel_Df::t('Link to mailto: is clicked'),
-      'category' => Intel_Df::t('Mailto link click'),
-      'mode' => '',
-      'value' => 0,
-      'ga_event_auto' => array(
-        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
-      ),
-      'trigger_auto' => array(
-        'description' => Intel_Df::t('Automatically triggered when link href starting with mailto: is clicked.'),
-      ),
-      'availability_auto' => array(
-        'description' => Intel_Df::t('Automatically enabled on all pages.'),
-      ),
-      //'selector' => 'a:track-link-mailto',
-      //'on_event' => 'click',
-      'js_setting' => 1, // processed via _linktracker.js
-      'overridable' => 0,
-    );
-
-    $event['linktracker_tel_click'] = array(
-      'title' => Intel_Df::t('Tel link click'),
-      'description' => Intel_Df::t('Link to tel: is clicked'),
-      'mode' => '',
-      'category' => Intel_Df::t('Tel link click'),
-      'value' => 0,
-      'ga_event_auto' => array(
-        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
-      ),
-      'trigger_auto' => array(
-        'description' => Intel_Df::t('Automatically triggered when link href starting with tel: is clicked.'),
-      ),
-      'availability_auto' => array(
-        'description' => Intel_Df::t('Automatically enabled on all pages.'),
-      ),
-      //'selector' => 'a:track-link-tel',
-      //'on_event' => 'click',
-      'js_setting' => 1, // processed via _linktracker.js
-      'overridable' => 0,
-    );
 
     $event['linktracker_download_click'] = array(
       'title' => Intel_Df::t('Download link click'),
@@ -693,10 +684,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'availability_auto' => array(
         'description' => Intel_Df::t('Automatically enabled on all pages.'),
       ),
-      //'selector' => 'a:track-link-download',
-      //'on_event' => 'click',
-      'js_setting' => 1,
-      'overridable' => 0,
+      'push' => 0, // disable event push, processed via _linktracker.js
     );
 
     $event['linktracker_external_click'] = array(
@@ -714,9 +702,46 @@ function intel_get_intel_event_info_default($event = array()) {
       'availability_auto' => array(
         'description' => Intel_Df::t('Automatically enabled on all pages.'),
       ),
-      'js_setting' => 1,
-      'overridable' => 0,
+      'push' => 0, // disable event push, processed via _linktracker.js
     );
+
+    $event['linktracker_mailto_click'] = array(
+      'title' => Intel_Df::t('Mailto link click'),
+      'description' => Intel_Df::t('Link to mailto: is clicked'),
+      'category' => Intel_Df::t('Mailto link click'),
+      'mode' => '',
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered when link href starting with mailto: is clicked.'),
+      ),
+      'availability_auto' => array(
+        'description' => Intel_Df::t('Automatically enabled on all pages.'),
+      ),
+      'push' => 0, // disable event push, processed via _linktracker.js
+    );
+
+    $event['linktracker_tel_click'] = array(
+      'title' => Intel_Df::t('Tel link click'),
+      'description' => Intel_Df::t('Link to tel: is clicked'),
+      'mode' => '',
+      'category' => Intel_Df::t('Tel link click'),
+      'value' => 0,
+      'ga_event_auto' => array(
+        'description' => Intel_Df::t('Automatically configured by Link Tracker script.'),
+      ),
+      'trigger_auto' => array(
+        'description' => Intel_Df::t('Automatically triggered when link href starting with tel: is clicked.'),
+      ),
+      'availability_auto' => array(
+        'description' => Intel_Df::t('Automatically enabled on all pages.'),
+      ),
+      'push' => 0, // disable event push, processed via _linktracker.js
+    );
+
+
 
     $event['linktracker_internal_click'] = array(
       'title' => Intel_Df::t('Internal link click'),
@@ -733,7 +758,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'availability_auto' => array(
         'description' => Intel_Df::t('Automatically enabled on all pages.'),
       ),
-      'js_setting' => 1,
+      'push' => 0, // disable event push, processed via _linktracker.js
       'overridable' => 0,
     );
   }
@@ -795,7 +820,7 @@ function intel_get_intel_event_info_default($event = array()) {
       //'category' => Intel_Df::t('Social share'),
       'description' => Intel_Df::t('Click on social share button'),
       'mode' => 'valued',
-      'valued_event' => 1,
+      //'valued_event' => 1,
       'value' => 10,
       'selector' => '.io-social-share-track',
       'on_event' => 'click',
@@ -814,7 +839,7 @@ function intel_get_intel_event_info_default($event = array()) {
       //'category' => Intel_Df::t('Social share'),
       'description' => Intel_Df::t('Click on social like button'),
       'mode' => 'valued',
-      'valued_event' => 1,
+      //'valued_event' => 1,
       'value' => 10,
       'selector' => '.io-social-like-track',
       'on_event' => 'click',
@@ -833,7 +858,7 @@ function intel_get_intel_event_info_default($event = array()) {
       //'category' => Intel_Df::t('Social share'),
       'description' => Intel_Df::t('Click on social follow button'),
       'mode' => 'valued',
-      'valued_event' => 1,
+      //'valued_event' => 1,
       'value' => 10,
       'selector' => '.io-social-follow-track',
       'on_event' => 'click',
@@ -852,7 +877,7 @@ function intel_get_intel_event_info_default($event = array()) {
       //'category' => Intel_Df::t('Social profile'),
       'description' => Intel_Df::t('Click on button to visit social profile'),
       'mode' => 'valued',
-      'valued_event' => 1,
+      //'valued_event' => 1,
       'value' => 10,
       'selector' => '.io-social-profile-track',
       'on_event' => 'click',
@@ -1175,12 +1200,13 @@ function intel_get_intel_events_overridable_fields($event) {
   }
 
   if (isset($event['overridable'])) {
+
     // if array, used to override defaults
     if (is_array($event['overridable'])) {
       return Intel_Df::drupal_array_merge_deep($overridable_defaults, $event['overridable']);
     }
     // if override set to false, set to empty array
-    if (empty($v['overridable'])) {
+    if (empty($event['overridable'])) {
       return array();
     }
     else {
@@ -1246,9 +1272,10 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
   foreach ($custom AS $k => $v) {
     // check if custom attribute
     if (isset($events[$k])) {
-      foreach ($v AS $a => $b) {
-        $events[$k][$a] = $b;
-      }
+      $events[$k] = Intel_Df::drupal_array_merge_deep($events[$k], $v);
+      // rebuild event_category incase changed by custom settings
+      unset($events[$k]['event_category']);
+      $events[$k]['event_category'] = intel_format_intel_event_eventcategory($events[$k], $goal_info);
     }
     else {
       $custom[$k]['module']  = 'intel';
@@ -1373,6 +1400,7 @@ function intel_get_enabled_intel_events($context) {
       if (
         ($event['enable'] && !$page_match)
         || (!$event['enable'] && $page_match)
+        && (!isset($event['push']) || $event['push'])
       ) {
         $events[$key] = $event;
       }
@@ -3212,6 +3240,14 @@ function intel_get_scorings($filter = '') {
     $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : $m['value'];
   }
 
+  $goals = intel_goal_load();
+  $goals_by_id = array();
+  foreach ($goals AS $i => $m) {
+    $i = 'goal_' . $i;
+    $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : (isset($m['value']) ? $m['value'] : 0);
+    $goals_by_id[$m['ga_id']] = $m;
+  }
+
   $events = intel_get_intel_event_info();
   foreach ($events AS $i => $m) {
     if (($filter == 'js_setting') && (empty($m['js_setting']))) {
@@ -3225,15 +3261,17 @@ function intel_get_scorings($filter = '') {
       $i = 'event_' . $i;
       $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : $m['value'];
     }
+    elseif($m['mode'] == 'goal' && !empty($m['ga_id']) && !empty($goals_by_id[$m['ga_id']])) {
+      $i = 'event_' . $i;
+      $goal = $goals_by_id[$m['ga_id']];
+      $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : (isset($goal['value']) ? $goal['value'] : 0);
+    }
   }
 
-  $goals = intel_goal_load();
+  //$goals = intel_goal_load();
   //$goals = array_merge($goals, get_option('intel_submission_goals', intel_get_submission_goals_default()));
   //$goals = array_merge($goals, get_option('intel_phonecall_goals', intel_get_phonecall_goals_default()));
-  foreach ($goals AS $i => $m) {
-    $i = 'goal_' . $i;
-    $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : (isset($m['value']) ? $m['value'] : 0);
-  }
+
 
   return $scorings[$filter];
 }

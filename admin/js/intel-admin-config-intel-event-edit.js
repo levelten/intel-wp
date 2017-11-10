@@ -13,12 +13,14 @@ var intel_admin_config_intel_event_edit = (function( $ ) {
 
 	ths.handleMode = function handleMode () {
 		var mode = $('#edit-mode option:selected').val();
-		console.log(mode);
+
 		if (mode == 'goal') {
 			$('div.form-item-ga-id').show();
+			$('div.add-goal-link').show();
 		}
 		else {
 			$('div.form-item-ga-id').hide();
+			$('div.add-goal-link').hide();
 		}
 
 	};

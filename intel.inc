@@ -8,7 +8,7 @@
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.8');
+define('INTEL_L10IAPI_JS_VER', '0.2.9');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -18,7 +18,8 @@ define('INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT', 1);
 define('INTEL_TRACK_PHONECALLS_DEFAULT', 0);
 define('INTEL_TRACK_EMAILCLICKS_DEFAULT', 0);
 define('INTEL_TRACK_REALTIME_DEFAULT', 0);
-define('INTEL_CACHE_BUSTING_DEFAULT', 1);
+define('INTEL_CACHE_BUSTING_DEFAULT', 0);
+define('INTEL_SAVE_PUSH_STORAGE_DEFAULT', 'cookie');
 
 define('INTEL_HELP_APIVERS', 'http://api.getlevelten.com');
 
@@ -3199,6 +3200,15 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 0,
     'selectable' => 1,
   );
+  /*
+  $info['impressiontracker'] = array(
+    'title' => Intel_Df::t('Impression Tracker'),
+    'description' => Intel_Df::t('Tracks when page elements are viewed on a page.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_impressiontracker.js',
+    'enabled' => 1,
+    'selectable' => 1,
+  );
+  */
   $info['linktracker'] = array(
     'title' => Intel_Df::t('Link Tracker'),
     'description' => Intel_Df::t('Tracks link clicks by type such as mailto, download, external and custom links.'),
@@ -3241,6 +3251,16 @@ function _intel_intel_script_info($info = array()) {
     'enabled' => 0,
     'selectable' => 1,
   );
+
+  /*
+  $info['jquery_appear'] = array(
+    'title' => Intel_Df::t('jQuery appear plugin'),
+    'description' => Intel_Df::t('Adds jQuery appear plugin'),
+    'path' => INTEL_URL . 'vendor/js/jquery.appear.js',
+    'enabled' => 0,
+    'selectable' => 1,
+  );
+  */
 
   return $info;
 }
@@ -4403,16 +4423,39 @@ if(!is_admin() && !empty($_POST)){} {
 }
 
 
+/**
+ * Implements filter.do_shortcode_tag()
+ *
+ * Alters shortcode markup to add intel data attributes to html tags
+ *
+ * @param $output
+ * @param $tag
+ * @param $attrs
+ * @return string
+ */
+function intel_do_shortcode_tag($output, $tag, $attrs) {
+  $intel_attrs = array();
+  $intel_attrs_str = '';
+  if ($tag == 'embed') {
+    foreach ($attrs as $k => $v) {
+      if (substr($k, 0, 8) == 'data-io-') {
+        $intel_attrs[$k] = $v;
+        $intel_attrs_str .= " {$k}=\"{$v}\"";
+      }
+    }
+  }
 
-add_shortcode('io-wrapper', 'intel_io_wrapper_shortcode');
-function intel_io_wrapper_shortcode($vars, $content) {
-  $filter = array(
-    'title' => '',
-    'uri' => '',
-  );
-  $vars = shortcode_atts( $filter, $vars);
-  return '<span class="io-target" title="Alpha">' . $content . "</span>";
+  if (!empty($intel_attrs)) {
+    if ($tag == 'embed') {
+      if (substr($output, -10) == '></iframe>') {
+        $output = substr($output, 0, -10) . $intel_attrs_str . substr($output, -10);
+      }
+    }
+  }
+
+  return $output;
 }
+add_filter('do_shortcode_tag', 'intel_do_shortcode_tag', 20, 3);
 
 spl_autoload_register('intel_class_autoload');
 function intel_class_autoload($className) {

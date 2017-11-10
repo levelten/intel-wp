@@ -66,6 +66,42 @@ function intel_help_start_page() {
   $output .= '    </div>';
   $output .= '  </div>';
 
+  $output .= '<h4>' . Intel_Df::t('4. Goals & Form Tracking') . '</h4>';
+  $output .= '  <div class="row">';
+  $output .= '    <div class="col-md-7">';
+  $output .= '      <iframe ' . $video_width . ' ' . $video_height . ' src="https://www.youtube.com/embed/zKGgz1ljchg?list=PLmUKQxGacjpCj85hvZoIbWkqnMVMhR5RO" frameborder="0" gesture="media" allowfullscreen></iframe>';
+  $output .= '    </div>';
+  $output .= '    <div class="col-md-5">';
+  $output .= '    </div>';
+  $output .= '  </div>';
+
+  $output .= '<h4>' . Intel_Df::t('5. Valuing Events') . '</h4>';
+  $output .= '  <div class="row">';
+  $output .= '    <div class="col-md-7">';
+  $output .= '      <iframe ' . $video_width . ' ' . $video_height . ' src="https://www.youtube.com/embed/MHGNrn2KGss?list=PLmUKQxGacjpCj85hvZoIbWkqnMVMhR5RO" frameborder="0" gesture="media" allowfullscreen></iframe>';
+  $output .= '    </div>';
+  $output .= '    <div class="col-md-5">';
+  $output .= '    </div>';
+  $output .= '  </div>';
+
+  $output .= '<h4>' . Intel_Df::t('6. Intelligence Events') . '</h4>';
+  $output .= '  <div class="row">';
+  $output .= '    <div class="col-md-7">';
+  $output .= '      <iframe ' . $video_width . ' ' . $video_height . ' src="https://www.youtube.com/embed/N-Sama8h7xw?list=PLmUKQxGacjpCj85hvZoIbWkqnMVMhR5RO" frameborder="0" gesture="media" allowfullscreen></iframe>';
+  $output .= '    </div>';
+  $output .= '    <div class="col-md-5">';
+  $output .= '    </div>';
+  $output .= '  </div>';
+
+  $output .= '<h4>' . Intel_Df::t('7. Event Tag Attributes') . '</h4>';
+  $output .= '  <div class="row">';
+  $output .= '    <div class="col-md-7">';
+  $output .= '      <iframe ' . $video_width . ' ' . $video_height . ' src="https://www.youtube.com/embed/rbnRZPDRVUQ?list=PLmUKQxGacjpCj85hvZoIbWkqnMVMhR5RO" frameborder="0" gesture="media" allowfullscreen></iframe>';
+  $output .= '    </div>';
+  $output .= '    <div class="col-md-5">';
+  $output .= '    </div>';
+  $output .= '  </div>';
+
 
   // article close
   $output .= '</div></div>';

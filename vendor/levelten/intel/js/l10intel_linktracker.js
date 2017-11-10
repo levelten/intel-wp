@@ -45,6 +45,7 @@ function L10iLinkTracker(_ioq, config) {
 
     this.init = function init() {
         ioq.log(ioq.name + ':linktracker.init()');
+
         var ths = this;
         var evtDef = {
             key: 'linktracker_link_click',
@@ -87,25 +88,25 @@ function L10iLinkTracker(_ioq, config) {
         */
     };
 
-    this.setLinkTypeDef = function setLinkTypeDef(name, obj) {
-        var i;
+    this.setLinkTypeDef = function setLinkTypeDef(name, def) {
+        var i, a;
         if (ioq.isArray(name)) {
-            for(i = 0; i < name.length; i++) {
-                obj = name[i];
-                if (obj._i) {
-                    obj.track = obj.track || {};
-                    this.linkTypeDefs[obj._i] = obj;
+            for (var i = 0; i < name.length; i++) {
+                a = name[i];
+                if (a[0] && a[1] && ioq.isObject(a[1])) {
+                    this.linkTypeDefs[a[0]] = a[1];
                 }
             }
         }
         else {
-            obj._i = name;
-            obj.track = obj.track || {};
             this.linkTypeDefs[name] = obj;
         }
     };
 
     this.getLinkTypeDef = function setLinkTypeDef(name, defaultValue) {
+        if (name == undefined) {
+            return this.linkTypeDefs;
+        }
         if (this.linkTypeDefs[name] === undefined) {
             return defaultValue;
         }
@@ -128,7 +129,7 @@ function L10iLinkTracker(_ioq, config) {
 
     this.handleLinkEvent = function handleLinkEvent(event) {
 
-        var i, v, attributes = {};
+        var i, v, attributes = {}, linkDef;
         var f = {
             event: event,
             hrefTypeDefs: this.hrefTypeDefs,
@@ -190,13 +191,17 @@ function L10iLinkTracker(_ioq, config) {
 
         // trigger callbacks
         ioq.triggerCallbacks('handleLinkEventAlter', f);
-        if (
-          f.linkTypeDefs[f.linkType]
-          && (f.linkTypeDefs[f.linkType].track || f.$obj.objSettings['link-track'] || f.$obj.objSettings['link-' + f.eventType + '-track'])
-        ) {
-            f.evtDef.eventCategory = f.linkTypeDefs[f.linkType].title;
+        linkDef = f.linkTypeDefs[f.linkType] || {};
+        if (linkDef.track || f.$obj.objSettings['link-track'] || f.$obj.objSettings['link-' + f.eventType + '-track']) {
+            f.evtDef.eventCategory = linkDef.title;
             if (f.eventType) {
                 f.evtDef.eventCategory += ' ' + f.eventType
+            }
+            if (linkDef.clickMode) {
+                f.evtDef.mode = linkDef.clickMode;
+            }
+            if (linkDef.clickValue) {
+                f.evtDef.eventValue = linkDef.clickValue;
             }
             // force re-construct
             delete(f.evtDef.const);

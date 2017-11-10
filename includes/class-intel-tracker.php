@@ -292,7 +292,7 @@ class Intel_Tracker {
 					}
 					$script .= '");' . "\n";
 				} else {
-					$script .= "$io_name('$cm', _intel_settings.intel.pushes.$cm);\n";
+					$script .= "$io_name('$cm', _intel_settings.intel.pushes['$cm']);\n";
 				}
 			}
 		}

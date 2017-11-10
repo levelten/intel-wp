@@ -92,7 +92,7 @@ function intel_page_alter(&$page) {
     $config['gaGoals'][] = array(
       'id' => $goal['ga_id'],
       'name' => $goal['title'],
-      //'value' => !empty($scorings['goal_' + $goal['ga_id']]) ? $scorings['goal_' + $goal['ga_id']] : 0
+      'value' => $goal['value'],
     );
   }
 
@@ -270,6 +270,17 @@ function intel_page_alter(&$page) {
     else {
       intel_add_page_intel_push(array('event', $l10i_event_action));
     }
+  }
+
+  if (intel_is_intel_script_enabled('linktracker')) {
+    $link_infos = intel_get_link_type_info();
+    foreach ($link_infos AS $key => $value) {
+      $value['id'] = $key;
+      $def = intel_filter_link_info_for_push($value);
+      intel_add_page_intel_push(array('linktracker:setLinkTypeDef', $key, $def));
+    }
+    //intel_add_page_intel_push(array('linktracker:setLinkDef', $key, $def));
+    //intel_d($link_infos);
   }
 
   //intel_check_user_login($page);
@@ -903,7 +914,7 @@ function intel_get_flush_page_intel_pushes() {
  */
 
 function intel_save_flush_page_intel_pushes() {
-  $push_storage = get_option('intel_save_push_storage', '');
+  $push_storage = get_option('intel_save_push_storage', INTEL_SAVE_PUSH_STORAGE_DEFAULT);
   if ($push_storage == 'cookie') {
     return intel_page_intel_pushes('save_cookie_flush');
   }
@@ -1028,33 +1039,6 @@ function _intel_ga_event_sanitize_events($ga_events) {
  * @param $event
  */
 function intel_filter_event_for_push($event) {
-  /*
-  if (isset($event['valued_event'])) {
-    unset($event['valued_event']);
-  }
-  if (isset($event['title'])) {
-    unset($event['title']);
-  }
-  if (isset($event['module'])) {
-    unset($event['module']);
-  }
-  if (isset($event['description'])) {
-    unset($event['description']);
-  }
-  if (isset($event['enable_all_pages'])) {
-    unset($event['enable_all_pages']);
-  }
-  if (isset($event['selectable'])) {
-    unset($event['selectable']);
-  }
-  if (isset($event['custom'])) {
-    unset($event['custom']);
-  }
-  if (isset($event['key'])) {
-    unset($event['key']);
-  }
-  */
-
   if (empty($event) || !is_array($event)) {
     return FALSE;
   }
@@ -1170,6 +1154,45 @@ function intel_trigger_intel_event_by_name($event_name, $values = array()) {
   // merge event values on $values
   $values += $event;
   return intel_trigger_intel_event($values);
+}
+
+/**
+ * Strips event metadata values not needed for page push
+ * @param $event
+ */
+function intel_filter_link_info_for_push($def) {
+  if (empty($def) || !is_array($def)) {
+    return FALSE;
+  }
+
+  // translate from classic format to UA format
+  $trans = array(
+    //'category' => 'eventCategory', // automatically constructed
+    'title' => 'key',
+    'click_mode' => 'clickMode',
+    'click_value' => 'clickValue',
+    'title' => 1,
+    'track' => 1,
+    'clickMode' => 1,
+    'clickValue' => 1,
+  );
+
+  foreach ($def as $k => $v) {
+    if (isset($trans[$k])) {
+      $t = $trans[$k];
+
+      if (is_string($t)) {
+        $def[$t] = $v;
+        unset($def[$k]);
+      }
+    }
+    else {
+      unset($def[$k]);
+    }
+
+  }
+
+  return $def;
 }
 
 function intel_cache_busting_url($url) {

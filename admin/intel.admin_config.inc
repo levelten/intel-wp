@@ -204,14 +204,14 @@ function intel_admin_settings($form, &$form_state) {
     '#description' => Intel_Df::t('Enables email click tracking features.'),
   );
   $options = array(
-    '' => Intel_Df::t('Database'),
+    'db' => Intel_Df::t('Database'),
     'cookie' => Intel_Df::t('Cookie'),
   );
   $form['l10iapi']['advanced']['intel_save_push_storage'] = array(
     '#type' => 'radios',
     '#title' => Intel_Df::t('Redirect push storage'),
     '#options' => $options,
-    '#default_value' => get_option('intel_save_push_storage', ''),
+    '#default_value' => get_option('intel_save_push_storage', INTEL_SAVE_PUSH_STORAGE_DEFAULT),
     '#description' => Intel_Df::t('Set how to store intel pushes when a page redirects.'),
   );
   $form['l10iapi']['advanced']['intel_cache_busting'] = array(
@@ -866,6 +866,7 @@ function intel_admin_goal_list_page() {
   $link_options = array(
     'query' => Intel_Df::drupal_get_destination(),
   );
+  $count = 0;
   for ($i = 1; $i <= $id_limit; $i++) {
     $key = "$i";
     $goal = !empty($goals[$key]) ? $goals[$key] : array();
@@ -896,12 +897,13 @@ function intel_admin_goal_list_page() {
 
     $row[] = implode(' ', $ops);
     $rows[] = $row;
+    $count++;
   }
-
 
   $vars = array(
     'header' => $header,
     'rows' => $rows,
+    'empty' => Intel_Df::t('No goals have been created yet.'),
   );
   $vars['colgroup'] = array(
     // COLGROUP with one COL element.
@@ -922,6 +924,11 @@ function intel_admin_goal_list_page() {
   );
 
   $output = Intel_Df::theme('table', $vars);
+
+  if ($count == 0) {
+    $form = Intel_Form::drupal_get_form('intel_admin_goal_default_form');
+    $output .= Intel_Df::render($form);
+  }
 
   $l_options = Intel_Df::l_options_add_query(array('refresh' => 1));
   $output .= "<br>\n" . Intel_Df::l( Intel_Df::t('refresh data'), Intel_Df::current_path(), $l_options );
@@ -1092,6 +1099,28 @@ function intel_admin_goal_form_submit(&$form, &$form_state) {
   intel_goal_save($goal);
 }
 
+function intel_admin_goal_default_form($form, &$form_state) {
+  require_once INTEL_DIR . "includes/intel.ga.inc";
+
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => Intel_Df::t('Add default goals'),
+  );
+
+
+  return $form;
+}
+
+function intel_admin_goal_default_form_submit($form, &$form_state) {
+  require_once INTEL_DIR . "includes/intel.ga.inc";
+
+  $goal_defaults = intel_get_intel_goals_default();
+  intel_goal_save($goal_defaults['general']);
+  // sleep to avoid api flood limits
+  usleep(250);
+  intel_goal_save($goal_defaults['contact']);
+}
+
 function intel_admin_intel_event_list_page() {
   require_once INTEL_DIR . "includes/intel.ga.inc";
 
@@ -1181,7 +1210,6 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   $custom = (!$event || !empty($event['custom'])) ? 1 : 0;
 
   $overridable = intel_get_intel_events_overridable_fields($event);
-
   if ($add) {
     $event += $_GET;
   }
@@ -1297,6 +1325,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     $form['ga_event_values'][$key]['#markup'] = Intel_Df::t('(not set)');
   }
 
+
   $form['ga_event_values']['inline_wrapper_1'] = array(
     '#type' => 'markup',
     '#markup' => '</div><div class="pull-left" style="padding-left: 15px;">',
@@ -1317,6 +1346,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   $desc .= ' ' . Intel_Df::t('You can create and manage goals in the !link.', array(
       '!link' => Intel_Df::l( Intel_Df::t('Intelligence goal admin'), 'admin/config/intel/settings/goal', $l_options),
     ));
+  $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
   $key = 'ga_id';
   $form['ga_event_values'][$key] = array(
     '#type' => (1 || $custom || !empty($overridable[$key])) ? 'select' : 'item',
@@ -1325,9 +1355,11 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     '#default_value' => !empty($event[$key]) ? $event[$key] : '',
     '#description' => $desc,
     '#disabled' => !($custom || !empty($overridable[$key])),
+    '#suffix' => '<div class="add-goal-link text-right" style="margin-top: -12px;">' . Intel_Df::l(Intel_Df::t('Add Goal'), 'admin/config/intel/settings/goal/add', $l_options) . '</div>',
     '#attributes' => array(
       'class' => array(
         'pull-left',
+        'm-b-0',
         //'clearfix'
       ),
     ),
@@ -1341,6 +1373,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   $form['ga_event_values']['inline_wrapper_2'] = array(
     '#type' => 'markup',
     '#markup' => '</div></div>',
+    //'#markup' => '</div>' . '<div class="add-goal-link pull-left" style="padding-left: 15px;">' . Intel_Df::l(Intel_Df::t('Add Goal'), 'admin/config/intel/settings/goal/add') . '</div>' . '</div>',
   );
 
   $key = 'action';
