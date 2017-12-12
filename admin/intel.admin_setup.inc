@@ -2204,7 +2204,7 @@ function intel_admin_setup_form_settings($form, &$form_state) {
         '#type' => 'item',
         '#prefix' => '<td class="' . $col_classes[0] . '">',
         '#suffix' => '</td>',
-        '#markup' => $data['type'],
+        '#markup' => !empty($data['type_label']) ? $data['type_label'] : $data['type'],
       );
 
       $f["form_{$data['type']}-{$data['id']}_tracking_event"] = array(
@@ -2307,6 +2307,7 @@ function intel_admin_setup_check_form_settings($form, &$form_state) {
 
   $status['success'] = 1;
   $form_type_forms_info = intel()->form_type_forms_info();
+
   $form_data = array();
   foreach ($form_type_forms_info as $form_type => $forms_info) {
     $form_data[$form_type] = array();

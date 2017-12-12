@@ -76,7 +76,7 @@ table .text-cell {
 }
 
 #intel-report h3  {
-  padding: 5px 0px 5px 6px;
+  padding: 5px 0 5px 6px;
   margin-top: 6px;
   background-color: #666666;
   color: #FFFFFF;
@@ -94,7 +94,7 @@ table .text-cell {
 
 #intel-report h4  {
   border-color: #ccc;
-  text-shadow: #fff 0px 1px 0px;
+  text-shadow: #fff 0 1px 0;
   font-size: 11px;
   text-align: left;
   font-weight: normal;
@@ -156,7 +156,7 @@ table .text-cell {
   font-size: 1.3em;  
   vertical-align: middle;
   font-weight: bold;
-  margin: 4px 0px 0px 0px;
+  margin: 4px 0 0 0;
   width: 19em;
   white-space: nowrap; 
   line-height: 30px; 
@@ -301,7 +301,7 @@ table .text-cell {
 
 #intel-report .google-visualization-table-tr-head th {
   border-top-color: #ccc;
-  text-shadow: #fff 0px 1px 0px;
+  text-shadow: #fff 0 1px 0;
   
   text-align: left;
   font-size: 11px;
@@ -316,14 +316,14 @@ table .text-cell {
 
 #intel-report .google-visualization-table-table td {  
   vertical-align: middle;
-  border-width: 1px 0px;
+  border-width: 1px 0;
   border-style: solid;
   border-color: #ddd;
   padding: 6px 4px;
 }
 
 #intel-report .google-visualization-table-table td.google-visualization-table-seq {
-  padding-left: 0px;
+  padding-left: 0;
 }
 
 #intel-report .summary-box {  

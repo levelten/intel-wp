@@ -62,10 +62,12 @@ class IntelVisitor extends Entity {
     } 
     try {
       $this->apiVisitor->load($params);
+      return TRUE;
     } 
     catch (Exception $e) {
       $this->apiVisitorLoadError = $e;
       //throw new Exception('Unable to load api visitor: ' . $e);
+      return FALSE;
     }
   }
   
@@ -74,8 +76,8 @@ class IntelVisitor extends Entity {
       return FALSE;
     }
     if (!isset($this->email)) {
-      $this->apiPersonLoad_error = new Exception(t('No email is set.'));
-      return;
+      $this->apiPersonLoad_error = new Exception(Intel_Df::t('No email is set.'));
+      return FALSE;
     }   
     if (!isset($this->apiPerson)) {
       intel_include_library_file('class.visitor.php');
@@ -188,7 +190,7 @@ class IntelVisitor extends Entity {
     $a = explode('_', $scope);
     if ($a[0] == 'api') {
       if ($this->apiLevel != 'pro') {
-        return;
+        return FALSE;
       }
       if ($a[1] == 'person') {
         return $this->apiPerson->getVar($a[2], $namespace, $keys);
@@ -225,6 +227,7 @@ class IntelVisitor extends Entity {
       $this->data = $data;
       $this->data_updated = REQUEST_TIME;
     }
+    return TRUE;
   }
   
   public function getProp($prop_name) {

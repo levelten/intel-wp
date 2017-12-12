@@ -496,9 +496,6 @@ class Intel_Visitor_List_Table extends WP_List_Table {
 					case 'name':
 						$r .= "$avatar $edit";
 						break;
-					case 'name':
-						//$r .= "$user_object->first_name $user_object->last_name";
-						break;
 					case 'email':
 						$r .= !empty($email) ? "<a href='" . esc_url( "mailto:$email" ) . "'>$email</a>" : Intel_Df::t('(not set)');
 						break;

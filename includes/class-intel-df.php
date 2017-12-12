@@ -955,12 +955,6 @@ class Intel_Df  {
 		}
 	}
 
-	public static function get_path($type, $name) {
-		if ($type == 'module') {
-
-		}
-	}
-
 	public static function url($path = NULL, array $options = array()) {
 // Merge in defaults.
 		$options += array(
@@ -1890,14 +1884,14 @@ class Intel_Df  {
 			if ($cell['data'] == $ts['name']) {
 				$ts['sort'] = (($ts['sort'] == 'asc') ? 'desc' : 'asc');
 				$cell['class'][] = 'active';
-				$image = Lvtl_Df::theme('tablesort_indicator', array('style' => $ts['sort']));
+				$image = Intel_Df::theme('tablesort_indicator', array('style' => $ts['sort']));
 			}
 			else {
 				// If the user clicks a different header, we want to sort ascending initially.
 				$ts['sort'] = 'asc';
 				$image = '';
 			}
-			$cell['data'] = Lvtl_Df::l($cell['data'] . $image, $_GET['q'], array('attributes' => array('title' => $title), 'query' => array_merge($ts['query'], array('sort' => $ts['sort'], 'order' => $cell['data'])), 'html' => TRUE));
+			$cell['data'] = Intel_Df::l($cell['data'] . $image, $_GET['q'], array('attributes' => array('title' => $title), 'query' => array_merge($ts['query'], array('sort' => $ts['sort'], 'order' => $cell['data'])), 'html' => TRUE));
 
 			unset($cell['field'], $cell['sort']);
 		}

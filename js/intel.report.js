@@ -24,7 +24,7 @@ var _intel_reports = (function ($) {
       var i, url = '';
       var a = window.location.href.split('?');
       var timeframe = $(this).find('option:selected').attr('value');
-      ths.locObj.params.timeframe = $(this).find('option:selected').attr('value')
+      ths.locObj.params.timeframe = $(this).find('option:selected').attr('value');
       for (i in ths.locObj.params) {
         if (url) {
           url += '&';
@@ -94,7 +94,7 @@ var _intel_reports = (function ($) {
     console.log(ths);
   };
 
-  intelReport = {
+  var intelReport = {
     attach: function (context) {
       $('#apply-report-filter').click( function() {
         reportFilterSubmit();

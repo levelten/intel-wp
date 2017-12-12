@@ -28,7 +28,8 @@ function intel_author_list_report_page($sub_index = '-', $filter_type = '', $fil
   }
   
   if (empty($_GET['return_type'])) {
-    $output .= intel_get_report_ajax_container();
+    $vars = array();
+    $output .= intel_get_report_ajax_container($vars);
   }
   elseif ($_GET['return_type'] == 'nonajax') {
     $output .= intel_author_list_report($filters, $context, $sub_index);
@@ -38,7 +39,7 @@ function intel_author_list_report_page($sub_index = '-', $filter_type = '', $fil
       'report' => intel_author_list_report($filters, $context, $sub_index),
     );
     drupal_json_output($data);
-    return;    
+    return $output;
   }  
    
   return $output;

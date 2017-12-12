@@ -134,6 +134,7 @@ class Intel_Visitor extends Intel_Entity  {
 			$this->apiVisitorLoadError = $e;
 			//throw new Exception('Unable to load api visitor: ' . $e);
 		}
+		return TRUE;
 	}
 
 	public function apiPersonLoad($params = array()) {
@@ -143,7 +144,7 @@ class Intel_Visitor extends Intel_Entity  {
     $email = $this->getEmail();
 		if (!$email) {
 			$this->apiPersonLoad_error = new Exception(__('No email is set.', 'intel'));
-			return;
+			return FALSE;
 		}
 		if (!isset($this->apiPerson)) {
       intel_include_library_file('class.visitor.php');
@@ -263,7 +264,7 @@ class Intel_Visitor extends Intel_Entity  {
 		$a = explode('_', $scope);
 		if ($a[0] == 'api') {
 			if ($this->apiLevel != 'pro') {
-				return;
+				return FALSE;
 			}
 			if ($a[1] == 'person') {
 				return $this->apiPerson->getVar($a[2], $namespace, $keys);
@@ -300,6 +301,7 @@ class Intel_Visitor extends Intel_Entity  {
 			$this->data = $data;
 			$this->data_updated = $this->intel->request_time;
 		}
+		return TRUE;
 	}
 
 	public function getProp($prop_name, $construct = 0) {

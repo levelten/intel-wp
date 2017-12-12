@@ -14,10 +14,10 @@ Drupal.behaviors.intelSettingsSummary = {
     // determine if value field should be shown for existing attributes
     $('#edit-field-page-attribute-col .form-select').each(function (index, value) {
       Drupal.behaviors.intelSettingsSummary.setPageAttrDisplay.call(value);
-    })
+    });
     $('#edit-field-visitor-attribute-col .form-select').each(function (index, value) {
       Drupal.behaviors.intelSettingsSummary.setVisitorAttrDisplay.call(value);
-    })
+    });
 
     // set callbacks to determine if value field should be shown on change
     $('#edit-field-page-attribute-col .form-select').change(function (context) {

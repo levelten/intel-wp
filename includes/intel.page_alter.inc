@@ -41,7 +41,8 @@ function intel_page_alter(&$page) {
     //'trackAdhocCtas' => ($api_level == 'pro') ? 'track-cta' : '',
     //'trackAdhocEvents' => 'track-event',
     'trackForms' => array(),
-    'trackRealtime' => get_option('intel_track_realtime', INTEL_TRACK_REALTIME_DEFAULT),
+    'trackRealtime' => (integer)get_option('intel_track_realtime', INTEL_TRACK_REALTIME_DEFAULT),
+    'fetchGaRealtime' => (integer)get_option('intel_fetch_ga_realtime', 0),
     'isLandingpage' => 0,
     //'scorings' => intel_get_scorings('js_setting'),
     'scorings' => array(
@@ -1046,7 +1047,6 @@ function intel_filter_event_for_push($event) {
   // translate from classic format to UA format
   $trans = array(
     //'category' => 'eventCategory', // automatically constructed
-    'key' => 'key',
     'event_id' => 'eventId',
     'event_category' => 'eventCategory',
     'action' => 'eventAction',
@@ -1168,7 +1168,6 @@ function intel_filter_link_info_for_push($def) {
   // translate from classic format to UA format
   $trans = array(
     //'category' => 'eventCategory', // automatically constructed
-    'title' => 'key',
     'click_mode' => 'clickMode',
     'click_value' => 'clickValue',
     'title' => 1,
@@ -1405,6 +1404,11 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
       $params['userId'] =  '.';
     }
     $l10iq_pushes[] = array('ga.create', $l10i_ga_account, 'auto', $params);
+
+    $l10i_ga_account_base = get_option('intel_ga_tid_base', '');
+    if ($l10i_ga_account_base) {
+      $l10iq_pushes[] = array('addTracker', $l10i_ga_account_base, array('enhance' => 'base'));
+    }
 
     // trigger alter to enable other modules to add pushes
     $l10iq_pushes = apply_filters('intel_l10iq_pushes_alter', $l10iq_pushes);

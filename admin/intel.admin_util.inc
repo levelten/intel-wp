@@ -30,6 +30,40 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
+
+  $req = array(
+    'metrics' => array(),
+    'dimensions' => array(),
+    'filters' => '',
+    'sort_metric' => '',
+    'max_results' => 50,
+  );
+
+  /*
+  $req['metrics'] = array('rt:activeUsers');
+  $req['dimensions'] = array('rt:pagePath');
+  */
+
+  $vtkid = 'b6a09261d45b98eba001';
+  $req['metrics'] = array('rt:totalEvents');
+  $req['dimensions'] = array('rt:eventCategory', 'rt:pagePath', 'rt:source', 'rt:medium');
+
+  $req['filters'] = 'rt:eventCategory==Visitor session;rt:eventAction==' . $vtkid;
+
+  $options = array(
+    'realtime' => 1,
+    'refresh' => 1,
+  );
+
+  intel_d($req);
+
+  //$data = google_analytics_reports_api_report_data($req, $options);
+  $data = intel_ga_api_data($req, $options);
+
+  intel_d($data);
+
+  return '';
+
   $page_attrs = intel_get_page_attribute_info();
 
   intel_d($page_attrs);

@@ -6128,27 +6128,27 @@
   width: 100%;
 }
 .bootstrap-wrapper .m-t-0 {
-  margin-top: 0rem !important;
+  margin-top: 0 !important;
 }
 .bootstrap-wrapper .m-b-0 {
-  margin-bottom: 0rem !important;
+  margin-bottom: 0 !important;
 }
 .bootstrap-wrapper .m-l-0 {
-  margin-left: 0rem !important;
+  margin-left: 0 !important;
 }
 .bootstrap-wrapper .m-r-0 {
-  margin-right: 0rem !important;
+  margin-right: 0 !important;
 }
 .bootstrap-wrapper .m-x-0 {
-  margin-right: 0rem !important;
-  margin-left: 0rem !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
 }
 .bootstrap-wrapper .m-y-0 {
-  margin-top: 0rem !important;
-  margin-bottom: 0rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 .bootstrap-wrapper .m-a-0 {
-  margin: 0rem 0rem !important;
+  margin: 0 0 !important;
 }
 .bootstrap-wrapper .m-t-_25 {
   margin-top: .25rem !important;
@@ -6473,27 +6473,27 @@
   margin: 3rem 3rem !important;
 }
 .bootstrap-wrapper .p-t-0 {
-  padding-top: 0rem !important;
+  padding-top: 0 !important;
 }
 .bootstrap-wrapper .p-b-0 {
-  padding-bottom: 0rem !important;
+  padding-bottom: 0 !important;
 }
 .bootstrap-wrapper .p-l-0 {
-  padding-left: 0rem !important;
+  padding-left: 0 !important;
 }
 .bootstrap-wrapper .p-r-0 {
-  padding-right: 0rem !important;
+  padding-right: 0 !important;
 }
 .bootstrap-wrapper .p-x-0 {
-  padding-right: 0rem !important;
-  padding-left: 0rem !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
 }
 .bootstrap-wrapper .p-y-0 {
-  padding-top: 0rem !important;
-  padding-bottom: 0rem !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 .bootstrap-wrapper .p-a-0 {
-  padding: 0rem 0rem !important;
+  padding: 0 0 !important;
 }
 .bootstrap-wrapper .p-t-_25 {
   padding-top: .25rem !important;

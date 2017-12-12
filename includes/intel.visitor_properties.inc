@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Support for syncing visitor data accross various data sources
+ * Support for syncing visitor data across various data sources
  * 
  * @author Tom McCracken <tomm@getlevelten.com>
  */
@@ -599,31 +599,32 @@ function _intel_intel_visitor_property_info($prop) {
 
   $attr_info = intel_get_attribute_info();
 
-  foreach ($attr_info as $k => $v) {
-    if (!empty($v['source_type']) && $v['source_type'] == 'taxonomy') {
-      $prop['data.analytics.' . $k] = array(
-        'title' => $v['title'],
-        'category' => Intel_Df::t('attributes'),
-        'source_type' => !empty($v['source_type']) ? $v['source_type'] : '',
-        'variables' => array(
-          '_key' => NULL,
-        ),
-      );
+  if (is_array($attr_info)) {
+    foreach ($attr_info as $k => $v) {
+      if (!empty($v['source_type']) && $v['source_type'] == 'taxonomy') {
+        $prop['data.analytics.' . $k] = array(
+          'title' => $v['title'],
+          'category' => Intel_Df::t('attributes'),
+          'source_type' => !empty($v['source_type']) ? $v['source_type'] : '',
+          'variables' => array(
+            '_key' => NULL,
+          ),
+        );
+      }
+      /*
+      if (!empty($v['prop']) && $v['prop']) {
+        $prop['data.' . $v['prop']] = array(
+          'title' => $v['title'],
+          'category' => Intel_Df::t('attributes'),
+          'source_type' => !empty($v['source_type']) ? $v['source_type'] : '',
+          'variables' => array(
+            '@value' => NULL,
+          ),
+        );
+      }
+      */
     }
-    /*
-    if (!empty($v['prop']) && $v['prop']) {
-      $prop['data.' . $v['prop']] = array(
-        'title' => $v['title'],
-        'category' => Intel_Df::t('attributes'),
-        'source_type' => !empty($v['source_type']) ? $v['source_type'] : '',
-        'variables' => array(
-          '@value' => NULL,
-        ),
-      );
-    }
-    */
   }
-
 
   return $prop;
 }

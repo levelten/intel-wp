@@ -257,7 +257,7 @@ class Intel_Form  {
 	 */
 	public static function form_get_cache($form_build_id, &$form_state) {
 		// TODO WP
-		return;
+		return NULL;
 
 		if ($cached = cache_get('form_' . $form_build_id, 'cache_form')) {
 			$form = $cached->data;
@@ -300,7 +300,7 @@ class Intel_Form  {
 	 */
 	public static function form_set_cache($form_build_id, $form, $form_state) {
 		// TODO WP
-		return;
+		return NULL;
 
 		// 6 hours cache life time for forms should be plenty.
 		$expire = 21600;

@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Support for syncing visitor data accross various data sources
+ * Support for syncing visitor data across various data sources
  *
  * @author Tom McCracken <tomm@getlevelten.com>
  */
@@ -185,7 +185,7 @@ function intel_sync_fullcontact_page($vtk) {
 }
 
 add_filter( 'intel_sync_visitor', 'intel_l10iapi_sync_visitordata', 10, 2);
-function intel_l10iapi_sync_visitordata($visitor, $options) {
+function intel_l10iapi_sync_visitordata($visitor, $options = array()) {
   if (!empty($options['processes']) && !in_array('l10iapi', $options['processes'])) {
     return $visitor;
   }

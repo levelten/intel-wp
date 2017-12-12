@@ -545,7 +545,6 @@ function intel_get_intel_event_info_default($event = array()) {
     'availability_auto' => array(
       'description' => Intel_Df::t('Automatically available on all supported form pages.'),
     ),
-    'overridable' => 0,
   );
 
   // event mode should be admin configurable
@@ -963,9 +962,6 @@ function intel_get_intel_event_info_default($event = array()) {
       'value_format' => 'percent',
       'trigger_auto' => array(
         'description' => Intel_Df::t('Automatically set by the YouTube script. The event value is the percentage the video was watched.'),
-      ),
-      'trigger_auto' => array(
-        'description' => Intel_Df::t('Automatically triggered by the YouTube script when a YouTube video stops playing.'),
       ),
       'js_setting' => 1,
       'overridable' => 0,
@@ -3899,8 +3895,8 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   $gadwp = GADWP();
   $gapi = new GADWP_GAPI_Controller();
   $projectId = get_option('intel_ga_view');
-  $from = date("Y-m-d", $request['start_date']);
-  $to = date("Y-m-d", $request['end_date']);
+  $from = !empty($request['start_date']) ? date("Y-m-d", $request['start_date']) : '';
+  $to = !empty($request['end_date']) ? date("Y-m-d", $request['end_date']) : '';
   //intel_d("$from - $to");
   //$from = $request['start_date'];
   //$to = $request['end_date'];
@@ -3942,14 +3938,20 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   $request_cache = $request;
   $cache_time = 900;
 
-  if (!empty($cache_options['round_start'])) {
-    $request_cache['start_date'] = $cache_time * floor($request_cache['start_date'] / $cache_time);
+  if (!empty($cache_options['realtime'])) {
+    $serial = 'intel_rt_' . md5(serialize(array_merge($request_cache, array())));
+  }
+  else {
+    if (!empty($cache_options['round_start'])) {
+      $request_cache['start_date'] = $cache_time * floor($request_cache['start_date'] / $cache_time);
 
+    }
+    if (!empty($cache_options['round_end'])) {
+      $request_cache['end_date'] = $cache_time * floor($request_cache['end_date'] / $cache_time);
+    }
+    $serial = 'intel_' . md5(serialize(array_merge($request_cache, array())));
   }
-  if (!empty($cache_options['round_end'])) {
-    $request_cache['end_date'] = $cache_time * floor($request_cache['end_date'] / $cache_time);
-  }
-  $serial = 'intel_' . md5(serialize(array_merge($request_cache, array())));
+
 
   //$serial = 'intel_' . $gapi->get_serial( $seed );
   $feed = intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options );
@@ -4012,8 +4014,14 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
 
     if (!empty($cache_options['refresh'])) {
       GADWP_Tools::delete_cache( $serial );
-      $data = $gapi->service->data_ga->get( 'ga:' . $projectId, $from, $to, $metrics, $options );
-      GADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( $timeouts ) );
+      if (!empty($cache_options['realtime'])) {
+        $data = $gapi->service->data_realtime->get( 'ga:' . $projectId, $metrics, $options );
+        GADWP_Tools::set_cache($serial, $data, 10);
+      }
+      else {
+        $data = $gapi->service->data_ga->get('ga:' . $projectId, $from, $to, $metrics, $options);
+        GADWP_Tools::set_cache($serial, $data, $gapi->get_timeouts($timeouts));
+      }
     }
     else {
       $transient = FALSE;
@@ -4022,8 +4030,15 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
         //if ($gapi->gapi_errors_handler()) {
         //  return -23;
         //}
-        $data = $gapi->service->data_ga->get('ga:' . $projectId, $from, $to, $metrics, $options);
-        GADWP_Tools::set_cache($serial, $data, $gapi->get_timeouts($timeouts));
+        if (!empty($cache_options['realtime'])) {
+          $data = $gapi->service->data_realtime->get( 'ga:' . $projectId, $metrics, $options );
+          GADWP_Tools::set_cache($serial, $data, 10);
+        }
+        else {
+          $data = $gapi->service->data_ga->get('ga:' . $projectId, $from, $to, $metrics, $options);
+          GADWP_Tools::set_cache($serial, $data, $gapi->get_timeouts($timeouts));
+        }
+
         //$gapi->gadwp->config->options['api_backoff'] = 0;
         //$gapi->gadwp->config->set_plugin_options();
       }
@@ -4670,6 +4685,9 @@ function intel_fetch_ga_profiles() {
     return $ga_profiles;
   }
 
+  if (!is_callable('GADWP')) {
+    return $ga_profiles;
+  }
   $gadwp = GADWP();
   if ( null === $gadwp->gapi_controller ) {
     $gadwp->gapi_controller = new GADWP_GAPI_Controller();

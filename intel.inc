@@ -56,6 +56,17 @@ function intel_menu($items = array()) {
     'file' => 'system.admin.inc',
     'file path' => Intel_Df::drupal_get_path('module', 'system'),
   );
+  $items['admin/config/intel/iapi_auth_callback'] = array(
+    'title' => 'Settings',
+    'description' => 'API, global options, events, page attribute and visitor attribute settings.',
+    'page callback' => 'intel_admin_settings_iapi_auth_callback',
+    //'page arguments' => array('intel_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'admin/intel.admin_config.inc',
+    'weight' => -10,
+  );
   $items['admin/config/intel/settings'] = array(
     'title' => 'Settings',
     'description' => 'API, global options, events, page attribute and visitor attribute settings.',
@@ -155,6 +166,18 @@ function intel_menu($items = array()) {
     'title' => 'Events',
     'description' => 'Intel events configuration.',
     'page callback' => 'intel_admin_intel_event_list_page',
+    'access callback' => 'user_access',
+    //'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
+  $items['admin/config/intel/settings/form'] = array(
+    'title' => 'Forms',
+    'description' => 'Form configuration.',
+    'page callback' => 'intel_admin_form_type_list_page',
     'access callback' => 'user_access',
     //'access callback' => '_intel_user_access_extended',
     'access arguments' => array('admin intel'),
@@ -517,7 +540,6 @@ function intel_menu($items = array()) {
       'title' => 'Sync data',
       'page callback' => 'intel_sync_fullcontact_page',
       'page arguments' => array(1),
-      'access callback' => 'user_access',
       'access callback' => 'intel_visitor_access',
       'access arguments' => array('update', 1),
       'type' => Intel_Df::MENU_CALLBACK,
@@ -4437,10 +4459,12 @@ function intel_do_shortcode_tag($output, $tag, $attrs) {
   $intel_attrs = array();
   $intel_attrs_str = '';
   if ($tag == 'embed') {
-    foreach ($attrs as $k => $v) {
-      if (substr($k, 0, 8) == 'data-io-') {
-        $intel_attrs[$k] = $v;
-        $intel_attrs_str .= " {$k}=\"{$v}\"";
+    if (!empty($attrs) && is_array($attrs)) {
+      foreach ($attrs as $k => $v) {
+        if (substr($k, 0, 8) == 'data-io-') {
+          $intel_attrs[$k] = $v;
+          $intel_attrs_str .= " {$k}=\"{$v}\"";
+        }
       }
     }
   }

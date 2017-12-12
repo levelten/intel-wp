@@ -110,6 +110,13 @@ function intel_ga_explorer_report() {
     '#size' => 16,
     '#default_value' => (isset($request['custom']['max_results'])) ? $request['custom']['max_results'] : 50,
   );
+
+  $form['realtime_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Realtime API'),
+    //'#description' => Intel_Df::t('Enter a value to assign to the event when the CTA is clicked. Must be an whole number.'),
+    '#default_value' => (isset($request['realtime_mode'])) ? $request['realtime_mode'] : '',
+  );
   
   $form['submit'] = array(
     '#type' => 'submit',
@@ -157,7 +164,13 @@ function intel_ga_explorer_report() {
         '#markup' => '<br><div class="panel panel-default"><h3 class="panel-heading">Request</h3><div class="panel-body">' . implode("<br>\n", $items) . '</div></div>',
       );
 
-      $options = array('refresh' => TRUE);
+      if (!empty($request['realtime_mode'])) {
+        $options = array('realtime' => TRUE);
+      }
+      else {
+        $options = array('refresh' => TRUE);
+      }
+
       //$data = google_analytics_reports_api_report_data($req, $options);
       $data = intel_ga_api_data($req, $options);
 
@@ -253,6 +266,7 @@ function intel_ga_explorer_report_submit($form, &$form_state) {
   $request['custom']['start_date'] = strtotime(str_replace("'", '', $values['start_date']));
   $request['custom']['end_date'] = strtotime(str_replace("'", '', $values['end_date']));
   $request['custom']['max_results'] = str_replace("'", '', $values['max_results']);
+  $request['realtime_mode'] = str_replace("'", '', $values['realtime_mode']);
 
   update_option('intel_ga_explorer_request', $request);
 }
@@ -468,6 +482,18 @@ function intel_ga_explorer_presets() {
     'dimensions' => array('ga:customVarValue5', 'ga:sessionCount', 'ga:customVarValue4'),
     'metrics' => array('ga:entrances', 'ga:pageviews', 'ga:goalValueAll', 'ga:goalCompletionsAll', 'ga:uniquePageviews', 'ga:pageValue'),
     'sort_metric' => 'ga:customVarValue5,ga:customVarValue4',
+  );
+
+  $presets['realtime_activeusers'] = array(
+    'title' => Intel_Df::t('Realtime traffic source'),
+    'dimensions' => array('rt:pagePath'),
+    'metrics' => array('rt:activeUsers'),
+  );
+
+  $presets['realtime_events'] = array(
+    'title' => Intel_Df::t('Realtime events'),
+    'dimensions' => array('rt:eventCategory', 'rt:eventAction'),
+    'metrics' => array('rt:totalEvents'),
   );
 
   return $presets;

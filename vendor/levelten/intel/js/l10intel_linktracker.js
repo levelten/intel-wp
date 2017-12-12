@@ -193,6 +193,7 @@ function L10iLinkTracker(_ioq, config) {
         ioq.triggerCallbacks('handleLinkEventAlter', f);
         linkDef = f.linkTypeDefs[f.linkType] || {};
         if (linkDef.track || f.$obj.objSettings['link-track'] || f.$obj.objSettings['link-' + f.eventType + '-track']) {
+            console.log();
             f.evtDef.eventCategory = linkDef.title;
             if (f.eventType) {
                 f.evtDef.eventCategory += ' ' + f.eventType

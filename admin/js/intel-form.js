@@ -38,7 +38,7 @@ var _intel_form = (function( $ ) {
 		});
 
 		// transform field descriptions into tooltips
-		var $description, $label, content, $this;
+		var $description, $label, content;
 		$('.bootstrap-wrapper .form-item').each(function (index, value) {
 			$description = $('.description', this);
 			if ($description.length) {

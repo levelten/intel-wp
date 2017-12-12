@@ -38,7 +38,7 @@ function initialize_map_$map_index() {
 	    center: new google.maps.LatLng(<?php print $center['lat']; ?>, <?php print $center['lon']; ?>),
 	    radius: 50000
 	  };
-	  locCircle = new google.maps.Circle(circleOptions);
+	  var locCircle = new google.maps.Circle(circleOptions);
 	}
 	google.maps.event.addDomListener(window, 'load', initialize_map_<?php print $map_index ; ?>);
 </script>

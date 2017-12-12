@@ -52,7 +52,7 @@
 			center: new google.maps.LatLng(<?php print $map_options['center']['lat']; ?>, <?php print $map_options['center']['lon']; ?>),
 			radius: 50000
 		};
-		locCircle = new google.maps.Circle(circleOptions);
+		var locCircle = new google.maps.Circle(circleOptions);
 	});
 
 	if (!window['intel_init_map_all']) {

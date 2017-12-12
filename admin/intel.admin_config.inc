@@ -81,6 +81,8 @@ function intel_admin_settings($form, &$form_state) {
     '#description' => $desc,
   );
 
+
+
   /*
   $form['l10iapi']['intel_ga_tid'] = array(
     '#type' => 'textfield',
@@ -119,6 +121,16 @@ function intel_admin_settings($form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+
+  $desc = Intel_Df::t('Select the base Google Analytics profile to push Intelligence events.');
+  $form['l10iapi']['advanced']['intel_ga_view_base'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Base Google Analytics profile (tracking id / view name)'),
+    '#default_value' => get_option('intel_ga_view_base', ''),
+    '#options' => $gap_options,
+    '#description' => $desc,
+  );
+
   $form['l10iapi']['advanced']['intel_l10iapi_url'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('Custom API URL'),
@@ -225,6 +237,13 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Sync Full Contact data'),
     '#default_value' => get_option('intel_sync_visitordata_fullcontact', INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT),
     '#description' => Intel_Df::t('Check to enable syncing data via FullContact API. Only available for pro accounts.'),
+  );
+
+  $form['l10iapi']['advanced']['intel_fetch_ga_realtime'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Fetch GA Realtime'),
+    '#default_value' => get_option('intel_fetch_ga_realtime', 0),
+    '#description' => Intel_Df::t('Will fetch realtime Google Analytics data for visitor.'),
   );
 
   if($lib_path = intel_get_library_path()) {
@@ -434,11 +453,37 @@ function intel_admin_settings_submit($form, &$form_state) {
     update_option('intel_ga_profile', $profile);
     update_option('intel_ga_tid', $profile['propertyId']);
   }
+  if (!empty($ga_profiles[$values['intel_ga_view_base']])) {
+    $profile = $ga_profiles[$values['intel_ga_view_base']];
+    update_option('intel_ga_profile_base', $profile);
+    update_option('intel_ga_tid_base', $profile['propertyId']);
+  }
 
   Intel_Df::drupal_set_message(Intel_Df::t('General settings have been saved.'));
 
   //Intel_Df::drupal_goto('admin/config/intel/settings/general');
   //return 'admin/config/intel/settings/general';
+}
+
+function intel_admin_settings_iapi_auth_callback() {
+  if (empty($_REQUEST['state'])) {
+    exit;
+  }
+  $state_valid = wp_verify_nonce( $_REQUEST['state'], 'iapi_auth' );
+  if ($state_valid != 1) {
+    exit;
+  }
+
+  update_option('intel_ga_tid', $_REQUEST['tid']);
+  update_option('intel_apikey', $_REQUEST['apikey']);
+
+  Intel_Df::drupal_set_message(Intel_Df::t('Intelligence API is properly connected.'));
+
+  if (!empty($_REQUEST['callback_destination'])) {
+    Intel_Df::drupal_goto($_REQUEST['callback_destination']);
+  }
+
+  return '';
 }
 
 function intel_admin_scoring($form, &$form_state) {
@@ -1795,6 +1840,58 @@ function intel_admin_intel_event_delete_form_submit($form, &$form_state) {
   ));
   Intel_Df::drupal_set_message($msg);
   Intel_Df::drupal_goto('admin/config/intel/settings/intel_event');
+}
+
+function intel_admin_form_type_list_page() {
+  $form_type_forms_info = intel()->form_type_forms_info();
+
+  $header = array(
+    Intel_Df::t('Title'),
+    Intel_Df::t('Type'),
+    Intel_Df::t('Tracking event'),
+    Intel_Df::t('Value'),
+  );
+
+  $rows = array();
+
+  foreach ($form_type_forms_info as $form_type => $forms_info) {
+    $form_data[$form_type] = array();
+    foreach ($forms_info as $form_info) {
+      $data = array(
+        'type' => $form_type,
+        'id' => 0,
+        'title' => NULL,
+        'tracking_event' => NULL,
+        'field_map' => NULL,
+        'settings_url' => NULL,
+      );
+      $data = apply_filters('intel_form_type_' . $form_type . '_form_setup', $data, $form_info);
+
+      $row = array(
+        'data' => array(),
+      );
+      $title = !empty($data['title']) ? $data['title'] : Intel_Df::t('(not set)');
+      if (!empty($data['settings_url'])) {
+        $title = Intel_Df::l($title, $data['settings_url']);
+      }
+      $row['data'][] = $title;
+      $row['data'][] = !empty($data['type_label']) ? $data['type_label'] : $data['type'];
+      $row['data'][] = !empty($data['tracking_event']) ? $data['tracking_event'] : Intel_Df::t('(not set)');
+      $row['data'][] = !empty($data['tracking_event_value']) ? $data['tracking_event_value'] : Intel_Df::t('(default)');
+
+
+      $rows[] = $row;
+
+    }
+  }
+
+  $vars = array(
+    'header' => $header,
+    'rows' => $rows,
+  );
+  $output = Intel_Df::theme('table', $vars);
+
+  return $output;
 }
 
 function intel_admin_link_type_list_page() {

@@ -160,16 +160,17 @@ class Intel_Admin {
 	public function site_menu() {
 		global $wp_version;
 		if ( current_user_can( 'manage_options' ) ) {
-			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
-			add_submenu_page( 'intel_reports', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_reports', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_reports', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_reports', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_reports', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
+			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
+			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
   	}
 	}
 
 	public function menu_router() {
+
 		$intel = intel();
 		$menu_info = $intel->menu_info();
 
@@ -470,14 +471,14 @@ class Intel_Admin {
 		}
 
 		if (!empty($info['file'])) {
-			$fp = INTEL_DIR;
+			$fp = !empty($info['file path']) ? $info['file path'] : INTEL_DIR;
 			$fn = $fp . $info['file'];
 			include_once $fn;
 		}
 
 		// check if setup is complete
 		if ($q != 'admin/config/intel/settings/setup'
-			&& !intel_is_installed('min')) {
+			&& 0 && !intel_is_installed('min')) {
 			$msg = Intel_Df::t('Intelligence setup must be complete before accessing this page. !link.', array(
 				'!link' => Intel_Df::l(Intel_Df::t('Click here to run the setup wizard'), 'admin/config/intel/settings/setup'),
 			));

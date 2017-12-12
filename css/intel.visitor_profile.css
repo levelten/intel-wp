@@ -77,7 +77,7 @@
 	color: #333;
   padding-top: 10px;
   width: 60%;
-  min-width: 480;
+  min-width: 480px;
   font-style:italic;
 }
 
@@ -146,7 +146,7 @@
 }
 
 #intel-profile h3  {
-  padding: 2px 0px 2px 6px;
+  padding: 2px 0 2px 6px;
   background-color: #666666;
   color: #FFFFFF;
   font-size: 1.1em;
@@ -159,7 +159,7 @@
 
 #intel-profile h4  {
   border-color: #ccc;
-  text-shadow: #fff 0px 1px 0px;
+  text-shadow: #fff 0 1px 0;
   font-size: 11px;
   text-align: left;
   font-weight: normal;
