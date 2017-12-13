@@ -2045,6 +2045,10 @@ function intel_is_installed($level = 'min') {
     return !empty($api_level);
   }
 
+  if ($level == 'ga_data') {
+    return intel_is_plugin_active('gadwp');
+  }
+
   $sys_meta = get_option('intel_system_meta', array());
   return !empty($sys_meta['setup_complete']);
 }
@@ -4637,4 +4641,29 @@ function intel_get_extended_post_entity_attrs($post) {
 
   return $entity_attrs;
 }
+
+function intel_imapi_property_setup_l($text, $options = array()) {
+
+  $imapi_domain = get_option('intel_imapi_url', '');
+  if (!$imapi_domain) {
+    $imapi_domain = INTEL_IMAPI_URL;
+  }
+
+  $imapi_domain = explode('/', $imapi_domain);
+  $imapi_domain = $imapi_domain[0];
+
+  $l_options = !empty($options['l_options']) ? $options['l_options'] : array();
+  if (!isset($l_options['query'])) {
+    $l_options['query'] = array();
+  }
+  $l_options['query']['state'] = wp_create_nonce('iapi_auth');
+  $l_options['query']['website_platform'] = 'wp';
+  $l_options['query']['redirect_uri'] = Intel_Df::url('admin/config/intel/iapi_auth_callback', array('absolute' => TRUE));
+  $l_options['query']['callback_destination'] = !empty($options['callback_destination']) ? $options['callback_destination'] : Intel_Df::current_path();
+  $l_options['query']['ux_style'] = 'simple';
+
+  //return Intel_Df::l($text, "https://$imapi_domain/property_setup", $l_options);
+  return Intel_Df::l($text, "http://$imapi_domain/property_setup", $l_options);
+}
+
 

@@ -768,7 +768,7 @@ function intel_admin_setup_intel_ga_profile($form, &$form_state) {
     // split off http protocal on domain
     $domain = explode('//', $profile['url']);
     $domain = count($domain) == 2 ? $domain[1] : $domain[0];
-    $gap_options[$profile['viewId']] = "{$profile['propertyId']} / {$profile['viewName']}";
+    $gap_options[$profile['id']] = "{$profile['propertyId']} / {$profile['name']}";
   }
 
   $f['intel_ga_view'] = array(
@@ -795,7 +795,7 @@ function intel_admin_setup_check_intel_ga_profile($form, &$form_state) {
   else {
     $ga_profile = get_option('intel_ga_profile', array());
     $form_state['intel_ga_profile'] = $ga_profile;
-    $intel_ga_view = !empty($ga_profile['viewId']) ? $ga_profile['viewId'] : '';
+    $intel_ga_view = !empty($ga_profile['id']) ? $ga_profile['id'] : '';
   }
 
   if (empty($intel_ga_view)) {
@@ -833,7 +833,7 @@ function intel_admin_setup_submit_intel_ga_profile($form, &$form_state) {
 
   update_option('intel_ga_profile', $profile);
   update_option('intel_ga_tid', $profile['propertyId']);
-  update_option('intel_ga_view', $profile['viewId']);
+  update_option('intel_ga_view', $profile['id']);
 
 }
 
@@ -864,7 +864,7 @@ function intel_admin_setup_intel_api_key($form, &$form_state) {
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $l_options = Intel_Df::l_options_add_target('imapi', $l_options);
   $l_options['query'] = array(
-    'gaviewid' => $form_state['intel_ga_profile']['viewId'],
+    'gaviewid' => $form_state['intel_ga_profile']['id'],
   );
   $items[] = '<br><br><label>' . Intel_Df::t('First') . '</label><br>';
   $items[] = Intel_Df::l(Intel_Df::t('Login to the Intelligence admin'), "https://$imapi_domain", $l_options);

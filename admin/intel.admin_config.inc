@@ -36,6 +36,44 @@ function intel_admin_settings($form, &$form_state) {
     }
   }
 
+  include_once INTEL_DIR . 'includes/intel.imapi.inc';
+
+  $ga_tid = get_option('intel_ga_tid', '');
+  $apikey = get_option('intel_apikey', '');
+  $ga_viewid = get_option('intel_ga_view', '');
+  $ga_profile = get_option('intel_ga_profile', array());
+  $ga_profile_base = get_option('intel_ga_profile_base', array());
+
+
+  $imapi_property = 0;
+  if ($ga_tid && $apikey) {
+    $options = array(
+      'tid' => $ga_tid,
+      'apikey' => $apikey,
+    );
+    try {
+      $imapi_property = intel_imapi_property_get($options);
+    }
+    catch (Exception $e) {
+      $imapi_property = 0;
+    }
+  }
+
+  intel_d($imapi_property);
+
+  if (!empty($imapi_property) && (empty($ga_profile) || empty($ga_viewid))) {
+    $ga_profile = $imapi_property['ga_profile'];
+    $ga_viewid = $ga_profile['id'];
+    update_option('intel_ga_profile', $ga_profile);
+    update_option('intel_ga_view', $ga_viewid);
+    if (!empty($imapi_property['ga_profile_base'])) {
+      $ga_profile_base = $imapi_property['ga_profile_base'];
+      update_option('intel_ga_profile_base', $ga_profile_base);
+    }
+  }
+
+  $form_state['imapi_property0'] = $imapi_property;
+
   $form['l10iapi'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Intelligence API'),
@@ -61,25 +99,42 @@ function intel_admin_settings($form, &$form_state) {
   );
   */
 
-  $ga_profiles = intel_fetch_ga_profiles();
-  $form_state['intel_ga_profiles'] = $ga_profiles;
-  $gap_options = array(
-    '' => '--  ' . Intel_Df::t('none') . '  --',
-  );
 
-  foreach ($ga_profiles as $view_id => $profile) {
-    $gap_options[$view_id] = "{$profile['propertyId']} / {$profile['viewName']}";
+  if (0) {
+    $gap_options = array();
+    $ga_profiles = intel_fetch_ga_profiles();
+    $form_state['intel_ga_profiles'] = $ga_profiles;
+    $gap_options = array(
+      '' => '--  ' . Intel_Df::t('none') . '  --',
+    );
+
+    foreach ($ga_profiles as $view_id => $profile) {
+      $gap_options[$view_id] = "{$profile['propertyId']} / {$profile['name']}";
+    }
+
+
+
+    $form['l10iapi']['intel_ga_view'] = array(
+      '#type' => 'select',
+      '#title' => Intel_Df::t('Google Analytics profile (tracking id / view name)'),
+      '#default_value' => get_option('intel_ga_view', ''),
+      '#options' => $gap_options,
+      '#description' => $desc,
+    );
+  }
+  else {
+    $form_state['intel_ga_tid0'] = get_option('intel_ga_tid', '');
+    $desc = '';
+    $form['l10iapi']['intel_ga_tid'] = array(
+      '#type' => 'textfield',
+      '#title' => Intel_Df::t('Tracking id'),
+      '#default_value' => get_option('intel_ga_tid', ''),
+      '#description' => $desc,
+      '#size' => 18,
+      '#required' => 1,
+    );
   }
 
-
-
-  $form['l10iapi']['intel_ga_view'] = array(
-    '#type' => 'select',
-    '#title' => Intel_Df::t('Google Analytics profile (tracking id / view name)'),
-    '#default_value' => get_option('intel_ga_view', ''),
-    '#options' => $gap_options,
-    '#description' => $desc,
-  );
 
 
 
@@ -104,12 +159,21 @@ function intel_admin_settings($form, &$form_state) {
     '#default_value' => get_option('intel_apikey', ''),
     '#description' => $desc,
     '#size' => 32,
+    '#required' => 1,
   );
   if ($account_level) {
+    $form_state['intel_api_level0'] = $account_level;
     $form['l10iapi']['intel_api_level'] = array(
       '#type' => 'item',
       '#title' => Intel_Df::t('Account level'),
       '#markup' => strtoupper($account_level),
+    );
+  }
+  if (!empty($ga_profile['name'])) {
+    $form['l10iapi']['intel_main_view_name'] = array(
+      '#type' => 'item',
+      '#title' => Intel_Df::t('Main view'),
+      '#markup' => $ga_profile['name'],
     );
   }
 
@@ -122,6 +186,7 @@ function intel_admin_settings($form, &$form_state) {
     '#collapsed' => TRUE,
   );
 
+  /*
   $desc = Intel_Df::t('Select the base Google Analytics profile to push Intelligence events.');
   $form['l10iapi']['advanced']['intel_ga_view_base'] = array(
     '#type' => 'select',
@@ -130,6 +195,7 @@ function intel_admin_settings($form, &$form_state) {
     '#options' => $gap_options,
     '#description' => $desc,
   );
+  */
 
   $form['l10iapi']['advanced']['intel_l10iapi_url'] = array(
     '#type' => 'textfield',
@@ -425,9 +491,47 @@ function intel_admin_settings($form, &$form_state) {
 }
 
 function intel_admin_settings_validate($form, &$form_state) {
+  $values = $form_state['values'];
   // convert string to array
   parse_str($form_state['values']['intel_l10iapi_custom_params'], $params);
   $form_state['values']['intel_l10iapi_custom_params'] = $params;
+
+  $imapi_property0 = $form_state['imapi_property0'];
+  // check if tid changed
+  if (empty($imapi_property0->intel_tid) || ($values['intel_ga_tid'] != $imapi_property0->intel_tid)) {
+    $options = array(
+      'tid' => $values['intel_ga_tid'],
+      'apikey' => $values['intel_apikey']
+    );
+    try {
+      $imapi_property = intel_imapi_property_get($options);
+    }
+    catch (Exception $e) {
+      $e_code = $e->getCode();
+      if ($e_code == 404) {
+        Intel_Form::form_set_error('intel_ga_tid', Intel_Df::t('An Intelligence property has not yet been created for @tid. Either use a different tracking id, or !imapi_setup.', array(
+          '@tid' => $values['intel_ga_tid'],
+          '!imapi_setup' => intel_imapi_property_setup_l(Intel_Df::t('setup an Intelligence property'))
+        )));
+        return;
+      }
+      Intel_Form::form_set_error('intel_ga_tid', Intel_Df::t('There was an IMAPI error fetching info for @tid. Please try again later.', array(
+        '@tid' => $values['intel_ga_tid']
+      )));
+      return;
+    }
+
+  }
+  $options = array(
+    'tid' => $values['intel_ga_tid'],
+    'apikey' => $values['intel_apikey']
+  );
+  $form_state['imapi_property'] = $imapi_property = intel_imapi_property_get();
+  if (!empty($form_state['intel_api_level0'])) {
+
+
+  }
+
 
   /*
   if (trim(strpos($form_state['values']['intel_l10iapi_custom_params']), '<script') === 0) {
@@ -447,6 +551,7 @@ function intel_admin_settings_submit($form, &$form_state) {
     }
   }
 
+  /*
   $ga_profiles = $form_state['intel_ga_profiles'];
   if (!empty($ga_profiles[$values['intel_ga_view']])) {
     $profile = $ga_profiles[$values['intel_ga_view']];
@@ -458,6 +563,7 @@ function intel_admin_settings_submit($form, &$form_state) {
     update_option('intel_ga_profile_base', $profile);
     update_option('intel_ga_tid_base', $profile['propertyId']);
   }
+  */
 
   Intel_Df::drupal_set_message(Intel_Df::t('General settings have been saved.'));
 
@@ -474,8 +580,25 @@ function intel_admin_settings_iapi_auth_callback() {
     exit;
   }
 
+  if (empty($_REQUEST['tid']) || empty($_REQUEST['apikey'])) {
+    exit;
+  }
+
+  $return =
+
   update_option('intel_ga_tid', $_REQUEST['tid']);
   update_option('intel_apikey', $_REQUEST['apikey']);
+
+
+
+  $ga_profile = array(
+    'id' => $_REQUEST['viewid'],
+    'viewId' => $_REQUEST['viewid'],
+  );
+
+
+
+
 
   Intel_Df::drupal_set_message(Intel_Df::t('Intelligence API is properly connected.'));
 

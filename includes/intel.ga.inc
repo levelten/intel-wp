@@ -4713,10 +4713,10 @@ function intel_fetch_ga_profiles() {
         $item = array(
           'accountId' => $profile->getAccountId(),
           'internalPropertyId' => $profile->getInternalWebPropertyId(),
-          'viewId' => $profile->getId(),
+          'id' => $profile->getId(),
           'propertyId' => $profile->getwebPropertyId(),
-          'viewName' => $profile->getName(),
-          'url' => $profile->getwebsiteUrl(),
+          'name' => $profile->getName(),
+          'websiteUrl' => $profile->getwebsiteUrl(),
           'timezone' => $profile->getTimezone(),
           'timeshift' => $timeshift,
           'defaultPage' => $profile->getDefaultPage(),
@@ -4752,7 +4752,7 @@ function intel_fetch_ga_goals($save = 0) {
   $totalresults = 65535; // use something big
 
   while ( $startindex < $totalresults ) {
-    $result = $gadwp->gapi_controller->service->management_goals->listManagementGoals($ga_profile['accountId'], $ga_profile['propertyId'], $ga_profile['viewId'], array('start-index' => $startindex, 'max-results' => $maxresults));
+    $result = $gadwp->gapi_controller->service->management_goals->listManagementGoals($ga_profile['accountId'], $ga_profile['propertyId'], $ga_profile['id'], array('start-index' => $startindex, 'max-results' => $maxresults));
 
     $items = $result->getItems();
 
@@ -4858,7 +4858,7 @@ function intel_fetch_ga_goals_page() {
 
 function intel_get_ga_admin_goals_url() {
   $ga_profile = get_option('intel_ga_profile');
-  return "https://analytics.google.com/analytics/web/#management/Settings/a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['viewId']}/%3Fm.page%3DGoals";
+  return "https://analytics.google.com/analytics/web/#management/Settings/a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['id']}/%3Fm.page%3DGoals";
   //$url = "https://analytics.google.com/analytics/web/#management/Settings/a5541069w22533750p78133449/%3Fm.page%3DGoals";
 }
 
@@ -5041,7 +5041,7 @@ function intel_get_ga_admin_custom_dimensions_url() {
 
 function intel_get_ga_profile_slug() {
   $ga_profile = get_option('intel_ga_profile');
-  return "a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['viewId']}";
+  return "a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['id']}";
 }
 
 function intel_get_ga_admin_url($page = '', $options = array()) {
