@@ -36,12 +36,6 @@ var intel_admin_setup = (function( $ ) {
 		if ($('#goal-list-table').length) {
 			$('#goal-add-btn').on('click', ths.goal_add);
 		}
-
-		if ($('.plugin-install').length) {
-
-		}
-
-
 	});
 
 	ths.goal_add = function () {

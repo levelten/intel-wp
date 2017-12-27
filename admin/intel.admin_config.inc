@@ -18,10 +18,6 @@ function intel_admin_settings($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   // check dependencies
-  // verify if gadwp exists
-  $ga_data_source = intel_ga_data_source();
-
-
   $message = '';
   if (count($form_state['input']) == 0) { // hack to assure check and messages are only done once when form is submitted
     $account_level = intel_verify_apikey($message);
@@ -31,35 +27,41 @@ function intel_admin_settings($form, &$form_state) {
     else {
       $msg = Intel_Df::t('Intelligence API not connected.');
       $msg .= ' ' . $message;
-      $msg .= ' ' . Intel_Df::l(Intel_Df::t('View setup instructions tutorial.'), 'http://getlevelten.com/blog/tom-mccracken/intelligence-tutorial-install', array('attributes' =>  array('target' => 'getlevelten')));
+      //$msg .= ' ' . Intel_Df::l(Intel_Df::t('View setup instructions tutorial.'), 'http://getlevelten.com/blog/tom-mccracken/intelligence-tutorial-install', array('attributes' =>  array('target' => 'getlevelten')));
       Intel_Df::drupal_set_message($msg, 'error');
     }
   }
 
   include_once INTEL_DIR . 'includes/intel.imapi.inc';
 
+  $ga_data_source = intel_ga_data_source();
   $ga_tid = get_option('intel_ga_tid', '');
   $apikey = get_option('intel_apikey', '');
   $ga_viewid = get_option('intel_ga_view', '');
   $ga_profile = get_option('intel_ga_profile', array());
   $ga_profile_base = get_option('intel_ga_profile_base', array());
+  $imapi_property = get_option('intel_imapi_property', array());
+  $op_meta = get_option('intel_option_meta', array());
 
-
-  $imapi_property = 0;
-  if ($ga_tid && $apikey) {
-    $options = array(
-      'tid' => $ga_tid,
-      'apikey' => $apikey,
-    );
-    try {
-      $imapi_property = intel_imapi_property_get($options);
-    }
-    catch (Exception $e) {
-      $imapi_property = 0;
+  if (empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 3600) || !empty($_GET['refresh'])) {
+    if ($ga_tid && $apikey) {
+      $options = array(
+        'tid' => $ga_tid,
+        'apikey' => $apikey,
+      );
+      try {
+        $imapi_property = intel_imapi_property_get($options);
+        $op_meta['imapi_property_updated'] = time();
+      }
+      catch (Exception $e) {
+        $imapi_property = array();
+        unset($op_meta['imapi_property_updated']);
+      }
+      update_option('intel_imapi_property', $imapi_property);
+      update_option('intel_option_meta', $op_meta);
     }
   }
 
-  intel_d($imapi_property);
 
   if (!empty($imapi_property) && (empty($ga_profile) || empty($ga_viewid))) {
     $ga_profile = $imapi_property['ga_profile'];
@@ -72,7 +74,8 @@ function intel_admin_settings($form, &$form_state) {
     }
   }
 
-  $form_state['imapi_property0'] = $imapi_property;
+  $form_state['intel_imapi_property'] = $imapi_property;
+  $form_state['intel_op_meta'] = $op_meta;
 
   $form['l10iapi'] = array(
     '#type' => 'fieldset',
@@ -85,8 +88,8 @@ function intel_admin_settings($form, &$form_state) {
 
     );
     $desc .= ' ' . Intel_Df::t('This should be a seperate property than the primary tracking id set in the !link', array(
-        '!link' => Intel_Df::l( Intel_Df::t('Google Analytics Dashboard for WP plugin'), '/wp-admin/admin.php?page=gadash_settings'),
-      ));
+      '!link' => Intel_Df::l( Intel_Df::t('Google Analytics Dashboard for WP plugin'), '/wp-admin/admin.php?page=gadash_settings'),
+    ));
   }
 
   /*
@@ -123,12 +126,12 @@ function intel_admin_settings($form, &$form_state) {
     );
   }
   else {
-    $form_state['intel_ga_tid0'] = get_option('intel_ga_tid', '');
+    $form_state['intel_ga_tid'] = $ga_tid;
     $desc = '';
     $form['l10iapi']['intel_ga_tid'] = array(
       '#type' => 'textfield',
       '#title' => Intel_Df::t('Tracking id'),
-      '#default_value' => get_option('intel_ga_tid', ''),
+      '#default_value' => $ga_tid,
       '#description' => $desc,
       '#size' => 18,
       '#required' => 1,
@@ -153,29 +156,24 @@ function intel_admin_settings($form, &$form_state) {
       '!link' => Intel_Df::l(Intel_Df::t('api.getlevelten.com'), 'http://api.getlevelten.com/site', array('attributes' => array('target' => '_blank'))),
     )
   );
+  $form_state['intel_apikey'] = $apikey;
   $form['l10iapi']['intel_apikey'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('API key'),
-    '#default_value' => get_option('intel_apikey', ''),
+    '#default_value' => $apikey,
     '#description' => $desc,
     '#size' => 32,
     '#required' => 1,
   );
-  if ($account_level) {
-    $form_state['intel_api_level0'] = $account_level;
+  if (!empty($account_level)) {
+    $form_state['intel_api_level'] = $account_level;
     $form['l10iapi']['intel_api_level'] = array(
       '#type' => 'item',
-      '#title' => Intel_Df::t('Account level'),
+      '#title' => Intel_Df::t('Subscription level'),
       '#markup' => strtoupper($account_level),
     );
   }
-  if (!empty($ga_profile['name'])) {
-    $form['l10iapi']['intel_main_view_name'] = array(
-      '#type' => 'item',
-      '#title' => Intel_Df::t('Main view'),
-      '#markup' => $ga_profile['name'],
-    );
-  }
+
 
 
   $form['l10iapi']['advanced'] = array(
@@ -353,6 +351,55 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Tracking settings'),
     '#collapsible' => TRUE,
   );
+
+  $desc = '';
+  if (!empty($ga_profile['name'])) {
+    $l_options = Intel_Df::l_options_add_destination('ga');
+    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('home'), $l_options);
+  }
+  $form['tracking']['enhanced_ga'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Enhanced Google Analytics profile'),
+    '#collapsible' => FALSE,
+    '#description' => $desc,
+  );
+
+  $form['tracking']['enhanced_ga']['intel_ga_profile_propertyid'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Tracking Id'),
+    '#markup' => !empty($ga_profile['propertyId']) ? $ga_profile['propertyId'] : Intel_Df::t('(not set)'),
+
+  );
+
+  $form['tracking']['enhanced_ga']['intel_ga_profile_name'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Main view'),
+    '#markup' => !empty($ga_profile['name']) ? $ga_profile['name'] : Intel_Df::t('(not set)'),
+  );
+
+  $desc = '';
+  if (!empty($ga_profile_base['name'])) {
+    $l_options = Intel_Df::l_options_add_destination('ga');
+    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('home', array('use_profile_base' => 1)), $l_options);
+  }
+  $form['tracking']['base_ga'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Base Google Analytics profile'),
+    '#collapsible' => FALSE,
+    '#description' => $desc,
+  );
+
+  $form['tracking']['base_ga']['intel_ga_profile_base_propertyid'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Tracking Id'),
+    '#markup' => !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : Intel_Df::t('(not set)'),
+  );
+  $form['tracking']['base_ga']['intel_ga_profile_base_name'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Main view'),
+    '#markup' => !empty($ga_profile_base['name']) ? $ga_profile_base['name'] : Intel_Df::t('(not set)'),
+  );
+
   $desc = Intel_Df::t('If you are tracking multiple subdomains, set the main domain name for this property.');
   $form['tracking']['intel_domain_name'] = array(
     '#type' => 'textfield',
@@ -375,6 +422,35 @@ function intel_admin_settings($form, &$form_state) {
     '#options' => $options,
     '#description' => $desc,
   );
+
+  $form['tracking']['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Advanced'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $options = array(
+    '' => '-- ' . Intel_Df::t('None') . ' --',
+    'analytics' => Intel_Df::t('Analytics'),
+    'gtag' => Intel_Df::t('Tag Manager'),
+  );
+  $form['tracking']['advanced']['intel_embed_ga_tracking_code'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Include Google Analytics tracking code'),
+    '#options' => $options,
+    '#default_value' => get_option('intel_embed_ga_tracking_code', ''),
+    //'#description' => Intel_Df::t('Will fetch realtime Google Analytics data for visitor.'),
+  );
+
+  /*
+  $form['tracking']['advanced']['intel_push_ga_base_command'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Push Intelligence events to base tracker'),
+    '#default_value' => get_option('intel_push_intel_events_to_base', 0),
+    //'#description' => Intel_Df::t('Will fetch realtime Google Analytics data for visitor.'),
+  );
+  */
 
   /*
   $desc = Intel_Df::t('Enables tracking of admin pages.');
@@ -496,18 +572,22 @@ function intel_admin_settings_validate($form, &$form_state) {
   parse_str($form_state['values']['intel_l10iapi_custom_params'], $params);
   $form_state['values']['intel_l10iapi_custom_params'] = $params;
 
-  $imapi_property0 = $form_state['imapi_property0'];
+  $imapi_property = $form_state['imapi_property'];
+
   // check if tid changed
-  if (empty($imapi_property0->intel_tid) || ($values['intel_ga_tid'] != $imapi_property0->intel_tid)) {
+  if (empty($imapi_property->intel_tid)
+    || ($values['intel_ga_tid'] != $imapi_property->intel_tid)
+  ) {
     $options = array(
       'tid' => $values['intel_ga_tid'],
       'apikey' => $values['intel_apikey']
     );
     try {
-      $imapi_property = intel_imapi_property_get($options);
+      $form_state['intel_imapi_property'] = $imapi_property = intel_imapi_property_get($options);
     }
     catch (Exception $e) {
       $e_code = $e->getCode();
+      // property not found
       if ($e_code == 404) {
         Intel_Form::form_set_error('intel_ga_tid', Intel_Df::t('An Intelligence property has not yet been created for @tid. Either use a different tracking id, or !imapi_setup.', array(
           '@tid' => $values['intel_ga_tid'],
@@ -515,22 +595,24 @@ function intel_admin_settings_validate($form, &$form_state) {
         )));
         return;
       }
-      Intel_Form::form_set_error('intel_ga_tid', Intel_Df::t('There was an IMAPI error fetching info for @tid. Please try again later.', array(
-        '@tid' => $values['intel_ga_tid']
-      )));
+      // apikey not correct
+      if ($e_code == 403) {
+        Intel_Form::form_set_error('intel_apikey', Intel_Df::t('The API key is incorrect for @tid. Please verify apikey, or !imapi_setup.', array(
+          '@tid' => $values['intel_ga_tid'],
+          '!imapi_setup' => intel_imapi_property_setup_l(Intel_Df::t('setup an Intelligence property'))
+        )));
+        return;
+      }
+      else {
+        Intel_Form::form_set_error('intel_ga_tid', Intel_Df::t('There was an IMAPI error fetching info for @tid: @msg Please try again later.', array(
+          '@tid' => $values['intel_ga_tid'],
+          '@msg' => $e->getMessage(),
+        )));
+      }
       return;
     }
-
   }
-  $options = array(
-    'tid' => $values['intel_ga_tid'],
-    'apikey' => $values['intel_apikey']
-  );
-  $form_state['imapi_property'] = $imapi_property = intel_imapi_property_get();
-  if (!empty($form_state['intel_api_level0'])) {
 
-
-  }
 
 
   /*
@@ -550,6 +632,37 @@ function intel_admin_settings_submit($form, &$form_state) {
       update_option($k, $v);
     }
   }
+
+  $imapi_property = $form_state['intel_imapi_property'];
+  $op_meta = $form_state['intel_op_meta'];
+
+  update_option('intel_imapi_property', $imapi_property);
+  $op_meta['imapi_property_updated'] = time();
+  update_option('intel_op_meta', $op_meta);
+
+  $ga_profile = $imapi_property['ga_profile'];
+  $ga_viewid = $ga_profile['id'];
+  update_option('intel_ga_profile', $ga_profile);
+  update_option('intel_ga_view', $ga_viewid);
+  if (!empty($imapi_property['ga_profile_base'])) {
+    $ga_profile_base = $imapi_property['ga_profile_base'];
+    update_option('intel_ga_profile_base', $ga_profile_base);
+  }
+
+  /*
+  intel_d($imapi_property);
+
+  if (!empty($imapi_property) && (empty($ga_profile) || empty($ga_viewid))) {
+    $ga_profile = $imapi_property['ga_profile'];
+    $ga_viewid = $ga_profile['id'];
+    update_option('intel_ga_profile', $ga_profile);
+    update_option('intel_ga_view', $ga_viewid);
+    if (!empty($imapi_property['ga_profile_base'])) {
+      $ga_profile_base = $imapi_property['ga_profile_base'];
+      update_option('intel_ga_profile_base', $ga_profile_base);
+    }
+  }
+  */
 
   /*
   $ga_profiles = $form_state['intel_ga_profiles'];
@@ -584,10 +697,31 @@ function intel_admin_settings_iapi_auth_callback() {
     exit;
   }
 
-  $return =
+  include_once INTEL_DIR . 'includes/intel.imapi.inc';
 
-  update_option('intel_ga_tid', $_REQUEST['tid']);
-  update_option('intel_apikey', $_REQUEST['apikey']);
+  // fetch property from imapi to get profile data and verify quth
+  $imapi_property = 0;
+  $options = array(
+    'tid' => $_REQUEST['tid'],
+    'apikey' => $_REQUEST['apikey'],
+  );
+  try {
+    $imapi_property = intel_imapi_property_get($options);
+  }
+  catch (Exception $e) {
+    $imapi_property = 0;
+  }
+
+  if ($imapi_property) {
+    update_option('intel_ga_tid', $_REQUEST['tid']);
+    update_option('intel_apikey', $_REQUEST['apikey']);
+    update_option('intel_ga_profile', $imapi_property['ga_profile']);
+    if (isset($imapi_property['ga_profile_base'])) {
+      update_option('intel_ga_profile_base', $imapi_property['ga_profile_base']);
+    }
+  }
+
+
 
 
 

@@ -128,7 +128,8 @@ class ApiClient {
       if (empty($ret['status'])) {
         $msg = !empty($ret['message']) ? $ret['message'] : $retjson;
         $msg = (strlen($msg) > 210) ? substr($msg, 0, 200) . '...' : $msg;
-        throw new LevelTen_Service_Exception ('API response error. returned: ' . $msg);
+        $code = $ret['status'];
+        throw new LevelTen_Service_Exception ('API response error. returned: ' . $msg, $ret['status']);
       }
       else if ((int)$ret['status'] >= 400) {
         $msg = !empty($ret['message']) ? $ret['message'] : $retjson;

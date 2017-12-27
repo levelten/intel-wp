@@ -1074,10 +1074,38 @@ class Intel_Df  {
 
 		// WP shim start
 		$admin_page = '';
-		if (strpos($path, 'admin/intel') === 0) {
+		$path_args = explode('/', $path);
+		if ($path_args[0] == 'admin') {
+			if (count($path_args) > 1) {
+				if ($path_args[1] == 'intel') {
+					$admin_page = 'intel_index';
+				}
+				elseif ($path_args[1] == 'config') {
+					$admin_page = 'intel_config';
+				}
+				elseif ($path_args[1] == 'reports') {
+					$admin_page = 'intel_reports';
+				}
+				elseif ($path_args[1] == 'util') {
+					$admin_page = 'intel_util';
+				}
+				elseif ($path_args[1] == 'help') {
+					$admin_page = 'intel_help';
+				}
+				elseif ($path_args[1] == 'people') {
+					$admin_page = 'intel_visitor';
+				}
+			}
+		}
+		elseif($path_args[0] == 'visitor') {
+			$admin_page = 'intel_visitor';
+		}
+
+		/*
+		if (substr($path, 0, 11) == 'admin/intel') {
 			$admin_page = 'intel_index';
 		}
-		elseif (strpos($path, 'admin/config/intel') === 0) {
+		elseif (substr($path, 0, 18) == 'admin/config/intel') {
 			$admin_page = 'intel_config';
 		}
 		elseif (strpos($path, 'admin/reports/intel') === 0) {
@@ -1095,6 +1123,7 @@ class Intel_Df  {
 		elseif (strpos($path, 'visitor/') === 0) {
 			$admin_page = 'intel_visitor';
 		}
+		*/
 		if ($admin_page) {
 			$options['query']['page'] = $admin_page;
 			$options['query']['q'] = $path;

@@ -197,9 +197,22 @@ class Intel_Tracker {
 	 * Generates tracking code
 	 */
 	public function tracking_head($is_admin = 0) {
+		if (!intel_is_installed('min')) {
+			return '';
+		}
 		$io_name = 'io';
 
+		// check if intel should embed ga tracking code
+		$embed_ga_tracking_code = get_option('intel_embed_ga_tracking_code', '');
+		if ($embed_ga_tracking_code) {
+			print intel_get_ga_js_embed($embed_ga_tracking_code);
+		}
+
 		$script = '';
+
+
+
+
 		$script .= $this->tracking_code_js();
 
 		if ($this->settings_placement == 'head') {
@@ -220,6 +233,9 @@ class Intel_Tracker {
 	}
 
 	public function tracking_footer($is_admin = 0) {
+		if (!intel_is_installed('min')) {
+			return '';
+		}
 		$io_name = 'io';
 
 

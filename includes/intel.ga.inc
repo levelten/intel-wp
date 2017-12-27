@@ -109,10 +109,11 @@ function intel_goal_const($goal, $ga_goal = array()) {
 
   $defaults = array(
     'ga_id' => $goal['ga_id'],
-    'name' => str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($goal['title']))),
+    'name' => intel_format_un($goal['title']),
+    'un' => intel_format_un($goal['title']),
     'title' => $goal['title'],
     'description' => '',
-    'type' => 'INTL',
+    'type' => 'INTEL',
     'value' => 100,
     'context' => array(
       'general' => 1,
@@ -155,7 +156,7 @@ function intel_goal_save($goal, $options = array()) {
     $ga_goal = $ga_goals[$goal['ga_id']];
     if (empty($goal['type']) && !empty($ga_goal['type'])) {
       if (intel_is_intl_goal($ga_goal)) {
-        $goal['type'] = 'INTL';
+        $goal['type'] = 'INTEL';
       }
       else {
         $goal['type'] = $ga_goal['type'];
@@ -4678,6 +4679,27 @@ function intel_fetch_analytics_visits($options = array()) {
   return $visits;
 }
 
+function intel_get_base_plugin_ga_profile($ga_data_source = '') {
+  if (!$ga_data_source) {
+    $ga_data_source = intel_ga_data_source();
+  }
+  if (empty($ga_data_source)) {
+    return FALSE;
+  }
+  if ($ga_data_source == 'gadwp' && !is_callable('GADWP')) {
+    return FALSE;
+  }
+  $profile = GADWP_Tools::get_selected_profile( GADWP()->config->options['ga_dash_profile_list'], GADWP()->config->options['ga_dash_tableid_jail'] );
+  $ga_profile_base = array(
+    'name' => $profile[0],
+    'id' => $profile[1],
+    'propertyId' => $profile[2],
+    'websiteUrl' => $profile[3],
+    'timezone' => $profile[5],
+  );
+  return $ga_profile_base;
+}
+
 function intel_fetch_ga_profiles() {
   $ga_profiles = &Intel_Df::drupal_static(__FUNCTION__, array());
 
@@ -4712,7 +4734,7 @@ function intel_fetch_ga_profiles() {
         $id = $profile->getId();
         $item = array(
           'accountId' => $profile->getAccountId(),
-          'internalPropertyId' => $profile->getInternalWebPropertyId(),
+          'internalWebPropertyId' => $profile->getInternalWebPropertyId(),
           'id' => $profile->getId(),
           'propertyId' => $profile->getwebPropertyId(),
           'name' => $profile->getName(),
@@ -4857,9 +4879,7 @@ function intel_fetch_ga_goals_page() {
 }
 
 function intel_get_ga_admin_goals_url() {
-  $ga_profile = get_option('intel_ga_profile');
-  return "https://analytics.google.com/analytics/web/#management/Settings/a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['id']}/%3Fm.page%3DGoals";
-  //$url = "https://analytics.google.com/analytics/web/#management/Settings/a5541069w22533750p78133449/%3Fm.page%3DGoals";
+  return "https://analytics.google.com/analytics/web/#management/Settings/" . intel_get_ga_profile_slug() . "/%3Fm.page%3DGoals";
 }
 
 
@@ -5034,14 +5054,22 @@ function x_intel_gapi_attach_management_custom_dimension(&$gadwp) {
 }
 
 function intel_get_ga_admin_custom_dimensions_url() {
-  $ga_profile = get_option('intel_ga_profile');
   return "https://analytics.google.com/analytics/web/#management/Settings/" . intel_get_ga_profile_slug() . "/%3Fm.page%3DCustomDimensions";
   //$url = "https://analytics.google.com/analytics/web/#management/Settings/a5541069w22533750p78133449/%3Fm.page%3DGoals";
 }
 
-function intel_get_ga_profile_slug() {
-  $ga_profile = get_option('intel_ga_profile');
-  return "a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['id']}";
+function intel_get_ga_profile_slug($use_profile_base = 0) {
+  if ($use_profile_base) {
+    $ga_profile = get_option('intel_ga_profile_base', array());
+  }
+  else {
+    $ga_profile = get_option('intel_ga_profile', array());
+  }
+
+  if (isset($ga_profile['internalPropertyId'])) {
+    return "a{$ga_profile['accountId']}w{$ga_profile['internalPropertyId']}p{$ga_profile['id']}";
+  }
+  return "a{$ga_profile['accountId']}w{$ga_profile['internalWebPropertyId']}p{$ga_profile['id']}";
 }
 
 function intel_get_ga_admin_url($page = '', $options = array()) {
@@ -5052,6 +5080,21 @@ function intel_get_ga_admin_url($page = '', $options = array()) {
   if ($page == 'goal_list') {
     $url .= '%3Fm.page%3DGoals%26m-content-goalList.rowShow%3D20';
   }
+  return $url;
+}
+
+function intel_get_ga_report_url($page = '', $options = array()) {
+
+  $use_profile_base = !empty($options['use_profile_base']) ? $options['use_profile_base'] : 0;
+  $url = "https://analytics.google.com/analytics/web/";
+  if ($page == 'report_home' || $page == 'home' ) {
+    $url .= '#embed/report-home/' . intel_get_ga_profile_slug($use_profile_base) . '/';
+  }
+  elseif (substr($page, 0, 3) == 'rt_') {
+    $s = substr($page, 3);
+    $url .= '#realtime/rt-' . $s . '/' . intel_get_ga_profile_slug($use_profile_base) . '/%3Fmetric.type%3D1/';
+  }
+
   return $url;
 }
 

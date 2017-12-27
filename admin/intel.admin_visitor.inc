@@ -542,7 +542,7 @@ function intel_visitor_page($entity) {
 
 function intel_visitor_tab_scorecard($visitor) {
   if (!intel_api_access()) {
-    $output = intel_api_access_error($vars = array());
+    $output = intel_set_api_access_error($vars = array());
     return $output;
   }
   require_once drupal_get_path('module', 'intel') . "/reports/intel.report_scorecard.inc";  
@@ -574,7 +574,7 @@ function intel_visitor_tab_scorecard($visitor) {
 
 function intel_visitor_tab_clickstream($visitor) {
   if (!intel_api_access()) {
-    $output = intel_api_access_error($vars = array());
+    $output = intel_set_api_access_error($vars = array());
     return $output;
   }
   
@@ -686,7 +686,7 @@ function intel_admin_people_contacts() {
     $vars = array(
       'message' => t('The Pro version of Intel is required to create contacts.'),
     );
-    intel_api_access_error($vars);
+    intel_set_api_access_error($vars);
   }
 
   

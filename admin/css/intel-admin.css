@@ -185,11 +185,6 @@
 /* form tooltips */
 
 
-/* Wizard styling */
-.bootstrap-wrapper .wizard-list-group .list-group-item a {
-    color: inherit;
-}
-
 /* Kint debuger styling */
 .bootstrap-wrapper .alert .kint {
     margin-top: -8px;

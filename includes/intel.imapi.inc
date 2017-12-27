@@ -45,10 +45,8 @@ function intel_imapi_get_client(&$vars, $options = array()) {
 }
 
 function intel_imapi_property_get($options = array()) {
-
   $vars = array();
-  $apiclient = intel_imapi_get_client($vars);
-intel_d($vars);
+  $apiclient = intel_imapi_get_client($vars, $options);
   $response = FALSE;
   $params = isset($options['params']) ? $options['params'] : array();
   $params['tid'] = $vars['tid'];
@@ -60,6 +58,7 @@ intel_d($vars);
     $response = $apiclient->getJSON('property/get', $params, $data);
   }
   catch (Exception $e) {
+    intel_d($e);
     throw($e);
   }
 

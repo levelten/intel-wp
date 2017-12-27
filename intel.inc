@@ -7,6 +7,7 @@
 // define constants
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
+define('INTEL_IMAPI_URL_SCHEME', 'http');
 define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
 define('INTEL_L10IAPI_JS_VER', '0.2.9');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
@@ -20,6 +21,7 @@ define('INTEL_TRACK_EMAILCLICKS_DEFAULT', 0);
 define('INTEL_TRACK_REALTIME_DEFAULT', 0);
 define('INTEL_CACHE_BUSTING_DEFAULT', 0);
 define('INTEL_SAVE_PUSH_STORAGE_DEFAULT', 'cookie');
+define('INTEL_GOAL_VALUE_DEFAULT', 100);
 
 define('INTEL_HELP_APIVERS', 'http://api.getlevelten.com');
 
@@ -66,6 +68,19 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_CALLBACK,
     'file' => 'admin/intel.admin_config.inc',
     'weight' => -10,
+    'intel_install_access' => 'active',
+  );
+  $items['admin/config/intel/plugin_activate'] = array(
+    'title' => 'Plugin activate',
+    //'description' => 'API, global options, events, page attribute and visitor attribute settings.',
+    'page callback' => 'intel_setup_plugin_activate',
+    //'page arguments' => array('intel_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'intel_com/intel.setup.inc',
+    'weight' => -10,
+    'intel_install_access' => 'active',
   );
   $items['admin/config/intel/settings'] = array(
     'title' => 'Settings',
@@ -117,8 +132,9 @@ function intel_menu($items = array()) {
   $items['admin/config/intel/settings/setup'] = array(
     'title' => 'Setup',
     'description' => 'Initial plugin setup',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('intel_admin_setup'),
+    'page callback' => 'intel_admin_setup_page',
+    //'page callback' => 'drupal_get_form',
+    //'page arguments' => array('intel_admin_setup'),
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_ACTION,
@@ -1059,6 +1075,7 @@ function intel_menu($items = array()) {
       'access arguments' => array('admin intel'),
       'type' => Intel_Df::MENU_LOCAL_TASK,
       'file' => 'admin/intel.admin_util.inc',
+      'intel_install_access' => 'active',
     );
 
     $items['admin/util/dev/temp_form'] = array(
@@ -1702,14 +1719,14 @@ function intel_api_level() {
  * @param $vars
  *   array of options: currently not used
  */
-function intel_api_access_error($vars = array()) {
+function intel_set_api_access_error($vars = array()) {
   $msg = '';
   if (isset($vars['message'])) {
     $msg = $vars['message'];
   }
   else {
     $object_name = isset($vars['object_name']) ? $vars['object_name'] : Intel_Df::t('report');
-    $msg = Intel_Df::t('The API version associated with this property does not have access to this @object_name.',
+    $msg = Intel_Df::t('The Intelligence API subscription associated with this property does not have access to this @object_name.',
       array(
         '@object_name' => $object_name,
       )
@@ -1717,6 +1734,47 @@ function intel_api_access_error($vars = array()) {
   }
 
   $msg .= ' ' . Intel_Df::l( Intel_Df::t('Learn more about API versions'), INTEL_HELP_APIVERS, array('attributes' => array('target' => '_blank'))) . '.';
+  Intel_Df::drupal_set_message($msg, 'warning');
+  return '';
+}
+
+function intel_get_install_access_error_message($vars = array()) {
+  $msg = '';
+  if (isset($vars['message'])) {
+    $msg = $vars['message'];
+  }
+  else {
+    $setup_step = Intel_Df::l(Intel_Df::t('setup Intelligence'), 'admin/config/intel/settings/setup');
+    if (isset($vars['level'])) {
+      if ($vars['level'] == 'min') {
+        $setup_step = Intel_Df::l(Intel_Df::t('connect to the Intelligence API'), 'admin/config/intel/settings/setup');
+      }
+      if ($vars['level'] == 'ga_data') {
+        $setup_step = Intel_Df::l(Intel_Df::t('connect to the Google Analytics API'), 'admin/config/intel/settings/setup');
+      }
+      if ($vars['level'] == 'setup') {
+        $setup_step = Intel_Df::l(Intel_Df::t('complete the Intelligence setup wizard'), 'admin/config/intel/settings/setup');
+      }
+    }
+    $object_name = isset($vars['object_name']) ? $vars['object_name'] : Intel_Df::t('page');
+    $msg = Intel_Df::t('To access this @object_name you must !setup_step.',
+      array(
+        '!setup_step' => $setup_step,
+        '@object_name' => $object_name,
+      )
+    );
+  }
+  return $msg;
+}
+
+/**
+ * Formats an error message if setup level is inadequate
+ * @param $vars
+ *   array of options: currently not used
+ */
+function intel_set_install_access_error($vars = array()) {
+
+  $msg = intel_get_install_access_error_message($vars = array());
   Intel_Df::drupal_set_message($msg, 'warning');
   return '';
 }
@@ -2037,21 +2095,27 @@ function intel_verify_apikey(&$message = '', &$property = array(), $options = ar
 }
 
 function intel_is_installed($level = 'min') {
+  $levels = &Intel_Df::drupal_static( __FUNCTION__, NULL);
 
-  $message = '';
-
-  if ($level == 'min') {
-    $api_level = intel_api_level();
-    return !empty($api_level);
+  if (!isset($levels)) {
+    $setup_state = get_option('intel_wizard_intel_setup_state', array());
+    $levels = array(
+      'active' => 1,
+      'ga_data' => !empty(intel_ga_data_source()),
+      'min' => !empty(intel_api_level()),
+      'setup' => !empty($setup_state['completed']),
+    );
   }
 
-  if ($level == 'ga_data') {
-    return intel_is_plugin_active('gadwp');
+  if (isset($levels[$level])) {
+    return $levels[$level];
   }
-
-  $sys_meta = get_option('intel_system_meta', array());
-  return !empty($sys_meta['setup_complete']);
+  elseif ($level == 'all') {
+    return $levels;
+  }
+  return FALSE;
 }
+
 
 
 /**
@@ -3402,6 +3466,7 @@ function _intel_addon_info($info = array()) {
     'title' => Intel_Df::t('Gravity Forms Intelligence'),
     'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Gravity Form is submitted.'),
     'group' => 'forms',
+    'slug' => 'gf-intelligence',
     'description_url' => '//wordpress.org/plugins/gf-intelligence',
     //'description_url' => 'http://intelligencewp.com/plugin/gf-intelligence',
     'show_callback' => 'intel_is_plugin_active',
@@ -3414,6 +3479,7 @@ function _intel_addon_info($info = array()) {
     'title' => Intel_Df::t('Contact Form 7 Intelligence'),
     'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Contact Form 7 form is submitted.'),
     'group' => 'forms',
+    'slug' => 'cf7-intelligence',
     'description_url' => '//wordpress.org/plugins/cf7-intelligence',
     //'description_url' => 'http://intelligencewp.com/plugin/cf7-intelligence',
     'show_callback' => 'intel_is_plugin_active',
@@ -4642,6 +4708,10 @@ function intel_get_extended_post_entity_attrs($post) {
   return $entity_attrs;
 }
 
+function intel_format_un($name) {
+  return str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($name)));
+}
+
 function intel_imapi_property_setup_l($text, $options = array()) {
 
   $imapi_domain = get_option('intel_imapi_url', '');
@@ -4661,9 +4731,15 @@ function intel_imapi_property_setup_l($text, $options = array()) {
   $l_options['query']['redirect_uri'] = Intel_Df::url('admin/config/intel/iapi_auth_callback', array('absolute' => TRUE));
   $l_options['query']['callback_destination'] = !empty($options['callback_destination']) ? $options['callback_destination'] : Intel_Df::current_path();
   $l_options['query']['ux_style'] = 'simple';
+  if (!empty($options['ga_propertyid_base'])) {
+    $l_options['query']['ga_propertyid_base'] = $options['ga_propertyid_base'];
+  }
+  if (!empty($options['ga_viewid_base'])) {
+    $l_options['query']['ga_viewid_base'] = $options['ga_viewid_base'];
+  }
 
   //return Intel_Df::l($text, "https://$imapi_domain/property_setup", $l_options);
-  return Intel_Df::l($text, "http://$imapi_domain/property_setup", $l_options);
+  return Intel_Df::l($text, INTEL_IMAPI_URL_SCHEME . "://$imapi_domain/property_setup", $l_options);
 }
 
 

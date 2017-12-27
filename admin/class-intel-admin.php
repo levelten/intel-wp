@@ -161,7 +161,8 @@ class Intel_Admin {
 		global $wp_version;
 		if ( current_user_can( 'manage_options' ) ) {
 			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
-			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
+			//add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
@@ -177,6 +178,11 @@ class Intel_Admin {
 		//ksort($menu_info);
 		//d($menu_info);
 
+		$install_levels = intel_is_installed('all');
+		$install_access_error = 0;
+
+
+
 		$info = array();
 		$tree = array();
 		$breadcrumbs = array();
@@ -187,15 +193,17 @@ class Intel_Admin {
 		$navbar_exclude = array();
 
 		$q = '';
-		if ($_GET['page'] == 'intel') {
-			$q = 'admin/dashboard';
-		}
-		if ($_GET['page'] == 'intel_visitor') {
-			$q = 'admin/people/contacts';
+		if ($_GET['page'] == 'intel_admin') {
+			$q = 'admin/reports/intel';
+			//$navbar_exclude[$q] = 1;
 			$breadcrumbs[] = array(
-				'text' => esc_html__('Contacts', 'intel'),
+				'text' => esc_html__('Reports', 'intel'),
 				'path' => Intel_Df::url($q),
 			);
+			$navbar_base_q = $navbar_base_qt = $q;
+      if (!$install_levels['ga_data']) {
+				$install_access_error = intel_get_install_access_error_message('ga_data');
+			}
 		}
 		if ($_GET['page'] == 'intel_reports') {
 			$q = 'admin/reports/intel';
@@ -205,6 +213,9 @@ class Intel_Admin {
 				'path' => Intel_Df::url($q),
 			);
 			$navbar_base_q = $navbar_base_qt = $q;
+			if (!$install_levels['ga_data']) {
+				$install_access_error = intel_get_install_access_error_message('ga_data');
+			}
 		}
 
 		if ($_GET['page'] == 'intel_config') {
@@ -230,6 +241,13 @@ class Intel_Admin {
 			);
 			$navbar_base_q = $navbar_base_qt = $q;
 		}
+		if ($_GET['page'] == 'intel_visitor') {
+			$q = 'admin/people/contacts';
+			$breadcrumbs[] = array(
+				'text' => esc_html__('Contacts', 'intel'),
+				'path' => Intel_Df::url($q),
+			);
+		}
 		if (isset($_GET['q'])) {
 			$q = $_GET['q'];
 		}
@@ -240,6 +258,10 @@ class Intel_Admin {
 		$intel->q = $q;
 		// set translated path
 		$qt = $q;
+
+		if (!$install_levels['min']) {
+			$install_access_error = intel_get_install_access_error_message();
+		}
 
 		$entities = array(
 			'submission',
@@ -390,6 +412,8 @@ class Intel_Admin {
 			return;
 		}
 
+
+
 		/*
 		$a = explode('/', $qt);
 		$qt_arg_count = count($a);
@@ -451,7 +475,16 @@ class Intel_Admin {
 			return;
 		}
 
+		// check menu item install level access
+		if (isset($info['intel_install_access'])) {
 
+			if(intel_is_installed($info['intel_install_access'])) {
+				$install_access_error = 0;
+			}
+			else {
+				$install_access_error = intel_get_install_access_error_message($info['intel_install_access']);
+			}
+		}
 
 		// process page arguments
 		$page_args = !empty($info['page arguments']) ? $info['page arguments'] : array();
@@ -477,12 +510,11 @@ class Intel_Admin {
 		}
 
 		// check if setup is complete
-		if ($q != 'admin/config/intel/settings/setup'
-			&& 0 && !intel_is_installed('min')) {
-			$msg = Intel_Df::t('Intelligence setup must be complete before accessing this page. !link.', array(
-				'!link' => Intel_Df::l(Intel_Df::t('Click here to run the setup wizard'), 'admin/config/intel/settings/setup'),
-			));
-			Intel_Df::drupal_set_message($msg, 'warning');
+		if ($install_access_error && (substr($q, 0, 33) != 'admin/config/intel/settings/setup')) {
+			//$msg = Intel_Df::t('Intelligence setup must be complete before accessing this page. !link.', array(
+			//	'!link' => Intel_Df::l(Intel_Df::t('Click here to run the setup wizard'), 'admin/config/intel/settings/setup'),
+			//));
+			Intel_Df::drupal_set_message($install_access_error, 'warning');
 			$vars['markup'] = '';
 		}
 		else {

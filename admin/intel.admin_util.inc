@@ -31,6 +31,8 @@ function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
 
+  $url = Intel_Df::url('admin/config/intel/plugin_active');
+  return $url;
   $req = array(
     'metrics' => array(),
     'dimensions' => array(),
@@ -832,8 +834,7 @@ function intel_util_reset_site() {
     $sys_meta = get_option('intel_system_meta', array());
 
     // clear setup status/data
-    unset($sys_meta['setup_successes']);
-    unset($sys_meta['setup_step']);
+    unset($sys_meta['apikey_verified']);
     update_option('intel_system_meta', $sys_meta);
   }
   if ($flags == 'demo') {
@@ -959,11 +960,15 @@ function intel_util_reset_site() {
     //'intel_extended_mode',
     'intel_ga_data_source',
     'intel_ga_profile',
+    'intel_ga_profile_base',
     'intel_ga_tid',
+    'intel_ga_tid_base',
     'intel_ga_view',
+    'intel_ga_view_base',
     'intel_ga_goals',
     'intel_goals',
     'intel_icon_urls',
+    'intel_imapi_property',
     //'intel_imapi_url',
     'intel_intel_events_custom',
     'intel_intel_scripts_enabled',
@@ -975,10 +980,11 @@ function intel_util_reset_site() {
     'intel_scorings',
     'intel_sync_visitor_requests',
     'intel_sync_visitordata_fullcontact',
-    'intel_system_meta',
+    //'intel_system_meta',
     'intel_track_emailclicks',
     'intel_track_phonecalls',
     'intel_track_realtime',
+    'intel_wizard_intel_setup_state',
   );
 
   $del_mode_options['demo'] = array(

@@ -1274,6 +1274,45 @@ function intel_parse_cms_url() {
   return $parsed_url;
 }
 
+function intel_get_ga_js_embed($embed_ga_tracking_code = '') {
+  if (!$embed_ga_tracking_code) {
+    $embed_ga_tracking_code = get_option('intel_embed_ga_tracking_code', '');
+  }
+  $ga_profile_base = get_option('intel_ga_profile_base', array());
+  $ga_tid_base = !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : '';
+
+  $script = '';
+  $terminator = "\n";
+  if ($embed_ga_tracking_code == 'gtag') {
+    $script .= "<!-- Global site tag (gtag.js) - Google Analytics -->" . $terminator;
+    $script .= "<script async src=\"https://www.googletagmanager.com/gtag/js?id=$ga_tid_base\"></script>" . $terminator;
+    $script .= "<script>" . $terminator;
+    $script .= "window.dataLayer = window.dataLayer || [];" . $terminator;
+    $script .= "function gtag(){dataLayer.push(arguments);}" . $terminator;
+    $script .= "gtag('js', new Date());" . $terminator;
+    if ($ga_tid_base) {
+      $script .= "gtag('config', '$ga_tid_base');" . $terminator;
+    }
+    $script .= "</script>" . $terminator;
+  }
+  elseif ($embed_ga_tracking_code == 'analytics') {
+    $script .= "<!-- Google Analytics -->" . $terminator;
+    $script .= "<script>" . $terminator;
+    $script .= "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){" . $terminator;
+    $script .= "(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o)," . $terminator;
+    $script .= "m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)" . $terminator;
+    $script .= "})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');" . $terminator;
+    if ($ga_tid_base) {
+      $script .= "ga('create', '$ga_tid_base', 'auto');" . $terminator;
+      $script .= "ga('send', 'pageview');" . $terminator;
+    }
+    $script .= "</script>" . $terminator;
+    $script .= "<!-- End Google Analytics -->" . $terminator;
+  }
+
+  return $script;
+}
+
 /**
  * Generates async embed code for Intel. The generated code is designed to be
  * used on Drupal generated pages and on static pages via copy and paste.
@@ -1333,6 +1372,7 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
 
   // generate GoA embed based on Google Analtyics module settings
   if (($type == 'ga') || ($type == 'combined')) {
+    /*
     $query_string = '';
     $library_tracker_url = '.google-analytics.com/ga.js';
     $library_cache_url = 'http://www' . $library_tracker_url;
@@ -1355,6 +1395,7 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
     $script .= $ga_src . $terminator;
     $script .= "var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);" . $terminator;
     $script .= "})();" . $terminator;
+    */
   }
 
   // generate Intel embed
@@ -1405,9 +1446,9 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
     }
     $l10iq_pushes[] = array('ga.create', $l10i_ga_account, 'auto', $params);
 
-    $l10i_ga_account_base = get_option('intel_ga_tid_base', '');
-    if ($l10i_ga_account_base) {
-      $l10iq_pushes[] = array('addTracker', $l10i_ga_account_base, array('enhance' => 'base'));
+    //$l10i_ga_account_base = get_option('intel_ga_tid_base', '');
+    if (!empty($ga_tid_base) && 0) {
+      $l10iq_pushes[] = array('addTracker', $ga_tid_base, array('enhance' => 'base'));
     }
 
     // trigger alter to enable other modules to add pushes

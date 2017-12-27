@@ -259,6 +259,45 @@ class Intel_Activator {
 		update_option('intel_entity_settings_taxonomy__post_format', $vars);
 	}
 
+	public static function update_1003() {
+		// restructure ga_profile
+		$ga_profile = get_option('intel_ga_profile', array());
+		$trans = array(
+			'viewId' => 'id',
+			'viewName' => 'name',
+			'internalPropertyId' => 'internalWebPropertyId',
+		);
+		foreach ($trans as $k => $kk) {
+			if (!empty($ga_profile[$k])) {
+				$ga_profile[$kk] = $ga_profile[$k];
+				unset($ga_profile[$k]);
+			}
+		}
+		update_option('intel_ga_profile', $ga_profile);
+
+		// move intel_setup wizard state info from system_meta
+		$sys_meta = get_option('intel_system_meta', array());
+		$wizard_state = get_option('intel_wizard_intel_setup_state', array());
+		$trans = array(
+			'setup_successes' => 'success',
+			'setup_complete' => 'completed',
+			'setup_step' => 'step',
+		);
+		foreach ($sys_meta as $k => $v) {
+			if (substr($k, 0, 6) == 'setup_') {
+				if (!empty($trans[$k])) {
+					$wizard_state[$trans[$k]] = $v;
+				}
+				else {
+					$wizard_state[$k] = $v;
+				}
+				unset($sys_meta[$k]);
+			}
+		}
+		$sys_meta = update_option('intel_system_meta', $sys_meta);
+		$wizard_state = update_option('intel_wizard_intel_setup_state', $wizard_state);
+	}
+
 	public static function setup_cron() {
 		// setup intel_cron_hook
 		$timestamp = wp_next_scheduled( 'intel_cron_hook' );
