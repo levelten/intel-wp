@@ -30,10 +30,9 @@ function intel_imapi_get_client(&$vars, $options = array()) {
   }
   intel_include_library_file('class.apiclient.php');
 
-  $apiUrl = get_option('intel_imapi_url', '');
   $api_params = get_option('intel_imapi_custom_params', array());
   $apiClientProps = array(
-    'apiUrl' => ($apiUrl ? $apiUrl : INTEL_IMAPI_URL) . '/',
+    'apiUrl' => intel_get_imapi_url() . '/',
     'urlrewrite' => 1,
     //'apiConnector' => get_option('intel_l10iapi_connector', ''),
     'apiParams' => $api_params,

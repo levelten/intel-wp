@@ -454,7 +454,7 @@ function intel_admin_setup_base_ga($form, &$form_state) {
   $items[] = '<p>';
   $items[] = Intel_Df::t('Intelligence integrates Google Analytics data directly into your site.');
   $items[] = Intel_Df::t('The Google Analytics Dashboard for WP plugin (GADWP) provides a convenient method to connect to Google Analytics.');
-  $items[] = Intel_Df::t('Please install and activate the GADWP.');
+  $items[] = Intel_Df::t('Please install and setup GADWP.');
   $items[] = '</p>';
 
   $items[] = '<label>' . Intel_Df::t('First') . '</label><br>';
@@ -504,7 +504,7 @@ function intel_admin_setup_base_ga($form, &$form_state) {
   if (!intel_is_plugin_active( 'gadwp' )) {
     $l_options['attributes']['disabled'] = 'disabled';
   }
-  $items[] = '<label>' . Intel_Df::t('Then') . '</label><br>';
+  $items[] = '<br><label>' . Intel_Df::t('Then') . '</label><br>';
   $items[] = Intel_Df::l(Intel_Df::t('Complete GADWP setup'), 'wp-admin/admin.php?page=gadash_settings', $l_options);
 
 
@@ -524,7 +524,7 @@ function intel_admin_setup_base_ga($form, &$form_state) {
 
     $f['ga_data_ignore'] = array(
       '#type' => 'checkbox',
-      '#title' => Intel_Df::t('Skip - I don\'t want to integrate Google Analytics right now'),
+      '#title' => Intel_Df::t('Skip - I don\'t want to integrate Google Analytics data right now'),
       '#default_value' => !empty($form_state['wizard_state']['ga_data_ignore']) ? $form_state['wizard_state']['ga_data_ignore'] : '',
     );
   }
@@ -560,7 +560,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
     return $status;
   }
 
-  if (!intel_is_plugin_active( 'gadwp' ) ) {
+  if (!intel_is_plugin_active( 'gadwp' ) || !is_callable('GADWP')) {
     $status['error_msg'] = Intel_Df::t('GADWP is not active.');
     $status['error_msg'] .= ' ' . Intel_Df::t('Please install and activate before proceeding.');
     return $status;
@@ -633,14 +633,6 @@ function intel_admin_setup_intel_profile($form, &$form_state, $options = array()
   $ga_profile_base = intel_get_base_plugin_ga_profile();
   //intel_d($ga_profile_base);
 
-  $imapi_domain = get_option('intel_imapi_url', '');
-  if (!$imapi_domain) {
-    $imapi_domain = INTEL_IMAPI_URL;
-  }
-
-  $imapi_domain = explode('/', $imapi_domain);
-  $imapi_domain = $imapi_domain[0];
-
   $items = array();
 
   $items[] = '<p>';
@@ -681,9 +673,11 @@ function intel_admin_setup_intel_profile($form, &$form_state, $options = array()
     '#collapsed' => TRUE,
   );
 
+  $imapi_url_obj = intel_get_imapi_url('obj');
+  $imapi_url_obj['path'] = '/my_properties';
   $l_options = Intel_Df::l_options_add_target('imapi');
   $desc = Intel_Df::t('To connect to an existing Intelligence property, enter the Tracking id and API key. !link.', array(
-    '!link' => Intel_Df::l(Intel_Df::t('View your Intelligence properties'), INTEL_IMAPI_URL_SCHEME . "://$imapi_domain/my_properties", $l_options),
+    '!link' => Intel_Df::l(Intel_Df::t('View your Intelligence properties'), http_build_url($imapi_url_obj), $l_options),
   ));
   $f['more_options']['existing'] = array(
     '#type' => 'fieldset',
@@ -1157,7 +1151,6 @@ function intel_admin_setup_basic_config_submit($form, &$form_state) {
   $values = $form_state['values'];
 
   $wizard_state = &$form_state['wizard_state'];
-  intel_d($wizard_state);
   if ($values['init_config'] == 'default') {
     $goal_defaults = intel_get_intel_goals_default();
     // create default goals
@@ -1228,11 +1221,11 @@ function intel_admin_setup_addon_install($form, &$form_state) {
 
   $items[] = Intel_Df::t('The table below contains a list of recommended add-ons based on your site\'s setup.');
   $l_options = Intel_Df::l_options_add_target('plugins');
-  $items[] = ' ' . Intel_Df::t('You can use the Name links to view the plugin summary page for each addon.');
-  $items[] = ' ' . Intel_Df::t('To install, follow the download instructions on the summary page and install it via the !link.', array(
-      '!link' => Intel_Df::l(Intel_Df::t('WordPress plugin admin'), 'wp-admin/plugins.php', $l_options),
-    ));
-  $items[] = ' ' . Intel_Df::t('For any add-on you don\'t want to install check the Ignore box to continue.');
+  //$items[] = ' ' . Intel_Df::t('You can use the Name links to view the plugin summary page for each addon.');
+  //$items[] = ' ' . Intel_Df::t('To install, follow the download instructions on the summary page and install it via the !link.', array(
+  //    '!link' => Intel_Df::l(Intel_Df::t('WordPress plugin admin'), 'wp-admin/plugins.php', $l_options),
+  //  ));
+  $items[] = ' ' . Intel_Df::t('For any add-on you don\'t want to install right now check the Ignore box to continue.');
   $items[] = '</p>';
 
   $items[] = '<h3>' . Intel_Df::t('Add-ons list') . '</h3>';
@@ -2631,7 +2624,7 @@ function intel_admin_setup_finish($form, &$form_state) {
   $items[] = '</p>';
 
   $items[] = '<p>';
-  $items[] = '<strong>' . Intel_Df::t('To get the most out of your analytics and unleash the full power of Intelligence:') . '</strong>';
+  $items[] = '<strong>' . Intel_Df::t('To learn how to get the most out of your analytics and unleash the full power of Intelligence:') . '</strong>';
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $items[] = '<br>' . Intel_Df::l( Intel_Df::t('Launch the Intelligence JumpStart'), 'admin/help/start', $l_options);
   //$items[] = '<br>' . Intel_Df::t('(click on tracked links and forms to trigger events)');

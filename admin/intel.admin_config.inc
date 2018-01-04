@@ -130,7 +130,7 @@ function intel_admin_settings($form, &$form_state) {
     $desc = '';
     $form['l10iapi']['intel_ga_tid'] = array(
       '#type' => 'textfield',
-      '#title' => Intel_Df::t('Tracking id'),
+      '#title' => Intel_Df::t('Tracking ID'),
       '#default_value' => $ga_tid,
       '#description' => $desc,
       '#size' => 18,
@@ -165,12 +165,17 @@ function intel_admin_settings($form, &$form_state) {
     '#size' => 32,
     '#required' => 1,
   );
+  $levels = array(
+    'free' => Intel_Df::t('Free'),
+    'basic' => Intel_Df::t('Basic'),
+    'pro' => Intel_Df::t('Professional'),
+  );
   if (!empty($account_level)) {
     $form_state['intel_api_level'] = $account_level;
     $form['l10iapi']['intel_api_level'] = array(
       '#type' => 'item',
       '#title' => Intel_Df::t('Subscription level'),
-      '#markup' => strtoupper($account_level),
+      '#markup' => $levels[$account_level],
     );
   }
 
@@ -202,7 +207,7 @@ function intel_admin_settings($form, &$form_state) {
     '#default_value' => get_option('intel_l10iapi_url', ''),
     '#description' => Intel_Df::t('The URL for the API without the protocall. Leave blank to use the default of !default.',
       array(
-        '!default' => INTEL_L10IAPI_URL,
+        '!default' => intel_get_iapi_url(),
       )),
     '#field_suffix' => '/',
   );
@@ -238,7 +243,7 @@ function intel_admin_settings($form, &$form_state) {
     '#default_value' => get_option('intel_imapi_url', ''),
     '#description' => Intel_Df::t('The URL for the API without the protocall. Leave blank to use the default of !default.',
       array(
-        '!default' => INTEL_IMAPI_URL,
+        '!default' => intel_get_imapi_url(),
       )),
     '#field_suffix' => '/',
   );
@@ -366,39 +371,16 @@ function intel_admin_settings($form, &$form_state) {
 
   $form['tracking']['enhanced_ga']['intel_ga_profile_propertyid'] = array(
     '#type' => 'item',
-    '#title' => Intel_Df::t('Tracking Id'),
+    '#title' => Intel_Df::t('Tracking ID'),
     '#markup' => !empty($ga_profile['propertyId']) ? $ga_profile['propertyId'] : Intel_Df::t('(not set)'),
-
   );
 
   $form['tracking']['enhanced_ga']['intel_ga_profile_name'] = array(
     '#type' => 'item',
-    '#title' => Intel_Df::t('Main view'),
+    '#title' => Intel_Df::t('Main data view'),
     '#markup' => !empty($ga_profile['name']) ? $ga_profile['name'] : Intel_Df::t('(not set)'),
   );
 
-  $desc = '';
-  if (!empty($ga_profile_base['name'])) {
-    $l_options = Intel_Df::l_options_add_destination('ga');
-    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('home', array('use_profile_base' => 1)), $l_options);
-  }
-  $form['tracking']['base_ga'] = array(
-    '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Base Google Analytics profile'),
-    '#collapsible' => FALSE,
-    '#description' => $desc,
-  );
-
-  $form['tracking']['base_ga']['intel_ga_profile_base_propertyid'] = array(
-    '#type' => 'item',
-    '#title' => Intel_Df::t('Tracking Id'),
-    '#markup' => !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : Intel_Df::t('(not set)'),
-  );
-  $form['tracking']['base_ga']['intel_ga_profile_base_name'] = array(
-    '#type' => 'item',
-    '#title' => Intel_Df::t('Main view'),
-    '#markup' => !empty($ga_profile_base['name']) ? $ga_profile_base['name'] : Intel_Df::t('(not set)'),
-  );
 
   $desc = Intel_Df::t('If you are tracking multiple subdomains, set the main domain name for this property.');
   $form['tracking']['intel_domain_name'] = array(
@@ -429,6 +411,30 @@ function intel_admin_settings($form, &$form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+
+  $desc = '';
+  if (!empty($ga_profile_base['name'])) {
+    $l_options = Intel_Df::l_options_add_destination('ga');
+    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('home', array('use_profile_base' => 1)), $l_options);
+  }
+  $form['tracking']['advanced']['base_ga'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Base Google Analytics profile'),
+    '#collapsible' => FALSE,
+    '#description' => $desc,
+  );
+
+  $form['tracking']['advanced']['base_ga']['intel_ga_profile_base_propertyid'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Tracking Id'),
+    '#markup' => !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : Intel_Df::t('(not set)'),
+  );
+  $form['tracking']['advanced']['base_ga']['intel_ga_profile_base_name'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Main view'),
+    '#markup' => !empty($ga_profile_base['name']) ? $ga_profile_base['name'] : Intel_Df::t('(not set)'),
+  );
+
 
   $options = array(
     '' => '-- ' . Intel_Df::t('None') . ' --',

@@ -30,6 +30,12 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
+  $url = intel_get_imapi_url();
+
+  intel_d($url);
+
+  return 'OK';
+
 
   $url = Intel_Df::url('admin/config/intel/plugin_active');
   return $url;

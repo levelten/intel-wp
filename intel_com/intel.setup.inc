@@ -66,9 +66,11 @@ if (!is_callable('intel_setup')) {
   }
 
   function intel_setup_theme_install_plugin_card($vars) {
-    wp_enqueue_style('intel-setup-plugin-card', intel_setup()->url . 'css/intel.setup-plugin-card.css');
+    wp_enqueue_style('intel-setup-plugins', intel_setup()->url . 'css/intel.setup-plugins.css');
+
     wp_enqueue_script('plugin-install');
     wp_enqueue_script('updates');
+    wp_enqueue_script('intel-setup-plugins', intel_setup()->url . 'js/intel.setup-plugins.js');
     add_thickbox();
 
 
@@ -93,7 +95,7 @@ if (!is_callable('intel_setup')) {
         return $wrapper0;
       }
       elseif (!empty($vars['wrapper']) && ($vars['wrapper'] == 'close')) {
-        return $wrapper0;
+        return $wrapper1;
       }
     }
 
@@ -118,7 +120,6 @@ if (!is_callable('intel_setup')) {
     $items[] = '</ul>';
     $items[] = '</div>';
 
-    $items[] = '</div>';
     $items[] = '</div>';
 
     $output = implode($items);
@@ -202,7 +203,19 @@ if (!is_callable('intel_setup')) {
           case 'install':
             if ($status['url']) {
               /* translators: 1: Plugin name and version. */
-              $vars['install_link'] = $action_links[] = '<a class="install-now button' . $class_add['install_link'] . $class_add['install_link_install'] . '" data-slug="' . esc_attr($plugin['slug']) . '" href="' . esc_url($status['url']) . '" aria-label="' . esc_attr(sprintf(__('Install %s now'), $name)) . '" data-name="' . esc_attr($name) . '">' . $text['install_link_install'] . '</a>';
+              // hack to pass activate url to install button
+              if ($vars['activate_url']) {
+                $activate_url = $vars['activate_url'];
+              }
+              else {
+                $activate_url = network_admin_url('plugins.php');
+              }
+              $activate_url = add_query_arg(array(
+                //'_wpnonce' => wp_create_nonce('activate-plugin_' . $status['file']),
+                'action' => 'activate',
+                //'plugin' => $status['file'],
+              ), $activate_url);
+              $vars['install_link'] = $action_links[] = '<a class="install-now button' . $class_add['install_link'] . $class_add['install_link_install'] . '" data-slug="' . esc_attr($plugin['slug']) . '" href="' . esc_url($status['url']) . '" aria-label="' . esc_attr(sprintf(__('Install %s now'), $name)) . '" data-name="' . esc_attr($name) . '" data-activate-url="' . $activate_url .  '">' . $text['install_link_install'] . '</a>';
             }
             break;
 
@@ -228,11 +241,13 @@ if (!is_callable('intel_setup')) {
               else {
                 $activate_url = network_admin_url('plugins.php');
               }
-              $activate_url = add_query_arg(array(
+              $vars['activate_url'] = $activate_url = add_query_arg(array(
                 '_wpnonce' => wp_create_nonce('activate-plugin_' . $status['file']),
                 'action' => 'activate',
                 'plugin' => $status['file'],
               ), $activate_url);
+
+
 
               if (is_network_admin()) {
                 $button_text = __('Network Activate');
@@ -317,14 +332,15 @@ if (!is_callable('intel_setup')) {
     return $plugins_allowedtags;
   }
 
+  function intel_setup_plugin_activate_url() {
+
+  }
+
   function intel_setup_plugin_activate() {
     // copied from wp-admin/plugins to enable custom redirects
 
     /** WordPress Administration Bootstrap */
     require_once( ABSPATH . 'wp-admin/admin.php' );
-
-    Intel_Df::watchdog('intel_setup_plugin_activate status', $status);
-    Intel_Df::watchdog('intel_setup_plugin_activate page', $page);
 
     if ( ! current_user_can('activate_plugins') )
       wp_die( __( 'Sorry, you are not allowed to manage plugins for this site.' ) );
@@ -356,7 +372,6 @@ if (!is_callable('intel_setup')) {
           }
 
           check_admin_referer('activate-plugin_' . $plugin);
-
           $result = activate_plugin($plugin, self_admin_url('plugins.php?error=true&plugin=' . urlencode($plugin)), is_network_admin());
           if (is_wp_error($result)) {
             if ('unexpected_output' == $result->get_error_code()) {
@@ -368,7 +383,6 @@ if (!is_callable('intel_setup')) {
               wp_die($result);
             }
           }
-
           if (!is_network_admin()) {
             $recent = (array) get_option('recently_activated');
             unset($recent[$plugin]);
@@ -400,8 +414,6 @@ if (!is_callable('intel_setup')) {
           exit;
       }
     }
-
-
   }
 
   if (!function_exists('intel_d')) {

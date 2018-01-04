@@ -1401,12 +1401,13 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
   // generate Intel embed
   if ($api_level && (($type == 'l10i') || ($type == 'combined'))) {
     $library_path = intel()->libraries_get_path('LevelTen') . 'intel/scripts';
-    $api_hostpath = get_option('intel_l10iapi_url', '');
-    if (empty($api_hostpath)) {
-      $api_hostpath = INTEL_L10IAPI_URL;
+    $api_hostpath = intel_get_iapi_url();
+    $a = explode('//', $api_hostpath);
+    if (count($a) == 2) {
+      $api_hostpath = $a[1];
     }
-    // if api_hostpathe is relative (begins with '/'), install is local
-    elseif (substr($api_hostpath, 0 ,1) == '/') {
+    // if api_hostpath is relative (begins with '/'), install is local
+    if (substr($api_hostpath, 0 ,1) == '/') {
       $api_hostpath = $_SERVER['HTTP_HOST'] . $api_hostpath;
       $api_local = 1;
     }

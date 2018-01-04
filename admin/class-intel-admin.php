@@ -171,7 +171,6 @@ class Intel_Admin {
 	}
 
 	public function menu_router() {
-
 		$intel = intel();
 		$menu_info = $intel->menu_info();
 

@@ -79,9 +79,8 @@ class Intel {
 
 	public $time_delta;
 
-	protected $js_inline = array(
-		array('name' => 'default')
-	);
+	protected $js_inline = array();
+
 
 	protected $js_settings = array();
 
@@ -355,6 +354,10 @@ class Intel {
 		// plugin action links
 		$this->loader->add_action( 'plugin_action_links_' . plugin_basename(INTEL_DIR . 'intel.php'), $plugin_admin, 'plugin_action_links', 10, 2 );
 
+		// add js_settings processing
+		//add_action( 'admin_footer', array( $this, 'process_js_footer' ), 10 );
+
+
 		// add tracker processing
 		add_action( 'admin_head', array( $this->tracker, 'tracking_admin_head' ), 10 );
 		add_action( 'admin_footer', array( $this->tracker, 'tracking_admin_footer' ), 99 );
@@ -607,22 +610,27 @@ class Intel {
 	}
 
 	public function process_js_header() {
-		print "<!-- intel js inline header start ->\n";
-		print_r($this->js_inline);
+
+		$js_settings = $this->get_js_settings();
+
+		print "<script>var wp_intel = wp_intel || {}; wp_intel.settings = " . json_encode($js_settings) . "</script>;\n";
+intel_d($this->js_inline);
 		foreach ($this->js_inline as $js) {
-			print $js['data'];
+			if ($js['scope'] == 'header' ) {
+				print $js['data'] . "\n";
+			}
 		}
-		print "<!-- intel js inline header end ->\n";
 	}
 
 	public function process_js_settings() {
 		print "<!-- intel js settings start ->\n";
-		$settings = array(
-			'intel_settings' => $this->js_settings,
-		);
-		print json_encode($settings);
+		$js_settings = $this->get_js_settings();
+
+		$script = '<script>';
+		$script .= "<script>var wp_intel_settings = " . json_encode($js_settings) . "</script>;\n";
 		print "<!-- intel js settings end ->\n";
 	}
+
 	public function get_js_settings_json() {
 		$settings = array(
 			'intel_settings' => $this->js_settings,

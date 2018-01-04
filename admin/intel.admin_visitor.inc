@@ -461,6 +461,10 @@ function intel_visitor_delete_confirm_form_submit($form , &$form_state ) {
 }
 
 function intel_visitor_page($entity) {
+
+  // add fontawesome for icons
+  wp_enqueue_style( 'intel_fa', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css' );
+
   $view_mode = 'full';
   $langcode = 'UND';
   if (intel()->is_debug()) {

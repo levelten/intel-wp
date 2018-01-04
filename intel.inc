@@ -6,10 +6,10 @@
 
 // define constants
 define('INTEL_PLATFORM', 'wp');
-define('INTEL_L10IAPI_URL', 'api.getlevelten.com/v1/intel');
-define('INTEL_IMAPI_URL_SCHEME', 'http');
-define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.2.9');
+define('INTEL_L10IAPI_URL', 'https://api.getlevelten.com/v1/intel');
+define('INTEL_IMAPI_URL', 'https://admin.intelligencewp.com/imapi/v1/intel');
+//define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
+define('INTEL_L10IAPI_JS_VER', '0.3.0');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
@@ -37,6 +37,8 @@ define('INTEL_STATUS_SERVER_ERROR', 500);
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_alter.inc";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
+
+
 
 // add intel_menu to hook_intel_menu_info
 add_filter('intel_menu_info', 'intel_menu');
@@ -67,6 +69,30 @@ function intel_menu($items = array()) {
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_CALLBACK,
     'file' => 'admin/intel.admin_config.inc',
+    'weight' => -10,
+    'intel_install_access' => 'active',
+  );
+  $items['admin/config/intel/plugin_install'] = array(
+    'title' => 'Plugin activate',
+    //'description' => 'API, global options, events, page attribute and visitor attribute settings.',
+    'page callback' => 'intel_setup_plugin_install',
+    //'page arguments' => array('intel_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'intel_com/intel.setup.inc',
+    'weight' => -10,
+    'intel_install_access' => 'active',
+  );
+  $items['admin/config/intel/plugin_activate_url_js'] = array(
+    'title' => 'Plugin activate',
+    //'description' => 'API, global options, events, page attribute and visitor attribute settings.',
+    'page callback' => 'intel_setup_plugin_activate_url_js',
+    //'page arguments' => array('intel_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'file' => 'intel_com/intel.setup.inc',
     'weight' => -10,
     'intel_install_access' => 'active',
   );
@@ -2060,10 +2086,9 @@ function intel_verify_apikey(&$message = '', &$property = array(), $options = ar
     return FALSE;
   }
   intel_include_library_file('class.apiclient.php');
-  $apiUrl = get_option('intel_l10iapi_url', '');
   $api_params = get_option('intel_l10iapi_custom_params', array());
   $apiClientProps = array(
-    'apiUrl' => ($apiUrl ? $apiUrl : INTEL_L10IAPI_URL) . '/',
+    'apiUrl' => intel_get_iapi_url() . '/',
     'apiConnector' => get_option('intel_l10iapi_connector', ''),
     'apiParams' => $api_params,
   );
@@ -2344,9 +2369,8 @@ function intel_field_extra_fields() {
 }
 
 function intel_get_ApiClientProps() {
-  $apiUrl = get_option('intel_l10iapi_url', '');
   $apiClientProps = array(
-    'apiUrl' => ($apiUrl ? $apiUrl : INTEL_L10IAPI_URL) . '/',
+    'apiUrl' => intel_get_iapi_url() . '/',
     'apiConnector' => get_option('intel_l10iapi_connector', ''),
     'apiParams' => get_option('intel_l10iapi_custom_params', array()),
     'tid' => get_option('intel_ga_tid', ''),
@@ -3978,17 +4002,6 @@ function intel_extended_mode() {
   return (get_option('intel_extended_mode', 0) || !empty($_GET['extended']));
 }
 
-function intel_get_imapi_host() {
-  $imapi_domain = get_option('intel_imapi_url', '');
-  if (!$imapi_domain) {
-    $imapi_domain = INTEL_IMAPI_URL;
-  }
-
-  $imapi_domain = explode('/', $imapi_domain);
-  $imapi_domain = $imapi_domain[0];
-  return $imapi_domain;
-}
-
 function intel_print_var($var, $console = FALSE) {
   if ($console) {
     $json = json_encode($var);
@@ -4712,15 +4725,50 @@ function intel_format_un($name) {
   return str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($name)));
 }
 
-function intel_imapi_property_setup_l($text, $options = array()) {
-
-  $imapi_domain = get_option('intel_imapi_url', '');
-  if (!$imapi_domain) {
-    $imapi_domain = INTEL_IMAPI_URL;
+function intel_get_iapi_url($component = '') {
+  $url_obj = &Intel_Df::drupal_static( __FUNCTION__);
+  if (empty($url_obj)) {
+    $url = get_option('intel_l10iapi_url', '');
+    if (!$url) {
+      $url = INTEL_L10IAPI_URL;
+    }
+    $url_obj = parse_url($url);
   }
 
-  $imapi_domain = explode('/', $imapi_domain);
-  $imapi_domain = $imapi_domain[0];
+  if ($component) {
+    if ($component == 'obj') {
+      return $url_obj;
+    }
+    return $url_obj[$component];
+  }
+
+  return http_build_url($url_obj);
+}
+
+function intel_get_imapi_url($component = '') {
+  $url_obj = &Intel_Df::drupal_static( __FUNCTION__);
+  if (empty($url_obj)) {
+    $url = get_option('intel_imapi_url', '');
+    if (!$url) {
+      $url = INTEL_IMAPI_URL;
+    }
+    $url_obj = parse_url($url);
+  }
+
+  if ($component) {
+    if ($component == 'obj') {
+      return $url_obj;
+    }
+    return $url_obj[$component];
+  }
+
+  return http_build_url($url_obj);
+}
+
+function intel_imapi_property_setup_l($text, $options = array()) {
+
+  $imapi_url_obj = intel_get_imapi_url('obj');
+  $imapi_url_obj['path'] = '/property_setup';
 
   $l_options = !empty($options['l_options']) ? $options['l_options'] : array();
   if (!isset($l_options['query'])) {
@@ -4739,7 +4787,7 @@ function intel_imapi_property_setup_l($text, $options = array()) {
   }
 
   //return Intel_Df::l($text, "https://$imapi_domain/property_setup", $l_options);
-  return Intel_Df::l($text, INTEL_IMAPI_URL_SCHEME . "://$imapi_domain/property_setup", $l_options);
+  return Intel_Df::l($text, http_build_url($imapi_url_obj), $l_options);
 }
 
 

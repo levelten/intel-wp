@@ -135,14 +135,18 @@ function intel_help_demo_page() {
   $url = "https://analytics.google.com/analytics/web/#realtime/rt-overview/" . intel_get_ga_profile_slug() . "/%3Fmetric.type%3D5/";
   $output .= Intel_Df::l( Intel_Df::t('Google Analytics real-time reports'), $url, $l_options) . '<br><br>';
 
-  $imapi_host = intel_get_imapi_host();
+  $imapi_host = intel_get_imapi_url('host');
 
   $ga_tid = get_option('intel_ga_tid', '');
+
+
+  $imapi_url_obj = intel_get_imapi_url('obj');
+  $imapi_url_obj['path'] = '/property/' . $ga_tid . '/demo';
 
   $l_options = Intel_Df::l_options_add_target('dr');
   $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
   $l_options = Intel_Df::l_options_add_query(array('base_urlpath' => intel()->base_url . intel()->base_path_front), $l_options);
-  $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), 'https://' . $imapi_host . '/property/' . $ga_tid . '/demo', $l_options) . '<br><br>';
+  $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), http_build_url($imapi_url_obj), $l_options) . '<br><br>';
 
   $l_options = Intel_Df::l_options_add_target('wpd');
   $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);

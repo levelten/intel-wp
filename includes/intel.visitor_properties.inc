@@ -697,10 +697,9 @@ function intel_create_icon($icon) {
     return '';
   }
   $url = '';
-  $apiUrl = get_option('intel_l10iapi_url', '');
   $api_params = get_option('intel_l10iapi_custom_params', array());
   $apiClientProps = array(
-    'apiUrl' => ($apiUrl ? $apiUrl : INTEL_L10IAPI_URL) . '/',
+    'apiUrl' => intel_get_iapi_url() . '/',
     'apiConnector' => get_option('intel_l10iapi_connector', ''),
   );
 

@@ -38,5 +38,5 @@ return;
 <!-- end Intelligence tracking code -->
 
 
-$l10iapi_url = get_option('intel_l10iapi_url', INTEL_L10IAPI_URL);
+$l10iapi_url = intel_get_iapi_url();
 $l10iapi_js_ver = get_option('intel_l10iapi_js_ver', INTEL_L10IAPI_JS_VER);
