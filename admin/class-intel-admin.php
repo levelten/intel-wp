@@ -159,6 +159,9 @@ class Intel_Admin {
 
 	public function site_menu() {
 		global $wp_version;
+
+
+
 		if ( current_user_can( 'manage_options' ) ) {
 			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
 			//add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );

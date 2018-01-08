@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.9.1
-Stable tag: 1.2.4-dev
+Stable tag: 1.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,9 @@ For installation instructions, visit [intelligencewp.com/docs/installation](http
 = 1.2.3 =
 * Added videos 4-7 to the JumpStart
 * YouTube api change fix
+
+= 1.2.4 =
+* Streamlined setup
 
 == Upgrade Notice ==
 

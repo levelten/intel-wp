@@ -99,6 +99,13 @@ function intel_admin_setup_wizard_info($items = array()) {
 
 function intel_admin_setup_page() {
 
+  $setup_state = get_option('intel_setup', array());
+
+  if (!empty($setup_state['active_path']) && ($setup_state['active_path'] != $_GET['q'])) {
+    Intel_Df::drupal_goto(Intel_Df::url($setup_state['active_path']));
+    exit;
+  }
+
   wp_enqueue_script('intel-admin-setup', INTEL_URL . 'admin/js/intel-admin-setup.js', array( 'jquery' ));
   wp_enqueue_style('intel-admin-setup', INTEL_URL . 'admin/css/intel-admin-setup.css');
 
