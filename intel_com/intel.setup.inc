@@ -235,7 +235,7 @@ if (!is_callable('intel_setup')) {
               $button_text = $text['install_link_activate'];
               /* translators: %s: Plugin name */
               $button_label = _x('Activate %s', 'plugin');
-              if ($vars['activate_url']) {
+              if (!empty($vars['activate_url'])) {
                 $activate_url = $vars['activate_url'];
               }
               else {
@@ -332,10 +332,6 @@ if (!is_callable('intel_setup')) {
     return $plugins_allowedtags;
   }
 
-  function intel_setup_plugin_activate_url() {
-
-  }
-
   function intel_setup_plugin_activate() {
     // copied from wp-admin/plugins to enable custom redirects
 
@@ -395,9 +391,12 @@ if (!is_callable('intel_setup')) {
           }
 
           // added custom redirect
-          if (!empty($_GET['destination'])) {
-            wp_redirect( $_GET['destination'] );
-            exit;
+          if (isset($_GET['destination'])) {
+            if (!empty($_GET['destination'])) {
+              wp_redirect( $_GET['destination'] );
+              exit;
+            }
+            return;
           }
 
           if (isset($_GET['from']) && 'import' == $_GET['from']) {
