@@ -57,7 +57,6 @@ function intel_imapi_property_get($options = array()) {
     $response = $apiclient->getJSON('property/get', $params, $data);
   }
   catch (Exception $e) {
-    intel_d($e);
     throw($e);
   }
 

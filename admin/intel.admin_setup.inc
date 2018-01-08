@@ -1296,8 +1296,6 @@ function intel_admin_setup_addon_install($form, &$form_state) {
     '#markup' => $markup,
   );
 
-  intel_d($addon_info);
-
   foreach ($addon_info as $addon_mn => $info) {
 
     // if there is a show_callback, check if it resolves to true. If not,
@@ -1331,7 +1329,6 @@ function intel_admin_setup_addon_install($form, &$form_state) {
     $markup = '';
     if (!empty($info['slug'])) {
       $plugin_card_vars['plugin_slug'] = $info['slug'];
-      intel_d($plugin_card_vars);
       $plugin_card_vars = intel_setup_process_install_plugin_card($plugin_card_vars);
       $markup .= intel_setup_theme_install_plugin_card($plugin_card_vars);
     }

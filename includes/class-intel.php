@@ -614,7 +614,7 @@ class Intel {
 		$js_settings = $this->get_js_settings();
 
 		print "<script>var wp_intel = wp_intel || {}; wp_intel.settings = " . json_encode($js_settings) . "</script>;\n";
-intel_d($this->js_inline);
+
 		foreach ($this->js_inline as $js) {
 			if ($js['scope'] == 'header' ) {
 				print $js['data'] . "\n";
