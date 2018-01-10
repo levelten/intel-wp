@@ -1074,36 +1074,36 @@ function intel_get_event_goal_info($filter = '') {
   }
   return $event;
 
-/*
-  foreach ($goals AS $key => $goal) {
-    $ekey = 'goal_' . $key;
-    $event[$ekey] = $goal;
-    $event[$ekey]['title'] = $event[$ekey]['category'] = Intel_Df::t('Goal') . ': ' . $goal['title'];
-    $event[$ekey]['category'] .= '+';
-    $event[$ekey]['selectable'] = 1;
-  }
+  /*
+    foreach ($goals AS $key => $goal) {
+      $ekey = 'goal_' . $key;
+      $event[$ekey] = $goal;
+      $event[$ekey]['title'] = $event[$ekey]['category'] = Intel_Df::t('Goal') . ': ' . $goal['title'];
+      $event[$ekey]['category'] .= '+';
+      $event[$ekey]['selectable'] = 1;
+    }
 
-  $goals = get_option('intel_submission_goals', intel_get_submission_goals_default());
+    $goals = get_option('intel_submission_goals', intel_get_submission_goals_default());
 
-  foreach ($goals AS $key => $goal) {
-    $ekey = 'submission_goal_' . $key;
-    $event[$ekey] = $goal;
-    $event[$ekey]['title'] = $event[$ekey]['category'] = Intel_Df::t('Form submission') . ': ' . $goal['title'];
-    $event[$ekey]['category'] .= '+';
-    $event[$ekey]['event'] = 'form_submission';
-  }
+    foreach ($goals AS $key => $goal) {
+      $ekey = 'submission_goal_' . $key;
+      $event[$ekey] = $goal;
+      $event[$ekey]['title'] = $event[$ekey]['category'] = Intel_Df::t('Form submission') . ': ' . $goal['title'];
+      $event[$ekey]['category'] .= '+';
+      $event[$ekey]['event'] = 'form_submission';
+    }
 
-  $goals = get_option('intel_phonecall_goals', intel_get_phonecall_goals_default());
+    $goals = get_option('intel_phonecall_goals', intel_get_phonecall_goals_default());
 
-  foreach ($goals AS $key => $goal) {
-    $ekey = 'phonecall_goal_' . $key;
-    $event[$ekey] = $goal;
-    $event[$ekey]['title'] = $event[$ekey]['category'] = Intel_Df::t('Phone call') . ': ' . $goal['title'];
-    $event[$ekey]['category'] .= '+';
-    $event[$ekey]['event'] = 'phonecall';
-  }
-  return $event;
-*/
+    foreach ($goals AS $key => $goal) {
+      $ekey = 'phonecall_goal_' . $key;
+      $event[$ekey] = $goal;
+      $event[$ekey]['title'] = $event[$ekey]['category'] = Intel_Df::t('Phone call') . ': ' . $goal['title'];
+      $event[$ekey]['category'] .= '+';
+      $event[$ekey]['event'] = 'phonecall';
+    }
+    return $event;
+  */
 }
 
 function intel_get_form_submission_eventgoal_options() {
@@ -1185,7 +1185,7 @@ function intel_get_intel_events_overridable_fields($event) {
       'callback' => 1,
       'refresh_force' => 1,
       'selectable' => 1,
-  ) + $overridable_defaults;
+    ) + $overridable_defaults;
 
   // a new unitialize event
   if (empty($event) || empty($event['key'])) {
@@ -2351,7 +2351,7 @@ function intel_page_attribute_published_date_option_info($value, $data_options) 
   }
   elseif (substr($value, 0, 2) == 'Hi') {
     $i = substr($value, 2, 4) .
-    $data['title'] = substr($value, 2, 2) . ':' . substr($value, 4, 2);
+      $data['title'] = substr($value, 2, 2) . ':' . substr($value, 4, 2);
     $count_value = '^[0-9]{8}' . $i . '[0-9]$';
     $count_op = 'REGEXP';
   }
@@ -2414,7 +2414,7 @@ function intel_page_attribute_published_dow_option_info($option_id, $data_option
   );
 
   if (!empty($data_options['page_count'])) {
-      $data['page_count'] = intel_entity_attr_entity_count('pdw', (int)$option_id);
+    $data['page_count'] = intel_entity_attr_entity_count('pdw', (int)$option_id);
   }
   return $data;
 }
@@ -5088,6 +5088,7 @@ function intel_get_ga_report_url($page = '', $options = array()) {
   $use_profile_base = !empty($options['use_profile_base']) ? $options['use_profile_base'] : 0;
   $url = "https://analytics.google.com/analytics/web/";
   if ($page == 'report_home' || $page == 'home' ) {
+    $url .= '?/report-home/' . intel_get_ga_profile_slug($use_profile_base) . '/';
     $url .= '#embed/report-home/' . intel_get_ga_profile_slug($use_profile_base) . '/';
   }
   elseif (substr($page, 0, 3) == 'rt_') {

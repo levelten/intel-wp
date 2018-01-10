@@ -88,8 +88,8 @@ function intel_admin_settings($form, &$form_state) {
 
     );
     $desc .= ' ' . Intel_Df::t('This should be a seperate property than the primary tracking id set in the !link', array(
-      '!link' => Intel_Df::l( Intel_Df::t('Google Analytics Dashboard for WP plugin'), '/wp-admin/admin.php?page=gadash_settings'),
-    ));
+        '!link' => Intel_Df::l( Intel_Df::t('Google Analytics Dashboard for WP plugin'), '/wp-admin/admin.php?page=gadash_settings'),
+      ));
   }
 
   /*
@@ -359,7 +359,7 @@ function intel_admin_settings($form, &$form_state) {
 
   $desc = '';
   if (!empty($ga_profile['name'])) {
-    $l_options = Intel_Df::l_options_add_destination('ga');
+    $l_options = Intel_Df::l_options_add_target('ga');
     $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('home'), $l_options);
   }
   $form['tracking']['enhanced_ga'] = array(
@@ -1949,30 +1949,30 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   );
   $form['availability']['selectable']['#markup'] = ($form['availability']['selectable']['#default_value']) ? 'Yes' : 'No';
 */
-   if (intel_is_extended()) {
-     $form['advanced'] = array(
-       '#type' => 'fieldset',
-       '#title' => Intel_Df::t('Advanced settings'),
-       '#collapsible' => TRUE,
-       '#collapsed' => empty($event['type']) && empty($event['callback']),
-       '#description' => Intel_Df::t('Hooks to enable JavaScript to customize this event. Be careful using these settings as improper use may cause JavaScript errors.'),
-     );
+  if (intel_is_extended()) {
+    $form['advanced'] = array(
+      '#type' => 'fieldset',
+      '#title' => Intel_Df::t('Advanced settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => empty($event['type']) && empty($event['callback']),
+      '#description' => Intel_Df::t('Hooks to enable JavaScript to customize this event. Be careful using these settings as improper use may cause JavaScript errors.'),
+    );
 
-     $form['advanced']['type'] = array(
-       '#type' => ($custom) ? 'textfield' : 'item',
-       '#title' => Intel_Df::t('Event type'),
-       '#default_value' => !empty($event['type']) ? $event['type'] : '',
-       '#description' => Intel_Df::t('The type enables custom event configuration before event processing executes. If type is set, a method in the form of trackIntelEvent[type] will be called.'),
-       '#size' => 64,
-     );
-     $form['advanced']['callback'] = array(
-       '#type' => ($custom) ? 'textfield' : 'item',
-       '#title' => Intel_Df::t('Callback'),
-       '#default_value' => !empty($event['callback']) ? $event['callback'] : '',
-       '#description' => Intel_Df::t('Declares a function to execute after the intel event data has been processed but before it is sent to Google Analytics. Must be set to the name of an avaialble JavaScript function.'),
-       '#size' => 64,
-     );
-   }
+    $form['advanced']['type'] = array(
+      '#type' => ($custom) ? 'textfield' : 'item',
+      '#title' => Intel_Df::t('Event type'),
+      '#default_value' => !empty($event['type']) ? $event['type'] : '',
+      '#description' => Intel_Df::t('The type enables custom event configuration before event processing executes. If type is set, a method in the form of trackIntelEvent[type] will be called.'),
+      '#size' => 64,
+    );
+    $form['advanced']['callback'] = array(
+      '#type' => ($custom) ? 'textfield' : 'item',
+      '#title' => Intel_Df::t('Callback'),
+      '#default_value' => !empty($event['callback']) ? $event['callback'] : '',
+      '#description' => Intel_Df::t('Declares a function to execute after the intel event data has been processed but before it is sent to Google Analytics. Must be set to the name of an avaialble JavaScript function.'),
+      '#size' => 64,
+    );
+  }
 
   //$form['ga_event_values']['value']['#markup'] = $form['ga_event_values']['value']['#default_value'];
 
