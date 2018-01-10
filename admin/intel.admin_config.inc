@@ -2148,6 +2148,9 @@ function intel_admin_form_type_list_page() {
     }
   }
 
+  //$form = Intel_Form::drupal_get_form('intel_admin_form_tracking_default_form');
+  //$output = Intel_Df::render($form);
+
   $vars = array(
     'header' => $header,
     'rows' => $rows,
@@ -2155,6 +2158,61 @@ function intel_admin_form_type_list_page() {
   $output = Intel_Df::theme('table', $vars);
 
   return $output;
+}
+
+function intel_admin_form_tracking_form($form, &$form_state) {
+  $form['default'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Default form tracking'),
+    '#collapsible' => FALSE,
+    //'#collapsed' => TRUE,
+  );
+
+  $form['default']['inline_wrapper_1'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="pull-left">',
+  );
+
+  $eventgoal_options = intel_get_form_submission_eventgoal_options();
+  $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
+  $form['default']['intel_tracking_event_name_default'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Tracking event/goal'),
+    '#options' => $eventgoal_options,
+    '#default_value' => get_option('intel_tracking_event_name_default', 'form_submission'),
+    '#description' => Intel_Df::t('Select the goal or event you would like to trigger to be tracked in analytics when a form is submitted.'),
+    '#suffix' => '<div class="add-goal-link text-right" style="margin-top: -12px;">' . Intel_Df::l(Intel_Df::t('Add Goal'), 'admin/config/intel/settings/goal/add', $l_options) . '</div>',
+  );
+
+  $form['default']['inline_wrapper_2'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div><div class="clearfix"></div>',
+  );
+
+  $l_options = Intel_Df::l_options_add_target('intel_admin_config_scoring');
+  $desc = Intel_Df::t('Each goal has a default site wide value in the !scoring_admin, but you can override that value per form.', array(
+    '!scoring_admin' => Intel_Df::l( Intel_Df::t('Intelligence scoring admin'), 'admin/config/intel/settings/scoring', $l_options ),
+  ));
+  $desc .= ' ' . Intel_Df::t('If you would like to use a custom goal/event value, enter it here otherwise leave the field blank to use the site defaults.');
+  $form['default']['intel_tracking_event_value'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Tracking value'),
+    '#default_value' => get_option('intel_tracking_event_value_default', ''),
+    '#description' => $desc,
+    '#size' => 8,
+  );
+
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => Intel_Df::t('Save'),
+  );
+
+  return $form;
+}
+
+function intel_admin_form_tracking_form_submit($form, &$form_state) {
+  update_option('intel_tracking_event_name_default', $form_state['values']['intel_tracking_event_name_default']);
+  update_option('intel_tracking_event_value_default', $form_state['values']['intel_tracking_event_value_default']);
 }
 
 function intel_admin_link_type_list_page() {

@@ -204,7 +204,7 @@ class Intel_Admin {
 			);
 			$navbar_base_q = $navbar_base_qt = $q;
       if (!$install_levels['ga_data']) {
-				$install_access_error = intel_get_install_access_error_message('ga_data');
+				$install_access_error = intel_get_install_access_error_message(array('level' => 'ga_data'));
 			}
 		}
 		if ($_GET['page'] == 'intel_reports') {
@@ -216,7 +216,7 @@ class Intel_Admin {
 			);
 			$navbar_base_q = $navbar_base_qt = $q;
 			if (!$install_levels['ga_data']) {
-				$install_access_error = intel_get_install_access_error_message('ga_data');
+				$install_access_error = intel_get_install_access_error_message(array('level' => 'ga_data'));
 			}
 		}
 
@@ -742,4 +742,8 @@ class Intel_Admin {
 		<?php
 	}
 
+	public function activated_plugin($plugin) {
+		require_once( INTEL_DIR . 'intel_com/intel.setup.inc' );
+		intel_setup_activated_plugin($plugin);
+	}
 }

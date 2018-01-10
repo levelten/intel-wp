@@ -357,11 +357,13 @@ class Intel {
 		// add js_settings processing
 		//add_action( 'admin_footer', array( $this, 'process_js_footer' ), 10 );
 
+		// admin notices
+		$this->loader->add_action( 'activated_plugin', $plugin_admin, 'activated_plugin' );
+
 
 		// add tracker processing
 		add_action( 'admin_head', array( $this->tracker, 'tracking_admin_head' ), 10 );
 		add_action( 'admin_footer', array( $this->tracker, 'tracking_admin_footer' ), 99 );
-
 	}
 
 	public function setup_cron() {

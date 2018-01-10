@@ -101,10 +101,17 @@ function intel_admin_setup_page() {
 
   $setup_state = get_option('intel_setup', array());
 
+  if (!empty($_GET['reset_setup'])) {
+    $setup_state = array();
+    update_option('intel_setup', $setup_state);
+  }
   if (!empty($setup_state['active_path']) && ($setup_state['active_path'] != $_GET['q'])) {
     Intel_Df::drupal_goto(Intel_Df::url($setup_state['active_path']));
     exit;
   }
+
+  //$setup_state['active_path'] = 'admin/config/intel/settings/setup';
+  //update_option('intel_setup', $setup_state);
 
   wp_enqueue_script('intel-admin-setup', INTEL_URL . 'admin/js/intel-admin-setup.js', array( 'jquery' ));
   wp_enqueue_style('intel-admin-setup', INTEL_URL . 'admin/css/intel-admin-setup.css');
@@ -466,7 +473,12 @@ function intel_admin_setup_base_ga($form, &$form_state) {
 
   $items[] = '<label>' . Intel_Df::t('First') . '</label><br>';
 
-  $l_options = Intel_Df::l_options_add_destination(Intel_Df::url(Intel_Df::current_path()));
+  $setup_state = get_option('intel_setup', array());
+  if (!isset($setup_state['install_plugins'])) {
+    $setup_state['install_plugins'] = array();
+  }
+  $setup_state['install_plugins']['google-analytics-dashboard-for-wp'] = 1;
+
   $vars = array(
     'plugin_slug' => 'google-analytics-dashboard-for-wp',
     'card_class' => array(
@@ -484,9 +496,13 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     'install_link_activate_text' => Intel_Df::t('Activate GADWP'),
     'install_link_update_text' => Intel_Df::t('Update GADWP'),
     'install_link_active_text' => '<span class="icon glyphicon glyphicon-check" aria-hidden="true"></span> ' . Intel_Df::t('GADWP is Active'),
-    'activate_url' => Intel_Df::url('admin/config/intel/plugin_activate', $l_options),
   );
   $vars['install_link_activate_class'] = $vars['install_link_install_class'];
+  $l_options = array();
+  if (!empty($_GET['step'])) {
+    $l_options = Intel_Df::l_options_add_query(array('step' => $_GET['step']), $l_options);
+  }
+  $vars['activated_redirect'] = Intel_Df::url(Intel_Df::current_path(), $l_options);
   $vars = intel_setup_process_install_plugin_card($vars);
 
   $items[] = '<div class="intel-setup">';
@@ -739,10 +755,6 @@ function intel_admin_setup_intel_profile_check($form, &$form_state) {
     }
     $tid = $form_state['values']['intel_ga_tid'];
   }
-
-  //intel_d($tid);
-  //intel_d($apikey);
-  //intel_d($sys_meta);
 
   // if tid or apikey has not been changed and apikey was verified recently,
   // don't verify again.
@@ -1262,10 +1274,16 @@ function intel_admin_setup_addon_install($form, &$form_state) {
     //'install_link_activate_text' => Intel_Df::t('Activate GADWP'),
     //'install_link_update_text' => Intel_Df::t('Update GADWP'),
     //'install_link_active_text' => '<span class="icon glyphicon glyphicon-check" aria-hidden="true"></span> ' . Intel_Df::t('GADWP is Active'),
-    'activate_url' => Intel_Df::url('admin/config/intel/plugin_activate', $activate_l_options),
+    //'activate_url' => Intel_Df::url('admin/config/intel/plugin_activate', $activate_l_options),
     'wrapper' => 0,
   );
   $plugin_card_vars['install_link_activate_class'] = $plugin_card_vars['install_link_install_class'];
+  // set redirect back to wizard after plugin activated
+  $l_options = array();
+  if (!empty($_GET['step'])) {
+    $l_options = Intel_Df::l_options_add_query(array('step' => $_GET['step']), $l_options);
+  }
+  $plugin_card_vars['activated_redirect'] = Intel_Df::url(Intel_Df::current_path(), $l_options);
   //$plugin_card_vars = intel_setup_process_install_plugin_card($plugin_card_vars);
 
   //$items[] = '<div class="intel-setup">';

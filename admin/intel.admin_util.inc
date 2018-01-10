@@ -30,9 +30,8 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $url = intel_get_imapi_url();
-
-  intel_d($url);//
+  $options = get_transient('intel_activated_intelligence', '');
+  intel_d($options);
 
   return 'OK';
 }

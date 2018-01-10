@@ -916,6 +916,7 @@ function intel_get_flush_page_intel_pushes() {
 
 function intel_save_flush_page_intel_pushes() {
   $push_storage = get_option('intel_save_push_storage', INTEL_SAVE_PUSH_STORAGE_DEFAULT);
+Intel_Df::watchdog('push_storage', $push_storage);
   if ($push_storage == 'cookie') {
     return intel_page_intel_pushes('save_cookie_flush');
   }
@@ -1771,7 +1772,7 @@ function intel_form_submission_vars_default() {
  * @return string|void
  */
 function intel_process_form_submission($vars) {
-
+//Intel_Df::watchdog('intel_process_form_submission vars', json_encode($vars));
   // set defaults
   $vars += intel_form_submission_vars_default();
 

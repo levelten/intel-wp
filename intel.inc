@@ -72,18 +72,6 @@ function intel_menu($items = array()) {
     'weight' => -10,
     'intel_install_access' => 'active',
   );
-  $items['admin/config/intel/plugin_install'] = array(
-    'title' => 'Plugin activate',
-    //'description' => 'API, global options, events, page attribute and visitor attribute settings.',
-    'page callback' => 'intel_setup_plugin_install',
-    //'page arguments' => array('intel_admin_settings'),
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_CALLBACK,
-    'file' => 'intel_com/intel.setup.inc',
-    'weight' => -10,
-    'intel_install_access' => 'active',
-  );
   $items['admin/config/intel/plugin_activate_url_js'] = array(
     'title' => 'Plugin activate',
     //'description' => 'API, global options, events, page attribute and visitor attribute settings.',
@@ -227,6 +215,20 @@ function intel_menu($items = array()) {
     'weight' => $w++,
     'file' => 'admin/intel.admin_config.inc',
   );
+
+  $items['admin/config/intel/settings/form/default_tracking'] = array(
+    'title' => 'Default tracking',
+    'description' => 'Default form tracking',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_form_tracking_form'),
+    'access callback' => 'user_access',
+    //'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
 
   $items['admin/config/intel/settings/taxonomy'] = array(
     'title' => 'Taxonomies',
@@ -1776,7 +1778,8 @@ function intel_get_install_access_error_message($vars = array()) {
         $setup_step = Intel_Df::l(Intel_Df::t('connect to the Intelligence API'), 'admin/config/intel/settings/setup');
       }
       if ($vars['level'] == 'ga_data') {
-        $setup_step = Intel_Df::l(Intel_Df::t('connect to the Google Analytics API'), 'admin/config/intel/settings/setup');
+        $l_options = Intel_Df::l_options_add_query(array('step' => 'base_ga'));
+        $setup_step = Intel_Df::l(Intel_Df::t('connect to the Google Analytics API'), 'admin/config/intel/settings/setup', $l_options);
       }
       if ($vars['level'] == 'setup') {
         $setup_step = Intel_Df::l(Intel_Df::t('complete the Intelligence setup wizard'), 'admin/config/intel/settings/setup');
