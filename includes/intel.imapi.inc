@@ -16,7 +16,26 @@
  */
 function intel_imapi_get_client(&$vars, $options = array()) {
   $vars['tid'] = isset($options['tid']) ? $options['tid'] : get_option('intel_ga_tid', '');
-  $vars['viewid'] = isset($options['viewid']) ? $options['viewid'] : get_option('intel_ga_view', '');
+
+  // determine viewid
+  if (!empty($options['viewid'])) {
+    $vars['viewid'] = $options['viewid'];
+  }
+  else if (!empty($options['ga_profile_type']) && ($options['ga_profile_type'] == 'base')) {
+    $ga_profile_base = get_option('intel_ga_profile_base', array());
+    if (!empty($ga_profile_base['id'])) {
+      $vars['viewid'] = $ga_profile_base['id'];
+    }
+    else {
+      $message = Intel_Df::t('Base Google Analytics profile not set.');
+      throw new Exception($message);
+      return FALSE;
+    }
+  }
+  else {
+    $vars['viewid'] = get_option('intel_ga_view', '');
+  }
+
   if (empty($vars['tid'])) {
     $message = Intel_Df::t('Tracking id is not set.');
     throw new Exception($message);
@@ -68,9 +87,8 @@ function intel_imapi_property_get($options = array()) {
 }
 
 function intel_imapi_ga_goal_get($goal_id = 0, $options = array()) {
-
   $vars = array();
-  $apiclient = intel_imapi_get_client($vars);
+  $apiclient = intel_imapi_get_client($vars, $options);
 
   $response = FALSE;
   $params = isset($options['params']) ? $options['params'] : array();
@@ -98,8 +116,8 @@ function intel_imapi_ga_goal_get($goal_id = 0, $options = array()) {
 }
 
 function intel_imapi_ga_goal_insert($ga_goal, $options = array()) {
-
-  $apiclient = intel_imapi_get_client($vars);
+  $vars = array();
+  $apiclient = intel_imapi_get_client($vars, $options);
 
   $response = FALSE;
   $params = isset($options['params']) ? $options['params'] : array();
@@ -122,8 +140,8 @@ function intel_imapi_ga_goal_insert($ga_goal, $options = array()) {
 }
 
 function intel_imapi_ga_goal_update($ga_goal, $options = array()) {
-
-  $apiclient = intel_imapi_get_client($vars);
+  $vars = array();
+  $apiclient = intel_imapi_get_client($vars, $options);
 
   $response = FALSE;
   $params = isset($options['params']) ? $options['params'] : array();

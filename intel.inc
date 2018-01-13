@@ -3975,6 +3975,16 @@ function intel_demo_mode() {
   return get_option('intel_demo_mode', 0);
 }
 
+function intel_is_public_demo() {
+
+  return intel_public_demo_mode();
+}
+
+function intel_public_demo_mode() {
+
+  return get_option('intel_public_demo_mode', 0) || !empty($_GET['public_demo']);
+}
+
 function intel_is_test($mode = '') {
 
   return intel_test_mode($mode);
@@ -4777,7 +4787,14 @@ function intel_imapi_property_setup_l($text, $options = array()) {
   if (!isset($l_options['query'])) {
     $l_options['query'] = array();
   }
-  $l_options['query']['state'] = wp_create_nonce('iapi_auth');
+
+  $l_options['query']['action'] = !empty($options['action']) ? $options['action'] : 'add';
+
+  $l_options['query']['state'] = wp_create_nonce('intel_' . $l_options['query']['action']);
+
+  if (!empty($options['tid'])) {
+    $l_options['query']['tid'] = $options['tid'];
+  }
   $l_options['query']['website_platform'] = 'wp';
   $l_options['query']['redirect_uri'] = Intel_Df::url('admin/config/intel/iapi_auth_callback', array('absolute' => TRUE));
   $l_options['query']['callback_destination'] = !empty($options['callback_destination']) ? $options['callback_destination'] : Intel_Df::current_path();

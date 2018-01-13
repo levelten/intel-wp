@@ -50,3 +50,10 @@
 .bootstrap-wrapper .form-item .description {
     display: none;
 }
+
+.bootstrap-wrapper .form-actions input {
+    margin-right: 1em;
+}
+.bootstrap-wrapper .form-actions a {
+    margin-right: 1em;
+}

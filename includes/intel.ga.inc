@@ -191,8 +191,13 @@ function intel_ga_goal_load($name = '', $options = array()) {
 
   $op_meta = get_option('intel_option_meta', array());
 
+  $gapt = '';
+  if (!empty($options['ga_profile_type']) && $options['ga_profile_type'] == 'base') {
+    $gapt = '_base';
+  }
+
   // refresh if goal have never been updated
-  if (empty($op_meta['ga_goals_updated'])) {
+  if (empty($op_meta['ga_goals' . $gapt . '_updated'])) {
     $options['refresh'] = 1;
   }
 
@@ -204,15 +209,15 @@ function intel_ga_goal_load($name = '', $options = array()) {
   // load goals from ga
   if (!empty($options['refresh'])) {
     $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
-    $ga_goals_updated = !empty($op_meta['ga_goals_updated']) ? $op_meta['ga_goals_updated'] : 0;
+    $ga_goals_updated = !empty($op_meta['ga_goals' . $gapt . '_updated']) ? $op_meta['ga_goals' . $gapt . '_updated'] : 0;
     if ((time() - $ga_goals_updated) > $time) {
 
       include_once INTEL_DIR . 'includes/intel.imapi.inc';
 
       try {
-        $ga_goals = intel_imapi_ga_goal_get();
-        update_option('intel_ga_goals', $ga_goals);
-        $op_meta['ga_goals_updated'] = time();
+        $ga_goals = intel_imapi_ga_goal_get(0, $options);
+        update_option('intel_ga_goals' . $gapt, $ga_goals);
+        $op_meta['ga_goals' . $gapt . '_updated'] = time();
         update_option('intel_option_meta', $op_meta);
       }
       catch (Exception $e) {
@@ -223,7 +228,7 @@ function intel_ga_goal_load($name = '', $options = array()) {
   }
 
   if (!isset($ga_goals)) {
-    $ga_goals = get_option('intel_ga_goals', array());
+    $ga_goals = get_option('intel_ga_goals' . $gapt, array());
   }
 
   if (!empty($name)) {
@@ -281,12 +286,67 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
     return FALSE;
   }
 
+  // if sync_base is set, goal will be saved to enhanced and base profiles unless
+  // ga_profile_type is specifically set to base, then the goal will only be saved
+  // to the base profile
+  $sync_base = get_option('intel_sync_goal_management_base', '');
+
+  // get settings for sync to base profile
+  $ga_profile_type = !empty($options['ga_profile_type']) ? $options['ga_profile_type'] : '';
+
+  // if ga_profile_type is set to base, but sync_base option is not set, don't
+  // save
+  if ($ga_profile_type == 'enhanced') {
+    $sync_base = 0;
+  }
+  else {
+    if ($ga_profile_type == 'base' && !$sync_base) {
+      return $ga_goal;
+    }
+    if ($sync_base) {
+      $ga_profile_base = get_option('intel_ga_profile_base', array());
+      $viewid_base = '';
+      if (!empty($ga_profile_base['id'])) {
+        $viewid_base = $ga_profile_base['id'];
+      }
+      else {
+        if ($ga_profile_type == 'base') {
+          return $ga_goal;
+        }
+        $sync_base = 0;
+      }
+    }
+  }
+
+
   $is_intel_goal = 0;
-  $ga_goals = intel_ga_goal_load(NULL, $options);
+  // if ga_property_type==base needs to be cleared to retrieve enhanced profile
+  // goals
+  $o = $options;
+  $o['ga_profile_type'] = 'enhanced';
+  $ga_goals = intel_ga_goal_load(NULL, $o);
+
+  if ($sync_base) {
+    $o = $options;
+    $o['ga_profile_type'] = 'base';
+    $ga_goals_base = intel_ga_goal_load(NULL, $o);
+  }
+
+  intel_d($ga_goals);
+  intel_d($ga_goals_base);
+
   // determine if goal id exists in
   $ga_goal0 = 0;
   if (isset($ga_goal['id']) && isset($ga_goals[$ga_goal['id']])) {
     $ga_goal0 = $ga_goals[$ga_goal['id']];
+  }
+
+  if ($sync_base) {
+    // determine if goal id exists in
+    $ga_goal0_base = 0;
+    if (isset($ga_goal['id']) && isset($ga_goals_base[$ga_goal['id']])) {
+      $ga_goal0_base = $ga_goals_base[$ga_goal['id']];
+    }
   }
 
   // data needs to be merged in from data in GA or defaults
@@ -302,18 +362,43 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
     $ga_goal['type'] = 'EVENT';
   }
 
+
+
   // if intel goal, check if should be saved
   if (intel_is_intl_goal($ga_goal)) {
     $update = 0;
-    if (empty($ga_goal0)) {
-      intel_imapi_ga_goal_insert($ga_goal);
+    if ($ga_profile_type != 'base') {
+      if (empty($ga_goal0)) {
+        // if ga_profile_type is set to base, only insert base profile
+        intel_d('goal_insert');
+        intel_imapi_ga_goal_insert($ga_goal);
+      }
+      // check if original goal and new goal are equivalent, if not save to GA.
+      elseif (
+        $ga_goal['name'] != $ga_goal0['name']
+        || !intel_is_intl_goal($ga_goal0)
+      ) {
+        // if ga_profile_type is set to base, only update base profile
+        intel_d('goal_update');
+        intel_imapi_ga_goal_update($ga_goal);
+      }
     }
-    // check if original goal and new goal are equivalent, if not save to GA.
-    elseif (
-      $ga_goal['name'] != $ga_goal0['name']
-      || !intel_is_intl_goal($ga_goal0)
-    ) {
-      intel_imapi_ga_goal_update($ga_goal);
+
+    if ($sync_base) {
+      if (empty($ga_goal0_base)) {
+        // if ga_profile_type is set to base, only insert base profile
+        intel_d('goal_base_insert');
+        intel_imapi_ga_goal_insert($ga_goal, array('viewid' => $viewid_base));
+      }
+      // check if original goal and new goal are equivalent, if not save to GA.
+      elseif (
+        $ga_goal['name'] != $ga_goal0_base['name']
+        || !intel_is_intl_goal($ga_goal0_base)
+      ) {
+        // if ga_profile_type is set to base, only update base profile
+        intel_d('goal_base_update');
+        intel_imapi_ga_goal_update($ga_goal, array('viewid' => $viewid_base));
+      }
     }
   }
 
@@ -324,27 +409,48 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
 
 function intel_sync_goals_ga_goals() {
 
-  $goals = get_option('intel_goals', array());
+  $goals = get_option('intel_goals', array('index_by' => 'ga_id'));
   $ga_goals = intel_ga_goal_load(null, array('refresh' => 1));
+  $ga_goals_base = 0;
   $processed = array();
 
+  // get settings for sync to base profile
+  $sync_base = get_option('intel_sync_goal_management_base', '');
+  $ga_profile_base = get_option('intel_ga_profile_base', array());
+  $viewid_base = '';
+  if (!empty($ga_profile_base['id'])) {
+    $viewid_base = $ga_profile_base['id'];
+    $options = array(
+      'refresh' => 1,
+      //'viewid' => $viewid_base,
+      'ga_profile_type' => 'base',
+    );
+    $ga_goals_base = intel_ga_goal_load(null, $options);
+  }
+  else {
+    $sync_base = '';
+  }
+
   if (!empty($_GET['debug'])) {
+    intel_d($sync_base);//
     intel_d($goals);//
     intel_d($ga_goals);//
+    intel_d($ga_goals_base);//
   }
   // first update ga_goals to match what is in goals data
   foreach ($goals as $id => $goal) {
+
+    $ga_goal = array(
+      'id' => $goal['ga_id'],
+      'name' => $goal['title'],
+      'type' => $goal['type'],
+    );
 
     // check if goal does not exist in GA
     if (!isset($ga_goals[$id])) {
       // if intel goal, save it to ga
       if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL') {
-        $ga_goal = array(
-          'id' => $goal['ga_id'],
-          'name' => $goal['title'],
-          'type' => $goal['type'],
-        );
-        $ga_goal = intel_ga_goal_save($ga_goal);
+        $ga_goal1 = intel_ga_goal_save($ga_goal, array('ga_property_type' => 'enhanced'));
         $processed[$id] = 1;
       }
       else {
@@ -353,23 +459,41 @@ function intel_sync_goals_ga_goals() {
         unset($goals[$id]);
       }
     }
+    // check of goal needs updating
     else {
-      $ga_goal = $ga_goals[$id];
       if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL') {
         if (
-          $ga_goal['name'] != $goal['title']
-          || !intel_is_intl_goal($ga_goal)
+          $ga_goals[$id]['name'] != $goal['title']
+          || !intel_is_intl_goal($ga_goals[$id])
         ) {
-          $ga_goal = array(
-            'id' => $goal['ga_id'],
-            'name' => $goal['title'],
-            'type' => $goal['type'],
-          );
-          $ga_goal = intel_ga_goal_save($ga_goal);
+          $ga_goal1 = intel_ga_goal_save($ga_goal, array('ga_property_type' => 'enhanced'));
         }
         $processed[$id] = 1;
       }
     }
+
+    if ($sync_base) {
+      // check if goal does not exist in GA
+      if (!isset($ga_goals_base[$id])) {
+        // if intel goal, save it to ga
+        if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL') {
+          $ga_goal1 = intel_ga_goal_save($ga_goal, array('ga_property_type' => 'base'));
+        }
+      }
+      // check of goal needs updating
+      else {
+        if ($goal['type'] == 'INTL' || $goal['type'] == 'INTEL') {
+          if (
+            $ga_goals_base[$id]['name'] != $goal['title']
+            || !intel_is_intl_goal($ga_goals_base[$id])
+          ) {
+            $ga_goal1 = intel_ga_goal_save($ga_goal, array('ga_property_type' => 'base'));
+          }
+          $processed[$id] = 1;
+        }
+      }
+    }
+
   }
 
   // second update goals list for any goals added in ga

@@ -1448,8 +1448,11 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
     }
     $l10iq_pushes[] = array('ga.create', $l10i_ga_account, 'auto', $params);
 
-    //$l10i_ga_account_base = get_option('intel_ga_tid_base', '');
-    if (!empty($ga_tid_base) && 0) {
+    //$ga_tid_base = get_option('intel_ga_tid_base', '');
+    $sync_events_base = get_option('intel_sync_intel_events_base', '');
+    if ($sync_events_base) {
+      $ga_profile_base = get_option('intel_ga_profile_base', array());
+      $ga_tid_base = !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : '';
       $l10iq_pushes[] = array('addTracker', $ga_tid_base, array('enhance' => 'base'));
     }
 

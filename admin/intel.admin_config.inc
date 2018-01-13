@@ -165,6 +165,11 @@ function intel_admin_settings($form, &$form_state) {
     '#size' => 32,
     '#required' => 1,
   );
+  if (intel_is_public_demo()) {
+    $form['l10iapi']['intel_apikey_demo'] =  $form['l10iapi']['intel_apikey'];
+    $form['l10iapi']['intel_apikey_demo']['#default_value'] = !empty($form['l10iapi']['intel_apikey_demo']['#default_value']) ? '********************************' : '';
+    $form['l10iapi']['intel_apikey']['#type'] = 'value';
+  }
   $levels = array(
     'free' => Intel_Df::t('Free'),
     'basic' => Intel_Df::t('Basic'),
@@ -271,6 +276,12 @@ function intel_admin_settings($form, &$form_state) {
     '#default_value' => get_option('intel_extended_mode', 0),
     '#description' => Intel_Df::t('Turns on extended experimental features that are still in development.'),
   );
+  $form['l10iapi']['advanced']['intel_public_demo_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Public demo mode'),
+    '#default_value' => get_option('intel_public_demo_mode', 0),
+    '#description' => Intel_Df::t('Hides sensitive items for demos.'),
+  );
 
   $form['l10iapi']['advanced']['intel_track_phonecalls'] = array(
     '#type' => 'checkbox',
@@ -360,7 +371,7 @@ function intel_admin_settings($form, &$form_state) {
   $desc = '';
   if (!empty($ga_profile['name'])) {
     $l_options = Intel_Df::l_options_add_target('ga');
-    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('home'), $l_options);
+    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('rt_overview'), $l_options);
   }
   $form['tracking']['enhanced_ga'] = array(
     '#type' => 'fieldset',
@@ -381,6 +392,67 @@ function intel_admin_settings($form, &$form_state) {
     '#markup' => !empty($ga_profile['name']) ? $ga_profile['name'] : Intel_Df::t('(not set)'),
   );
 
+  $desc = '';
+  $imapi_url_obj = intel_get_imapi_url('obj');
+  if (!empty($ga_profile_base['name'])) {
+    $l_options = Intel_Df::l_options_add_target('ga');
+    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('rt_overview', array('use_profile_base' => 1)), $l_options);
+
+    $options = array(
+      'action' => 'edit_ga_profile_base',
+      'tid' => $ga_tid,
+    );
+    $desc .= ' | ' . intel_imapi_property_setup_l(Intel_Df::t('Change profile'), $options);
+  }
+  else {
+    $options = array(
+      'action' => 'edit_ga_profile_base',
+      'tid' => $ga_tid,
+    );
+    $desc .= intel_imapi_property_setup_l(Intel_Df::t('Set profile'), $options);
+  }
+  $form['tracking']['base_ga'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Base Google Analytics profile'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#description' => $desc,
+  );
+
+  $form['tracking']['base_ga']['intel_ga_profile_propertyid_base'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Tracking ID'),
+    '#markup' => !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : Intel_Df::t('(not set)'),
+  );
+
+  $form['tracking']['base_ga']['intel_ga_profile_name_base'] = array(
+    '#type' => 'item',
+    '#title' => Intel_Df::t('Main data view'),
+    '#markup' => !empty($ga_profile_base['name']) ? $ga_profile_base['name'] : Intel_Df::t('(not set)'),
+  );
+
+  $form['tracking']['base_ga']['intel_sync_intel_events_base'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Track Intelligence events & goals in base profile'),
+    '#default_value' => get_option('intel_sync_intel_events_base', ''),
+    //'#description' => Intel_Df::t('Enables testing functionality and menu options.'),
+  );
+
+  $form_state['intel_sync_goal_management_base0'] = get_option('intel_sync_goal_management_base', '');
+  $form['tracking']['base_ga']['intel_sync_goal_management_base'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Sync Intelligence goals configuration to base profile'),
+    '#default_value' => $form_state['intel_sync_goal_management_base0'],
+    //'#description' => Intel_Df::t('Enables testing functionality and menu options.'),
+  );
+
+  if (!intel_is_public_demo()) {
+    $msg = Intel_Df::t('Warning: Enabling Sync Intelligence goals may overwrite any existing goals in base profile.') . '</span>';
+    $form['tracking']['base_ga']['intel_sync_goal_management_base_warning'] = array(
+      '#type' => 'markup',
+      '#markup' => '<span class="text-danger">' . $msg . '</span>',
+    );
+  }
 
   $desc = Intel_Df::t('If you are tracking multiple subdomains, set the main domain name for this property.');
   $form['tracking']['intel_domain_name'] = array(
@@ -412,41 +484,17 @@ function intel_admin_settings($form, &$form_state) {
     '#collapsed' => TRUE,
   );
 
-  $desc = '';
-  if (!empty($ga_profile_base['name'])) {
-    $l_options = Intel_Df::l_options_add_destination('ga');
-    $desc .= Intel_Df::l(Intel_Df::t('GA reports'), intel_get_ga_report_url('home', array('use_profile_base' => 1)), $l_options);
-  }
-  $form['tracking']['advanced']['base_ga'] = array(
-    '#type' => 'fieldset',
-    '#title' => Intel_Df::t('Base Google Analytics profile'),
-    '#collapsible' => FALSE,
-    '#description' => $desc,
-  );
-
-  $form['tracking']['advanced']['base_ga']['intel_ga_profile_base_propertyid'] = array(
-    '#type' => 'item',
-    '#title' => Intel_Df::t('Tracking Id'),
-    '#markup' => !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : Intel_Df::t('(not set)'),
-  );
-  $form['tracking']['advanced']['base_ga']['intel_ga_profile_base_name'] = array(
-    '#type' => 'item',
-    '#title' => Intel_Df::t('Main view'),
-    '#markup' => !empty($ga_profile_base['name']) ? $ga_profile_base['name'] : Intel_Df::t('(not set)'),
-  );
-
-
   $options = array(
     '' => '-- ' . Intel_Df::t('None') . ' --',
     'analytics' => Intel_Df::t('Analytics'),
-    'gtag' => Intel_Df::t('Tag Manager'),
+    'gtag' => Intel_Df::t('Global Tag'),
   );
   $form['tracking']['advanced']['intel_embed_ga_tracking_code'] = array(
     '#type' => 'select',
     '#title' => Intel_Df::t('Include Google Analytics tracking code'),
     '#options' => $options,
     '#default_value' => get_option('intel_embed_ga_tracking_code', ''),
-    //'#description' => Intel_Df::t('Will fetch realtime Google Analytics data for visitor.'),
+    '#description' => Intel_Df::t('Select to add a base Google Analytics embed code to the site.'),
   );
 
   /*
@@ -633,10 +681,16 @@ function intel_admin_settings_validate($form, &$form_state) {
 
 function intel_admin_settings_submit($form, &$form_state) {
   $values = $form_state['values'];
+
   foreach ($values as $k => $v) {
     if (substr($k, 0, 6) == 'intel_') {
       update_option($k, $v);
     }
+  }
+  // check if intel_sync_goal_management_base was enabled, if so, run goal sync
+  if (!empty($values['intel_sync_goal_management_base']) && $form_state['intel_sync_goal_management_base0'] != $values['intel_sync_goal_management_base']) {
+    intel_sync_goals_ga_goals();
+    Intel_Df::drupal_set_message(Intel_Df::t('Intelligence goals have been synced to base Google Analytics profile.'));
   }
 
   $imapi_property = $form_state['intel_imapi_property'];
@@ -692,53 +746,58 @@ function intel_admin_settings_submit($form, &$form_state) {
 
 function intel_admin_settings_iapi_auth_callback() {
   if (empty($_REQUEST['state'])) {
+    print Intel_Df::t('state empty.');
     exit;
   }
-  $state_valid = wp_verify_nonce( $_REQUEST['state'], 'iapi_auth' );
+  $action = !empty($_GET['action']) ? $_GET['action'] : 'add';
+
+  // check state
+  $state_valid = wp_verify_nonce( $_REQUEST['state'], 'intel_' .  $action);
   if ($state_valid != 1) {
+    print Intel_Df::t('state not valid.');
     exit;
   }
 
-  if (empty($_REQUEST['tid']) || empty($_REQUEST['apikey'])) {
+  if (empty($_REQUEST['tid'])) {
+    print Intel_Df::t('tid empty.');
     exit;
   }
 
   include_once INTEL_DIR . 'includes/intel.imapi.inc';
 
+  $apikey = get_option('intel_apikey', '');
+  if ($action == 'add') {
+    if (empty($_REQUEST['apikey'])) {
+      print Intel_Df::t('apikey empty.');
+      exit;
+    }
+    $apikey = $_REQUEST['apikey'];
+  }
+
   // fetch property from imapi to get profile data and verify quth
   $imapi_property = 0;
   $options = array(
     'tid' => $_REQUEST['tid'],
-    'apikey' => $_REQUEST['apikey'],
+    'apikey' => $apikey,
   );
   try {
     $imapi_property = intel_imapi_property_get($options);
   }
   catch (Exception $e) {
-    $imapi_property = 0;
+    print Intel_Df::t('IMAPI connection error.');
+    exit;
   }
 
   if ($imapi_property) {
-    update_option('intel_ga_tid', $_REQUEST['tid']);
-    update_option('intel_apikey', $_REQUEST['apikey']);
+    if ($action == 'add') {
+      update_option('intel_ga_tid', $_REQUEST['tid']);
+      update_option('intel_apikey', $apikey);
+    }
     update_option('intel_ga_profile', $imapi_property['ga_profile']);
     if (isset($imapi_property['ga_profile_base'])) {
       update_option('intel_ga_profile_base', $imapi_property['ga_profile_base']);
     }
   }
-
-
-
-
-
-  $ga_profile = array(
-    'id' => $_REQUEST['viewid'],
-    'viewId' => $_REQUEST['viewid'],
-  );
-
-
-
-
 
   Intel_Df::drupal_set_message(Intel_Df::t('Intelligence API is properly connected.'));
 
@@ -1377,10 +1436,15 @@ function intel_admin_goal_form($form, &$form_state, $goal) {
     '#size' => 10,
   );
 
-
-  $form['save'] = array(
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['save'] = array(
     '#type' => 'submit',
     '#value' => $add ? Intel_Df::t('Add goal') : Intel_Df::t('Save goal'),
+  );
+  $form['actions']['cancel'] = array(
+    '#type' => 'link',
+    '#title' => Intel_Df::t('Cancel'),
+    '#href' => !empty($_GET['destination']) ? $_GET['destination'] : 'admin/config/intel/settings/goal',
   );
 
 
@@ -2175,11 +2239,11 @@ function intel_admin_form_tracking_form($form, &$form_state) {
 
   $eventgoal_options = intel_get_form_submission_eventgoal_options();
   $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
-  $form['default']['intel_tracking_event_name_default'] = array(
+  $form['default']['intel_form_submission_tracking_event_name_default'] = array(
     '#type' => 'select',
     '#title' => Intel_Df::t('Tracking event/goal'),
     '#options' => $eventgoal_options,
-    '#default_value' => get_option('intel_tracking_event_name_default', 'form_submission'),
+    '#default_value' => get_option('intel_form_submission_tracking_event_name_default', 'form_submission'),
     '#description' => Intel_Df::t('Select the goal or event you would like to trigger to be tracked in analytics when a form is submitted.'),
     '#suffix' => '<div class="add-goal-link text-right" style="margin-top: -12px;">' . Intel_Df::l(Intel_Df::t('Add Goal'), 'admin/config/intel/settings/goal/add', $l_options) . '</div>',
   );
@@ -2197,7 +2261,7 @@ function intel_admin_form_tracking_form($form, &$form_state) {
   $form['default']['intel_tracking_event_value'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('Tracking value'),
-    '#default_value' => get_option('intel_tracking_event_value_default', ''),
+    '#default_value' => get_option('intel_form_submission_tracking_event_value_default', ''),
     '#description' => $desc,
     '#size' => 8,
   );
@@ -2211,8 +2275,8 @@ function intel_admin_form_tracking_form($form, &$form_state) {
 }
 
 function intel_admin_form_tracking_form_submit($form, &$form_state) {
-  update_option('intel_tracking_event_name_default', $form_state['values']['intel_tracking_event_name_default']);
-  update_option('intel_tracking_event_value_default', $form_state['values']['intel_tracking_event_value_default']);
+  update_option('intel_form_submission_tracking_event_name_default', $form_state['values']['intel_form_submission_tracking_event_name_default']);
+  update_option('intel_form_submission_tracking_event_value_default', $form_state['values']['intel_form_submission_tracking_event_value_default']);
 }
 
 function intel_admin_link_type_list_page() {
