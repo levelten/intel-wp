@@ -807,7 +807,10 @@ function intel_admin_settings_iapi_auth_callback() {
       update_option('intel_ga_tid', $_REQUEST['tid']);
       update_option('intel_apikey', $apikey);
     }
+
     update_option('intel_ga_profile', $imapi_property['ga_profile']);
+    update_option('intel_ga_view', $imapi_property['ga_profile']['id']);
+
     if (isset($imapi_property['ga_profile_base'])) {
       update_option('intel_ga_profile_base', $imapi_property['ga_profile_base']);
     }
@@ -2280,9 +2283,22 @@ function intel_admin_form_tracking_form($form, &$form_state) {
     '#size' => 8,
   );
 
+  /*
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => Intel_Df::t('Save'),
+  );
+  */
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['save'] = array(
+    '#type' => 'submit',
+    '#value' => Intel_Df::t('Save'),
+  );
+  $form['actions']['cancel'] = array(
+    '#type' => 'link',
+    '#title' => Intel_Df::t('Cancel'),
+    '#href' => !empty($_GET['destination']) ? $_GET['destination'] : 'admin/config/intel/settings/form',
   );
 
   return $form;

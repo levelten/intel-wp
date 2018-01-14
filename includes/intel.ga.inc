@@ -359,7 +359,13 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
     $ga_goal['type'] = 'EVENT';
   }
 
-
+  if (!empty(intel_is_debug())) {
+    intel_d($ga_goal);//
+    intel_d($options);//
+    intel_d($ga_goals);//
+    intel_d($ga_goals_base);//
+    intel_d($sync_base);//
+  }
 
   // if intel goal, check if should be saved
   if (intel_is_intl_goal($ga_goal)) {
@@ -396,7 +402,13 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
   }
 
   $ga_goals[$ga_goal['id']] = $ga_goal;
-  update_option('intel_ga_goals', $ga_goals);
+  if ($ga_profile_type == 'base') {
+    update_option('intel_ga_goals_base', $ga_goals);
+  }
+  else {
+    update_option('intel_ga_goals', $ga_goals);
+  }
+
   return $ga_goal;
 }
 
@@ -424,7 +436,7 @@ function intel_sync_goals_ga_goals() {
     $sync_base = '';
   }
 
-  if (!empty($_GET['debug'])) {
+  if (!empty(intel_is_debug())) {
     intel_d($sync_base);//
     intel_d($goals);//
     intel_d($ga_goals);//
