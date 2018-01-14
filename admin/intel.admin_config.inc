@@ -37,13 +37,10 @@ function intel_admin_settings($form, &$form_state) {
   $ga_data_source = intel_ga_data_source();
   $ga_tid = get_option('intel_ga_tid', '');
   $apikey = get_option('intel_apikey', '');
-  $ga_viewid = get_option('intel_ga_view', '');
-  $ga_profile = get_option('intel_ga_profile', array());
-  $ga_profile_base = get_option('intel_ga_profile_base', array());
-  $imapi_property = get_option('intel_imapi_property', array());
   $op_meta = get_option('intel_option_meta', array());
 
-  if (empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 3600) || !empty($_GET['refresh'])) {
+
+  if (empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 86400) || !empty($_GET['refresh'])) {
     if ($ga_tid && $apikey) {
       $options = array(
         'tid' => $ga_tid,
@@ -59,9 +56,16 @@ function intel_admin_settings($form, &$form_state) {
       }
       update_option('intel_imapi_property', $imapi_property);
       update_option('intel_option_meta', $op_meta);
+      update_option('intel_ga_profile', (!empty($imapi_property['ga_profile']) ? $imapi_property['ga_profile'] : array()));
+      update_option('intel_ga_view', (!empty($imapi_property['ga_profile']['id']) ? $imapi_property['ga_profile']['id'] : ''));
+      update_option('intel_ga_profile_base', (!empty($imapi_property['ga_profile_base']) ? $imapi_property['ga_profile_base'] : array()));
     }
   }
 
+  $ga_viewid = get_option('intel_ga_view', '');
+  $ga_profile = get_option('intel_ga_profile', array());
+  $ga_profile_base = get_option('intel_ga_profile_base', array());
+  $imapi_property = get_option('intel_imapi_property', array());
 
   if (!empty($imapi_property) && (empty($ga_profile) || empty($ga_viewid))) {
     $ga_profile = $imapi_property['ga_profile'];
