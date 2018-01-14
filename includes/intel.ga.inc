@@ -332,9 +332,6 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
     $ga_goals_base = intel_ga_goal_load(NULL, $o);
   }
 
-  intel_d($ga_goals);
-  intel_d($ga_goals_base);
-
   // determine if goal id exists in
   $ga_goal0 = 0;
   if (isset($ga_goal['id']) && isset($ga_goals[$ga_goal['id']])) {
@@ -370,7 +367,6 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
     if ($ga_profile_type != 'base') {
       if (empty($ga_goal0)) {
         // if ga_profile_type is set to base, only insert base profile
-        intel_d('goal_insert');
         intel_imapi_ga_goal_insert($ga_goal);
       }
       // check if original goal and new goal are equivalent, if not save to GA.
@@ -379,7 +375,6 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
         || !intel_is_intl_goal($ga_goal0)
       ) {
         // if ga_profile_type is set to base, only update base profile
-        intel_d('goal_update');
         intel_imapi_ga_goal_update($ga_goal);
       }
     }
@@ -387,7 +382,6 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
     if ($sync_base) {
       if (empty($ga_goal0_base)) {
         // if ga_profile_type is set to base, only insert base profile
-        intel_d('goal_base_insert');
         intel_imapi_ga_goal_insert($ga_goal, array('viewid' => $viewid_base));
       }
       // check if original goal and new goal are equivalent, if not save to GA.
@@ -396,7 +390,6 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
         || !intel_is_intl_goal($ga_goal0_base)
       ) {
         // if ga_profile_type is set to base, only update base profile
-        intel_d('goal_base_update');
         intel_imapi_ga_goal_update($ga_goal, array('viewid' => $viewid_base));
       }
     }

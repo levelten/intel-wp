@@ -136,6 +136,12 @@ function intel_admin_settings($form, &$form_state) {
       '#size' => 18,
       '#required' => 1,
     );
+
+    if (intel_is_public_demo()) {
+      $form['l10iapi']['intel_ga_tid_demo'] =  $form['l10iapi']['intel_ga_tid'];
+      $form['l10iapi']['intel_ga_tid_demo']['#default_value'] = !empty($form['l10iapi']['intel_ga_tid_demo']['#default_value']) ? '*************' : '';
+      $form['l10iapi']['intel_ga_tid']['#type'] = 'value';
+    }
   }
 
 
@@ -385,6 +391,9 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Tracking ID'),
     '#markup' => !empty($ga_profile['propertyId']) ? $ga_profile['propertyId'] : Intel_Df::t('(not set)'),
   );
+  if (intel_is_public_demo() && !empty($ga_profile['propertyId'])) {
+    $form['tracking']['enhanced_ga']['intel_ga_profile_propertyid']['#markup'] = '*************';
+  }
 
   $form['tracking']['enhanced_ga']['intel_ga_profile_name'] = array(
     '#type' => 'item',
@@ -424,6 +433,9 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Tracking ID'),
     '#markup' => !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : Intel_Df::t('(not set)'),
   );
+  if (intel_is_public_demo() && !empty($ga_profile_base['propertyId'])) {
+    $form['tracking']['base_ga']['intel_ga_profile_propertyid_base']['#markup'] = '*************';
+  }
 
   $form['tracking']['base_ga']['intel_ga_profile_name_base'] = array(
     '#type' => 'item',
@@ -447,10 +459,12 @@ function intel_admin_settings($form, &$form_state) {
   );
 
   if (!intel_is_public_demo()) {
-    $msg = Intel_Df::t('Warning: Enabling Sync Intelligence goals may overwrite any existing goals in base profile.') . '</span>';
+    $msg = Intel_Df::t('Warning: Enabling Sync Intelligence goals option will overwrite any existing goals in the base main data view.');
+    $msg .= ' ' . Intel_Df::t('If you have existing goals, it is recommended to setup a new view in your base Google Analytics property for Intelligence.');
+    $msg .= ' ' . Intel_Df::t('Make sure to set the "Main data view" above to the view for Intelligence using the Change profile link.');
     $form['tracking']['base_ga']['intel_sync_goal_management_base_warning'] = array(
       '#type' => 'markup',
-      '#markup' => '<span class="text-danger">' . $msg . '</span>',
+      '#markup' => '<span class="text-warning">' . $msg . '</span>',
     );
   }
 
@@ -494,7 +508,7 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Include Google Analytics tracking code'),
     '#options' => $options,
     '#default_value' => get_option('intel_embed_ga_tracking_code', ''),
-    '#description' => Intel_Df::t('Select to add a base Google Analytics embed code to the site.'),
+    '#description' => Intel_Df::t('Select to add a base Google Analytics embed code to the site.') . ' ' . Intel_Df::t('Select Analytics to assure Intelligence events & goals work with the base Google Analytics profile.'),
   );
 
   /*
