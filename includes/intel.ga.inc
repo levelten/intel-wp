@@ -414,7 +414,7 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
 
 function intel_sync_goals_ga_goals() {
 
-  $goals = get_option('intel_goals', array('index_by' => 'ga_id'));
+  $goals = get_option('intel_goals', array());
   $ga_goals = intel_ga_goal_load(null, array('refresh' => 1));
   $ga_goals_base = 0;
   $processed = array();
@@ -442,6 +442,7 @@ function intel_sync_goals_ga_goals() {
     intel_d($ga_goals);//
     intel_d($ga_goals_base);//
   }
+
   // first update ga_goals to match what is in goals data
   foreach ($goals as $id => $goal) {
 
