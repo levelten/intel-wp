@@ -30,8 +30,8 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $options = get_transient('intel_activated_intelligence', '');
-  intel_d($options);
+  $goals = get_option('intel_goals', array('index_by' => 'ga_id'));
+  intel_d($goals);
 
   return 'OK';
 }

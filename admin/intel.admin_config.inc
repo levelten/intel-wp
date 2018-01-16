@@ -39,8 +39,9 @@ function intel_admin_settings($form, &$form_state) {
   $apikey = get_option('intel_apikey', '');
   $op_meta = get_option('intel_option_meta', array());
 
-
-  if (empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 86400) || !empty($_GET['refresh'])) {
+  // check if imapi_property needs to be fetched
+  $imapi_property = get_option('intel_imapi_property', array());
+  if (empty($imapi_property) || empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 86400) || !empty($_GET['refresh'])) {
     if ($ga_tid && $apikey) {
       $options = array(
         'tid' => $ga_tid,
@@ -62,10 +63,9 @@ function intel_admin_settings($form, &$form_state) {
     }
   }
 
-  $ga_viewid = get_option('intel_ga_view', '');
   $ga_profile = get_option('intel_ga_profile', array());
+  $ga_viewid = get_option('intel_ga_view', '');
   $ga_profile_base = get_option('intel_ga_profile_base', array());
-  $imapi_property = get_option('intel_imapi_property', array());
 
   if (!empty($imapi_property) && (empty($ga_profile) || empty($ga_viewid))) {
     $ga_profile = $imapi_property['ga_profile'];
@@ -1215,7 +1215,7 @@ function intel_admin_goal_list_page() {
 
   $goals = intel_goal_load(null, $options);
   //$ga_goals = intel_ga_goal_load();
-//intel_d($ga_goals);
+
   if (isset($_GET['refresh'])) {
     Intel_Df::drupal_set_message(Intel_Df::t('Goal data has been refreshed'));
     $l_option = Intel_Df::l_options_add_query(array());
@@ -1468,7 +1468,6 @@ function intel_admin_goal_form($form, &$form_state, $goal) {
     '#href' => !empty($_GET['destination']) ? $_GET['destination'] : 'admin/config/intel/settings/goal',
   );
 
-
   return $form;
 }
 
@@ -1481,6 +1480,8 @@ function intel_admin_goal_form_submit(&$form, &$form_state) {
 
   if (!empty($values['title'])) {
     $goal['title'] = $values['title'];
+    $goal['name'] = intel_format_un($goal['title']);
+    $goal['un'] = intel_format_un($goal['title']);
   }
 
   $goal['description'] = $values['description'];
@@ -2279,7 +2280,7 @@ function intel_admin_form_tracking_form($form, &$form_state) {
     '!scoring_admin' => Intel_Df::l( Intel_Df::t('Intelligence scoring admin'), 'admin/config/intel/settings/scoring', $l_options ),
   ));
   $desc .= ' ' . Intel_Df::t('If you would like to use a custom goal/event value, enter it here otherwise leave the field blank to use the site defaults.');
-  $form['default']['intel_tracking_event_value'] = array(
+  $form['default']['intel_form_submission_tracking_event_value_default'] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('Tracking value'),
     '#default_value' => get_option('intel_form_submission_tracking_event_value_default', ''),
