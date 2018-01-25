@@ -285,13 +285,25 @@ function intel_visitor_render_profile_items($items) {
 }
 
 function template_preprocess_intel_visitor_social_links (&$variables) {
+
+  static $fa_embed;
+  if (empty($fa_embed)) {
+    wp_enqueue_style( 'intel_fa', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css' );
+    $fa_embed = 1;
+  }
+
   $entity = $variables['entity'];
   $properties = $entity->data;
   $property_info = intel()->visitor_property_info();
 
   $variables['markup'] = '';
   foreach ($property_info AS $prop_name => $info) {
-    if (!isset($info['category']) || ($info['category'] != 'social') || empty($info['icon'])) {
+
+    if (!isset($info['category']) || ($info['category'] != 'social')) {
+      continue;
+    }
+    //intel_d($info);
+    if (empty($info['icon']) && empty($info['icon_class'])) {
       continue;
     }
     $a = explode('.', $prop_name);
@@ -309,12 +321,19 @@ function template_preprocess_intel_visitor_social_links (&$variables) {
     );
     $upload_dir = wp_upload_dir();
     $upload_baseurl = $upload_dir['baseurl'] . '/';
-    $iv = array(
-      'path' => $upload_baseurl . $info['icon'],
-      'alt' => $alt,
-      'title' => $alt,
-    );
-    $img = Intel_Df::theme('image', $iv);
+    if (!empty($info['icon_class'])) {
+      $img = '<i class="' . $info['icon_class'] . ' social-icon" aria-hidden="true"></i>';
+    }
+    elseif (!empty($info['icon'])) {
+      $iv = array(
+        'path' => $upload_baseurl . $info['icon'],
+        'alt' => $alt,
+        'title' => $alt,
+      );
+      $img = Intel_Df::theme('image', $iv);
+    }
+
+
     $options = array(
       'html' => true,
       'attributes' => array(
@@ -439,8 +458,11 @@ function template_preprocess_intel_map(&$variables) {
   static $map_index;
   if (!isset($map_index)) {
     $map_index = 0;
-    wp_enqueue_script( 'intel_googleapis_map', 'https://maps.googleapis.com/maps/api/js?v=3.exp&key=' . $gmap_apikey . '&callback=intel_init_map_all');
-    //wp_enqueue_script( 'intel_map', INTEL_URL . 'js/intel.map.js');
+    if (!empty($_GET['return_type']) && ($_GET['return_type'] == 'json')) {
+    }
+    else {
+      wp_enqueue_script( 'intel_googleapis_map', 'https://maps.googleapis.com/maps/api/js?v=3.exp&key=' . $gmap_apikey . '&callback=_intel_googleapi_map_init');
+    }
   }
 
   $variables['map_index'] = $map_index++;
@@ -466,7 +488,7 @@ function template_preprocess_intel_map(&$variables) {
     );
     //$vars['locations_json'] .= "[" . $loc['lat'] . ", " . $loc['lon'] . ", " . "'" . (isset($loc['name']) ? $loc['name'] : '') . "'],\n";
     $variables['map_options']['center']['lat'] = $loc['lat']; 
-    $variables['map_options']['center']['lon'] = $loc['lon']; 
+    $variables['map_options']['center']['lon'] = $loc['lon'];
   }
 }
 
@@ -898,6 +920,9 @@ function theme_intel_property_trafficsource($variables) {
   elseif (!empty($variables['trafficsource'])) {
     $source = $variables['trafficsource'];
   }
+  else {
+    $source = array();
+  }
 
   $items = array();
   $tldata_link = '';
@@ -907,6 +932,18 @@ function theme_intel_property_trafficsource($variables) {
     'http://facebook.com' => 'http://www.facebook.com'
   );
 
+  if (empty($source['campaign'])) {
+    $source['campaign'] = '(not set)';
+  }
+  if (empty($source['medium'])) {
+    $source['medium'] = '(not set)';
+  }
+  if (empty($source['source'])) {
+    $source['source'] = '(not set)';
+  }
+  if (empty($source['socialNetwork'])) {
+    $source['socialNetwork'] = '(not set)';
+  }
   if ($source['campaign'] != '(not set)') {
     $items[] = intel_visitor_format_profile_item(Intel_Df::t("Campaign"), $source['campaign']);
     $items[] = intel_visitor_format_profile_item(Intel_Df::t("Source / Medium"), $source['source'] . ' / ' . $source['medium']);

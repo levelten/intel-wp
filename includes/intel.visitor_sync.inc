@@ -16,7 +16,7 @@ function x_intel_sync_visitordata($visitor, $request = array()) {
   Intel_Df::watchdog('intel_sync_visitordata: vtk', implode(', ', $visitor->identifiers['vtk']));
   $l10api_synced = FALSE;
 
-  // don't sync data if no pro api
+  // don't sync if data is not visitor available in IAPI
   $api_level = intel_api_level();
   if ($api_level != 'pro') {
     $visitor->setSyncProcessStatus('na', 1);

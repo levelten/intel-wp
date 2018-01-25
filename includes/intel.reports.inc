@@ -557,6 +557,8 @@ function intel_build_report($vars) {
   $vars += array(
     'title' => '',
   );
+
+  // Display messages or hide reports that require data not supported by IAPI level
   $api_level = intel_api_level();
   $error = '';
   $emsgs = array(
@@ -1320,6 +1322,9 @@ function intel_add_report_headers() {
   wp_enqueue_script( 'intel_reports', INTEL_URL . 'js/intel.report.js');
   wp_enqueue_script( 'intel_lib_charts', INTEL_URL . 'vendor/levelten/intel/charts/charts.js');
   wp_enqueue_style( 'intel_reports_css', INTEL_URL . 'css/intel.report.css');
+
+
+
   /*
   drupal_add_js('https://www.google.com/jsapi', array('type' => 'external', 'scope' => 'header'));
   drupal_add_js("google.load('visualization', '1', {packages: ['corechart']});google.load('visualization', '1', {packages: ['table']});", array('type' => 'inline', 'scope' => 'header'));
@@ -1332,7 +1337,23 @@ function intel_add_report_headers() {
 
 
 function intel_get_report_ajax_container($vars) {
-  $output = '<div id="intel-report-container" data-q="' . (!empty($vars['q']) ? $vars['q'] : $_GET['q']) . '" data-dates="' . ((!empty($_GET['dates'])) ? $_GET['dates'] : '') . '" data-refresh="' . ((!empty($_GET['refresh'])) ? 1 : 0) . '"><div class="loader"><img src="' . INTEL_URL . 'images/ajax_loader_report.gif' . '" alt="loading LevelTen Intelligence"><br>Gathering Intelligence...</div></div>';
+  $gmap_apikey = get_option('intel_gmap_apikey', '');
+  wp_enqueue_script( 'intel_googleapis_map', 'https://maps.googleapis.com/maps/api/js?v=3.exp&key=' . $gmap_apikey . '&callback=_intel_googleapi_map_init');
+
+  $query = '';
+  if (!empty($vars['query'])) {
+    foreach ($vars['query'] as $k => $v) {
+      if ($query) {
+        $query .= '&';
+      }
+      $query .= $k . '=' . $v;
+    }
+  }
+
+  $output = '<div id="intel-report-container" data-q="' . (!empty($vars['q']) ? $vars['q'] : $_GET['q']) . '" data-page="' . (!empty($vars['page']) ? $vars['page'] : $_GET['page']) . '" data-query="' . $query . '" data-current-path="' . (!empty($vars['current_path']) ? $vars['current_path'] : '') . '" data-dates="' . ((!empty($_GET['dates'])) ? $_GET['dates'] : '') . '" data-refresh="' . ((!empty($_GET['refresh'])) ? 'refresh' : '') . '"><div class="loader"><img src="' . INTEL_URL . 'images/ajax_loader_report.gif' . '" alt="loading Intelligence"><br>Gathering Intelligence...</div></div>';
+
+  $output .= '<script>_intel_googleapi_map_init = function () {}</script>';
+
   return $output;
 }
 

@@ -30,6 +30,7 @@ class IntelVisitor extends Entity {
     }
     */
 
+    // Set to check if IAMP supports visitor data requests
     $this->apiLevel = intel_api_level();
 
     $apiClientProps = $this->getApiClientProps();

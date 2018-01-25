@@ -454,6 +454,7 @@ function _intel_intel_visitor_property_info($prop) {
       'id' => NULL,
       'username' => NULL,
     ),
+    //'icon_class' => 'fa fa-facebook-square',
   );
   $prop['data.flickr'] = array(
     'title' => Intel_Df::t('Flickr'),
@@ -463,6 +464,7 @@ function _intel_intel_visitor_property_info($prop) {
       'id' => NULL,
       'username' => NULL,
     ),
+    //'icon_class' => 'fa fa-flickr',
   );
   $prop['data.friendfeed'] = array(
     'title' => Intel_Df::t('Friendfeed'),
@@ -480,6 +482,7 @@ function _intel_intel_visitor_property_info($prop) {
       'url' => NULL,
       'id' => NULL,
     ),
+    //'icon_class' => 'fa fa-foursquare',
   );
   $prop['data.googleplus'] = array(
     'title' => Intel_Df::t('Google+'),
@@ -488,6 +491,7 @@ function _intel_intel_visitor_property_info($prop) {
       'url' => NULL,
       'id' => NULL,
     ),
+    //'icon_class' => 'fa fa-google-plus-square',
   );
   $prop['data.googleprofile'] = array(
     'title' => Intel_Df::t('Google Profile'),

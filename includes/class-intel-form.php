@@ -1879,8 +1879,7 @@ class Intel_Form  {
 			if (!isset($element['#value'])) {
 				// Call #type_value without a second argument to request default_value handling.
 				if (is_callable($value_callback)) {
-					//$element['#value'] = $value_callback($element, FALSE, $form_state);
-					$element['#value'] = call_user_func( $value_callback, $element, FALSE, $form_state);
+					$element['#value'] = call_user_func_array( $value_callback, array(&$element, FALSE, &$form_state));
 				}
 				// Final catch. If we haven't set a value yet, use the explicit default value.
 				// Avoid image buttons (which come with garbage value), so we only get value

@@ -30,10 +30,27 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $goals = get_option('intel_goals', array('index_by' => 'ga_id'));
-  intel_d($goals);
+  $test = 'hi';
+
+  $fs_active_plugins = get_option('fs_active_plugins', array());
+
+  intel_d($fs_active_plugins);
+
+  $fs_accounts = get_option('fs_accounts', array());
+
+  intel_d($fs_accounts);
+
+  $fs_api_cache = get_option('fs_api_cache', array());
+
+  intel_d($fs_api_cache);
+
+  if (is_callable('intel_fs')) {
+    global $intel_fs;
+    intel_d($intel_fs);
+  }
 
   return 'OK';
+
 }
 
 /**
@@ -41,7 +58,6 @@ function intel_util_temp() {
  */
 function intel_util_temp_form($form, &$form_state) {
 
-  $settings = get_option('intel_test_form', array());
 
   /*
   $form['enable_all'] = array(
@@ -52,6 +68,8 @@ function intel_util_temp_form($form, &$form_state) {
     '#collapsed' => FALSE,
   );
   */
+
+
 
 intel_d($settings);//
 

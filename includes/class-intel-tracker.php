@@ -210,9 +210,6 @@ class Intel_Tracker {
 
 		$script = '';
 
-
-
-
 		$script .= $this->tracking_code_js();
 
 		if ($this->settings_placement == 'head') {

@@ -64,6 +64,15 @@
     padding-right: 0;
 }
 
+.intel-content .social-profile-links .social-icon {
+    position: relative;
+    top: 5px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+
+}
+
 .intel-content .header .bio {
     font-size: 21px;
     font-weight: 300;

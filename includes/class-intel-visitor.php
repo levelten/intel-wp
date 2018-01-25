@@ -81,6 +81,7 @@ class Intel_Visitor extends Intel_Entity  {
 			$this->completeLoad();
 		}
 
+		// Set for checks if visitor data is available in IAPI
 		$this->apiLevel = intel_api_level();
 
 		$apiClientProps = intel_get_ApiClientProps();
@@ -371,7 +372,8 @@ class Intel_Visitor extends Intel_Entity  {
           }
         }
         else {
-          $func($var, $prop_info, $this);
+          //$func($var, $prop_info, $this);
+					call_user_func($func, $var, $prop_info, $this);
         }
 
 			}
@@ -965,6 +967,10 @@ class Intel_Visitor extends Intel_Entity  {
 		$vars = array(
 			'vid' => $entity->get_id(),
 		);
+
+		$form_type_info = array();
+		$form_type_info = apply_filters('intel_form_type_info', $form_type_info);
+
 		$subs = intel()->get_entity_controller('intel_submission')->loadByVars($vars);
 
 		if (!empty($subs) && is_array($subs)) {
@@ -980,8 +986,32 @@ class Intel_Visitor extends Intel_Entity  {
       $ops = array();
       //$ops[] = Intel_Df::l(__('meta', 'intel'), 'submission/' . $row->sid);
       $title = 'NA';
+			$form_type = $row->type;
 
-			if ($row->type == 'intel_form') {
+		  if (!empty($form_type_info[$row->type]['submission_data_callback'])) {
+				$sub_data = call_user_func($form_type_info[$row->type]['submission_data_callback'], $row->fid, $row->fsid);
+				if (!empty($form_type_info[$row->type]['title'])) {
+					$form_type = $form_type_info[$row->type]['title'];
+				}
+				if (!empty($sub_data['form_title'])) {
+					$title = $sub_data['form_title'];
+				}
+				if (!empty($sub_data['submission_data_url'])) {
+					$ops[] = Intel_Df::l(__('data', 'intel'), $sub_data['submission_data_url']);
+				}
+
+				if (!empty($sub_data['field_values'])) {
+					foreach ($sub_data['field_values'] as $k => $v) {
+						$vars = array(
+							'title' => !empty($sub_data['field_titles'][$k]) ? $sub_data['field_titles'][$k] : $k,
+							'value' => $v,
+						);
+						$items[$k] = Intel_Df::theme('intel_visitor_profile_item', $vars);
+					}
+				}
+
+			}
+		  elseif ($row->type == 'intel_form') {
 				if (!empty($row->fid)) {
 					$title = ucwords(str_replace('_', ' ', $row->fid));
 				}
@@ -1064,9 +1094,12 @@ class Intel_Visitor extends Intel_Entity  {
           $title = $form_name;
         }
       }
+			else {
+
+			}
       $rows[] = array(
         Intel_Df::format_date($row->submitted, 'medium'),
-        $row->type,
+        $form_type,
         $title,
         implode(' ', $ops),
       );
@@ -1094,7 +1127,7 @@ class Intel_Visitor extends Intel_Entity  {
           $markup .= $item;
         }
         $entity->content['submissions_fields_table'] = array(
-          '#markup' => Intel_Df::theme('intel_visitor_profile_block', array('title' => __('Submitted data fields', 'intel'), 'markup' => $markup)),
+          '#markup' => Intel_Df::theme('intel_visitor_profile_block', array('title' => __('Form submission values', 'intel'), 'markup' => $markup)),
           '#weight' => $weight++,
         );
       }

@@ -173,6 +173,14 @@ class Intel_Admin {
   	}
 	}
 
+	// for return_type json, page needs to be called earlier than standard menu routing
+	public function init_menu_routing() {
+		if (!empty($_GET['return_type']) && $_GET['return_type'] == 'json') {
+			$this->menu_router();
+			wp_die();
+		}
+	}
+
 	public function menu_router() {
 		$intel = intel();
 		$menu_info = $intel->menu_info();
@@ -311,7 +319,6 @@ class Intel_Admin {
 
 							// load entity using arg(1);
 							$entity = $intel->get_entity_controller($entity_type)->loadOne($path_args[1]);
-
 							// visitor entities can be passed by vtk or vtkid, if entity not found
 							// using vid, try creating one using vtk/vtkid
 							if (empty($entity) && $path_args[0] == 'visitor' && strlen($path_args[1]) >= 20) {
@@ -333,6 +340,12 @@ class Intel_Admin {
 							$path_args_t[1] = $entity;
 						}
 						if ($path_args[0] == 'visitor') {
+							$breadcrumbs[] = array(
+								'text' => $entity->label(),
+								'path' => Intel_Df::url($entity->uri()),
+							);
+						}
+						if ($path_args[0] == 'submission') {
 							$breadcrumbs[] = array(
 								'text' => $entity->label(),
 								'path' => Intel_Df::url($entity->uri()),

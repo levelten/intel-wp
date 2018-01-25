@@ -16,7 +16,7 @@
  * Plugin Name:       Intelligence
  * Plugin URI:        http://intelligencewp.com
  * Description:       Provides behavior and visitor intelligence.
- * Version:           1.2.6.1
+ * Version:           1.2.7-dev
  * Minimum PHP:       5.3
  * Author:            LevelTen
  * Author URI:        http://getlevelten.com
@@ -33,8 +33,53 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define('INTEL_VER', '1.2.6.1');
+define('INTEL_VER', '1.2.7-dev');
 
+/*******************************************
+/* Begin Freemius setup
+ */
+if (0) {
+// Create a helper function for easy SDK access.
+	function intel_fs() {
+		global $intel_fs;
+
+		if ( ! isset( $intel_fs ) ) {
+			// Include Freemius SDK.
+			require_once dirname(__FILE__) . '/freemius/start.php';
+
+			$intel_fs = fs_dynamic_init( array(
+				'id'                  => '1675',
+				'slug'                => 'intelligence',
+				'type'                => 'plugin',
+				'public_key'          => 'pk_cd3b6d95db54c50e50ccbf77112de',
+				'is_premium'          => false,
+				'has_addons'          => false,
+				'has_paid_plans'      => false,
+				'menu'                => array(
+					'slug'           => 'intel_admin',
+					'first-path'     => 'admin.php?page=intel_config&q=admin/config/intel/settings/setup',
+					'account'        => false,
+					'support'        => false,
+				),
+			) );
+		}
+
+		return $intel_fs;
+	}
+
+// Init Freemius.
+	intel_fs();
+
+// Signal that parent SDK was initiated.
+	do_action( '_loaded' );
+
+// Signal that SDK was initiated.
+	do_action( 'intel_fs_loaded' );
+}
+
+/*******************************************
+/* End Freemius setup
+ */
 
 /**
  * The code that runs during plugin activation.

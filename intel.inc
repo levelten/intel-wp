@@ -47,6 +47,7 @@ add_filter('intel_menu_info', 'intel_menu');
  */
 function intel_menu($items = array()) {
   $reports = intel_reports();
+  // hide menu items that require access to IAPI premium data
   $api_level = intel_api_level();
 
   // admin config callbacks
@@ -739,6 +740,25 @@ function intel_menu($items = array()) {
       'access callback' => 'intel_submission_access',
       'access arguments' => array('view', 1),
       //'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_submission.inc',
+    );
+    $items['submission/%intel_submission/profile'] = array(
+      'title' => 'Submitter profile',
+      'description' => 'Information about visitors.',
+      'page callback' => 'intel_submission_profile_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_submission_access',
+      'access arguments' => array('view', 1),
+      'type' => Intel_Df::MENU_CALLBACK,
+      'file' => 'admin/intel.admin_submission.inc',
+    );
+    $items['submission/%intel_submission/sync'] = array(
+      'title' => 'Sync data',
+      'page callback' => 'intel_sync_submissiondata_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_submission_access',
+      'access arguments' => array('view', 1),
+      'type' => Intel_Df::MENU_CALLBACK,
       'file' => 'admin/intel.admin_submission.inc',
     );
 
@@ -1704,7 +1724,9 @@ function intel_goto_user($account) {
 
 /**
  * Determines if the api access level is adequate to access the
- * data needed to build the current page/path (e.g. a report)
+ * data needed to build the current page/path (e.g. a report). Used to prevent
+ * functions that require premium data that does not exist with API for given
+ * subscription level.
  */
 function intel_api_access() {
   $access = &Intel_Df::drupal_static(__FUNCTION__);
@@ -3773,7 +3795,8 @@ function intel_sync_visitordata($visitor, $options = array()) {
     intel_d($visitor);//
   }
 
-  // don't sync data if no pro api
+  // Check API level and skip sync if IAPI will not authorize visitor data
+  // requests.
   $api_level = intel_api_level();
   if ($api_level != 'pro') {
     $visitor->setSyncProcessStatus('na', 1);
@@ -4097,6 +4120,13 @@ function intel_theme($themes = array()) {
     'template' => 'intel-navbar',
     'file' => 'intel.pages.inc',
   );
+  $themes['intel_messages'] = array(
+    'variables' => array(
+      'messages' => array(),
+    ),
+    'template' => 'intel-messages',
+    //'file' => 'intel.pages.inc',
+  );
   $themes['intel_breadcrumbs'] = array(
     'variables' => array(
       'breadcrumbs' => array(),
@@ -4231,6 +4261,7 @@ function intel_theme($themes = array()) {
   $themes['intel_map'] = array(
     'variables' => array(
       'locations' => array(),
+      'script_src' => NULL,
     ),
     'template' => 'intel-map',
     'file' => 'intel.pages.inc',
@@ -4804,6 +4835,25 @@ function intel_imapi_property_setup_l($text, $options = array()) {
   }
   if (!empty($options['ga_viewid_base'])) {
     $l_options['query']['ga_viewid_base'] = $options['ga_viewid_base'];
+  }
+
+  // If Freemius active, attach install_id and license_id
+  if (is_callable('intel_fs')) {
+    $fs_accounts = get_option('fs_accounts', array());
+//intel_d($fs_accounts);
+
+    $fs_active_plugins = get_option('fs_active_plugins', array());
+//intel_d($fs_active_plugins);
+
+    if (!empty($fs_accounts['plugin_data']['intelligence']['subscription'])) {
+      $fs_subscription = $fs_accounts['plugin_data']['intelligence']['subscription'];
+      if (!empty($fs_subscription->install_id)) {
+        $l_options['query']['fs_install_id'] = $fs_subscription->install_id;
+      }
+      if (!empty($fs_subscription->license_id)) {
+        $l_options['query']['fs_license_id'] = $fs_subscription->license_id;
+      }
+    }
   }
 
   //return Intel_Df::l($text, "https://$imapi_domain/property_setup", $l_options);

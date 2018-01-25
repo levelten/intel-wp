@@ -22,7 +22,7 @@
  * @see template_preprocess_user_profile_item()
  */
 ?>
-<?php if ($title || $markup): ?>
+<?php if (!empty($title) || !empty($markup)): ?>
 <div<?php if (!empty($attributes)) { print $attributes; } else { print ' class="card"'; } ?>>
   <?php if ($title): ?>
       <h4 class="card-header"><?php print $title; ?></h4>

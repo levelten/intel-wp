@@ -38,9 +38,15 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 	public static function sync_ga($submission) {
 		$gadata = self::fetch_ga_meta_data($submission->sid, $submission->type, $submission->fid, $submission->fsid);
 		if (!empty($_GET['debug'])) {
-			dpm('gadata'); dpm($gadata);//
+			intel_d('gadata'); intel_d($gadata);//
 		}
-		if (empty($gadata)) {
+
+		if (
+			empty($gadata['session']['steps'])
+			|| empty($gadata['session']['trafficsource'])
+			|| empty($gadata['environment'])
+			|| empty($gadata['location'])
+		) {
 			$submission->setSyncProcessStatus('ga', 0);
 			return $submission;
 		}
@@ -120,7 +126,7 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 			foreach ($rows AS $row) {
 				$ts = (int)$row['dimension4'];
 				if ($ts > $ret['lasthit']) {
-					$visitor['lasthit'] = $ts;
+					$ret['lasthit'] = $ts;
 				}
 				$ret['location']['country'] = $row['country'];
 				$ret['location']['region'] = $row['region'];
@@ -166,7 +172,8 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 			foreach ($rows AS $row) {
 				$ts = (int)$row['dimension4'];
 				if ($ts > $ret['lasthit']) {
-					$visitor['lasthit'] = $ts;
+					$ret['lasthit'] = $ts;
+					$ret['session']['_lasthit'] = $ts;
 				}
 				$step = array();
 				$step['time'] = (int) $ts;
@@ -190,7 +197,8 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 			foreach ($rows AS $row) {
 				$ts = (int)$row['dimension4'];
 				if ($ts > $ret['lasthit']) {
-					$visitor['lasthit'] = $ts;
+					$ret['lasthit'] = $ts;
+					$ret['session']['_lasthit'] = $ts;
 				}
 				$mode = '';
 				$value = intval($row['eventValue']);

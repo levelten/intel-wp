@@ -4014,6 +4014,15 @@ function intel_ga_data_source() {
 function intel_ga_api_data($request = array(), $cache_options = array()) {
   $feed = array();
   $source = intel_ga_data_source();
+  // if source is not set, check if GADWP is setup and set it
+  if (!$source) {
+    if (is_callable('GADWP')) {
+      $gadwp = GADWP();
+      if (!empty($gadwp->config->options['ga_dash_token'])) {
+        update_option('intel_ga_data_source', 'gadwp');
+      }
+    }
+  }
   if ($source == 'gadwp') {
     $feed = intel_ga_api_data_gadwp($request, $cache_options);
     //$feed = intel_ga_api_data_internal($request, $cache_options);

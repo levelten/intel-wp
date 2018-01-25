@@ -1100,6 +1100,9 @@ class Intel_Df  {
 		elseif($path_args[0] == 'visitor') {
 			$admin_page = 'intel_visitor';
 		}
+		elseif($path_args[0] == 'submission') {
+			$admin_page = 'intel_admin';
+		}
 
 		/*
 		if (substr($path, 0, 11) == 'admin/intel') {

@@ -14,6 +14,7 @@ function intel_page_alter(&$page) {
 
   $ldr = array();
 
+  // Check IAPI level to prevent unsupported IAPI calls
   $api_level = intel_api_level();
 
   $parsed_url = intel_parse_cms_url();
@@ -38,7 +39,7 @@ function intel_page_alter(&$page) {
     //'lib_path' => intel_get_library_path(),
     'pageTitle' => '(not set)',
     'trackAnalytics' => 1, // this is set in intel_js_alter if ga script exists
-    //'trackAdhocCtas' => ($api_level == 'pro') ? 'track-cta' : '',
+    //'trackAdhocCtas' => ($api_level == 'pro') ? 'track-cta' : '', // Check if CTA tracking is supported in IPAI level
     //'trackAdhocEvents' => 'track-event',
     'trackForms' => array(),
     'trackRealtime' => (integer)get_option('intel_track_realtime', INTEL_TRACK_REALTIME_DEFAULT),
@@ -157,6 +158,7 @@ function intel_page_alter(&$page) {
   // check if page intent is landing page
   if (isset($page_attrs['pi']) && isset($page_attrs['pi']['l'])) {
     $config['isLandingpage'] = 1;
+    // Check if landingpage tracking is supported in IPAI level
     if ($api_level == 'pro') {
       //$page_events['landing_page_view'] = $intel_events['landing_page_view'];
     }
@@ -1400,6 +1402,8 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
   }
 
   // generate Intel embed
+  // Check if IAPI data access is available and alter io embed to enable
+  // IAPI data syncing
   if ($api_level && (($type == 'l10i') || ($type == 'combined'))) {
     $library_path = intel()->libraries_get_path('LevelTen') . 'intel/scripts';
     $api_hostpath = intel_get_iapi_url();
@@ -1853,7 +1857,7 @@ function intel_process_form_submission($vars) {
     $visitor = intel_visitor_load_or_create($_SESSION['intel_vid']);
   }
 
-  // load data from api to get submission context
+  // Load visitor data if available in IAPI, skip otherwise
   if ($api_level == 'pro') {
     if (!empty($visitor->vtk)) {
       try {
@@ -1932,6 +1936,7 @@ function intel_process_form_submission($vars) {
   $intel_events = intel_get_intel_event_info();
 
   // if vid not set on visitor, save to create vid
+  // Only make IAPI request if vtk is available (level == pro)
   if ($api_level == 'pro') {
     // only save if at least one identifier exists
     if (empty($visitor->vid) && !empty($visitor->identifiers)) {
@@ -2625,6 +2630,8 @@ elseif (INTEL_PLATFORM == 'wp') {
     }
     $api_level = intel_api_level();
 
+    // only load/create visitor if vtk is available (pro) to sync with other data
+    // sources
     if ($api_level == 'pro') {
       $visitor = intel_visitor_load_by_identifiers(array('uid' => $account->ID));
 

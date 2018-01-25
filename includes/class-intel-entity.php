@@ -74,6 +74,10 @@ class Intel_Entity {
 		}
 	}
 
+	public function label() {
+		return $this->entity_type . ' ' . $this->id;
+	}
+
 	public function get_id() {
 		return $this->id;
 	}

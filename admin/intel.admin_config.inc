@@ -656,6 +656,7 @@ function intel_admin_settings_validate($form, &$form_state) {
     );
     try {
       $form_state['intel_imapi_property'] = $imapi_property = intel_imapi_property_get($options);
+      $form_state['intel_tid_changed'] = 1;
     }
     catch (Exception $e) {
       $e_code = $e->getCode();
@@ -711,21 +712,25 @@ function intel_admin_settings_submit($form, &$form_state) {
     Intel_Df::drupal_set_message(Intel_Df::t('Intelligence goals have been synced to base Google Analytics profile.'));
   }
 
-  $imapi_property = $form_state['intel_imapi_property'];
-  $op_meta = $form_state['intel_op_meta'];
+  // update imapi_property and related data if tid has changed
+  if (!empty($form_state['intel_tid_changed'])) {
+    $imapi_property = $form_state['intel_imapi_property'];
+    $op_meta = $form_state['intel_op_meta'];
 
-  update_option('intel_imapi_property', $imapi_property);
-  $op_meta['imapi_property_updated'] = time();
-  update_option('intel_op_meta', $op_meta);
+    update_option('intel_imapi_property', $imapi_property);
+    $op_meta['imapi_property_updated'] = time();
+    update_option('intel_op_meta', $op_meta);
 
-  $ga_profile = $imapi_property['ga_profile'];
-  $ga_viewid = $ga_profile['id'];
-  update_option('intel_ga_profile', $ga_profile);
-  update_option('intel_ga_view', $ga_viewid);
-  if (!empty($imapi_property['ga_profile_base'])) {
-    $ga_profile_base = $imapi_property['ga_profile_base'];
-    update_option('intel_ga_profile_base', $ga_profile_base);
+    $ga_profile = $imapi_property['ga_profile'];
+    $ga_viewid = $ga_profile['id'];
+    update_option('intel_ga_profile', $ga_profile);
+    update_option('intel_ga_view', $ga_viewid);
+    if (!empty($imapi_property['ga_profile_base'])) {
+      $ga_profile_base = $imapi_property['ga_profile_base'];
+      update_option('intel_ga_profile_base', $ga_profile_base);
+    }
   }
+
 
   /*
   intel_d($imapi_property);
@@ -1031,7 +1036,7 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
 
   $scorings = intel_get_scorings();
   $scorings_option = get_option('intel_scorings', array());
-  if (!empty($_GET['debug'])) {
+  if (!empty(intel_is_debug())) {
     intel_d($scorings_option);//
     intel_d($scorings);//
   }

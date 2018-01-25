@@ -55,12 +55,13 @@
 		var locCircle = new google.maps.Circle(circleOptions);
 	});
 
-	if (!window['intel_init_map_all']) {
-		window['intel_init_map_all'] = function () {
+	//if (!window['_intel_googleapi_map_init']) {
+		window['_intel_googleapi_map_init'] = function () {
 			for (var i = 0; i < intel_map_init.length; i++) {
-				google.maps.event.addDomListener(window, 'load', intel_map_init[i]);
+				google.maps.event.addDomListener(window, "load", intel_map_init[i]());
 			}
 		}
-	}
+	//}
 </script>
 <div class="google-map"><div id="map-canvas-<?php print $map_index ; ?>" class="map-canvas"></div></div>
+

@@ -1,5 +1,6 @@
 google.load('visualization', '1', {packages: ['corechart']});
 google.load('visualization', '1', {packages: ['table']});
+var intel_map_init = intel_map_init || [];
 
 var _intel_reports = (function ($) {
   $( document ).ready(function() {
@@ -40,7 +41,15 @@ var _intel_reports = (function ($) {
         return_type: 'json'
       };
       var url = ('https:' == document.location.protocol) ? 'https://' : 'http://';
-      url += Drupal.settings.intel.config.cmsHostpath + $('#intel-report-container').attr("data-q"); //?callback=?";
+      //url += wp_intel.settings.intel.config.cmsHostpath + $('#intel-report-container').attr("data-q"); //?callback=?";
+      url += wp_intel.settings.intel.config.cmsHostpath + 'wp-admin/admin.php?page=' + $('#intel-report-container').attr("data-page");
+      url += '&q=' + $('#intel-report-container').attr("data-q");
+      if ($('#intel-report-container').attr("data-query")) {
+        url += '&' + $('#intel-report-container').attr("data-query");
+      }
+      if ($('#intel-report-container').attr("data-current-path")) {
+        data.current_path = $('#intel-report-container').attr("data-current-path");
+      }
       if ($('#intel-report-container').attr("data-refresh")) {
         data.refresh = 1;
       }
@@ -51,6 +60,9 @@ var _intel_reports = (function ($) {
       jQuery.getJSON(url, data, function (data) {
         $("#intel-report-container").replaceWith(data.report);
         l10iCharts.init();
+        if (typeof window['_intel_googleapi_map_init'] === 'function') {
+          _intel_googleapi_map_init();
+        }
       });
 
     }
@@ -155,4 +167,6 @@ var _intel_reports = (function ($) {
     }
     window.location.href = loc;
   }
+
+  return this;
 })(jQuery);

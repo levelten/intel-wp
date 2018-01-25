@@ -297,11 +297,9 @@ function intel_visitor_edit_form_submit($form, &$form_state) {
   }
 
   field_attach_submit('intel_visitor', $entity, $form, $form_state);
-dsm($entity);
-  dsm($form);
-  dsm($values);
+
   $field_map = variable_get('intel_visitor_field_map', array());
-dsm($field_map);
+
   $prop_options = array(
     'source' => 'form',
   );
@@ -684,7 +682,8 @@ function intel_admin_people_contacts() {
 
   $output = array();
 
-  $api_level = variable_get('intel_api_level', '');
+  // Check API level and prevent visitor add/edit if IAPI will not authorize
+  // visitor data
   $api_level = intel_api_level();
   if ($api_level != 'pro') {
     $vars = array(

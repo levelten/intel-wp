@@ -71,6 +71,12 @@
   padding-right: 4px;
 }
 
+#intel-profile .header .social-profile-link .social-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
 #intel-profile .header .bio {
 	clear: left;
 	font-size: 1.2em;
@@ -215,6 +221,8 @@
   clear: left;
   padding-top: 16px;
 }
+
+
 
 
  

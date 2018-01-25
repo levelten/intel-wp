@@ -327,6 +327,8 @@ class Intel {
 
 		// on intel admin pages, buffer page output and create sessions
 		if (self::is_intel_admin_page()) {
+			$this->loader->add_action( 'admin_init', $plugin_admin, 'init_menu_routing' );
+
 			// note there is no admin_enqueue_styles hook, so this is a hack to
 			// enqueue_styles
 			$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
@@ -340,6 +342,7 @@ class Intel {
 			$this->loader->add_action( 'admin_init', $plugin_admin, 'session_start' );
 			$this->loader->add_action( 'wp_login', $plugin_admin, 'session_end' );
 			$this->loader->add_action( 'wp_logout', $plugin_admin, 'session_end' );
+
 		}
 
 		// site menu
