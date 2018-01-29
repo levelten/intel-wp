@@ -80,7 +80,6 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 		$cache = array(
 			'refresh' => 1,
 		);
-
 		//$segment = 'dynamic::ga:customVarValue5==' . implode(',dynamic::ga:customVarValue5==', $vtkids);
 		//$segment = 'users::condition::ga:customVarValue5==' . implode(',ga:customVarValue5==', $vtkids); // users has a limit of 90 days time frame
 		//$segment = 'sessions::condition::ga:customVarValue5==' . implode(',ga:customVarValue5==', $vtkids);
@@ -98,8 +97,12 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 		);
 
 		$data = intel_ga_api_data($request, $cache);
-
 		$rows = intel_get_ga_feed_rows($data);
+
+		// if no data was returned, assume the rest of the data is not ready and exit
+		if (empty($rows)) {
+			return $ret;
+		}
 		if (!empty($rows) && is_array($rows)) {
 			foreach ($rows AS $row) {
 				$ts = (int)$row['dimension4'];

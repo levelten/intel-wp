@@ -103,7 +103,7 @@ function L10iLinkTracker(_ioq, config) {
         }
     };
 
-    this.getLinkTypeDef = function setLinkTypeDef(name, defaultValue) {
+    this.getLinkTypeDef = function getLinkTypeDef(name, defaultValue) {
         if (name == undefined) {
             return this.linkTypeDefs;
         }

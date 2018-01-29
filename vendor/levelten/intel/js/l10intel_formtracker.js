@@ -5,6 +5,10 @@ function L10iFormTracker(_ioq, config) {
     var io = _ioq.io;
     var $ = jQuery;
 
+    var ths = {};
+
+    this.formDefs = {};
+
 
     this.init = function init() {
         var ths = this;
@@ -12,66 +16,186 @@ function L10iFormTracker(_ioq, config) {
         //$('a').on('mouseover', {eventType: 'click'}, ths.eventHandler); // for testing event sends
     };
 
-    this.eventHandler = function eventHandler(event) {
-        var i, v;
-        var $obj = $(this);
-        var evtDef = {
-          transport: 'beacon',
-        };
+    ths.trackForm = function trackForm(def) {
+        if (ioq.isArray(def)) {
+            for (var i = 0; i < def.length; i++) {
+                ths.trackFormInit(def[i]);
+            }
+        }
+        else {
+            ths.trackFormInit(def);
+        }
+    };
 
-        var eventType = 'submit';
+    ths.trackFormInit = function trackFormInit(def) {
+        //console.log('trackFormInit()');
+        //console.log(def);
 
-
-        if ($obj.hasClass('prevent-formtracker')) {
-          return;
+        var $obj, $this, $onObj, enable = 1, $dataField, def2;
+        if (ioq.isNull(def)) {
+            def = {};
+        }
+        if (!ioq.isNull(def.landingpage)) {
+            def.landingpage = ths.trackLandingpage(def.landingpage);
         }
 
-        var formTypeEnabled = {
-            search: 1
+        if (ioq.isNull(def.selector)) {
+            def.selector = 'body';
+            def.onSelector = def.onSelector||'form';
         }
 
-        var formTypeTitles = {
-            search: 'Search'
-        };
+        def.oa = def.oa || {};
+        def.oa.rc = def.oa.rc || 'form';
+        if (!def.oa.rt && def.formType) {
+            def.oa.rt = def.formType;
+        }
+        if (!def.oa.rk && def.formId) {
+            def.oa.rk = def.formId;
+        }
+        if (!def.oa.ri) {
+            def.oa.ri = def.formUri || ':' + def.formType + ':' + def.formId;
+        }
 
-        var formType = '';
+        def.eventAction = def.eventAction || def.formTitle || ioq.settings.pageTitle;
+        def.eventLabel = def.eventLabel || def.oa.ri;
 
-        // check for hrefType specified via class track-link-[type id]
-        var classes = $obj.attr('class');
-        classes = classes ? classes.split(' ') : [];
-        for (i = 0; i < classes.length; i++) {
-            v = classes[i];
-            if (v.substr(0, 11) == 'track-form-') {
-                v = v.substr(11);
-                if (v == 'mode-valued') {
-                    evtDef.mode = 'valued';
-                }
-                else {
-                    formType = v;
+
+        $obj = ioq.jQuerySelect(def);
+        if (def.onSelector) {
+            $onObj = $obj.find(def.onSelector);
+        }
+        else {
+            $onObj = $obj;
+        }
+
+        // loop through each form found by the selector to check if any special fields exist to disable the onSubmit tracking.
+        $onObj.each(function() {
+            $this = $(this);
+            if (ths.processFormSpecialFields(def, $this)) {
+                enable = 0;
+            }
+        });
+
+        if ($onObj.length && def.trackView) {
+            delete def.trackView;
+            evtDef = ioq.objectMerge({}, def);
+            evtDef.eventCategory = 'Form view';
+            evtDef.onEvent = 'pageview';
+            evtDef.eid = 'formView';
+            evtDef.nonInteraction = 1;
+            io('event', evtDef);
+        }
+
+        /* Disabling logic until full conversion tracking can be implemented
+        if (ioq.isNull(def.onEvent)) {
+            def.onEvent = 'submit';
+        }
+
+        def.triggerCallback = ths.saveFormSubmit;
+
+
+        $obj = ioq.jQuerySelect(def);
+        if (def.onSelector) {
+            $onObj = $obj.find(def.onSelector);
+        }
+        else {
+            $onObj = $obj;
+        }
+
+        // loop through each form found by the selector to check if any special fields exist to disable the onSubmit tracking.
+        $onObj.each(function() {
+            $this = $(this);
+            if (ths.processFormSpecialFields(def, $this)) {
+                enable = 0;
+            }
+        });
+
+        if (enable) {
+            def.onHandler = function (event) {
+                window._ioq.push(['triggerFormSubmitEvent', def, jQuery(this), event]);
+            };
+            def.eid = 'formSubmit';
+            io('event', def);
+
+            def2 = ioq.objectMerge({}, def);
+            def2.onEvent = 'click';
+            ioq.jQueryOn(def2, $obj, function(event) {
+                $(this).removeClass('l10-form-submit-processed');
+            });
+        }
+        */
+
+        // only set loc form cookie for pro level
+        if (ioq._apiLevel == 'pro') {
+            ths.setCookie('l10i_lf', ioq.settings.pageUri, 1);
+        }
+
+        return def;
+
+    };
+
+    ths.processFormSpecialFields = function (def, $obj, event) {
+        var pf = 'io';
+        if ($obj.is('form')) {
+            // check if field has been set to not track
+            var enabled = $obj.find('input[name="' + pf + '_track_form"]').val();
+            if ((enabled == '0') || (enabled == 'false')) {
+                //ths.removeCallback(def.triggerCallback, ths.saveFormSubmit);
+                return true;  // jQuery.each() equivalent to "continue";
+            }
+
+            // check for data field used to store submit data rather than attaching js submit event
+            var $dataField = $obj.find('input[name="' + pf + '_submit_data"]');
+            if ($dataField.length == 0) {
+                // TODO: this is the format of Webform's hidden fields
+                $dataField = $obj.find('input[name="submitted[' + pf + '_submit_data]"]');
+            }
+            if ($dataField.length == 1) {
+                var formSubmit = ths.constFormSubmit(null, $obj);
+
+                formSubmit = JSON.stringify(formSubmit);
+
+                $dataField.val(formSubmit);
+                //ths.removeCallback(def.triggerCallback, ths.saveFormSubmit);
+                return true;
+            }
+        }
+        return false;
+    };
+
+    this.setFormDef = function setFormDef(name, def) {
+        var i, a;
+        if (ioq.isArray(name)) {
+            for (var i = 0; i < name.length; i++) {
+                a = name[i];
+                if (a[0] && a[1] && ioq.isObject(a[1])) {
+                    this.formDefs[a[0]] = a[1];
                 }
             }
         }
-
-        if () {
-
-        }
-
-        if (!formTypeEnabled[hrefType]) {
-            return;
-        }
-
-        if (!formTypeTitles[hrefType]) {
-            evtDef.eventCategory = 'Form ' + eventType;
-        }
         else {
-            evtDef.eventCategory = hrefTypeTitles[hrefType] + ' form ' + eventType;
+            this.formDefs[name] = obj;
         }
+    };
 
-        _ioq.push(['defEventHandler', evtDef, $obj, event]);
+    this.getFormDef = function getFormDef(name, defaultValue) {
+        if (name == undefined) {
+            return this.linkTypeDefs;
+        }
+        if (this.linkTypeDefs[name] === undefined) {
+            return defaultValue;
+        }
+        return this.linkTypeDefs[name];
+    };
+
+    this.eventHandler = function eventHandler(event) {
+
 
     };
 
     this.init();
+
+    return ths;
 }
 
 _ioq.push(['providePlugin', 'formtracker', L10iFormTracker, {}]);

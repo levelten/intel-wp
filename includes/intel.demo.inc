@@ -1051,6 +1051,28 @@ function intel_demo_contact_form($form, &$form_state, $options = array()) {
     '#prefix' => '<br>',
   );
 
+  $form_id = $form_state['build_info']['form_id'];
+  $form_uri = ':intel_form:' . $form_id;
+  $form_title = '';
+  if (!empty($form_state['options']['form_title'])) {
+    $form_title = $form_state['options']['form_title'];
+  }
+  elseif (!empty($form_state['form_title'])) {
+    $form_title = $form_state['form_title'];
+  }
+  else {
+    $form_title = ucwords(str_replace('_', ' ', $form_id));
+  }
+
+  $def = array(
+    'selector' => 'form#intel_demo_contact_form',
+    'trackView' => get_option('intel_form_track_view_default', ''),
+    'formType' => 'intel_form',
+    'formTitle' => $form_title,
+    'formId' => $form_id,
+  );
+  intel_add_page_intel_push(array('formtracker:trackForm', $def));
+
   return $form;
 }
 

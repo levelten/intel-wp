@@ -294,7 +294,9 @@ class Intel_Tracker {
 		$js_settings = intel()->get_js_settings();
 
 		$script = '';
-		$script .= "var wp_intel = wp_intel || {}; wp_intel.settings = " . json_encode($js_settings) . ";\n";
+		//$script .= "var wp_intel = wp_intel || {}; wp_intel.settings = " . json_encode($js_settings) . ";\n";
+		$script .= "var wp_intel = wp_intel || { 'settings': {}, 'behaviors': {}, 'locale': {} };\n";
+		$script .= "jQuery.extend(wp_intel.settings, " . json_encode($js_settings) . ");\n";
 		$script .= "$io_name('setConfig', wp_intel.settings.intel.config);\n";
 		if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
 			foreach ($js_settings['intel']['pushes'] as $cm => $push) {

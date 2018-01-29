@@ -2197,6 +2197,77 @@ function intel_admin_intel_event_delete_form_submit($form, &$form_state) {
 }
 
 function intel_admin_form_type_list_page() {
+
+  //wp_enqueue_script('intel_admin_form_list', INTEL_URL . 'admin/js/intel.admin_form_list.js', array('intel'));
+
+  //$form_type_forms_info = intel()->form_type_forms_info();
+
+  $form_type_info = intel()->form_type_info();
+
+  $form_type_form_info = intel()->form_type_form_info();
+
+  //intel_d($form_type_form_info);
+
+  $header = array(
+    Intel_Df::t('Title'),
+    Intel_Df::t('Type'),
+    Intel_Df::t('Sub. event'),
+    Intel_Df::t('Sub. value'),
+    Intel_Df::t('Track view'),
+  );
+
+  $rows = array();
+
+  $track_view_options = intel_get_form_view_options();
+  foreach ($form_type_form_info as $form_type => $forms_info) {
+    $form_data[$form_type] = array();
+    foreach ($forms_info as $form_id => $form_info) {
+      $row = array(
+        'data' => array(),
+      );
+      $title = $form_info['title'];
+      if (!empty($form_info['settings_url'])) {
+        $title = Intel_Df::l($title, $form_info['settings_url']);
+      }
+      $row['data'][] = $title;
+      $row['data'][] = !empty($form_type_info[$form_type]['title']) ? $form_type_info[$form_type]['title'] : $form_type;
+      $text = !empty($form_info['settings']['track_submission']) ? $form_info['settings']['track_submission'] : Intel_Df::t('(default)');
+      if (!empty($form_info['settings']['track_submission__title'])) {
+        $text = $form_info['settings']['track_submission__title'];
+      }
+      $row['data'][] = $text;
+      $row['data'][] = !empty($form_info['settings']['track_submission_value']) ? $form_info['settings']['track_submission_value'] : Intel_Df::t('(default)');
+
+      if (isset($form_info['settings']['track_view'])) {
+        $text = !empty($track_view_options[$form_info['settings']['track_view']]) ? $track_view_options[$form_info['settings']['track_view']] : Intel_Df::t('(unknown)');
+      }
+      else {
+        $text = !empty($form_type_info[$form_type]['supports']['track_view']) ? Intel_Df::t('(default)') : Intel_Df::t('NA');
+      }
+      $row['data'][] = $text;
+      $row['data-form-type'] = $form_type;
+      $row['data-form-id'] = $form_id;
+      $rows[] = $row;
+
+    }
+  }
+
+  //$form = Intel_Form::drupal_get_form('intel_admin_form_tracking_default_form');
+  //$output = Intel_Df::render($form);
+
+  $vars = array(
+    'header' => $header,
+    'rows' => $rows,
+  );
+  $output = Intel_Df::theme('table', $vars);
+
+  return $output;
+}
+
+function intel_admin_form_type_list_pagex() {
+
+  wp_enqueue_script('intel_admin_form_list', INTEL_URL . 'admin/js/intel.admin_form_list.js', array('intel'));
+
   $form_type_forms_info = intel()->form_type_forms_info();
 
   $header = array(
@@ -2220,7 +2291,7 @@ function intel_admin_form_type_list_page() {
         'settings_url' => NULL,
       );
       $data = apply_filters('intel_form_type_' . $form_type . '_form_setup', $data, $form_info);
-
+intel_d($data);
       $row = array(
         'data' => array(),
       );
@@ -2232,7 +2303,14 @@ function intel_admin_form_type_list_page() {
       $row['data'][] = !empty($data['type_label']) ? $data['type_label'] : $data['type'];
       $row['data'][] = !empty($data['tracking_event']) ? $data['tracking_event'] : Intel_Df::t('(not set)');
       $row['data'][] = !empty($data['tracking_event_value']) ? $data['tracking_event_value'] : Intel_Df::t('(default)');
-
+      $row['data-form-type'] = $form_type;
+      $row['data-form-id'] = $data['id'];
+      /*
+      $row['attributes'] = array(
+        'data-form-type' => $form_type,
+        'data-form-id' => $data['id'],
+      );
+      */
 
       $rows[] = $row;
 
@@ -2266,11 +2344,11 @@ function intel_admin_form_tracking_form($form, &$form_state) {
 
   $eventgoal_options = intel_get_form_submission_eventgoal_options();
   $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
-  $form['default']['intel_form_submission_tracking_event_name_default'] = array(
+  $form['default']['intel_form_track_submission_default'] = array(
     '#type' => 'select',
-    '#title' => Intel_Df::t('Tracking event/goal'),
+    '#title' => Intel_Df::t('Submission event/value'),
     '#options' => $eventgoal_options,
-    '#default_value' => get_option('intel_form_submission_tracking_event_name_default', 'form_submission'),
+    '#default_value' => get_option('intel_form_track_submission_default', 'form_submission'),
     '#description' => Intel_Df::t('Select the goal or event you would like to trigger to be tracked in analytics when a form is submitted.'),
     '#suffix' => '<div class="add-goal-link text-right" style="margin-top: -12px;">' . Intel_Df::l(Intel_Df::t('Add Goal'), 'admin/config/intel/settings/goal/add', $l_options) . '</div>',
   );
@@ -2285,10 +2363,19 @@ function intel_admin_form_tracking_form($form, &$form_state) {
     '!scoring_admin' => Intel_Df::l( Intel_Df::t('Intelligence scoring admin'), 'admin/config/intel/settings/scoring', $l_options ),
   ));
   $desc .= ' ' . Intel_Df::t('If you would like to use a custom goal/event value, enter it here otherwise leave the field blank to use the site defaults.');
-  $form['default']['intel_form_submission_tracking_event_value_default'] = array(
+  $form['default']['intel_form_track_submission_value_default'] = array(
     '#type' => 'textfield',
-    '#title' => Intel_Df::t('Tracking value'),
-    '#default_value' => get_option('intel_form_submission_tracking_event_value_default', ''),
+    '#title' => Intel_Df::t('Submission value'),
+    '#default_value' => get_option('intel_form_track_submission_value_default', ''),
+    '#description' => $desc,
+    '#size' => 8,
+  );
+
+  $desc .= ' ' . Intel_Df::t('Triggers "Form impression" event whenever a form appears on a page.');
+  $form['default']['intel_form_track_view_default'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Track form views'),
+    '#default_value' => get_option('intel_form_track_view_default', ''),
     '#description' => $desc,
     '#size' => 8,
   );
@@ -2315,8 +2402,78 @@ function intel_admin_form_tracking_form($form, &$form_state) {
 }
 
 function intel_admin_form_tracking_form_submit($form, &$form_state) {
-  update_option('intel_form_submission_tracking_event_name_default', $form_state['values']['intel_form_submission_tracking_event_name_default']);
-  update_option('intel_form_submission_tracking_event_value_default', $form_state['values']['intel_form_submission_tracking_event_value_default']);
+  update_option('intel_form_track_submission_default', $form_state['values']['intel_form_track_submission_default']);
+  update_option('intel_form_track_submission_value_default', $form_state['values']['intel_form_track_submission_value_default']);
+  update_option('intel_form_track_view_default', ($form_state['values']['intel_form_track_view_default']));
+}
+
+function intel_admin_form_feedback_form($form, &$form_state) {
+  $form['form'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Form stats'),
+    '#collapsible' => FALSE,
+    //'#collapsed' => TRUE,
+  );
+
+  $desc = '';
+  $form['form']['intel_form_feedback_list_submission_count'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Add form submission count to form lists'),
+    '#default_value' => get_option('intel_form_feedback_list_submission_count', 1),
+    '#description' => $desc,
+    '#size' => 8,
+  );
+
+  $desc = '';
+  $form['form']['intel_form_feedback_list_view_count'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Add form view count to form lists'),
+    '#default_value' => get_option('intel_form_feedback_list_view_count', 1),
+    '#description' => $desc,
+    '#size' => 8,
+  );
+
+  $desc = '';
+  $form['form']['intel_form_feedback_list_conversion_ratio'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Add form conversion ratio to form lists'),
+    '#default_value' => get_option('intel_form_feedback_list_conversion_ratio', 1),
+    '#description' => $desc,
+    '#size' => 8,
+  );
+
+  $form['submission'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Submission stats'),
+    '#collapsible' => FALSE,
+    //'#collapsed' => TRUE,
+  );
+
+  /*
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => Intel_Df::t('Save'),
+  );
+  */
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['save'] = array(
+    '#type' => 'submit',
+    '#value' => Intel_Df::t('Save'),
+  );
+  $form['actions']['cancel'] = array(
+    '#type' => 'link',
+    '#title' => Intel_Df::t('Cancel'),
+    '#href' => !empty($_GET['destination']) ? $_GET['destination'] : 'admin/config/intel/settings/form',
+  );
+
+  return $form;
+}
+
+function intel_admin_form_feedback_form_submit($form, &$form_state) {
+  update_option('intel_form_feedback_list_submission_count', $form_state['values']['intel_form_feedback_list_submission_count']);
+  update_option('intel_form_feedback_list_view_count', $form_state['values']['intel_form_feedback_list_view_count']);
+  update_option('intel_form_feedback_list_conversion_ratio', ($form_state['values']['intel_form_feedback_list_conversion_ratio']));
 }
 
 function intel_admin_link_type_list_page() {

@@ -308,6 +308,7 @@ class Intel {
 	private function define_global_hooks() {
 		add_filter('intel_theme_info', 'intel_theme');
 		add_filter('intel_theme_info', 'intel_df_theme');
+
 	}
 
 	/**
@@ -819,6 +820,28 @@ class Intel {
 		return !empty($info[$name]) ? $info[$name] : NULL;
 	}
 
+	public function form_type_info($name = NULL) {
+		$info = self::build_info('form_type');
+		if (!isset($name)) {
+			return $info;
+		}
+		return !empty($info[$name]) ? $info[$name] : NULL;
+	}
+
+	public function form_type_form_info($form_type = NULL, $name = NULL) {
+		$form_type_info = self::form_type_info($form_type);
+		$info = array();
+		foreach ($form_type_info as $ft => $v) {
+			$info[$ft] = self::build_info('form_type_' . $ft . '_form');
+		}
+
+		if (!isset($form_type)) {
+			return $info;
+		}
+		return !empty($info[$form_type]) ? $info[$form_type] : NULL;
+	}
+
+	// depricated
 	public function form_type_forms_info($name = NULL) {
 		$info = self::build_info('form_type_forms');
 		if (!isset($name)) {

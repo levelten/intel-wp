@@ -108,6 +108,9 @@ class Intel_Admin {
 		 * class.
 		 */
 
+		// core js support functions
+		wp_register_script('intel', INTEL_URL . 'js/intel.js', array('jquery'), $this->version, true);
+
 		wp_enqueue_script( $this->plugin_name, INTEL_URL . 'admin/js/intel-admin.js', array( 'jquery' ), $this->version, false );
 
 		//wp_enqueue_script('intel_admin_js_bootstrap_hack', INTEL_URL . 'admin/js/intel-bootstrap-hack.js', false, $this->version, false);
@@ -305,6 +308,13 @@ class Intel_Admin {
 						}
 
 					}
+					elseif (!empty($path_args[4]) && $path_args[4] == 'form') {
+						$a = array_slice($path_args, 0, 5);
+						$breadcrumbs[] = array(
+							'text' => Intel_Df::t('Forms'),
+							'path' => Intel_Df::url(implode('/', $a)),
+						);
+					}
 				}
 			}
 			else {
@@ -358,6 +368,7 @@ class Intel_Admin {
 					$load_index = 0;
 					$load_type = '';
 					$load_title = '';
+					intel_d($path_args[4]);
 					if ($path_args[1] == 'config') {
 						if ($path_args[4] == 'intel_event') {
 							$load_index = 5;

@@ -230,6 +230,19 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_config.inc',
   );
 
+  $items['admin/config/intel/settings/form/feedback'] = array(
+    'title' => 'Feedback',
+    'description' => 'Form feedback',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_form_feedback_form'),
+    'access callback' => 'user_access',
+    //'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_config.inc',
+  );
+
 
   $items['admin/config/intel/settings/taxonomy'] = array(
     'title' => 'Taxonomies',
@@ -3348,6 +3361,13 @@ function _intel_intel_script_info($info = array()) {
     'selectable' => 1,
   );
   */
+  $info['formtracker'] = array(
+    'title' => Intel_Df::t('Form Tracker'),
+    'description' => Intel_Df::t('Tracks form events and supports server side form event tracking.'),
+    'path' => INTEL_URL . 'vendor/levelten/intel/js/l10intel_formtracker.js',
+    'enabled' => 1,
+    'selectable' => 1,
+  );
   $info['linktracker'] = array(
     'title' => Intel_Df::t('Link Tracker'),
     'description' => Intel_Df::t('Tracks link clicks by type such as mailto, download, external and custom links.'),

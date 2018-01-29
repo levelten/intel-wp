@@ -607,7 +607,7 @@ class Intel_Visitor extends Intel_Entity  {
 			else {
 				$merge_dir = 'into_this';
 				$to_vid = $this->vid;
-				$from_vid = $$dup->vid;
+				$from_vid = $dup->vid;
 				$merge_identifiers = $dup->identifiers;
 				$this->data = Intel_Df::drupal_array_merge_deep($this->data, $dup->data);
 				$this->ext_data = Intel_Df::drupal_array_merge_deep($this->ext_data, $dup->ext_data);
@@ -968,8 +968,12 @@ class Intel_Visitor extends Intel_Entity  {
 			'vid' => $entity->get_id(),
 		);
 
-		$form_type_info = array();
-		$form_type_info = apply_filters('intel_form_type_info', $form_type_info);
+		//$form_type_info = array();
+		//$form_type_info = apply_filters('intel_form_type_info', $form_type_info);
+
+		$form_type_info = intel()->form_type_info();
+
+		$form_type_form_info = intel()->form_type_form_info();
 
 		$subs = intel()->get_entity_controller('intel_submission')->loadByVars($vars);
 
@@ -982,11 +986,22 @@ class Intel_Visitor extends Intel_Entity  {
 			$subs = array();
 		}
 
+		$field_values = array();
     foreach ($subs AS $row) {
       $ops = array();
       //$ops[] = Intel_Df::l(__('meta', 'intel'), 'submission/' . $row->sid);
       $title = 'NA';
 			$form_type = $row->type;
+
+
+
+			if (!empty($form_type_info[$row->type]['title'])) {
+				$form_type = $form_type_info[$row->type]['title'];
+			}
+
+			if (!empty($form_type_form_info[$row->type][$row->fid]['title'])) {
+				$title = $form_type_form_info[$row->type][$row->fid]['title'];
+			}
 
 		  if (!empty($form_type_info[$row->type]['submission_data_callback'])) {
 				$sub_data = call_user_func($form_type_info[$row->type]['submission_data_callback'], $row->fid, $row->fsid);
@@ -999,14 +1014,12 @@ class Intel_Visitor extends Intel_Entity  {
 				if (!empty($sub_data['submission_data_url'])) {
 					$ops[] = Intel_Df::l(__('data', 'intel'), $sub_data['submission_data_url']);
 				}
-
 				if (!empty($sub_data['field_values'])) {
 					foreach ($sub_data['field_values'] as $k => $v) {
-						$vars = array(
+						$field_values[$k] = array(
 							'title' => !empty($sub_data['field_titles'][$k]) ? $sub_data['field_titles'][$k] : $k,
 							'value' => $v,
 						);
-						$items[$k] = Intel_Df::theme('intel_visitor_profile_item', $vars);
 					}
 				}
 
@@ -1016,70 +1029,6 @@ class Intel_Visitor extends Intel_Entity  {
 					$title = ucwords(str_replace('_', ' ', $row->fid));
 				}
 			}
-      elseif ($row->type == 'gravityform') {
-				$fs = GFAPI::get_entry($row->fsid);
-				if (!empty($fs['form_id'])) {
-					$fd = GFAPI::get_form($fs['form_id']);
-				}
-				$title = $fd['title'];
-				foreach ($fd['fields'] as $field) {
-					$id = (string)$field->id;
-					if (!empty($fs[$id])) {
-						$vars = array(
-							'title' => $field->label,
-							'value' => $fs[$id],
-						);
-						$items[$field->label] = Intel_Df::theme('intel_visitor_profile_item', $vars);
-					}
-					if (is_array($field->inputs)) {
-						foreach ($field->inputs as $input) {
-							$id = (string)$input['id'];
-							if (!empty($fs[$id])) {
-								$t = $field->label . ': ' . $input['label'];
-								$vars = array(
-									'title' => $t,
-									'value' => $fs[$id],
-								);
-								$items[$t] = Intel_Df::theme('intel_visitor_profile_item', $vars);
-							}
-						}
-					}
-				}
-				/*
-        if (!isset($wf_nodes[$row->fid])) {
-          $wf_nodes[$row->fid] = node_load($row->fid);
-        }
-        $title = $wf_nodes[$row->fid]->title;
-        $d = webform_get_submission($row->fid, $row->fsid);
-        if (isset($d->data) && is_array($d->data)) {
-          $comps = $wf_nodes[$row->fid]->webform['components'];
-          foreach ($d->data AS $i => $v) {
-            if (!empty($ignore_field[$comps[$i]['form_key']])) {
-              continue;
-            }
-
-            // check webform 7.3/7.4 format. $v['value'][0] is webform 7.3 format, $v[0] is webform 7.4
-            $markup = (isset($v['value'][0])) ? $v['value'][0] : $v[0];
-
-            // if field is term reference, replace tid with name
-            if ($comps[$i]['type'] == 'term_reference') {
-              $tr = taxonomy_term_load($markup);
-              if (isset($tr->name)) {
-                $markup = $tr->name . " ($markup)";
-              }
-            }
-
-            $items['webform-field-' . $comps[$i]['form_key']] = array(
-              '#title' => $comps[$i]['name'],
-              '#markup' => $markup,
-              '#theme' => 'intel_visitor_profile_item',
-            );
-          }
-        }
-				*/
-        //$ops[] = Intel_Df::l(__('data', 'intel'), 'node/' . $row->fid . '/submission/' . $row->fsid);
-				$ops[] = Intel_Df::l(__('data', 'intel'), ':gravityform:' . $row->fid . ':' . $row->fsid);
-      }
       elseif ($row->type == 'disqus_comment') {
         $title = t('Comment');
         $a = explode('#', substr($row->details_url, 1));
@@ -1103,6 +1052,7 @@ class Intel_Visitor extends Intel_Entity  {
         $title,
         implode(' ', $ops),
       );
+
     }
 
     if (!empty($rows) && count($rows)) {
@@ -1121,10 +1071,10 @@ class Intel_Visitor extends Intel_Entity  {
         '#weight' => $weight++,
       );
 
-      if (count($items)) {
+      if (count($field_values)) {
         $markup = '';
-        foreach ($items AS $item) {
-          $markup .= $item;
+        foreach ($field_values AS $fv) {
+          $markup .= Intel_Df::theme('intel_visitor_profile_item', $fv);
         }
         $entity->content['submissions_fields_table'] = array(
           '#markup' => Intel_Df::theme('intel_visitor_profile_block', array('title' => __('Form submission values', 'intel'), 'markup' => $markup)),
@@ -1132,6 +1082,8 @@ class Intel_Visitor extends Intel_Entity  {
         );
       }
     }
+
+
 
     $stats = array();
     if (!empty($vdata['analytics_visits'])) {

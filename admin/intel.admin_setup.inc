@@ -74,11 +74,13 @@ function intel_admin_setup_wizard_info($items = array()) {
       'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
       'progress_msg' => Intel_Df::t('The hard parts over!'),
     );
+    /*
     $info['steps']['form_settings'] = array(
       'title' => Intel_Df::t('Form settings'),
       'action_img_src' => INTEL_URL . '/images/setup_scoring_action.png',
       'progress_msg' => Intel_Df::t('Only one more!'),
     );
+    */
   }
   else {
     $info['steps']['basic_config'] = array(

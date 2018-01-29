@@ -22,7 +22,7 @@
     if (colIndex == 0) {
       return;
     }
-    $(".cta-admin-list thead th:eq(" + (colIndex-1) + ")").after('<th>Impns</th><th>Clicks</th><th>Click%</th><th>Convs</th><th>Conv%</th>');
+    $(".cta-admin-list thead th:eq(" + (colIndex-1) + ")").after('<th>Views</th><th>Clicks</th><th>Click%</th><th>Convs</th><th>Conv%</th>');
     $(".cta-admin-list tr").each ( function( index ) {
       var href = $(this).find("td:eq(0) a").attr("href");
       if (typeof href != 'undefined') {
@@ -38,7 +38,6 @@
       var url = ('https:' == document.location.protocol) ? 'https://' : 'http://';
 	  url += Drupal.settings.intel.config.cmsHostpath + "intel/admin_content_cta_alter_js"; //?callback=?";
       jQuery.getJSON(url).success(function(data) {
-console.log(data);
         $(".cta-admin-list tr").each ( function( index ) {
             console.log(this);
           var href = $(this).find("td:eq(0) a").attr("href");

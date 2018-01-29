@@ -208,12 +208,16 @@ function intel_submission_profile_page($submission, $options = array()) {
   );
   $profile_out = Intel_Df::theme('intel_visitor_profile', $build);
 
-  $steps_table = Intel_Df::theme('intel_visit_steps_table', array('steps' => $submission->data['analytics_session']['steps']));
+  $steps_table = '';
+  if (isset($submission->data['analytics_session']['steps']) && is_array($submission->data['analytics_session']['steps'])) {
+    $steps_table = Intel_Df::theme('intel_visit_steps_table', array('steps' => $submission->data['analytics_session']['steps']));
+  }
+
 
   // TODO: refactor in to template
   $output = '';
-  $output .= '<div class="inside bootstrap-wrapper intel-wrapper">';
-  $output .= '<div class="intel-content submission-profile half row">';
+  $output .= '<div class="bootstrap-wrapper intel-wrapper">';
+  $output .= '<div class="intel-content submission-profile half">';
   if (!empty($options['embedded'])) {
     $messages = Intel_Df::drupal_get_messages();
     $output .= Intel_Df::theme('intel_messages', array('messages' => $messages));
@@ -227,7 +231,9 @@ function intel_submission_profile_page($submission, $options = array()) {
   $output .= $profile_out;
   $output .= '<div class="card-deck-wrapper m-b-1">';
   $output .= '<div class="card-deck">';
-  $output .= Intel_Df::theme('intel_trafficsource_block', array('trafficsource' => $submission->data['analytics_session']['trafficsource']));
+  if (!empty($submission->data['analytics_session']['trafficsource'])) {
+    $output .= Intel_Df::theme('intel_trafficsource_block', array('trafficsource' => $submission->data['analytics_session']['trafficsource']));
+  }
   $output .= Intel_Df::theme('intel_location_block', array('entity' => $submission));
   $output .= Intel_Df::theme('intel_browser_environment_block', array('entity' => $submission));
   $output .= '</div>';

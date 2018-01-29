@@ -1242,13 +1242,24 @@ function intel_get_form_submission_eventgoal_options() {
 
   $options = array();
 
-  $options[''] = '-- ' . Intel_Df::t( 'None') . ' --';
+  $options[''] = '(' . Intel_Df::t( 'default') . ')';
+
   $options['form_submission-'] = Intel_Df::t( 'Event: Form submission' );
   $options['form_submission'] = Intel_Df::t( 'Valued event: Form submission!' );
 
   foreach ($submission_goals AS $key => $goal) {
     $options[$key] = Intel_Df::t( 'Goal: ') . $goal['goal_title'];
   }
+  $options['0'] = '(' . Intel_Df::t( 'none') . ')';
+
+  return $options;
+}
+
+function intel_get_form_view_options() {
+
+  $options[''] = '(' . Intel_Df::t( 'default') . ')';
+  $options['1'] = Intel_Df::t( 'Yes');
+  $options['0'] = Intel_Df::t( 'No');
 
   return $options;
 }

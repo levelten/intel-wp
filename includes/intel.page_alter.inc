@@ -286,6 +286,15 @@ function intel_page_alter(&$page) {
     //intel_d($link_infos);
   }
 
+  /*
+  $def = array(
+    'selector' => 'form#test',
+    'trackImpression'
+  );
+  intel_add_page_intel_push(array('formtracker:trackForm', $def));
+  intel_add_page_intel_push(array('formtracker:trackForm', 'test', $def));
+  */
+
   //intel_check_user_login($page);
 
   intel_check_form_submission($page);
@@ -918,7 +927,6 @@ function intel_get_flush_page_intel_pushes() {
 
 function intel_save_flush_page_intel_pushes() {
   $push_storage = get_option('intel_save_push_storage', INTEL_SAVE_PUSH_STORAGE_DEFAULT);
-Intel_Df::watchdog('push_storage', $push_storage);
   if ($push_storage == 'cookie') {
     return intel_page_intel_pushes('save_cookie_flush');
   }
@@ -937,6 +945,7 @@ function intel_save_cookie_flush_page_intel_pushes() {
 
 
 function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') {
+
   if (!isset($_SESSION['intel'])) {
     $_SESSION['intel'] = array();
   }
@@ -971,8 +980,16 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
       $value = $push[0];
     }
     else {
-      $index = count($_SESSION['intel']['page_pushes'][$method]);
-      $value = $push;
+      // check if push uses command(def) format
+      if (count($push) == 1 && is_array($push[0])) {
+        $index = count($_SESSION['intel']['page_pushes'][$method]);
+        $value = $push[0];
+      }
+      else {
+        $index = count($_SESSION['intel']['page_pushes'][$method]);
+        $value = $push;
+      }
+
     }
 
     if ($index == -1) {
@@ -989,6 +1006,7 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
   if ($action == 'save_flush' || $action == 'save_db_flush') {
     intel()->quick_session_cache();
     unset($_SESSION['intel']['page_pushes']);
+
   }
   elseif ($action == 'save_cookie_flush') {
     // format pushes into an array
