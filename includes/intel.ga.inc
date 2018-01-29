@@ -1236,13 +1236,19 @@ function intel_get_event_goal_info($filter = '') {
   */
 }
 
-function intel_get_form_submission_eventgoal_options() {
+function intel_get_form_submission_eventgoal_options($context = '') {
 
   $submission_goals = intel_get_event_goal_info('submission');
 
   $options = array();
 
-  $options[''] = '(' . Intel_Df::t( 'default') . ')';
+  if ($context == 'default') {
+    $options[''] = '(' . Intel_Df::t( 'none') . ')';
+  }
+  else {
+    $options[''] = '(' . Intel_Df::t( 'default') . ')';
+  }
+
 
   $options['form_submission-'] = Intel_Df::t( 'Event: Form submission' );
   $options['form_submission'] = Intel_Df::t( 'Valued event: Form submission!' );
@@ -1250,12 +1256,14 @@ function intel_get_form_submission_eventgoal_options() {
   foreach ($submission_goals AS $key => $goal) {
     $options[$key] = Intel_Df::t( 'Goal: ') . $goal['goal_title'];
   }
-  $options['0'] = '(' . Intel_Df::t( 'none') . ')';
+  if ($context != 'default') {
+    $options['0'] = '(' . Intel_Df::t('none') . ')';
+  }
 
   return $options;
 }
 
-function intel_get_form_view_options() {
+function intel_get_form_view_options($context = '') {
 
   $options[''] = '(' . Intel_Df::t( 'default') . ')';
   $options['1'] = Intel_Df::t( 'Yes');

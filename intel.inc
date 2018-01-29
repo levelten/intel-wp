@@ -1777,6 +1777,20 @@ function intel_api_level() {
   return $api_level;
 }
 
+function intel_is_api_level($level) {
+  $api_level = intel_api_level();
+  if ($level == 'pro' && $api_level == 'pro') {
+    return 1;
+  }
+  elseif($level == 'basic' && $api_level == 'basic' || $api_level == 'pro') {
+    return 1;
+  }
+  else if ($level == 'free') {
+    return 1;
+  }
+  return 0;
+}
+
 /**
  * Formats an error message if api access level is inadequate
  * @param $vars

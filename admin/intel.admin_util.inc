@@ -30,24 +30,17 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $test = 'hi';
 
-  $fs_active_plugins = get_option('fs_active_plugins', array());
 
-  intel_d($fs_active_plugins);
+  intel_d(version_compare('1.2.3', '1.2.3'));
 
-  $fs_accounts = get_option('fs_accounts', array());
+  intel_d(version_compare('1.2.3.1', '1.2.3'));
 
-  intel_d($fs_accounts);
+  intel_d(version_compare('1.2.3-dev', '1.2.3'));
 
-  $fs_api_cache = get_option('fs_api_cache', array());
+  intel_d(version_compare('1.2.3.d', '1.2.3'));
 
-  intel_d($fs_api_cache);
-
-  if (is_callable('intel_fs')) {
-    global $intel_fs;
-    intel_d($intel_fs);
-  }
+  intel_d(version_compare('1.2.3.0-dev', '1.2.3'));
 
   return 'OK';
 

@@ -2291,7 +2291,7 @@ function intel_admin_form_type_list_pagex() {
         'settings_url' => NULL,
       );
       $data = apply_filters('intel_form_type_' . $form_type . '_form_setup', $data, $form_info);
-intel_d($data);
+
       $row = array(
         'data' => array(),
       );
@@ -2342,7 +2342,7 @@ function intel_admin_form_tracking_form($form, &$form_state) {
     '#markup' => '<div class="pull-left">',
   );
 
-  $eventgoal_options = intel_get_form_submission_eventgoal_options();
+  $eventgoal_options = intel_get_form_submission_eventgoal_options('default');
   $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
   $form['default']['intel_form_track_submission_default'] = array(
     '#type' => 'select',
@@ -2421,7 +2421,6 @@ function intel_admin_form_feedback_form($form, &$form_state) {
     '#title' => Intel_Df::t('Add form submission count to form lists'),
     '#default_value' => get_option('intel_form_feedback_list_submission_count', 1),
     '#description' => $desc,
-    '#size' => 8,
   );
 
   $desc = '';
@@ -2430,7 +2429,6 @@ function intel_admin_form_feedback_form($form, &$form_state) {
     '#title' => Intel_Df::t('Add form view count to form lists'),
     '#default_value' => get_option('intel_form_feedback_list_view_count', 1),
     '#description' => $desc,
-    '#size' => 8,
   );
 
   $desc = '';
@@ -2439,7 +2437,6 @@ function intel_admin_form_feedback_form($form, &$form_state) {
     '#title' => Intel_Df::t('Add form conversion ratio to form lists'),
     '#default_value' => get_option('intel_form_feedback_list_conversion_ratio', 1),
     '#description' => $desc,
-    '#size' => 8,
   );
 
   $form['submission'] = array(
@@ -2447,6 +2444,14 @@ function intel_admin_form_feedback_form($form, &$form_state) {
     '#title' => Intel_Df::t('Submission stats'),
     '#collapsible' => FALSE,
     //'#collapsed' => TRUE,
+  );
+
+  $desc = '';
+  $form['submission']['intel_form_feedback_submission_profile'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Display Intelligence profile on form submission data.'),
+    '#default_value' => get_option('intel_form_feedback_submission_profile', 1),
+    '#description' => $desc,
   );
 
   /*
