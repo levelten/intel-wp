@@ -60,6 +60,12 @@ class Intel_Activator {
 		$vars['page_attribute']['title_plural'] = Intel_Df::t('Post formats');
 		update_option('intel_entity_settings_taxonomy__post_format', $vars);
 
+		include_once ( INTEL_DIR . 'includes/intel.update.inc' );
+
+		// initialize schema_versions
+		intel_activate_updates();
+
+		/*
 		// initialize system meta for updates
 		$schema_ver = 1000;
 		$updates = self::get_needed_updates();
@@ -73,6 +79,7 @@ class Intel_Activator {
 		$system_meta['intel_ver'] = INTEL_VER;
 		//$system_meta['activated'] = time();
 		update_option('intel_system_meta', $system_meta);
+		*/
 	}
 
 	public static function setup_database() {

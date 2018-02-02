@@ -38,7 +38,18 @@ require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.pag
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.inc";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.inc";
 
-
+function intel_intel_system_info($info = array()) {
+  $info['intel'] = array(
+    'plugin_file' => 'intel.php', // Main plugin file
+    'plugin_path' => INTEL_DIR, // The path to the directory containing file
+    //'update_start' => 1000, // default: 1000
+    //'update_callback_class' => $this, // default: null
+    //'update_file' => '', // default [plugin_un].install
+    //'update_file_path' => '', // default ''
+  );
+  return $info;
+}
+add_filter('intel_system_info', 'intel_intel_system_info');
 
 // add intel_menu to hook_intel_menu_info
 add_filter('intel_menu_info', 'intel_menu');
@@ -4892,6 +4903,18 @@ function intel_imapi_property_setup_l($text, $options = array()) {
 
   //return Intel_Df::l($text, "https://$imapi_domain/property_setup", $l_options);
   return Intel_Df::l($text, http_build_url($imapi_url_obj), $l_options);
+}
+
+function intel_activate_plugin($plugin_un) {
+  require_once INTEL_DIR . 'includes/intel.update.inc';
+
+  intel_activate_updates($plugin_un);
+}
+
+function intel_uninstall_plugin($plugin_un) {
+  require_once INTEL_DIR . 'includes/intel.update.inc';
+
+  intel_uninstall_updates($plugin_un);
 }
 
 

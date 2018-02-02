@@ -706,6 +706,14 @@ class Intel {
 		return $infos[$type];
 	}
 
+	public function system_info($name = NULL) {
+		$info = self::build_info('system');
+		if (!isset($name)) {
+			return $info;
+		}
+		return !empty($info[$name]) ? $info[$name] : NULL;
+	}
+
 	public function addon_info($name = NULL) {
 		$info = self::build_info('addon');
 		if (!isset($name)) {

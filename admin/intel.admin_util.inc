@@ -30,17 +30,45 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
+  $system_info = intel()->system_info();
+
+  intel_d($system_info);
+
+  return 'OK';
+
+  $sql = "
+		  SELECT *
+		  FROM {$wpdb->prefix}rg_form_meta
+		";
+
+  $data = array();
+
+  $results = $wpdb->get_results( $sql );
+
+  intel_d($results);
+
+  foreach ($results as $row) {
+    $value = json_decode($row->display_meta);
+    intel_d($row);
+    intel_d($value);
+    if (isset($value->gf_intel->trackingEventName)) {
+      $value->gf_intel->trackSubmission = $value->gf_intel->trackingEventName;
+      unset($value->gf_intel->trackingEventName);
+    }
+    if (isset($value->gf_intel->trackingEventValue)) {
+      $value->gf_intel->trackSubmissionValue = $value->gf_intel->trackingEventValue;
+      unset($value->gf_intel->trackingEventValue);
+    }
 
 
-  intel_d(version_compare('1.2.3', '1.2.3'));
+    intel_d($value);
 
-  intel_d(version_compare('1.2.3.1', '1.2.3'));
 
-  intel_d(version_compare('1.2.3-dev', '1.2.3'));
 
-  intel_d(version_compare('1.2.3.d', '1.2.3'));
+    //update_option($row->option_name, $value);
+  }
 
-  intel_d(version_compare('1.2.3.0-dev', '1.2.3'));
+
 
   return 'OK';
 
@@ -128,28 +156,37 @@ function intel_util_temp_form_submit($form, &$form_state) {
 function intel_util_update() {
   $output = '';
 
-  require_once INTEL_DIR . 'includes/class-intel-activator.php';
+  require_once INTEL_DIR . 'includes/intel.update.inc';
   $intel = intel();
-  $updates = Intel_Activator::get_needed_updates();
+  $updates = intel_get_needed_updates();
 
   $run_update = !empty($_GET['run_update']) ? $_GET['run_update'] : '';
   if ($run_update) {
     if (!empty($updates[$run_update])) {
-      $func = array('Intel_Activator', 'update_' . $run_update);
-      if (is_callable($func)) {
-        $status = call_user_func($func);
+      $update = $updates[$run_update];
+      $callback = $update['callback'];
+      if (is_callable($callback)) {
+        $status = call_user_func($callback);
         Intel_Df::drupal_set_message(Intel_Df::t('Update %i was run successfully.', array(
-          '%i' => $run_update
+          '%i' => $run_update,
         )), 'success');
 
       }
       else {
-        Intel_Df::drupal_set_message(Intel_Df::t('Function Intel_Activator::update_%i not found.', array(
-          '%i' => $run_update
+        Intel_Df::drupal_set_message(Intel_Df::t('Function @callback not found.', array(
+          '@callback' => $callback,
         )), 'warning');
       }
+      // update system data
+      $system_data = get_option('intel_system', array());
+      if (!isset($system_data[$update['plugin_un']])) {
+        $system_data[$update['plugin_un']] = array();
+      }
+      $system_data[$update['plugin_un']]['schema_version'] = $update['schema_version'];
+      update_option('intel_system', $system_data);
+
+      // update system meta
       unset($intel->system_meta['needed_updates'][$run_update]);
-      $intel->system_meta['schema_version'] = $run_update;
       update_option('intel_system_meta', $intel->system_meta);
       Intel_Df::drupal_goto('admin/util/update');
     }

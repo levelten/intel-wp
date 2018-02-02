@@ -89,6 +89,8 @@ For installation instructions, visit [intelligencewp.com/docs/installation](http
 = 1.2.7 =
 * Standardizing submission profile
 * Form type submission data API
+* Added system API
+* Extended database update system to support addon plugins
 
 == Upgrade Notice ==
 

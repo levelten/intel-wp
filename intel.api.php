@@ -11,8 +11,36 @@
  */
 
 ///////////////////////////////////////////////////////////////////////////////
+// System hooks
+
+
+/**
+ * Enables modules to declare visitor and page attributes.
+ *
+ * @return array
+ *   An array who's keys are plugin unique names and whose values are arrays
+ *   containing the keys:
+ *   - title: The human readable display name of the plugin.
+ *   - description: used in the admin interface to further describe the attribute
+ *   - update_start: starting numeric sequence for update functions
+ * @see callback_intel_visitor_property_info_process_callbacks()
+ */
+function hook_intel_system_info($info = array()) {
+  $info['my_plugin_un'] = array(
+    'plugin_file' => '', // Main plugin file
+    'plugin_path' => '', // The path to the directory containing file
+    'update_start' => 2000, // default: 1000
+    'update_callback_class' => $this, // default: null
+    'update_file' => '', // default
+    'update_file_path' => '',
+  );
+  return $info;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Visitor hooks
-////////////////
+
 
 /**
  * Call right before a visitor is about to be saved to the database. Enables
