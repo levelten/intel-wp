@@ -118,6 +118,7 @@ function intel_include_update_file($plugin_un, $system_info = null) {
 
 function intel_activate_updates($plugin_un = '') {
   $needed_updates = $updates = intel_get_needed_updates($plugin_un = '');
+  //Intel_Df::watchdog('intel_activate_updates updates', print_r($needed_updates, 1));
 
   $system_info = $system_info = intel()->system_info();
   $system_data = get_option('intel_system', array());
@@ -128,20 +129,25 @@ function intel_activate_updates($plugin_un = '') {
     if (!empty($plugin_un) && $v['plugin_un'] != $plugin_un) {
       continue;
     }
-    $p_info = $system_info[$v['plugin_un']];
-    if (!isset($system_data[$plugin_un])) {
-      $system_data[$plugin_un] = array(
+    $p_un = $v['plugin_un'];
+    $p_info = $system_info[$p_un];
+
+    if (!isset($system_data[$p_un])) {
+      $system_data[$p_un] = array(
         'schema_version' => !empty($p_info['update_start']) ? $p_info['update_start'] : 1000,
       );
     }
 
-    if ($v['schema_version'] > $system_data[$plugin_un]['schema_version']) {
-      $system_data[$plugin_un]['schema_version'] = $v['schema_version'];
+    if ($v['schema_version'] > $system_data[$p_un]['schema_version']) {
+      $system_data[$p_un]['schema_version'] = $v['schema_version'];
     }
     unset($needed_updates[$k]);
 
   }
   $system_meta['needed_updates'] = $needed_updates;
+
+  //Intel_Df::watchdog('intel_activate_updates system_data', print_r($system_data, 1));
+  //Intel_Df::watchdog('intel_activate_updates system_meta', print_r($system_meta, 1));
 
   $system_data = update_option('intel_system', $system_data);
   $system_meta = update_option('intel_system_meta', $system_meta);

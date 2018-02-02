@@ -1859,8 +1859,7 @@ class Intel_Form  {
 						// Skip all value callbacks except safe ones like text if the CSRF
 						// token was invalid.
 						if (empty($form_state['invalid_token']) || in_array($value_callback, $safe_core_value_callbacks)) {
-							//$element['#value'] = $value_callback($element, $input, $form_state);
-							$element['#value'] = call_user_func($value_callback, $element, $input, $form_state);
+							$element['#value'] = call_user_func_array($value_callback, array(&$element, $input, &$form_state));
 						}
 						else {
 							$input = NULL;

@@ -142,6 +142,18 @@ function intel_update_1003() {
 	$wizard_state = update_option('intel_wizard_intel_setup_state', $wizard_state);
 }
 
+/**
+ * Migrate default form tracking options
+ */
 function intel_update_1004() {
-
+	$value = get_option('intel_form_submission_tracking_event_name_default', -99);
+	if ($value != -99) {
+		$value = update_option('intel_form_track_submission_default', $value);
+		delete_option('intel_form_submission_tracking_event_name_default');
+	}
+	$value = get_option('intel_form_submission_tracking_event_value_default', -99);
+	if ($value != -99) {
+		$value = update_option('intel_form_track_submission_value_default', $value);
+		delete_option('intel_form_submission_tracking_event_value_default');
+	}
 }

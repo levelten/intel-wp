@@ -4908,7 +4908,15 @@ function intel_imapi_property_setup_l($text, $options = array()) {
 function intel_activate_plugin($plugin_un) {
   require_once INTEL_DIR . 'includes/intel.update.inc';
 
-  intel_activate_updates($plugin_un);
+  // if plugin is intel, clear plugin_un name so that update scheme version is
+  // initialized for all registered plugins
+  if ($plugin_un == 'intel') {
+    intel_activate_updates();
+  }
+  else {
+    intel_activate_updates($plugin_un);
+  }
+
 }
 
 function intel_uninstall_plugin($plugin_un) {
