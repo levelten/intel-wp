@@ -644,7 +644,7 @@ function intel_admin_settings_validate($form, &$form_state) {
   parse_str($form_state['values']['intel_l10iapi_custom_params'], $params);
   $form_state['values']['intel_l10iapi_custom_params'] = $params;
 
-  $imapi_property = $form_state['imapi_property'];
+  $imapi_property = !empty($form_state['imapi_property']) ? $form_state['imapi_property'] : array();
 
   // check if tid changed
   if (empty($imapi_property->intel_tid)
