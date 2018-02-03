@@ -192,13 +192,6 @@ class Intel {
 
 		// check if updates needed
 		$this->system_meta = get_option('intel_system_meta', array());
-		if (!empty($this->system_meta) && (empty($this->system_meta['intel_ver']) || $this->system_meta['intel_ver'] != INTEL_VER)) {
-			require_once INTEL_DIR . 'includes/class-intel-activator.php';
-
-			$this->system_meta['needed_updates'] = Intel_Activator::get_needed_updates();
-			$this->system_meta['intel_ver'] = INTEL_VER;
-			update_option('intel_system_meta', $this->system_meta);
-		}
 	}
 
 	public static function getInstance() {
