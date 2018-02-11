@@ -188,7 +188,8 @@ class Intel_Admin {
 		$intel = intel();
 		$menu_info = $intel->menu_info();
 
-		//ksort($menu_info);
+		ksort($menu_info);
+		uasort($menu_info, 'Intel_Df::drupal_sort_weight');
 		//d($menu_info);
 
 		$install_levels = intel_is_installed('all');

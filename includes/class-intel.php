@@ -299,9 +299,8 @@ class Intel {
 	}
 
 	private function define_global_hooks() {
-		add_filter('intel_theme_info', 'intel_theme');
-		add_filter('intel_theme_info', 'intel_df_theme');
-
+		add_filter('intel_theme', 'intel_theme');
+		add_filter('intel_theme', 'intel_df_theme');
 	}
 
 	/**
@@ -754,10 +753,19 @@ class Intel {
 	 * Provides menu_info
 	 */
 	public function menu_info() {
-		$menu_info = array();
+		$menu_info = &Intel_Df::drupal_static(__FUNCTION__, array());
+
+		if (!empty($menu_info)) {
+			return $menu_info;
+		}
+
+		$menu_info = apply_filters('intel_menu', $menu_info);
+		// ?deprecated
 		$menu_info = apply_filters('intel_menu_info', $menu_info);
 
 		// allow plugins to alter theme_info
+		$menu_info = apply_filters('intel_menu_alter', $menu_info);
+		// ?deprecated
 		$menu_info = apply_filters('intel_menu_info_alter', $menu_info);
 
 		return $menu_info;
@@ -767,11 +775,16 @@ class Intel {
 	 * Provides theme_info
 	 */
 	public function theme_info() {
-		$theme_info = array();
-		$theme_info = apply_filters('intel_theme_info', $theme_info);
+		$theme_info = &Intel_Df::drupal_static(__FUNCTION__, array());
+
+		if (!empty($theme_info)) {
+			return $theme_info;
+		}
+
+		$theme_info = apply_filters('intel_theme', $theme_info);
 
 		// allow plugins to alter theme_info
-		$theme_info = apply_filters('intel_theme_info_alter', $theme_info);
+		$theme_info = apply_filters('intel_theme_alter', $theme_info);
 
 		return $theme_info;
 	}

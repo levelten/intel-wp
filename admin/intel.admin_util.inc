@@ -301,10 +301,6 @@ function intel_util_log_form_submit($form, &$form_state) {
 }
 
 function intel_util_environment() {
-  if (!intel_is_test() || !intel_is_debug()) {
-    return '';
-  }
-
   include_once( INTEL_DIR . 'includes/intel.env_info.inc');
 
   $output = '';

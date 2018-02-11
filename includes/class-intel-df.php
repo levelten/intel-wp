@@ -818,6 +818,15 @@ class Intel_Df  {
 		return $output;
 	}
 
+	public static function drupal_sort_weight($a, $b) {
+		$a_weight = is_array($a) && isset($a['weight']) ? $a['weight'] : 0;
+		$b_weight = is_array($b) && isset($b['weight']) ? $b['weight'] : 0;
+		if ($a_weight == $b_weight) {
+			return 0;
+		}
+	return $a_weight < $b_weight ? -1 : 1;
+	}
+
 	public static function &drupal_static($name, $default_value = NULL, $reset = FALSE) {
 		static $data = array(), $default = array();
 		// First check if dealing with a previously defined static variable.
@@ -1329,10 +1338,16 @@ class Intel_Df  {
 			call_user_func_array('template_preprocess_' . $hook, array(&$variables));
 		}
 
+		// allow plugins to preprocess variables
+		$variables = apply_filters('intel_preprocess_' . $hook, $variables);
+
 		// call process functions
 		if (is_callable('template_process_' . $hook)) {
 			call_user_func_array('template_process_' . $hook, array(&$variables));
 		}
+
+		// allow plugins to process variables
+		$variables = apply_filters('intel_process_' . $hook, $variables);
 
 		// if template file, process variables via template file
 		if (!empty($info['template'])) {

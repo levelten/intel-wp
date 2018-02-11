@@ -104,7 +104,8 @@ function intel_include_update_file($plugin_un, $system_info = null) {
     return FALSE;
   }
   $p_info = $system_info[$plugin_un];
-  $file_path = $p_info['plugin_path'];
+  // TODO: plugin_path is deprecated, plugin_dir is correct property
+  $file_path = !empty($p_info['plugin_path']) ? $p_info['plugin_path'] : $p_info['plugin_dir'];
   $file_path .= !empty($p_info['update_file_path']) ? $p_info['update_file_path'] : '';
   $file = !empty($p_info['update_file']) ? $p_info['update_file'] : "$plugin_un.install";
   if (!file_exists($file_path . $file)) {
@@ -117,7 +118,8 @@ function intel_include_update_file($plugin_un, $system_info = null) {
 }
 
 function intel_activate_updates($plugin_un = '') {
-  $needed_updates = $updates = intel_get_needed_updates($plugin_un = '');
+  $needed_updates = $updates = intel_get_needed_updates($plugin_un);
+
   //Intel_Df::watchdog('intel_activate_updates updates', print_r($needed_updates, 1));
 
   $system_info = $system_info = intel()->system_info();

@@ -4039,8 +4039,14 @@ function intel_is_demo() {
 }
 
 function intel_demo_mode() {
-
+  if (is_user_logged_in()) {
+    return 1;
+  }
   return get_option('intel_demo_mode', 0);
+}
+
+function intel_is_demo_page() {
+  return (substr($_SERVER['REQUEST_URI'], 0, 18) == '/intelligence/demo');
 }
 
 function intel_is_public_demo() {
@@ -4743,20 +4749,25 @@ if (!empty($GLOBALS['intel_wp_config_options'])) {
   }
 }
 
-
-function intel_posts_alter($posts) {
+/**
+ * Implements hook_the_posts()
+ *
+ * @param $posts
+ * @return mixed
+ */
+function intel_the_posts($posts) {
 //intel_d( $posts[0] );
 //$excerpt = get_the_excerpt( $posts[0] );
 //intel_d($excerpt);
-  $intel_demo_mode = get_option('intel_demo_mode', 0);
+  $intel_demo_mode = intel_is_demo();
   if (!empty($intel_demo_mode)) {
     include_once ( INTEL_DIR . 'includes/intel.demo.inc' );
-    $posts = intel_demo_posts_alter($posts);
+    $posts = intel_demo_the_posts($posts);
   }
 
   return $posts;
 }
-add_filter('the_posts', 'intel_posts_alter');
+add_filter('the_posts', 'intel_the_posts');
 
 /**
  * Implements hook_save_post()

@@ -120,6 +120,7 @@ function intel_admin_setup_page() {
 
   $setup_info = intel_admin_setup_wizard_info();
   $form = Intel_Form::drupal_get_form('intel_wizard_form', $setup_info);
+
   return Intel_Df::render($form);
 }
 
@@ -169,6 +170,8 @@ function intel_admin_setup_start($form, &$form_state) {
     '#type' => 'markup',
     '#markup' => $markup,
   );
+
+  intel_d($f['instructions']);
 
   return $f;
 }
@@ -505,10 +508,9 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     $l_options = Intel_Df::l_options_add_query(array('step' => $_GET['step']), $l_options);
   }
   $vars['activated_redirect'] = Intel_Df::url(Intel_Df::current_path(), $l_options);
-  $vars = intel_setup_process_install_plugin_card($vars);
 
   $items[] = '<div class="intel-setup">';
-  $items[] = intel_setup_theme_install_plugin_card($vars);
+  $items[] = Intel_Df::theme('install_plugin_card', $vars);
   $items[] = '</div>';
 
   $items[] = '<div class="clearfix">';
@@ -1316,7 +1318,9 @@ function intel_admin_setup_addon_install($form, &$form_state) {
     $col_classes[$i] = 'col-' . Intel_Df::drupal_clean_css_identifier(strtolower($cell));
     $cell_markup .= '<th class="' . $col_classes[$i] . '">' . $cell . '</th>';
   }
-  $markup .= intel_setup_theme_install_plugin_card(array('wrapper' => 'open')) . '<div class="intel-setup">';
+  //$markup .= intel_setup_theme_install_plugin_card(array('wrapper' => 'open')) . '<div class="intel-setup">';
+  $markup .= Intel_Df::theme('install_plugin_card', array('wrapper' => 'open'));
+  $markup .= '<div class="intel-setup">';
   $markup .= '<table class="table table-striped form-table addon-install"><thead><tr>' . $cell_markup . '</tr></thead><tbody>';
   $f['table_forms_0'] = array(
     '#type' => 'markup',
@@ -1356,8 +1360,9 @@ function intel_admin_setup_addon_install($form, &$form_state) {
     $markup = '';
     if (!empty($info['slug'])) {
       $plugin_card_vars['plugin_slug'] = $info['slug'];
-      $plugin_card_vars = intel_setup_process_install_plugin_card($plugin_card_vars);
-      $markup .= intel_setup_theme_install_plugin_card($plugin_card_vars);
+      //$plugin_card_vars = intel_setup_process_install_plugin_card($plugin_card_vars);
+      //$markup .= intel_setup_theme_install_plugin_card($plugin_card_vars);
+      $markup = Intel_Df::theme('install_plugin_card', $plugin_card_vars);
     }
 
     $f["addon_{$addon_mn}_install"] = array(
@@ -1408,7 +1413,8 @@ function intel_admin_setup_addon_install($form, &$form_state) {
 
   $f['table_forms_1'] = array(
     '#type' => 'markup',
-    '#markup' => '</tbody></table>' . intel_setup_theme_install_plugin_card(array('wrapper' => 'close')) . '</div>',
+    //'#markup' => '</tbody></table>' . intel_setup_theme_install_plugin_card(array('wrapper' => 'close')) . '</div>',
+    '#markup' => '</tbody></table>' . Intel_Df::theme('install_plugin_card', array('wrapper' => 'close')) . '</div>',
   );
 
 

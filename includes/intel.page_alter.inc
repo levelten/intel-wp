@@ -168,28 +168,33 @@ function intel_page_alter(&$page) {
   // only when user is logged in (otherwise page caching will cause errors)
   if (!empty($user->ID)) {
     if (INTEL_PLATFORM == 'wp') {
-      $tracking_exclude_roles = get_option('intel_tracking_exclude_role', array('administrator' => 'administrator'));
-      // WP roles do not have ids, so we create them
-      $role_index = get_option('intel_role_index', array());
-      $cur = isset($ga_va['ur']) ? $ga_va['ur'] : array();
-      if (!empty($user->roles) && is_array($user->roles)) {
-        foreach ($user->roles AS $i => $role) {
-          if (!empty($tracking_exclude_roles[$role])) {
-            $config['trackAnalytics'] = 0;
-          }
-          if (!isset($role_index[$role])) {
-            $role_index[$role] = count($role_index);
-            update_option('intel_role_index', $role_index);
-          }
-          $id = $role_index[$role];
-          if (!isset($cur[$id])) {
-            if (!isset($visitor_attrs['ur'])) {
-              $visitor_attrs['ur'] = array();
+      // don't exclude on intel_demo_pages to allow testing
+      if (!intel_is_demo_page()) {
+        $tracking_exclude_roles = get_option('intel_tracking_exclude_role', array('administrator' => 'administrator'));
+
+        // WP roles do not have ids, so we create them
+        $role_index = get_option('intel_role_index', array());
+        $cur = isset($ga_va['ur']) ? $ga_va['ur'] : array();
+        if (!empty($user->roles) && is_array($user->roles)) {
+          foreach ($user->roles AS $i => $role) {
+            if (!empty($tracking_exclude_roles[$role])) {
+              $config['trackAnalytics'] = 0;
             }
-            $visitor_attrs['ur'][$id] = '';
+            if (!isset($role_index[$role])) {
+              $role_index[$role] = count($role_index);
+              update_option('intel_role_index', $role_index);
+            }
+            $id = $role_index[$role];
+            if (!isset($cur[$id])) {
+              if (!isset($visitor_attrs['ur'])) {
+                $visitor_attrs['ur'] = array();
+              }
+              $visitor_attrs['ur'][$id] = '';
+            }
           }
         }
       }
+
     }
     elseif (INTEL_PLATFORM == 'drupal') {
       $cur = isset($ga_va['ur']) ? $ga_va['ur'] : array();

@@ -971,6 +971,8 @@ class Intel_Visitor extends Intel_Entity  {
 		//$form_type_info = array();
 		//$form_type_info = apply_filters('intel_form_type_info', $form_type_info);
 
+		$system_info = intel()->system_info();
+
 		$form_type_info = intel()->form_type_info();
 
 		$form_type_form_info = intel()->form_type_form_info();
