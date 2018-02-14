@@ -824,7 +824,7 @@ class Intel_Df  {
 		if ($a_weight == $b_weight) {
 			return 0;
 		}
-	return $a_weight < $b_weight ? -1 : 1;
+	  return $a_weight < $b_weight ? -1 : 1;
 	}
 
 	public static function &drupal_static($name, $default_value = NULL, $reset = FALSE) {

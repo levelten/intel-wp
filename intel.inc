@@ -1020,7 +1020,6 @@ function intel_menu($items = array()) {
   $items['admin/util/general'] = array(
     'title' => 'General',
     'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
-    'weight' => $w++,
   );
 
   /*
@@ -3465,6 +3464,12 @@ function intel_is_intel_script_enabled($name) {
 }
 
 add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
+/**
+ * Plugin path info keyed by plugin_un
+ *
+ * @param $info
+ * @return mixed
+ */
 function intel_intel_plugin_path_info($info) {
   $info['gadwp'] = array(
     'directory' => array(

@@ -30,45 +30,28 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
-  $system_info = intel()->system_info();
+  include_once(ABSPATH . 'wp-admin/includes/plugin-install.php'); //for plugins_api..
 
-  intel_d($system_info);
+  $plugin_slug = !empty($vars['plugin_slug']) ? $vars['plugin_slug'] : 'intelligence';
+  $args = array(
+    'slug' => $plugin_slug,
+  );
+  $plugin = plugins_api('plugin_information', $args);
 
-  return 'OK';
+  $status = $status = install_plugin_install_status($plugin);
 
-  $sql = "
-		  SELECT *
-		  FROM {$wpdb->prefix}rg_form_meta
-		";
+  intel_d($plugin);
+  intel_d($status);
 
-  $data = array();
+  $args = array(
+    'slug' => 'social-warfare',
+  );
+  $plugin = plugins_api('plugin_information', $args);
 
-  $results = $wpdb->get_results( $sql );
+  $status = $status = install_plugin_install_status($plugin);
 
-  intel_d($results);
-
-  foreach ($results as $row) {
-    $value = json_decode($row->display_meta);
-    intel_d($row);
-    intel_d($value);
-    if (isset($value->gf_intel->trackingEventName)) {
-      $value->gf_intel->trackSubmission = $value->gf_intel->trackingEventName;
-      unset($value->gf_intel->trackingEventName);
-    }
-    if (isset($value->gf_intel->trackingEventValue)) {
-      $value->gf_intel->trackSubmissionValue = $value->gf_intel->trackingEventValue;
-      unset($value->gf_intel->trackingEventValue);
-    }
-
-
-    intel_d($value);
-
-
-
-    //update_option($row->option_name, $value);
-  }
-
-
+  intel_d($plugin);
+  intel_d($status);
 
   return 'OK';
 

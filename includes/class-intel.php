@@ -768,6 +768,14 @@ class Intel {
 		// ?deprecated
 		$menu_info = apply_filters('intel_menu_info_alter', $menu_info);
 
+		$i = 0;
+		foreach ($menu_info as $k => $v) {
+			$menu_info[$k]['key'] = $k;
+			$menu_info[$k]['key_args'] = explode('/', $k);
+			$menu_info[$k]['key_args_count'] = count($menu_info[$k]['key_args']);
+			$menu_info[$k]['_index'] = $i++;
+		}
+
 		return $menu_info;
 	}
 

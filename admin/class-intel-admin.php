@@ -184,18 +184,51 @@ class Intel_Admin {
 		}
 	}
 
+	public function  sort_menu_info_weight($a, $b) {
+		if ($a['key_args_count'] != $b['key_args_count']) {
+			return $a['key_args_count'] < $b['key_args_count'] ? -1 : 1;
+		}
+		$a_weight = is_array($a) && isset($a['weight']) ? $a['weight'] : 0;
+		$b_weight = is_array($b) && isset($b['weight']) ? $b['weight'] : 0;
+		if ($a_weight == $b_weight) {
+			return $a['_index'] < $b['_index'] ? -1 : 1;
+		}
+		return $a_weight < $b_weight ? -1 : 1;
+	}
+
 	public function menu_router() {
 		$intel = intel();
 		$menu_info = $intel->menu_info();
 
-		ksort($menu_info);
-		uasort($menu_info, 'Intel_Df::drupal_sort_weight');
-		//d($menu_info);
+
+		/*
+		$util_menu_info = array();
+		foreach ($menu_info as $k => $v) {
+			if ($v['key_args'][1] == 'util') {
+				$util_menu_info[$k] = $v;
+			}
+		}
+
+		//intel_d($menu_info);
+		intel_d($util_menu_info);
+		*/
+
+		uasort($menu_info, array($this, 'sort_menu_info_weight'));
+
+		/*
+		$util_menu_info = array();
+		foreach ($menu_info as $k => $v) {
+			if ($v['key_args'][1] == 'util') {
+				$util_menu_info[$k] = $v;
+			}
+		}
+
+		//intel_d($menu_info);
+		intel_d($util_menu_info);
+		*/
 
 		$install_levels = intel_is_installed('all');
 		$install_access_error = 0;
-
-
 
 		$info = array();
 		$tree = array();
