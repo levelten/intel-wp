@@ -2186,10 +2186,12 @@ function intel_is_installed($level = 'min') {
 
   if (!isset($levels)) {
     $setup_state = get_option('intel_wizard_intel_setup_state', array());
+    $ga_data_source = intel_ga_data_source();
+    $api_level = intel_api_level();
     $levels = array(
       'active' => 1,
-      'ga_data' => !empty(intel_ga_data_source()),
-      'min' => !empty(intel_api_level()),
+      'ga_data' => !empty($ga_data_source),
+      'min' => !empty($api_level),
       'setup' => !empty($setup_state['completed']),
     );
   }
