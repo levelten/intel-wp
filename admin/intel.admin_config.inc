@@ -1036,7 +1036,7 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
 
   $scorings = intel_get_scorings();
   $scorings_option = get_option('intel_scorings', array());
-  if (!empty(intel_is_debug())) {
+  if (intel_is_debug()) {
     intel_d($scorings_option);//
     intel_d($scorings);//
   }

@@ -2191,6 +2191,7 @@ function intel_is_installed($level = 'min') {
     $levels = array(
       'active' => 1,
       'ga_data' => !empty($ga_data_source),
+      //'ga_data' => !empty(intel_ga_data_source()),
       'min' => !empty($api_level),
       'setup' => !empty($setup_state['completed']),
     );

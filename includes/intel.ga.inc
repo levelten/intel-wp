@@ -359,7 +359,7 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
     $ga_goal['type'] = 'EVENT';
   }
 
-  if (!empty(intel_is_debug())) {
+  if (intel_is_debug()) {
     intel_d($ga_goal);//
     intel_d($options);//
     intel_d($ga_goals);//
@@ -436,7 +436,7 @@ function intel_sync_goals_ga_goals() {
     $sync_base = '';
   }
 
-  if (!empty(intel_is_debug())) {
+  if (intel_is_debug()) {
     intel_d($sync_base);//
     intel_d($goals);//
     intel_d($ga_goals);//
