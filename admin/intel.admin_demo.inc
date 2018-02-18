@@ -31,7 +31,7 @@ function intel_admin_demo_settings($form, &$form_state, $options = array()) {
 
   $form['general']['intel_demo_mode'] = array(
     '#type' => !empty($options['tutorial']) ? 'hidden' : 'checkbox',
-    '#title' => Intel_Df::t('Enable demo'),
+    '#title' => Intel_Df::t('Enable demo for anonymous users.'),
     '#default_value' => !empty($demo_mode) ? $demo_mode : '',
     '#description' => Intel_Df::t('Enables spoof demo pages to be displayed on site. These pages are created programmatically and do not alter your database.'),
   );

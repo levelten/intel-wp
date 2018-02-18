@@ -1003,7 +1003,7 @@ class Intel_Df  {
 		);
 
 		if ($options['external'] && strpos($path, '//') == FALSE) {
-			$hook_data = apply_filters('intel_url_urn_resovler', $hook_data);
+			$hook_data = apply_filters('intel_url_urn_resolver', $hook_data);
 			// check if path returned from resover is external
 			$options['external'] = self::url_is_external($path);
 		}
@@ -1338,6 +1338,7 @@ class Intel_Df  {
 			call_user_func_array('template_preprocess_' . $hook, array(&$variables));
 		}
 
+		// fire hook_intel_preprocess_HOOK()
 		// allow plugins to preprocess variables
 		$variables = apply_filters('intel_preprocess_' . $hook, $variables);
 
@@ -1346,8 +1347,14 @@ class Intel_Df  {
 			call_user_func_array('template_process_' . $hook, array(&$variables));
 		}
 
-		// allow plugins to process variables
+		// fire hook_intel_process_HOOK()
+		// allow plugins to preprocess variables
 		$variables = apply_filters('intel_process_' . $hook, $variables);
+
+		// function prop can be called callback or function
+		if (!isset($theme_info[$hook]['function']) && isset($theme_info[$hook]['callback'])) {
+			$theme_info[$hook]['function'] = $theme_info[$hook]['callback'];
+		}
 
 		// if template file, process variables via template file
 		if (!empty($info['template'])) {
@@ -1356,8 +1363,8 @@ class Intel_Df  {
 				$output = self::process_template($file, $variables);
 			}
 		}
-		elseif (!empty($theme_info[$hook]['callback'])) {
-			$func = $theme_info[$hook]['callback'];
+		elseif (!empty($theme_info[$hook]['function'])) {
+			$func = $theme_info[$hook]['function'];
 			if (is_string($func) && is_callable($func)) {
 				//$output = $func($variables);
 				//$output = call_user_func($func, $variables);

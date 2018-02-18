@@ -733,6 +733,51 @@ function intel_demo_the_posts($posts){
 
     $posts = array();
     $post_count = count($posts_data);
+
+    // GA tracking code embed
+    $intel_embed_ga_tracking_code = get_option('intel_embed_ga_tracking_code', '');
+    if (!empty($_GET['action'])) {
+      if ($_GET['action'] == 'intel_embed_ga_tracking_code') {
+        if (current_user_can('admin intel') && !empty($_GET['nonce']) && wp_verify_nonce( $_GET['nonce'], 'intel_embed_ga_tracking_code' )) {
+          update_option('intel_embed_ga_tracking_code', 'analytics');
+          $l_options = Intel_Df::l_options_add_query(array('action' => 'intel_embed_ga_tracking_code_enabled'));
+          $uri = explode('?', $_SERVER['REQUEST_URI']);
+          Intel_Df::drupal_goto($uri[0], $l_options);
+          exit;
+        }
+      }
+      elseif($_GET['action'] == 'intel_embed_ga_tracking_code_enabled') {
+        $msg = Intel_Df::t('Google Analytics tracking code is now embeded by Intelligence.');
+        $notice_vars = array(
+          'type' => 'success',
+          'message' => $msg,
+        );
+        $embed_notice = Intel_Df::theme('wp_notice', $notice_vars);
+      }
+    }
+
+    if (!$intel_embed_ga_tracking_code) {
+      $msg = Intel_Df::t('Google Analytics tracking code has not been detected.');
+      if (current_user_can('admin intel')) {
+        $msg .= ' ' . Intel_Df::t('Would you like Intelligence to embed the tracking code?');
+        $l_options = Intel_Df::l_options_add_class('button');
+        $l_options['query'] = array(
+          'action' => 'intel_embed_ga_tracking_code',
+          'nonce' => wp_create_nonce( 'intel_embed_ga_tracking_code' ),
+        );
+        $msg .= '<br><br>' . Intel_Df::l(Intel_Df::t('Yes, enable tracking code embed'), $_SERVER['REQUEST_URI'], $l_options);
+      }
+      $notice_vars = array(
+        'type' => 'error',
+        'message' => $msg,
+        'class' => array(
+          'ga-embed-error'
+        ),
+      );
+      $embed_notice = Intel_Df::theme('wp_notice', $notice_vars);
+    }
+
+
     foreach ($posts_data as $i => $post_data) {
       // create a fake virtual page
       $post = new stdClass;
@@ -757,6 +802,11 @@ function intel_demo_the_posts($posts){
       }
 
       $content .= '<div class="intel-demo-article">';
+
+      $notice_vars = array(
+        'message' => Intel_Df::t('A Google Analytics embed code has not been detected.'),
+      );
+      $content .= $embed_notice;
 
       if ($_post->post_type == 'post') {
         if ($post_count == 1) {
@@ -1187,7 +1237,6 @@ function intel_demo_contact_form_validate($form, &$form_state) {
 }
 
 function intel_demo_contact_form_submit($form, &$form_state) {
-
   $vars = intel_demo_form_submit_intel_vars($form, $form_state);
 
   // process submission data

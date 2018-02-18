@@ -4844,7 +4844,7 @@ function intel_get_base_plugin_ga_profile($ga_data_source = '') {
   if (empty($ga_data_source)) {
     return FALSE;
   }
-  if ($ga_data_source == 'gadwp' && !is_callable('GADWP')) {
+  if ($ga_data_source == 'gadwp' && (!is_callable('GADWP') || empty(GADWP()->config->options['ga_dash_profile_list']))) {
     return FALSE;
   }
   $profile = GADWP_Tools::get_selected_profile( GADWP()->config->options['ga_dash_profile_list'], GADWP()->config->options['ga_dash_tableid_jail'] );

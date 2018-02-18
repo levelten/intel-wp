@@ -299,8 +299,8 @@ class Intel {
 	}
 
 	private function define_global_hooks() {
-		add_filter('intel_theme', 'intel_theme');
-		add_filter('intel_theme', 'intel_df_theme');
+		add_filter('intel_theme_info', 'intel_theme_info');
+		add_filter('intel_theme_info', 'intel_df_theme_info');
 	}
 
 	/**
@@ -313,6 +313,9 @@ class Intel {
 	private function define_admin_hooks() {
 
 		$this->admin = $plugin_admin = new Intel_Admin( $this->get_plugin_name(), $this->get_version() );
+
+		// testing intel_form init
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'admin_init');
 
 		$this->loader->add_action( 'admin_init', $this, 'setup_role_caps');
 
@@ -378,7 +381,15 @@ class Intel {
 
 	public function is_intel_admin_page() {
 		$flag = 0;
-		if (!empty($_GET['page']) && substr($_GET['page'], 0, 6) == 'intel_') {
+		$pages = array(
+			'intel_admin' => 1,
+			'intel_reports' => 1,
+			'intel_visitor' => 1,
+			'intel_config' => 1,
+			'intel_util' => 1,
+			'intel_help' => 1,
+		);
+		if (is_admin() && !empty($_GET['page']) && !empty($pages[$_GET['page']])) {
 			$flag = 1;
 		}
 		$flag = apply_filters('is_intel_admin_page_alter', $flag);
@@ -759,13 +770,10 @@ class Intel {
 			return $menu_info;
 		}
 
-		$menu_info = apply_filters('intel_menu', $menu_info);
-		// ?deprecated
+		// allow plugins to add menu_info
 		$menu_info = apply_filters('intel_menu_info', $menu_info);
 
-		// allow plugins to alter theme_info
-		$menu_info = apply_filters('intel_menu_alter', $menu_info);
-		// ?deprecated
+		// allow plugins to alter menu_info
 		$menu_info = apply_filters('intel_menu_info_alter', $menu_info);
 
 		$i = 0;
@@ -789,10 +797,11 @@ class Intel {
 			return $theme_info;
 		}
 
-		$theme_info = apply_filters('intel_theme', $theme_info);
+		// allow plugins to add theme_info
+		$theme_info = apply_filters('intel_theme_info', $theme_info);
 
 		// allow plugins to alter theme_info
-		$theme_info = apply_filters('intel_theme_alter', $theme_info);
+		$theme_info = apply_filters('intel_theme_info_alter', $theme_info);
 
 		return $theme_info;
 	}

@@ -3,9 +3,38 @@ var _ioq = _ioq || [];
 function L10iDemo(_ioq, config) {
   var ioq = _ioq;
   var io = _ioq.io;
+  var gaCheckInterval;
+  var gaCheckIntervalCount = 0;
+  var gaEmbedded = 0;
 
   this.init = function init() {
     ioq.log(ioq.name + ':demo.init()');//
+
+    // check if ga-embed notice exists
+    var $gaEmbedError = jQuery('.intel-notice.ga-embed-error');
+
+    // set interval to check for ga existance and test to make sure callbacks are being executed.
+    if ($gaEmbedError.length) {
+      gaCheckInterval = setInterval(function(){
+        if (typeof window.ga === "function") {
+          ga(function(tracker) {
+            gaEmbedded = 1;
+            clearInterval(gaCheckInterval);
+            $gaEmbedError.hide();
+          });
+        }
+        if(gaCheckIntervalCount == 1) {
+          $gaEmbedError.show();
+        }
+        gaCheckIntervalCount++;
+      }, 1000);
+    }
+
+
+  };
+
+  this.isGaEmbedded = function () {
+    return gaEmbedded;
   };
 
   this.clearVisitor = function clearVisitor() {
@@ -26,7 +55,9 @@ function L10iDemo(_ioq, config) {
     }
   };
 
-  this.init();
+  //this.init();
+
+  _ioq.push(['addCallback', 'domReady', this.init(), this]);
 }
 
 _ioq.push(['providePlugin', 'demo', L10iDemo, {}]);

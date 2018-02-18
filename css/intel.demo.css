@@ -84,6 +84,35 @@ div.intel-demo-nav-links .intel-demo-nav-next {
   width: 50%;
 }
 
+.intel-notice.notice {
+  background: #fff;
+  border-left: 4px solid #fff;
+  box-shadow: 0 1px 1px 0 rgba( 0, 0, 0, 0.1 );
+  margin: 5px 0 15px;
+  padding: 8px 12px 1px 12px;
+}
+
+.intel-notice.notice.notice-error {
+  border-left-color: #dc3232;
+}
+
+.intel-notice.notice.notice-warning {
+  border-left-color: #ffb900;
+}
+
+.intel-notice.notice.notice-success {
+  border-left-color: #46b450;
+}
+
+.intel-notice.notice.notice-info {
+  border-left-color: #00a0d2;
+}
+
+/* initially hide notice, javascript will display it if needed. */
+.intel-notice.ga-embed-error {
+  display: none;
+}
+
 /* hack to hide post-thumbnails set by the absolute value of post->ID */
 /*
 img.attachment-post-thumbnail {

@@ -496,7 +496,7 @@ class Intel_Form  {
 	}
 
 	public static function drupal_retrieve_form($form_id, &$form_state) {
-		$forms = &Intel_Df::drupal_static(__FUNCTION__);
+		$forms = &Intel_Df::drupal_static(__FUNCTION__, array());
 
 		// Record the $form_id.
 		$form_state['build_info']['form_id'] = $form_id;
@@ -508,7 +508,8 @@ class Intel_Form  {
 
 		// We first check to see if there's a function named after the $form_id.
 		// If there is, we simply pass the arguments on to it to get the form.
-		if (!function_exists($form_id)) {
+		//if (!function_exists($form_id)) {
+		if (!is_callable($form_id)) {
 			// In cases where many form_ids need to share a central constructor function,
 			// such as the node editing form, modules can implement hook_forms(). It
 			// maps one or more form_ids to the correct constructor functions.
@@ -810,12 +811,14 @@ class Intel_Form  {
 			// Ensure that modules can rely on #validate being set.
 			$form['#validate'] = array();
 			// Check for a handler specific to $form_id.
-			if (function_exists($form_id . '_validate')) {
+			//if (function_exists($form_id . '_validate')) {
+			if (is_callable($form_id . '_validate')) {
 				$form['#validate'][] = $form_id . '_validate';
 			}
 			// Otherwise check whether this is a shared form and whether there is a
 			// handler for the shared $form_id.
-			elseif (isset($form_state['build_info']['base_form_id']) && function_exists($form_state['build_info']['base_form_id'] . '_validate')) {
+			//elseif (isset($form_state['build_info']['base_form_id']) && function_exists($form_state['build_info']['base_form_id'] . '_validate')) {
+			elseif (isset($form_state['build_info']['base_form_id']) && is_callable($form_state['build_info']['base_form_id'] . '_validate')) {
 				$form['#validate'][] = $form_state['build_info']['base_form_id'] . '_validate';
 			}
 		}
@@ -824,12 +827,15 @@ class Intel_Form  {
 			// Ensure that modules can rely on #submit being set.
 			$form['#submit'] = array();
 			// Check for a handler specific to $form_id.
-			if (function_exists($form_id . '_submit')) {
+			//if (function_exists($form_id . '_submit')) {
+			if (is_callable($form_id . '_submit')) {
 				$form['#submit'][] = $form_id . '_submit';
+
 			}
 			// Otherwise check whether this is a shared form and whether there is a
 			// handler for the shared $form_id.
-			elseif (isset($form_state['build_info']['base_form_id']) && function_exists($form_state['build_info']['base_form_id'] . '_submit')) {
+			//elseif (isset($form_state['build_info']['base_form_id']) && function_exists($form_state['build_info']['base_form_id'] . '_submit')) {
+			elseif (isset($form_state['build_info']['base_form_id']) && is_callable($form_state['build_info']['base_form_id'] . '_submit')) {
 				$form['#submit'][] = $form_state['build_info']['base_form_id'] . '_submit';
 			}
 		}
@@ -844,6 +850,12 @@ class Intel_Form  {
 				$form['#theme'][] = $form_state['build_info']['base_form_id'];
 			}
 		}
+
+		$form['intel_form'] = array(
+			'#type' => 'hidden',
+			'#value' => 1,
+			'#name' => 'intel_form',
+		);
 
 		// Invoke hook_form_alter(), hook_form_BASE_FORM_ID_alter(), and
 		// hook_form_FORM_ID_alter() implementations.
@@ -1040,7 +1052,7 @@ class Intel_Form  {
 		if (!isset($form_state['redirect']) || $form_state['redirect'] !== FALSE) {
 			if (isset($form_state['redirect'])) {
 				if (is_array($form_state['redirect'])) {
-					call_user_func_array('Intel_Df::drupal_goto', $form_state['redirect']);
+					call_user_func('Intel_Df::drupal_goto', $form_state['redirect']);
 				}
 				else {
 					// This function can be called from the installer, which guarantees
@@ -1051,7 +1063,17 @@ class Intel_Form  {
 					$function($form_state['redirect']);
 				}
 			}
-			Intel_Df::drupal_goto(Intel_Df::current_path(), array('query' => Intel_Df::drupal_get_query_parameters()));
+			// if an intel_admin page use Intel_Df::current_path() for default redirect
+			if (intel()->is_intel_admin_page()) {
+				Intel_Df::drupal_goto(Intel_Df::current_path(), array('query' => Intel_Df::drupal_get_query_parameters()));
+			}
+			else {
+				// non intel path, use standard wp_redirect to current page
+				$url = "//" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+				wp_redirect( $url );
+				exit;
+			}
+
 		}
 	}
 
@@ -1266,7 +1288,8 @@ class Intel_Form  {
 				$batch['has_form_submits'] = TRUE;
 			}
 			else {
-				$function($form, $form_state);
+				//$function($form, $form_state);
+				call_user_func_array($function, array(&$form, &$form_state));
 			}
 			$return = TRUE;
 		}
@@ -1588,7 +1611,6 @@ class Intel_Form  {
 				// matches the current user's session.
 				$form_state['invalid_token'] = FALSE;
 				if (isset($element['#token'])) {
-					// if ( isset( $_POST['gadash_security'] ) && wp_verify_nonce( $_POST['gadash_security'], 'gadash_form' ) ) {
 					if (empty($form_state['input']['form_token']) || !wp_verify_nonce( $form_state['input']['form_token'], $element['#token'])) {
 						// Set an early form error to block certain input processing since that
 						// opens the door for CSRF vulnerabilities.
@@ -2000,7 +2022,7 @@ class Intel_Form  {
 	 */
 	public static function form_state_values_clean(&$form_state) {
 		// Remove internal Form API values.
-		unset($form_state['values']['form_id'], $form_state['values']['form_token'], $form_state['values']['form_build_id'], $form_state['values']['op']);
+		unset($form_state['values']['form_id'], $form_state['values']['form_token'], $form_state['values']['form_build_id'], $form_state['values']['op'], $form_state['values']['intel_form']);
 
 		// Remove button values.
 		// form_builder() collects all button elements in a form. We remove the button

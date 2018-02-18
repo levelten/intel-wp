@@ -171,8 +171,6 @@ function intel_admin_setup_start($form, &$form_state) {
     '#markup' => $markup,
   );
 
-  intel_d($f['instructions']);
-
   return $f;
 }
 
@@ -199,271 +197,6 @@ function intel_admin_setup_start_submit($form, &$form_state) {
   if (!in_array('start', $wizard_state['successes'])) {
     $wizard_state['successes'][] = 'start';
   }
-}
-
-function intel_admin_setup_primary_ga_plugin($form, &$form_state) {
-  $f = array();
-
-  $items = array();
-  /*
-  $items[] = '<p>';
-  $items[] = Intel_Df::t('Intelligence requires a compatible Google Analytics Data API plugin.');
-  $l_options = Intel_Df::l_options_add_target('gadwp');
-  $l_options_2 = Intel_Df::l_options_add_target('plugin_admin');
-  $items[] = Intel_Df::t('Please install and activate the !plugin_summary using the !plugin_admin.',
-    array(
-      '!plugin_summary' => Intel_Df::l(Intel_Df::t('Google Analytics Dashboard for WP plugin'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options),
-      '!plugin_admin' => Intel_Df::l(Intel_Df::t('WordPress plugin admin'), 'wp-admin/plugins.php'), $l_options_2,
-    ));
-  $items[] = '</p>';
-
-  $items[] = '<p>';
-  $items[] = Intel_Df::t('Once the plugin is active, click Completed to proceed.');
-  $items[] = '</p>';
-  */
-  header('X-Frame-Options: GOFORIT');
-  header_remove('X-Frame-Options');
-  $items[] = '<p>';
-  $items[] = Intel_Df::t('Intelligence integrates Google Analytics reporting and data directly into your site.');
-  $items[] = Intel_Df::t('The Google Analytics Dashboard for WP plugin provides a convenient method to connect to Google data (as well as managing base GA tracking).');
-  $items[] = Intel_Df::t('Please install and activate the Google Analytics Dashboard for WP plugin.');
-  $items[] = '<br><br>';
-
-  include_once ABSPATH . '/wp-admin/includes/plugin-install.php';
-  //include_url( 'includes/plugin-install.php');
-  $args = array(
-    'slug' => 'google-analytics-dashboard-for-wp'
-  );
-  $plugin = plugins_api( 'plugin_information', $args );
-
-  $l_options = Intel_Df::l_options_add_class('btn btn-info');
-  if ( is_wp_error( $plugin ) ) {
-    Intel_Df::drupal_set_message(Intel_Df::t('Error fetching plugin info:') . ' ' .  $plugin->get_error_message(), 'warning');
-
-    // instructions for manually installing plugin
-    $l_options = Intel_Df::l_options_add_target('gadwp', $l_options);
-    $items[] = '<label>' . Intel_Df::t('First') . '</label><br>';
-    $items[] = Intel_Df::l(Intel_Df::t('Download Google Analytics Dashboard for WP plugin'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options);
-
-    $l_options = Intel_Df::l_options_add_class('btn btn-info');
-    $l_options = Intel_Df::l_options_add_target('plugin-admin', $l_options);
-    $items[] = '<br><br><label>' . Intel_Df::t('Then') . '</label><br>';
-    $items[] = Intel_Df::l(Intel_Df::t('Activate plugin using WP plugin admin'), 'wp-admin/plugins.php', $l_options);
-    $items[] = '</p>';
-  }
-  else {
-    wp_enqueue_script( 'plugin-install' );
-    wp_enqueue_script( 'updates' );
-
-    $status = install_plugin_install_status( $plugin );
-
-    $items[] = '<label>' . Intel_Df::t('First') . '</label><br>';
-    $l_options['attributes']['data-slug'] = esc_attr($plugin->slug);
-    $l_options['attributes']['data-name'] = esc_attr( $plugin->name );
-    $install_link = '';
-    switch ( $status['status'] ) {
-      case 'install':
-        if ($status['url']) {
-          // '<a class="install-now button" data-slug="' . esc_attr( $plugin['slug'] ) . '" href="' . esc_url( $status['url'] ) . '" aria-label="' . esc_attr( sprintf( __( 'Install %s now' ), $name ) ) . '" data-name="' . esc_attr( $name ) . '">' . __( 'Install Now' ) . '</a>';
-          $l_options['attributes']['class'][] = 'install-now';
-          $l_options['attributes']['aria-label'] = esc_attr(sprintf(__('Install %s now'), $plugin->name));
-          $l_options['attributes']['data-name'] = esc_attr($plugin->name);
-          $install_link = Intel_Df::l(Intel_Df::t('Install Google Analytics Dashboard for WP plugin'), $status['url'], $l_options);
-        }
-        break;
-
-      case 'update_available':
-        if ($status['url']) {
-          // '<a class="update-now button aria-button-if-js" data-plugin="' . esc_attr( $status['file'] ) . '" data-slug="' . esc_attr( $plugin['slug'] ) . '" href="' . esc_url( $status['url'] ) . '" aria-label="' . esc_attr( sprintf( __( 'Update %s now' ), $name ) ) . '" data-name="' . esc_attr( $name ) . '">' . __( 'Update Now' ) . '</a>';
-          $l_options['attributes']['class'][] = 'update-now button aria-button-if-js';
-          $l_options['attributes']['data-plugin'] = esc_attr($status['file']);
-          $l_options['attributes']['aria-label'] = esc_attr(sprintf(__('Update %s now'), $plugin->name));
-          $install_link = Intel_Df::l(Intel_Df::t('Update Google Analytics Dashboard for WP plugin'), $status['url'], $l_options);
-        }
-        break;
-
-      case 'latest_installed':
-      case 'newer_installed':
-      if ( is_plugin_active( $status['file'] ) ) {
-        $l_options = Intel_Df::l_options_add_class('btn btn-info');
-        $install_link = '<span class="btn btn-success">' . Intel_Df::t('Done! Google Analytics Dashboard for WP plugin is active') . '</span>';
-      } elseif ( current_user_can( 'activate_plugins' ) ) {
-          $button_text = __('Activate');
-          /* translators: %s: Plugin name */
-          $l_options['attributes']['aria-label'] = _x('Activate %s', 'plugin');
-          $activate_url = add_query_arg(array(
-            '_wpnonce' => wp_create_nonce('activate-plugin_' . $status['file']),
-            'action' => 'activate',
-            'plugin' => $status['file'],
-          ), network_admin_url('plugins.php'));
-
-          if (is_network_admin()) {
-            $button_text = __('Network Activate');
-            /* translators: %s: Plugin name */
-            $l_options['attributes']['aria-label'] = _x('Network Activate %s', 'plugin');
-            $activate_url = add_query_arg(array('networkwide' => 1), $activate_url);
-          }
-
-        $install_link = Intel_Df::l(Intel_Df::t($button_text . ' ' . 'Google Analytics Dashboard for WP plugin'), $activate_url, $l_options);
-
-        }
-        break;
-    }
-
-    $l_options = Intel_Df::l_options_add_target('gadwp');
-    $items[] = $install_link . ' &nbsp ' . Intel_Df::l(Intel_Df::t('Plugin details'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options);
-    /*
-    $vars = array(
-      'class' => array(
-        'plugin-action-buttons'
-      ),
-      'items' => array(
-        $install_link,
-        Intel_Df::l(Intel_Df::t('More details'), 'https://wordpress.org/plugins/google-analytics-dashboard-for-wp/', $l_options),
-      )
-    );
-    $action_links = Intel_Df::theme('item_list', $vars);
-
-    $item = Intel_Df::theme('item_list', $vars);
-    $card = '<div class="plugin-card plugin-card-' . esc_attr($plugin->slug) . '">';
-    $card .= '  <div class="plugin-card-top">';
-    $card .= '    <div class="name column-name">';
-    $card .= '      <h3>' . $plugin->name . '</h3>';
-    $card .= '    </div>';
-    $card .= '    <div class="action-links">';
-    $card .= '      <h3>' . $action_links . '</h3>';
-    $card .= '    </div>';
-    $card .= '  </div>';
-    $card .= '</div>';
-    $items[] = $card;
-    //$items[] = '<div id="plugin-filter"><div class="plugin-card plugin-card-' . esc_attr($plugin->slug) . '">' . $item . '</div></div>';
-    //$items[] = '<div id="plugin-filter"><div class="plugin-card plugin-card-' . esc_attr($plugin->slug) . '">' . $item . '</div></div>';
-    */
-  }
-
-  $f['instructions'] = array(
-    '#type' => 'markup',
-    '#markup' => implode(' ', $items),
-  );
-
-  return $f;
-}
-
-function intel_admin_setup_primary_ga_plugin_check($form, &$form_state) {
-  include_once INTEL_DIR . 'includes/intel.ga.inc';
-
-  $status = array();
-
-  // check dependencies
-  // verify if gadwp exists
-  /*
-  $ga_data_source = intel_ga_data_source();
-  if ($ga_data_source) {
-    $status['success'] = 1;
-  }
-  else {
-  */
-    if (intel_is_plugin_active( 'gadwp' ) ) {
-      $status['success'] = 1;
-    }
-    else {
-      $status['error_msg'] = Intel_Df::t('Google Analytics Dashboard for WP has not been activated.');
-      $status['error_msg'] .= ' ' . Intel_Df::t('Please install and activate before proceeding.');
-    }
-  //}
-
-  return $status;
-}
-
-function intel_admin_setup_primary_ga_plugin_validate($form, &$form_state, $status) {
-  if (!empty($status['error_msg'])) {
-    Intel_Form::form_set_error('none', $status['error_msg']);
-  }
-}
-
-function intel_admin_setup_primary_ga_profile($form, &$form_state) {
-  $f = array();
-
-  $items = array();
-  $items[] = '<p>';
-  $l_options = array(
-    'attributes' => array(
-      'target' => 'gadwp',
-    ),
-  );
-  $items[] = Intel_Df::t('To enable your site to access Google data complete the Google Analytics Dashboard For WP setup.');
-  $items[] = Intel_Df::t('Be sure to complete the Plugin Authorization and Select View configuration.');
-  $items[] = '</p>';
-
-  $l_options = Intel_Df::l_options_add_class('btn btn-info');
-  $l_options = Intel_Df::l_options_add_target('gadwp-admin', $l_options);
-  $items[] = '<br><label>' . Intel_Df::t('First') . '</label><br>';
-  $items[] = Intel_Df::l(Intel_Df::t('Complete Google Analytics Dashboard For WP setup'), 'wp-admin/admin.php?page=gadash_settings', $l_options);
-
-  //$items[] = '<p>';
-  //$items[] = Intel_Df::t('Once you have set the primary GA profile, click Completed to proceed.');
-  //$items[] = '</p>';
-
-  $f['instructions'] = array(
-    '#type' => 'markup',
-    '#markup' => implode(' ', $items),
-  );
-
-  return $f;
-}
-
-function intel_admin_setup_primary_ga_profile_check($form, &$form_state) {
-  include_once INTEL_DIR . 'includes/intel.ga.inc';
-  //include_once INTEL_DIR . 'includes/class-intel-gapi.php';
-
-  $status = array();
-
-  // check if gadwp ga authorization is complete
-  $gadwp = GADWP();
-  if (empty($gadwp->config->options['ga_dash_token'])) {
-    $status['error_msg'] = Intel_Df::t('Plugin Google Analytics API authorization is not complete.');
-    $status['error_msg'] .= Intel_Df::t('Please complete the Google Analytics Dashboard For WP setup.');
-    return $status;
-  }
-
-  if ( null === $gadwp->gapi_controller ) {
-    $gadwp->gapi_controller = new GADWP_GAPI_Controller();
-  }
-
-  $gadwp_admin_l_options = Intel_Df::l_options_add_destination('ga');
-  $ga_profiles = intel_fetch_ga_profiles();
-  if (empty($ga_profiles)) {
-    $status['error_msg'] = Intel_Df::t('Unable to retrieve profile list from Google Analytics.');
-    $status['error_msg'] .= Intel_Df::t('Please complete the Google Analytics Dashboard For WP setup.');
-    return $status;
-  }
-
-  $ga_profile_base = intel_get_base_plugin_ga_profile('gadwp');
-
-  if (empty($ga_profile_base)) {
-    $status['error_msg'] = Intel_Df::t('View not selected in Google Analytics Dashboard For WP.');
-    $status['error_msg'] .= Intel_Df::t('Please set the Select View in !link.', array(
-      '!link' => Intel_Df::l(Intel_Df::t('Google Analytics Settings'), 'wp-admin/admin.php?page=gadash_settings', $gadwp_admin_l_options),
-    ));
-  }
-
-  $status['success'] = 1;
-
-  $form_state['gadwp'] = $gadwp;
-  $form_state['intel_ga_profiles'] = $ga_profiles;
-
-  return $status;
-}
-
-function intel_admin_setup_primary_ga_profile_validate($form, &$form_state, $status) {
-  if (!empty($status['error_msg'])) {
-    Intel_Form::form_set_error('none', $status['error_msg']);
-  }
-}
-
-function intel_admin_setup_primary_ga_profile_submit($form, &$form_state) {
-  update_option('intel_ga_data_source', 'gadwp');
-  intel_get_base_plugin_ga_profile();
 }
 
 function intel_admin_setup_base_ga($form, &$form_state) {
@@ -532,7 +265,16 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     $l_options['attributes']['disabled'] = 'disabled';
   }
   $items[] = '<br><label>' . Intel_Df::t('Then') . '</label><br>';
-  $items[] = Intel_Df::l(Intel_Df::t('Complete GADWP setup'), 'wp-admin/admin.php?page=gadash_settings', $l_options);
+
+  $gadwp = GADWP();
+
+  // gadwp migrated admin page name
+  $page = 'gadwp_settings';
+  if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
+    $page = 'gadash_settings';
+  }
+
+  $items[] = Intel_Df::l(Intel_Df::t('Complete GADWP setup'), 'wp-admin/admin.php?page=' . $page, $l_options);
 
 
 
@@ -566,7 +308,6 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
   include_once INTEL_DIR . 'includes/intel.ga.inc';
 
   $status = array();
-
   // check dependencies
   // verify if gadwp exists
   /*
@@ -626,6 +367,8 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
 
   $form_state['gadwp'] = $gadwp;
   $form_state['intel_ga_profiles'] = $ga_profiles;
+
+
 
   return $status;
 }
@@ -824,7 +567,6 @@ function intel_admin_setup_intel_profile_check($form, &$form_state) {
   else {
     $status['error_msg'] = Intel_Df::t('Unable to connect to Intelligence API with given credentials. Please verify that your Tracking id and API key are correct.');
   }
-
 
   return $status;
 }
@@ -2373,7 +2115,6 @@ function intel_admin_setup_form_settings($form, &$form_state) {
     '#markup' => $markup,
   );
 
-  //intel_d($form_type_forms_info);
   foreach ($form_data as $form_type => $form_type_data) {
     foreach ($form_type_data as $form_id => $data) {
 

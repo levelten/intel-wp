@@ -2181,18 +2181,41 @@ function intel_verify_apikey(&$message = '', &$property = array(), $options = ar
   }
 }
 
+/**
+ * Returns if Intelligence plugin is installed and setup.
+ *
+ * @param string|null $level
+ *   Specifies the level of setup to check is completed.
+ *   Levels are:
+ *   - 'active': If the plugin is active in WordPress
+ *   - 'min': Connected to Intelligence API
+ *   - 'setup': All setup steps have been completed
+ *   - 'ga_data': Google Analytics data source has been setup. This step can be
+ *     skipped during the setup process.
+ *
+ * @return array|bool
+ */
 function intel_is_installed($level = 'min') {
   $levels = &Intel_Df::drupal_static( __FUNCTION__, NULL);
 
   if (!isset($levels)) {
     $setup_state = get_option('intel_wizard_intel_setup_state', array());
     $ga_data_source = intel_ga_data_source();
+    $ga_data = !empty($ga_data_source);
+    if ($ga_data_source == 'gadwp' ) {
+      if (!is_callable('GADWP')) {
+        $ga_data = 0;
+      }
+      else {
+        $gadwp = GADWP();
+        $ga_data = !empty($gadwp->config->options['ga_dash_token']);
+      }
+    }
     $api_level = intel_api_level();
     $levels = array(
       'active' => 1,
-      'ga_data' => !empty($ga_data_source),
-      //'ga_data' => !empty(intel_ga_data_source()),
       'min' => !empty($api_level),
+      'ga_data' => $ga_data,
       'setup' => !empty($setup_state['completed']),
     );
   }
@@ -3466,6 +3489,8 @@ function intel_is_intel_script_enabled($name) {
   return !empty($info['enabled']) ? 1 : 0;
 }
 
+
+
 add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
 /**
  * Plugin path info keyed by plugin_un
@@ -4157,9 +4182,9 @@ if ( !function_exists( 'intel_d' ) ) {
 }
 
 /**
- * Implements hook_theme().
+ * Implements hook_theme_info().
  */
-function intel_theme($themes = array()) {
+function intel_theme_info($themes = array()) {
   //$themes = array();
   $themes['intel_page'] = array(
     'variables' => array(
@@ -4387,7 +4412,35 @@ function intel_theme($themes = array()) {
     'file' => 'intel.pages.inc',
   );
 
-
+  $themes['wp_screen'] = array(
+    'variables' => array(
+      'title' => NULL,
+      'content' => NULL,
+      'help_tab' => array(),
+    ),
+    'callback' => 'theme_wp_screen',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['wp_notice'] = array(
+    'variables' => array(
+      'message' => NULL,
+      'type' => NULL,
+      'inline' => NULL,
+    ),
+    'callback' => 'theme_wp_notice',
+    'file' => 'intel.pages.inc',
+  );
+  $themes['wp_welcome_panel'] = array(
+    'variables' => array(
+      'title' => NULL,
+      'description' => NULL,
+      'body' => NULL,
+      'panel_header' => NULL,
+      'panel_footer' => NULL,
+    ),
+    'callback' => 'theme_wp_welcome_panel',
+    'file' => 'intel.pages.inc',
+  );
 
   return $themes;
 }
@@ -4557,6 +4610,8 @@ function intel_form_shortcode($vars) {
   }
 }
 
+
+
 function intel_form_shortcode_get_form($form_id, $vars) {
   $forms = &Intel_Df::drupal_static( __FUNCTION__, array());
 
@@ -4617,15 +4672,17 @@ function intel_form_shortcode_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-if(!is_admin() && !empty($_POST)){} {
-  add_action('init', 'intel_form_shortcode_post');
-  function intel_form_shortcode_post() {
-    // check if a intel_form was submitted
-    if (!empty($_POST['form_id']) && !empty($_POST['form_build_id']) && !empty($_POST['form_shortcode'])) {
-      $vars = $_POST['form_shortcode'];
-      $vars = stripcslashes($vars);
-      $vars = json_decode($vars, 1);
-      $form = intel_form_shortcode_get_form($_POST['form_id'], $vars);
+if(!empty($_POST)) {
+  if (!is_admin()) {
+    add_action('init', 'intel_form_shortcode_post');
+    function intel_form_shortcode_post() {
+      // check if a intel_form was submitted
+      if (!empty($_REQUEST['intel_form']) && !empty($_POST['form_shortcode'])) {
+        $vars = $_POST['form_shortcode'];
+        $vars = stripcslashes($vars);
+        $vars = json_decode($vars, 1);
+        $form = intel_form_shortcode_get_form($_POST['form_id'], $vars);
+      }
     }
   }
 }
@@ -4735,7 +4792,7 @@ function intel_wp_config_option($value, $name) {
     // re-encode json for return value
     $value = json_encode($value);
   }
-  elseif (!empty($intel_wp_config_options[$name])) {
+  elseif (isset($intel_wp_config_options[$name])) {
     $value = $intel_wp_config_options[$name];
   }
   return $value;

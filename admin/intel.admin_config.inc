@@ -91,9 +91,13 @@ function intel_admin_settings($form, &$form_state) {
     $link_options = array(
 
     );
+    $page = 'gadash_settings';
+    if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '>=')) {
+      $page = 'gadwp_settings';
+    }
     $desc .= ' ' . Intel_Df::t('This should be a seperate property than the primary tracking id set in the !link', array(
-        '!link' => Intel_Df::l( Intel_Df::t('Google Analytics Dashboard for WP plugin'), '/wp-admin/admin.php?page=gadash_settings'),
-      ));
+      '!link' => Intel_Df::l( Intel_Df::t('Google Analytics Dashboard for WP plugin'), '/wp-admin/admin.php?page=' . $page),
+    ));
   }
 
   /*

@@ -125,6 +125,32 @@ class Intel_Admin {
 		wp_localize_script('intel_admin_js_bootstrap_hack', 'intel_admin_settings', $data);
 	}
 
+	public function admin_init() {
+		if (!empty($_POST['intel_form'])) {
+			$vars = !empty($_POST['form_options']) ? $_POST['form_options'] : '{}';
+			$vars = stripcslashes($vars);
+			$vars = json_decode($vars, 1);
+			$form = $this->admin_init_get_form($_POST['form_id'], $vars);
+		}
+	}
+
+	function admin_init_get_form($form_id, $options) {
+		$forms = &Intel_Df::drupal_static( __FUNCTION__, array());
+
+		if (isset($forms[$form_id])) {
+			return $forms[$form_id];
+		}
+
+		if (is_callable($form_id)) {
+			include_once(INTEL_DIR . 'includes/class-intel-form.php');
+			$forms[$form_id] = Intel_Form::drupal_get_form($form_id, $options);
+		}
+		else {
+			$forms[$form_id] = FALSE;
+		}
+		return $forms[$form_id];
+	}
+
 	// buffer page output incase we need to do a redirect
 	public static function ob_callback($buffer) {
 		return $buffer;
@@ -166,7 +192,7 @@ class Intel_Admin {
 
 
 		if ( current_user_can( 'manage_options' ) ) {
-			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), version_compare( $wp_version, '3.8.0', '>=' ) ? 'dashicons-analytics' : GADWP_URL . 'admin/images/gadash-icon.png' );
+			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
 			//add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
@@ -200,32 +226,7 @@ class Intel_Admin {
 		$intel = intel();
 		$menu_info = $intel->menu_info();
 
-
-		/*
-		$util_menu_info = array();
-		foreach ($menu_info as $k => $v) {
-			if ($v['key_args'][1] == 'util') {
-				$util_menu_info[$k] = $v;
-			}
-		}
-
-		//intel_d($menu_info);
-		intel_d($util_menu_info);
-		*/
-
 		uasort($menu_info, array($this, 'sort_menu_info_weight'));
-
-		/*
-		$util_menu_info = array();
-		foreach ($menu_info as $k => $v) {
-			if ($v['key_args'][1] == 'util') {
-				$util_menu_info[$k] = $v;
-			}
-		}
-
-		//intel_d($menu_info);
-		intel_d($util_menu_info);
-		*/
 
 		$install_levels = intel_is_installed('all');
 		$install_access_error = 0;

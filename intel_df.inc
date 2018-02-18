@@ -7,7 +7,7 @@
 /**
  * Implements hook_theme().
  */
-function intel_df_theme($themes = array()) {
+function intel_df_theme_info($themes = array()) {
   //$themes = array();
   $themes['markup'] = array(
     'render element' => 'element',
@@ -139,7 +139,7 @@ function intel_df_theme($themes = array()) {
   return $themes;
 }
 
-add_filter('intel_element_info', 'intel_df_element_info');
+
 /**
  * Implements hook_element_info().
  */
@@ -372,9 +372,11 @@ function intel_df_element_info($types) {
 
   return $types;
 }
+// Regsiter hook_intel_element_info()
+add_filter('intel_element_info', 'intel_df_element_info');
 
-add_filter('intel_url_urn_resovler', 'intel_url_urn_resovler');
-function intel_url_urn_resovler($vars) {
+add_filter('intel_url_urn_resolver', 'intel_url_urn_resolver');
+function intel_url_urn_resolver($vars) {
   $urn_elms = explode(':', $vars['path']);
   if ($urn_elms[0] == 'urn') {
     array_shift($urn_elms);

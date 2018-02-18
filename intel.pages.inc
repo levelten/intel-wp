@@ -1004,3 +1004,120 @@ function template_process_intel_trafficsource_block(&$variables) {
   $variables['attributes']['class'][] = 'trafficsource';
   $variables['attributes'] = Intel_Df::drupal_attributes($variables['attributes']);
 }
+
+function theme_wp_screen(&$vars) {
+  global $intel_wp_screen;
+
+  $screen = get_current_screen();
+
+  $intel_wp_screen = (object) array(
+    'id' => !empty($vars['screen_id']) ? $vars['screen_id'] : $screen->id,
+    'variables' => $vars,
+  );
+
+  $output = '';
+  $class = 'wrap intel-wp-screen';
+  if (!empty($vars['class'])) {
+    $class .= ' ' . implode(' ', $vars['class']);
+  }
+
+  $output .= '<div class="' . $class . '">';
+
+  if (isset($vars['title'])) {
+    $output .= '<h1>' . $vars['title'] . '</h1>';
+  }
+
+  if (isset($vars['content'])) {
+    $output .= $vars['content'];
+  }
+
+  $output .= '</div>';
+
+  return $output;
+}
+
+function template_preprocess_wp_notice(&$vars) {
+  $type = !empty($vars['type']) ? $vars['type'] : 'error';
+  $class = array(
+    'intel-notice',
+    'notice',
+    'notice-' . $type,
+  );
+  if (!empty($vars['inline'])) {
+    $class[] = "inline";
+  }
+
+  if (!empty($vars['class']) && is_array($vars['class'])) {
+    $class = array_merge($class, $vars['class']);
+  }
+
+  $vars['class'] = $class;
+}
+
+function theme_wp_notice(&$vars) {
+  $notice_class = implode(' ', $vars['class']);
+
+  $output = '';
+  $output .= '<div class="' . $notice_class . '">';
+  $output .= '<p>';
+  $output .= '<strong>' . __('Notice:') . '</strong> ';
+  $output .= $vars['message'];
+  $output .= '</p>';
+  $output .= '</div>';
+
+  return $output;
+}
+
+function theme_wp_welcome_panel(&$vars) {
+  $output = '';
+  $class = 'welcome-panel intel-wp-welcome-panel';
+  if (!empty($vars['class'])) {
+    $class .= ' ' . implode(' ', $vars['class']);
+  }
+  $output .= '<div id="welcome-panel" class="' . $class . '">';
+
+  if (isset($vars['panel_header'])) {
+    $output .= $vars['panel_header'];
+  }
+
+  $output .= '<div class="welcome-panel-content">';
+
+  if (isset($vars['title'])) {
+    $output .= '<h2 class="title">' . $vars['title'] . '</h2>';
+  }
+
+  if (isset($vars['description'])) {
+    $output .= '<div class="about-description">' . $vars['description'] . '</div>';
+  }
+
+  if (isset($vars['body'])) {
+    $output .= '<div class="welcome-panel-column-container">';
+    if (is_array($vars['body'])) {
+      foreach ($vars['body'] as $cnt => $content) {
+        $class = 'welcome-panel-column-container';
+        if ($cnt == (count($content) - 1)) {
+          $class .= ' welcome-panel-last';
+        }
+        $output .= '<div class="' . $class . '">';
+        $output .= $content;
+        $output .= '</div>'; // end div.welcome-panel-column-container
+      }
+    }
+    else {
+      $output .= $vars['body'];
+    }
+
+    $output .= '</div>'; // end div.welcome-panel-column-container
+
+  }
+
+  $output .= '</div>'; // end div.welcome-panel-content
+
+  if (isset($vars['panel_footer'])) {
+    $output .= $vars['panel_footer'];
+  }
+
+  $output .= '</div>'; // end div#welcome-panel
+
+  return $output;
+}
