@@ -116,41 +116,112 @@ function intel_help_demo_page() {
   $demo_mode = get_option('intel_demo_mode', 0);
   $demo_settings = get_option('intel_demo_settings', array());
 
-  if (empty($demo_mode)) {
-    $msg = Intel_Df::t('Demo is currently disabled. Go to demo settings to enable.');
-    Intel_Df::drupal_set_message($msg, 'warning');
+  $imapi_host = intel_get_imapi_url('host');
+
+  $ga_tid = get_option('intel_ga_tid', '');
+
+  // current user is tracking is excluded notice
+  if (is_callable('intel_is_current_user_tracking_excluded') && intel_is_current_user_tracking_excluded()) {
+    $notice_vars = array(
+      'inline' => 1,
+      'type' => 'warning',
+    );
+    $notice_vars['message'] = Intel_Df::t('Your user role is set to be excluded from tracking.');
+    $notice_vars['message'] .= ' ' . Intel_Df::t('You can test tracking on Intelligence demo pages but any interactions on non demo pages will not be tracked.');
+
+    $output .= '<div class="alert alert-info">' . $notice_vars['message'] . '</div>';
   }
+
+
+  $output .= '<div class="card">';
+  $output .= '<div class="card-block clearfix">';
 
   $output .= '<p class="lead">';
   $output .= Intel_Df::t('This demo generates a small website using spoofed pages enabling you to explore how Intelligence works.');
   //$output .= ' ' . Intel_Df::t('This tutorial will walk you through the essentials of extending Google Analytics using Intelligence to create results oriented analytics.');
   $output .= '</p>';
 
+  /*
   $l_options = Intel_Df::l_options_add_class('btn btn-info');
   $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path(), $l_options);
   $output .= Intel_Df::l( Intel_Df::t('Demo settings'), 'admin/config/intel/settings/general/demo', $l_options) . '<br><br>';
+  */
+
+  $output .= '<div class="row">';
+  $output .= '<div class="col-md-6">';
+  $output .= '<p>';
+  $output .= '<h3>' . Intel_Df::t('First') . '</h3>';
+  $output .= Intel_Df::t('Launch Google Analytics to see interactions in real-time:');
+  $output .= '</p>';
+
+  $output .= '<div>';
+  $l_options = Intel_Df::l_options_add_target('ga');
+  $l_options = Intel_Df::l_options_add_class('btn btn-info m-b-_5', $l_options);
+  $url = 	$url = intel_get_ga_report_url('rt_event');
+  $output .= Intel_Df::l( Intel_Df::t('View real-time events'), $url, $l_options);
+
+  $output .= '<br>';
 
   $l_options = Intel_Df::l_options_add_target('ga');
-  $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
-  $url = "https://analytics.google.com/analytics/web/#realtime/rt-overview/" . intel_get_ga_profile_slug() . "/%3Fmetric.type%3D5/";
-  $output .= Intel_Df::l( Intel_Df::t('Google Analytics real-time reports'), $url, $l_options) . '<br><br>';
+  $l_options = Intel_Df::l_options_add_class('btn btn-info m-b-_5', $l_options);
+  $url = 	$url = intel_get_ga_report_url('rt_goal');
+  $output .= Intel_Df::l( Intel_Df::t('View real-time conversion goals'), $url, $l_options);
+  $output .= '</div>';
 
-  $imapi_host = intel_get_imapi_url('host');
+  $output .= '</div>'; // end col-x-6
+  $output .= '<div class="col-md-6">';
 
-  $ga_tid = get_option('intel_ga_tid', '');
+  $output .= '<p>';
+  $output .= '<h3>' . Intel_Df::t('Next') . '</h3>';
+  $output .= Intel_Df::t('Go to the demo site and interact with elements such as links and forms:');
+  $output .= '</p>';
 
+  $output .= '<div>';
+
+  $l_options = Intel_Df::l_options_add_target('intel_demo');
+  $l_options = Intel_Df::l_options_add_class('btn btn-info m-b-_5', $l_options);
+  $output .= Intel_Df::l(Intel_Df::t('Demo home page'), 'intelligence/demo', $l_options);
+
+  $output .= '<br>';
 
   $imapi_url_obj = intel_get_imapi_url('obj');
   $imapi_url_obj['path'] = '/property/' . $ga_tid . '/demo';
 
-  $l_options = Intel_Df::l_options_add_target('dr');
-  $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
+  $l_options = Intel_Df::l_options_add_target('intel_demo_referrer');
+  $l_options = Intel_Df::l_options_add_class('btn btn-info m-b-_5', $l_options);
   $l_options = Intel_Df::l_options_add_query(array('base_urlpath' => intel()->base_url . intel()->base_path_front), $l_options);
-  $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), http_build_url($imapi_url_obj), $l_options) . '<br><br>';
+  $output .= Intel_Df::l( Intel_Df::t('Demo referrers page'), http_build_url($imapi_url_obj), $l_options);
 
-  $l_options = Intel_Df::l_options_add_target('wpd');
-  $l_options = Intel_Df::l_options_add_class('btn btn-info', $l_options);
-  $output .= Intel_Df::l(Intel_Df::t('Demo Home Page'), 'intelligence/demo', $l_options);
+
+
+  $output .= '</div>';
+
+  $output .= '</div>'; // end col-x-6
+  $output .= '</div>'; // end row
+
+  $output .= '</div>'; // end card-block
+  $output .= '</div>'; // end card
+
+  // Demo mode alert
+  $notice_vars = array(
+    'inline' => 1,
+    'type' => 'info',
+  );
+  $mode = $demo_mode ? __('enabled') : __('disabled');
+  $notice_vars['message'] = Intel_Df::t('Demo pages for anonymous users are currently ') . '<strong>' . $mode . '</strong>.';
+  $l_options = Intel_Df::l_options_add_class('btn btn-default');
+  $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path(), $l_options);
+  $notice_vars['message'] .= ' ' . Intel_Df::l( Intel_Df::t('Change demo settings'), 'admin/config/intel/settings/general/demo', $l_options);
+
+  //$output .= Intel_Df::theme('wp_notice', $notice_vars);
+
+  //$output .= '<div class="alert alert-default">' . $notice_vars['message'] . '</div>';
+
+  $output .= '<div class="card">';
+  $output .= '<div class="card-block clearfix">';
+  $output .= $notice_vars['message'];
+  $output .= '</div>'; // end card-block
+  $output .= '</div>'; // end card
 
   //$output .= '<br><br>' . Intel_Df::l(Intel_Df::t('Demo Blog Post A'), 'intelligence/demo/blog/alpha');
 

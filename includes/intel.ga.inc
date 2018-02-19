@@ -4022,12 +4022,30 @@ function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1
   }
 }
 
-function intel_ga_data_source() {
-  static $source;
-  if (empty($source)) {
-    $source = get_option('intel_ga_data_source', '');
+function intel_ga_data_source($check_connected = 0) {
+  $ga_data_source = get_option('intel_ga_data_source', '');
+  if (!$check_connected) {
+    return $ga_data_source;
   }
-  return $source;
+
+  if (empty($ga_data_source)) {
+    return FALSE;
+  }
+
+  if ($ga_data_source == 'gadwp') {
+    if (!is_callable('GADWP')) {
+      return FALSE;
+    }
+    $gadwp = GADWP();
+    if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
+      return !empty($gadwp->config->options['ga_dash_token']) ? $ga_data_source : FALSE;
+    }
+    else {
+      return !empty($gadwp->config->options['token']) ? $ga_data_source : FALSE;
+    }
+  }
+
+  return $ga_data_source;
 }
 
 function intel_ga_api_data($request = array(), $cache_options = array()) {
@@ -4844,10 +4862,24 @@ function intel_get_base_plugin_ga_profile($ga_data_source = '') {
   if (empty($ga_data_source)) {
     return FALSE;
   }
-  if ($ga_data_source == 'gadwp' && (!is_callable('GADWP') || empty(GADWP()->config->options['ga_dash_profile_list']))) {
+
+  if ($ga_data_source == 'gadwp' && !is_callable('GADWP')) {
     return FALSE;
   }
-  $profile = GADWP_Tools::get_selected_profile( GADWP()->config->options['ga_dash_profile_list'], GADWP()->config->options['ga_dash_tableid_jail'] );
+
+  if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
+    $ga_profile_list = !empty(GADWP()->config->options['ga_dash_profile_list']) ? GADWP()->config->options['ga_dash_profile_list'] : array();
+    $tableid_jail = !empty(GADWP()->config->options['ga_dash_tableid_jail']) ? GADWP()->config->options['ga_dash_tableid_jail'] : '';
+  }
+  else {
+    $ga_profile_list = !empty(GADWP()->config->options['ga_profiles_list']) ? GADWP()->config->options['ga_profiles_list'] : array();
+    $tableid_jail = !empty(GADWP()->config->options['tableid_jail']) ? GADWP()->config->options['tableid_jail'] : '';
+  }
+  if (empty($ga_profile_list)) {
+    return FALSE;
+  }
+
+  $profile = GADWP_Tools::get_selected_profile( $ga_profile_list, $tableid_jail );
   $ga_profile_base = array(
     'name' => $profile[0],
     'id' => $profile[1],

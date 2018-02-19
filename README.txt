@@ -92,6 +92,12 @@ For installation instructions, visit [intelligencewp.com/docs/installation](http
 * Added system API
 * Extended database update system to support addon plugins
 
+= 1.2.8 =
+* Extended demo api to enable feature level demos
+* Better support for addon menu items
+* Support for GADWP 5.2+
+* wp_screen, wp_notice & wp_welcome_panel theme elements
+
 == Upgrade Notice ==
 
 = 1.0.0 =
