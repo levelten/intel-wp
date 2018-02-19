@@ -5001,4 +5001,20 @@ function intel_uninstall_plugin($plugin_un) {
   intel_uninstall_updates($plugin_un);
 }
 
+function intel_is_current_user_tracking_excluded() {
+  $user = wp_get_current_user();
+
+  $tracking_exclude_roles = get_option('intel_tracking_exclude_role', array('administrator' => 'administrator'));
+
+  if (!empty($user->roles) && is_array($user->roles)) {
+    foreach ($user->roles AS $i => $role) {
+      if (!empty($tracking_exclude_roles[$role])) {
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
 

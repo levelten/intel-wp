@@ -48,6 +48,9 @@ function intel_admin_demo_settings($form, &$form_state, $options = array()) {
 
   $posts_settings = !empty($demo_settings['posts']) ? $demo_settings['posts'] : array();
   foreach ($posts as $id => $post) {
+    if (isset($post->intel_demo['overridable']) && !$post->intel_demo['overridable']) {
+      continue;
+    }
     $post_settings = !empty($posts_settings[$id]) ? $posts_settings[$id] : array();
     $fieldset_key = 'posts_' . $id;
     $form['posts'][$fieldset_key] = array(

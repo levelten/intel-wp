@@ -632,7 +632,10 @@ function intel_demo_posts($options = array()) {
         $p = (array)$p;
       }
       $posts[$i] = ($p + $post_defaults);
-      if (!empty($demo_settings['posts'][$i]) && is_array($demo_settings['posts'][$i])) {
+      if (
+        (!isset($p['intel_demo']['overridable']) || $p['intel_demo']['overridable'])
+        && !empty($demo_settings['posts'][$i]) && is_array($demo_settings['posts'][$i])
+      ) {
         $posts[$i] = $demo_settings['posts'][$i] + $posts[$i];
       }
       $posts[$i] = (object)$posts[$i];
@@ -735,14 +738,17 @@ function intel_demo_the_posts($posts){
     $post_count = count($posts_data);
 
     // GA tracking code embed
+    $parse_url = Intel_Df::drupal_parse_url($_SERVER['REQUEST_URI']);
     $intel_embed_ga_tracking_code = get_option('intel_embed_ga_tracking_code', '');
     if (!empty($_GET['action'])) {
       if ($_GET['action'] == 'intel_embed_ga_tracking_code') {
         if (current_user_can('admin intel') && !empty($_GET['nonce']) && wp_verify_nonce( $_GET['nonce'], 'intel_embed_ga_tracking_code' )) {
           update_option('intel_embed_ga_tracking_code', 'analytics');
-          $l_options = Intel_Df::l_options_add_query(array('action' => 'intel_embed_ga_tracking_code_enabled'));
-          $uri = explode('?', $_SERVER['REQUEST_URI']);
-          Intel_Df::drupal_goto($uri[0], $l_options);
+
+          $l_options = Intel_Df::l_options_add_query($parse_url['query']);
+          $l_options['query']['action'] = 'intel_embed_ga_tracking_code_enabled';
+          unset($l_options['query']['nonce']);
+          Intel_Df::drupal_goto($parse_url['path'], $l_options);
           exit;
         }
       }
@@ -761,11 +767,10 @@ function intel_demo_the_posts($posts){
       if (current_user_can('admin intel')) {
         $msg .= ' ' . Intel_Df::t('Would you like Intelligence to embed the tracking code?');
         $l_options = Intel_Df::l_options_add_class('button');
-        $l_options['query'] = array(
-          'action' => 'intel_embed_ga_tracking_code',
-          'nonce' => wp_create_nonce( 'intel_embed_ga_tracking_code' ),
-        );
-        $msg .= '<br><br>' . Intel_Df::l(Intel_Df::t('Yes, enable tracking code embed'), $_SERVER['REQUEST_URI'], $l_options);
+        $l_options['query'] = $parse_url['query'];
+        $l_options['query']['action'] = 'intel_embed_ga_tracking_code';
+        $l_options['query']['nonce'] = wp_create_nonce( 'intel_embed_ga_tracking_code' );
+        $msg .= '<br><br>' . Intel_Df::l(Intel_Df::t('Yes, enable tracking code embed'), $parse_url['path'], $l_options);
       }
       $notice_vars = array(
         'type' => 'error',
