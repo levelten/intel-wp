@@ -2200,17 +2200,8 @@ function intel_is_installed($level = 'min') {
 
   if (!isset($levels)) {
     $setup_state = get_option('intel_wizard_intel_setup_state', array());
-    $ga_data_source = intel_ga_data_source();
+    $ga_data_source = intel_ga_data_source(TRUE);
     $ga_data = !empty($ga_data_source);
-    if ($ga_data_source == 'gadwp' ) {
-      if (!is_callable('GADWP')) {
-        $ga_data = 0;
-      }
-      else {
-        $gadwp = GADWP();
-        $ga_data = !empty($gadwp->config->options['ga_dash_token']);
-      }
-    }
     $api_level = intel_api_level();
     $levels = array(
       'active' => 1,

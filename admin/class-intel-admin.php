@@ -126,12 +126,16 @@ class Intel_Admin {
 	}
 
 	public function admin_init() {
+		// this will break some forms as objects may not be loaded yet. Need to implement
+		// form redirects in javascript. For example set wpcf7_intel edit form.
+		/*
 		if (!empty($_POST['intel_form'])) {
 			$vars = !empty($_POST['form_options']) ? $_POST['form_options'] : '{}';
 			$vars = stripcslashes($vars);
 			$vars = json_decode($vars, 1);
 			$form = $this->admin_init_get_form($_POST['form_id'], $vars);
 		}
+		*/
 	}
 
 	function admin_init_get_form($form_id, $options) {

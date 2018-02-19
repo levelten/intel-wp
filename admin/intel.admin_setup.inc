@@ -259,14 +259,15 @@ function intel_admin_setup_base_ga($form, &$form_state) {
   //$items[] = Intel_Df::t('Be sure to complete the Plugin Authorization and Select View configuration.');
   //$items[] = '</p>';
 
-  $l_options = Intel_Df::l_options_add_class('btn btn-info');
+  $class = 'btn ' . (!empty($form_state['intel_ga_profiles']) ? 'btn-success' : 'btn-info');
+  $l_text_prefix = '';
+
+  $l_options = Intel_Df::l_options_add_class($class);
   $l_options = Intel_Df::l_options_add_target('gadwp-admin', $l_options);
   if (!intel_is_plugin_active( 'gadwp' )) {
     $l_options['attributes']['disabled'] = 'disabled';
   }
   $items[] = '<br><label>' . Intel_Df::t('Then') . '</label><br>';
-
-  $gadwp = GADWP();
 
   // gadwp migrated admin page name
   $page = 'gadwp_settings';
@@ -274,7 +275,12 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     $page = 'gadash_settings';
   }
 
-  $items[] = Intel_Df::l(Intel_Df::t('Complete GADWP setup'), 'wp-admin/admin.php?page=' . $page, $l_options);
+  if (!empty($form_state['intel_ga_profiles'])) {
+    $l_text_prefix = '<span class="icon glyphicon glyphicon-check" aria-hidden="true"></span> ';
+    $l_options['html'] = 1;
+  }
+
+  $items[] = Intel_Df::l($l_text_prefix . Intel_Df::t('Complete GADWP setup'), 'wp-admin/admin.php?page=' . $page, $l_options);
 
 
 
@@ -320,7 +326,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
 
   $ga_data_ignore = !empty($form_state['wizard_state']['ga_data_ignore']);
   if (!empty($form_state['values'])) {
-    $ga_data_ignore = $form_state['values']['ga_data_ignore'];
+    $ga_data_ignore = !empty($form_state['values']['ga_data_ignore']);
   }
 
   if ($ga_data_ignore) {
@@ -336,7 +342,8 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
 
   // check if gadwp ga authorization is complete
   $gadwp = GADWP();
-  if (empty($gadwp->config->options['ga_dash_token'])) {
+  // $gadwp->config->options['token'] GADWP_CURRENT_VERSION >= 5.2, $gadwp->config->options['ga_dash_token'] < 5.2
+  if (empty($gadwp->config->options['token']) && empty($gadwp->config->options['ga_dash_token'])) {
     $status['error_msg'] = Intel_Df::t('Google Analytics API is not connected.');
     $status['error_msg'] .= ' ' . Intel_Df::t('Please complete the Google Analytics Dashboard For WP setup.');
     return $status;
@@ -357,9 +364,14 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
   $ga_profile_base = intel_get_base_plugin_ga_profile('gadwp');
 
   if (empty($ga_profile_base)) {
+    // gadwp migrated admin page name
+    $page = 'gadwp_settings';
+    if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
+      $page = 'gadash_settings';
+    }
     $status['error_msg'] = Intel_Df::t('View not selected in GADWP settings.');
     $status['error_msg'] .= ' ' . Intel_Df::t('Please set the Select View in !link.', array(
-      '!link' => Intel_Df::l(Intel_Df::t('Google Analytics settings'), 'wp-admin/admin.php?page=gadash_settings', $gadwp_admin_l_options),
+      '!link' => Intel_Df::l(Intel_Df::t('Google Analytics settings'), 'wp-admin/admin.php?page=' . $page, $gadwp_admin_l_options),
     ));
   }
 
@@ -401,7 +413,6 @@ function intel_admin_setup_intel_profile($form, &$form_state, $options = array()
   $f = array();
 
   $ga_profile_base = intel_get_base_plugin_ga_profile();
-  //intel_d($ga_profile_base);
 
   $items = array();
 
@@ -682,10 +693,16 @@ function intel_admin_setup_intel_ga_profile_check($form, &$form_state) {
     return $status;
   }
 
-  $intel_profile = GADWP_Tools::get_selected_profile( $form_state['gadwp']->config->options['ga_dash_profile_list'], $intel_ga_view );
-  $intel_ga_tid = $intel_profile[2];
+  if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
+    $intel_profile = GADWP_Tools::get_selected_profile( $form_state['gadwp']->config->options['ga_dash_profile_list'], $intel_ga_view );
+    $prime_profile = GADWP_Tools::get_selected_profile( $form_state['gadwp']->config->options['ga_dash_profile_list'], $form_state['gadwp']->config->options['ga_dash_tableid_jail'] );
+  }
+  else {
+    $intel_profile = GADWP_Tools::get_selected_profile( $form_state['gadwp']->config->options['ga_profiles_list'], $intel_ga_view );
+    $prime_profile = GADWP_Tools::get_selected_profile( $form_state['gadwp']->config->options['ga_profiles_list'], $form_state['gadwp']->config->options['tableid_jail'] );
+  }
 
-  $prime_profile = GADWP_Tools::get_selected_profile( $form_state['gadwp']->config->options['ga_dash_profile_list'], $form_state['gadwp']->config->options['ga_dash_tableid_jail'] );
+  $intel_ga_tid = $intel_profile[2];
   $prime_ga_tid = $prime_profile[2];
 
   if ($intel_ga_tid == $prime_ga_tid) {

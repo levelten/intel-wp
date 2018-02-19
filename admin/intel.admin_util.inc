@@ -906,18 +906,29 @@ function intel_util_reset_site() {
     $del_options = $del_mode_options[$mode];
     if ($mode == 'installtest') {
       if (!empty($plugins_enabled['gadwp'])) {
+        if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
+          $option_name = 'gadash_options';
+          $del_keys = array(
+            'ga_dash_tableid_jail' => '',
+            'ga_dash_token' => '',
+            'ga_dash_profile_list' => array(),
+          );
+        }
+        else {
+          $option_name = 'gadwp_options';
+          $del_keys = array(
+            'tableid_jail' => '',
+            'token' => '',
+            'ga_profiles_list' => array(),
+          );
+        }
         // see google-analytics-dashboard-for-wp/install/install.php
-        $del_keys = array(
-          'ga_dash_tableid_jail' => '',
-          'ga_dash_token' => '',
-          'ga_dash_profile_list' => array(),
-        );
-        $gadwp_options = get_option('gadash_options', '{}');
+        $gadwp_options = get_option($option_name, '{}');
         $gadwp_options = json_decode($gadwp_options, 1);
         foreach ($del_keys as $k => $v) {
           $gadwp_options[$k] = $v;
         }
-        update_option('gadash_options', json_encode( $gadwp_options) );
+        update_option($option_name, json_encode( $gadwp_options) );
 
         Intel_Df::drupal_set_message(Intel_Df::t('GADWP options cleared.'));
       }
