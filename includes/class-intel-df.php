@@ -1333,9 +1333,12 @@ class Intel_Df  {
 			}
 		}
 
+		$func_prefix = !empty($info['function_prefix']) ? $info['function_prefix'] . '_' : '';
+		//$func_prefix = '';
+
 		// call preprocess functions
-		if (is_callable('template_preprocess_' . $hook)) {
-			call_user_func_array('template_preprocess_' . $hook, array(&$variables));
+		if (is_callable($func_prefix . 'template_preprocess_' . $hook)) {
+			call_user_func_array($func_prefix . 'template_preprocess_' . $hook, array(&$variables));
 		}
 
 		// fire hook_intel_preprocess_HOOK()
@@ -1343,8 +1346,8 @@ class Intel_Df  {
 		$variables = apply_filters('intel_preprocess_' . $hook, $variables);
 
 		// call process functions
-		if (is_callable('template_process_' . $hook)) {
-			call_user_func_array('template_process_' . $hook, array(&$variables));
+		if (is_callable($func_prefix . 'template_process_' . $hook)) {
+			call_user_func_array($func_prefix . 'template_process_' . $hook, array(&$variables));
 		}
 
 		// fire hook_intel_process_HOOK()
@@ -1363,11 +1366,9 @@ class Intel_Df  {
 				$output = self::process_template($file, $variables);
 			}
 		}
-		elseif (!empty($theme_info[$hook]['function'])) {
-			$func = $theme_info[$hook]['function'];
-			if (is_string($func) && is_callable($func)) {
-				//$output = $func($variables);
-				//$output = call_user_func($func, $variables);
+		elseif (!empty($info['function']) || !empty($info['callback'])) {
+			$func = !empty($info['callback']) ? $info['callback'] : $func_prefix . $info['function'];
+			if (is_callable($func)) {
 				$output = call_user_func_array($func, array(&$variables));
 			}
 		}
