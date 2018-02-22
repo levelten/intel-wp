@@ -85,28 +85,28 @@ if (0) {
  * The code that runs during plugin activation.
  * This action is documented in includes/class-intel-activator.php
  */
-function activate_intel() {
+function intel_activate_hook() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-intel-activator.php';
 	Intel_Activator::activate();
 	intel_activate_plugin('intel');
 }
-register_activation_hook( __FILE__, 'activate_intel' );
+register_activation_hook( __FILE__, 'intel_activate_hook' );
 
 /**
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-intel-deactivator.php
  */
-function deactivate_intel() {
+function intel_deactivate_hook() {
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-intel-deactivator.php';
 	Intel_Deactivator::deactivate();
 }
-register_deactivation_hook( __FILE__, 'deactivate_intel' );
+register_deactivation_hook( __FILE__, 'intel_deactivate_hook' );
 
-function _intel_uninstall() {
-	require_once plugin_dir_path( __FILE__ ) . 'intel.install';
+function intel_uninstall_hook() {
+	require_once plugin_dir_path( __FILE__ ) . 'intel.install.php';
 	intel_uninstall();
 }
-register_uninstall_hook( __FILE__, '_intel_uninstall' );
+register_uninstall_hook( __FILE__, 'intel_uninstall_hook' );
 
 
 

@@ -52,7 +52,7 @@ function init($getin, $postin = array()) {
     return $response;
   }
   else {
-    file_include('includes/render.inc');
+    file_include('includes/render.php');
     render_response($response);
     exit;
   }
@@ -84,7 +84,7 @@ function routers_load() {
     'function' => 'track_pageview',
     'file' => 'track',
     'includes' => array(
-      'includes/db.inc',
+      'includes/db.php',
     ),
     //'access' => 'level',
   );
@@ -92,7 +92,7 @@ function routers_load() {
     'function' => 'track_event',
     'file' => 'track',
     'includes' => array(
-      'includes/db.inc',
+      'includes/db.php',
     ),
     //'access' => 'level',
   );
@@ -100,7 +100,7 @@ function routers_load() {
     'function' => 'track_var',
     'file' => 'track',
     'includes' => array(
-      'includes/db.inc',
+      'includes/db.php',
     ),
     //'access' => 'level',
   );
@@ -108,7 +108,7 @@ function routers_load() {
     'function' => 'track_session',
     'file' => 'track',
     'includes' => array(
-      'includes/db.inc',
+      'includes/db.php',
     ),
     //'access' => 'level',
   );
@@ -116,7 +116,7 @@ function routers_load() {
     'function' => 'track_log',
     'file' => 'track',
     'includes' => array(
-      'includes/db.inc',
+      'includes/db.php',
     ),
     //'access' => 'level',
   );
@@ -144,7 +144,7 @@ function router_execute($routers) {
   // check for cookies to sync
   $data = !empty($GET['data']) ? $GET['data'] : array();
   if (!empty($data['cookies'])) {
-    file_include('includes/session.inc');
+    file_include('includes/session.php');
     cookies_sync($data['cookies']);
   }
   
@@ -167,7 +167,7 @@ function router_execute($routers) {
       file_include($file);
     }
   }
-  file_include('functions/' . $router['file'] . '.inc');
+  file_include('functions/' . $router['file'] . '.php');
   if (!isset($router['function args'])) {
     $router['function args'] = array();
   }
@@ -192,7 +192,7 @@ function file_include($file) {
  * Authenticates based on propery account level only (no apikey needed)
  */
 function access_level($level = '') {
-  file_include('includes/property.inc');
+  file_include('includes/property.php');
   $p_id = property_construct_id();
   $property = property_dbload($p_id);
   if (empty($property->level)) {
@@ -221,7 +221,7 @@ function access_authenticated($level = '') {
   if ($REQUEST['apikey'] == $settings['adminkey']) {
     return TRUE;
   }
-  file_include('includes/property.inc');
+  file_include('includes/property.php');
   $p_id = property_construct_id();
   $property = property_dbload($p_id);
 

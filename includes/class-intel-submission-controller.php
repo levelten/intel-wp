@@ -67,7 +67,7 @@ class Intel_Submission_Controller extends Intel_Entity_Controller  {
 	}
 
 	public static function fetch_ga_meta_data($sid, $form_type, $fid, $fsid) {
-		require_once INTEL_DIR . "includes/intel.ga.inc";
+		require_once INTEL_DIR . "includes/intel.ga.php";
 		intel_include_library_file('ga/class.ga_model.php');
 
 		$ret = array(

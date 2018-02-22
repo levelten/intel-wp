@@ -60,7 +60,7 @@ class Intel_Activator {
 		$vars['page_attribute']['title_plural'] = Intel_Df::t('Post formats');
 		update_option('intel_entity_settings_taxonomy__post_format', $vars);
 
-		include_once ( INTEL_DIR . 'includes/intel.update.inc' );
+		include_once ( INTEL_DIR . 'includes/intel.update.php' );
 
 		// initialize schema_versions
 		intel_activate_updates();

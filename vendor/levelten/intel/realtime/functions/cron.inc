@@ -12,7 +12,7 @@ namespace LevelTen\Intel\Realtime;
  */
  
  function cron_run() {
-  file_include('functions/track.inc');
+  file_include('functions/track.php');
   
   track_log_prune();
   

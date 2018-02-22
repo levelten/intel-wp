@@ -193,12 +193,10 @@ class Intel_Admin {
 	public function site_menu() {
 		global $wp_version;
 
-
-
 		if ( current_user_can( 'manage_options' ) ) {
 			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
-			//add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
@@ -407,7 +405,6 @@ class Intel_Admin {
 					$load_index = 0;
 					$load_type = '';
 					$load_title = '';
-					intel_d($path_args[4]);
 					if ($path_args[1] == 'config') {
 						if ($path_args[4] == 'intel_event') {
 							$load_index = 5;
@@ -806,7 +803,7 @@ class Intel_Admin {
 	}
 
 	public function activated_plugin($plugin) {
-		require_once( INTEL_DIR . 'intel_com/intel.setup.inc' );
+		require_once( INTEL_DIR . 'intel_com/intel.setup.php' );
 		intel_setup_activated_plugin($plugin);
 	}
 }

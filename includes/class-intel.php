@@ -227,8 +227,8 @@ class Intel {
 		 * Include core functions
 		 */
 		//require INTEL_DIR . 'includes/class-intel-df.php';
-		require_once INTEL_DIR . 'intel.inc';
-		require_once INTEL_DIR . 'intel_df.inc';
+		require_once INTEL_DIR . 'intel.inc.php';
+		require_once INTEL_DIR . 'intel_df.php';
 	}
 
 	/**

@@ -1,15 +1,5 @@
 <?php
-/**
- * @file
- * Supports ajax callbacks
- * 
- * @author Tom McCracken <tomm@getlevelten.com>
- */
+// Deprecated .inc file extension. Moved to .php extension.
 
-function intel_ajax($endpoint) {  
-  watchdog('intel_ajax', print_r($_GET, 1));
-  if ($endpoint == 'visitor/save') {
-    $visitor = intel_visitor_load('user', 0);
-    $visitor->save();
-  }
-}
+// get this file with .php extension
+include_once substr(__FILE__, 0, -4) . '.php';

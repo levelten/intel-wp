@@ -59,8 +59,8 @@ CREATE TABLE IF NOT EXISTS `{$db_tableprefix}realtime_visitor` (
 }
 
 function install() {
-  file_include('includes/db.inc');
-  file_include('includes/html.inc');
+  file_include('includes/db.php');
+  file_include('includes/html.php');
   global $db, $db_tableprefix;
   $vars = page_init_vars();
   $vars['head']['title'] = 'L10Intel Realtime';

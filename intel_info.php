@@ -44,7 +44,7 @@ echo esc_html( $title );
 
 	<div class="intelligence-info">
 	<?php
-		include_once( $dirname . '/includes/intel.env_info.inc');
+		include_once( $dirname . '/includes/intel.env_info.php');
 		print intel_env_info_content();
 	?>
 	</div>
