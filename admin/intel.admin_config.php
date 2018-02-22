@@ -493,7 +493,7 @@ function intel_admin_settings($form, &$form_state) {
   $desc = Intel_Df::t('Disables tracking for specified roles.');
   $form['tracking']['intel_tracking_exclude_role'] = array(
     '#type' => 'checkboxes',
-    '#title' => Intel_Df::t('Exclude roles'),
+    '#title' => Intel_Df::t('Exclude user roles'),
     '#default_value' => get_option('intel_tracking_exclude_role', array('administrator' => 'administrator')),
     '#options' => $options,
     '#description' => $desc,

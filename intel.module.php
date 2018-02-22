@@ -5008,4 +5008,8 @@ function intel_is_current_user_tracking_excluded() {
   return FALSE;
 }
 
+function intel_tracking_exclude_user_role_default() {
+  array('administrator' => 'administrator');
+}
+
 
