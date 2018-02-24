@@ -494,7 +494,7 @@ function intel_admin_settings($form, &$form_state) {
   $form['tracking']['intel_tracking_exclude_role'] = array(
     '#type' => 'checkboxes',
     '#title' => Intel_Df::t('Exclude user roles'),
-    '#default_value' => get_option('intel_tracking_exclude_role', array('administrator' => 'administrator')),
+    '#default_value' => get_option('intel_tracking_exclude_role', intel_get_tracking_exclude_user_role_default()),
     '#options' => $options,
     '#description' => $desc,
   );
@@ -815,7 +815,10 @@ function intel_admin_settings_iapi_auth_callback() {
     exit;
   }
 
+  // check if we got back a valid $imapi_property
   if ($imapi_property) {
+    // only init intel_ga_tid and intel_apikey if action is add so we don't over
+    // write on changes.
     if ($action == 'add') {
       update_option('intel_ga_tid', $_REQUEST['tid']);
       update_option('intel_apikey', $apikey);
@@ -826,10 +829,38 @@ function intel_admin_settings_iapi_auth_callback() {
 
     if (isset($imapi_property['ga_profile_base'])) {
       update_option('intel_ga_profile_base', $imapi_property['ga_profile_base']);
+
+      // if ga_profile_base set and intel_sync_intel_events_base is not initialize,
+      // automatically enable it
+      $setting = get_option('intel_sync_intel_events_base', -1);
+      if ($setting == -1) {
+        update_option('intel_sync_intel_events_base', 1);
+      }
+
+      // if ga_profile_base set and intel_sync_intel_events_base not initialize
+      // and no goals already exist in base view automatically, enable syncing
+      // of goals with base profile
+      $setting = get_option('intel_sync_goal_management_base', -1);
+      if ($setting == -1) {
+        $options = array(
+          'refresh' => 1,
+          'ga_profile_type' => 'base',
+        );
+        $ga_goals_base = intel_ga_goal_load(null, $options);
+        if (empty($ga_goals_base)) {
+          update_option('intel_sync_goal_management_base', 1);
+        }
+        else {
+          $msg = Intel_Df::t('Existing goals were found in the base Google Analytics profile view.');
+          $msg .= ' ' . Intel_Df::t('Syncing of Intelligence goal configuration to the base profile was not enabled to prevent overwriting of existing goals.');
+          $msg .= ' ' . Intel_Df::t('It can be enabled at any time in Intelligence settings.');
+          Intel_Df::drupal_set_message($msg);
+        }
+      }
     }
   }
 
-  Intel_Df::drupal_set_message(Intel_Df::t('Intelligence API is properly connected.'));
+  Intel_Df::drupal_set_message(Intel_Df::t('Intelligence API is properly connected.'), 'success');
 
   if (!empty($_REQUEST['callback_destination'])) {
     Intel_Df::drupal_goto($_REQUEST['callback_destination']);

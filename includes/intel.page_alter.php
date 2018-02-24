@@ -170,7 +170,7 @@ function intel_page_alter(&$page) {
     if (INTEL_PLATFORM == 'wp') {
       // don't exclude on intel_demo_pages to allow testing
       if (!intel_is_demo_page()) {
-        $tracking_exclude_roles = get_option('intel_tracking_exclude_role', array('administrator' => 'administrator'));
+        $tracking_exclude_roles = get_option('intel_tracking_exclude_role', intel_get_tracking_exclude_user_role_default());
 
         // WP roles do not have ids, so we create them
         $role_index = get_option('intel_role_index', array());
@@ -2466,6 +2466,13 @@ function intel_setcookie($name, $value, $time = 0, $path = '/', $domain = '', $r
 
 function intel_setrawcookie($name, $value, $time = 0, $path = '/', $domain = '') {
   intel_setcookie($name, $value, $time, $path, $domain, 1);
+}
+
+function intel_deletecookie($name) {
+  if (isset($_COOKIOE[$name])) {
+    unset($_COOKIOE[$name]);
+  }
+  intel_setcookie($name, '', time() - 999);
 }
 
 /*

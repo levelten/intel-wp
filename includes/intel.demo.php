@@ -745,21 +745,26 @@ function intel_demo_the_posts($posts){
         if (current_user_can('admin intel') && !empty($_GET['nonce']) && wp_verify_nonce( $_GET['nonce'], 'intel_embed_ga_tracking_code' )) {
           update_option('intel_embed_ga_tracking_code', 'analytics');
 
+          // set cookie to signal to dispay ack message
+          intel_setcookie('intel_demo_embed_ga_tracking_code_enabled', '1');
+
+          // setup redirect
           $l_options = Intel_Df::l_options_add_query($parse_url['query']);
-          $l_options['query']['action'] = 'intel_embed_ga_tracking_code_enabled';
+          unset($l_options['query']['action']);
           unset($l_options['query']['nonce']);
           Intel_Df::drupal_goto($parse_url['path'], $l_options);
           exit;
         }
       }
-      elseif($_GET['action'] == 'intel_embed_ga_tracking_code_enabled') {
-        $msg = Intel_Df::t('Google Analytics tracking code is now embeded by Intelligence.');
-        $notice_vars = array(
-          'type' => 'success',
-          'message' => $msg,
-        );
-        $embed_notice = Intel_Df::theme('wp_notice', $notice_vars);
-      }
+    }
+    if (!empty($_COOKIE['intel_demo_embed_ga_tracking_code_enabled'])) {
+      $msg = Intel_Df::t('Google Analytics tracking code is now embeded by Intelligence.');
+      $notice_vars = array(
+        'type' => 'success',
+        'message' => $msg,
+      );
+      $embed_notice = Intel_Df::theme('wp_notice', $notice_vars);
+      intel_deletecookie('intel_demo_embed_ga_tracking_code_enabled');
     }
 
     if (!$intel_embed_ga_tracking_code) {

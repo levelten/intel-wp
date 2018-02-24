@@ -4995,7 +4995,7 @@ function intel_uninstall_plugin($plugin_un) {
 function intel_is_current_user_tracking_excluded() {
   $user = wp_get_current_user();
 
-  $tracking_exclude_roles = get_option('intel_tracking_exclude_role', array('administrator' => 'administrator'));
+  $tracking_exclude_roles = get_option('intel_tracking_exclude_role', intel_get_tracking_exclude_user_role_default());
 
   if (!empty($user->roles) && is_array($user->roles)) {
     foreach ($user->roles AS $i => $role) {
@@ -5008,8 +5008,9 @@ function intel_is_current_user_tracking_excluded() {
   return FALSE;
 }
 
-function intel_tracking_exclude_user_role_default() {
-  array('administrator' => 'administrator');
+function intel_get_tracking_exclude_user_role_default() {
+  return array();
+  //array('administrator' => 'administrator');
 }
 
 
