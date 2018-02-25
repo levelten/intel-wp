@@ -28,9 +28,13 @@ function intel_util() {
  * Testing function
  */
 function intel_util_temp() {
-  include_once INTEL_DIR . 'includes/intel.ga.php';
+  include_once INTEL_DIR . 'includes/intel.imapi.php';
 
-  intel_d(__FILE__);
+  $intel_sys = get_option('intel_system', array());
+
+  intel_d($intel_sys);
+
+  return 'OK';
 
   include_once(ABSPATH . 'wp-admin/includes/plugin-install.php'); //for plugins_api..
 
@@ -164,8 +168,12 @@ function intel_util_update() {
       }
       // update system data
       $system_data = get_option('intel_system', array());
+      $system_info = intel()->system_info();
       if (!isset($system_data[$update['plugin_un']])) {
         $system_data[$update['plugin_un']] = array();
+        if (isset($system_info[$update['plugin_un']]['plugin_version'])) {
+          $system_data[$update['plugin_un']]['plugin_version'] = $system_info[$update['plugin_un']]['plugin_version'];
+        }
       }
       $system_data[$update['plugin_un']]['schema_version'] = $update['schema_version'];
       update_option('intel_system', $system_data);

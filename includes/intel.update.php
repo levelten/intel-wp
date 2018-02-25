@@ -21,7 +21,9 @@ function intel_get_needed_updates($plugin_un = '') {
   // Check if old settings still exists and if so migrate it to new format
   if (!empty($system_meta['schema_version'])) {
     if (!isset($system_data['intel'])) {
-      $system_data['intel'] = array();
+      $system_data['intel'] = array(
+        'plugin_version' => INTEL_VER,
+      );
     }
     $system_data['intel']['schema_version'] = $system_meta['schema_version'];
     unset($system_meta['schema_version']);
@@ -136,6 +138,7 @@ function intel_activate_updates($plugin_un = '') {
 
     if (!isset($system_data[$p_un])) {
       $system_data[$p_un] = array(
+        'plugin_version' => isset($system_info[$p_un]['plugin_version']) ? $system_info[$p_un]['plugin_version'] : '',
         'schema_version' => !empty($p_info['update_start']) ? $p_info['update_start'] : 1000,
       );
     }

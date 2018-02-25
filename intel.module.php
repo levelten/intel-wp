@@ -3490,6 +3490,22 @@ add_filter('intel_plugin_path_info', 'intel_intel_plugin_path_info');
  * @return mixed
  */
 function intel_intel_plugin_path_info($info) {
+  $info['addthis'] = array(
+    'directory' => array(
+      'addthis'
+    ),
+    'filename' => array(
+      'addthis_social_widget.php'
+    )
+  );
+  $info['addthis_follow'] = array(
+    'directory' => array(
+      'addthis-follow'
+    ),
+    'filename' => array(
+      'addthis-follow.php'
+    )
+  );
   $info['gadwp'] = array(
     'directory' => array(
       'google-analytics-dashboard-for-wp'
@@ -3526,6 +3542,14 @@ function intel_intel_plugin_path_info($info) {
     ),
     'filename' => array(
       'intel.php'
+    )
+  );
+  $info['intel_addthis'] = array(
+    'directory' => array(
+      'intelligence-addthis'
+    ),
+    'filename' => array(
+      'intel_addthis.php'
     )
   );
   $info['wpcf7'] = array(
@@ -3575,31 +3599,42 @@ function intel_is_plugin_active($name) {
 }
 
 // add _intel_intel_script_info to hook_intel_script_info
-add_filter('intel_addon_info', '_intel_addon_info');
+add_filter('intel_addon_info', 'intel__addon_info');
 /**
  * Implements hook_intel_intel_script
  */
-function _intel_addon_info($info = array()) {
-  $info['gravityforms_intel'] = array(
-    'title' => Intel_Df::t('Gravity Forms Intelligence'),
+function intel__addon_info($info = array()) {
+
+  $info['intel_addthis'] = array(
+    'title' => Intel_Df::t('AddThis Addon'),
+    'description' => Intel_Df::t('Tracks AddThis social shares, clickbacks and follows.'),
+    'group' => 'social',
+    'slug' => 'intelligence-addthis',
+    'description_url' => '//wordpress.org/plugins/intelligence-addthis',
+    'show_callback' => 'intel_is_plugin_active',
+    'show_arguments' => array('addthis'),
+    'is_active_callback' => 'intel_is_plugin_active',
+    'is_active_arguments' => array('intel_addthis'),
+  );
+
+  $info['gf_intel'] = array(
+    'title' => Intel_Df::t('Gravity Forms Addon'),
     'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Gravity Form is submitted.'),
     'group' => 'forms',
     'slug' => 'gf-intelligence',
     'description_url' => '//wordpress.org/plugins/gf-intelligence',
-    //'description_url' => 'http://intelligencewp.com/plugin/gf-intelligence',
     'show_callback' => 'intel_is_plugin_active',
     'show_arguments' => array('gravityforms'),
     'is_active_callback' => 'intel_is_plugin_active',
-    'is_active_arguments' => array('gravityforms_intel'),
+    'is_active_arguments' => array('gf_intel'),
   );
 
   $info['wpcf7_intel'] = array(
-    'title' => Intel_Df::t('Contact Form 7 Intelligence'),
+    'title' => Intel_Df::t('Contact Form 7 Addon'),
     'description' => Intel_Df::t('Enables event & goal tracking and contact building when a Contact Form 7 form is submitted.'),
     'group' => 'forms',
     'slug' => 'cf7-intelligence',
     'description_url' => '//wordpress.org/plugins/cf7-intelligence',
-    //'description_url' => 'http://intelligencewp.com/plugin/cf7-intelligence',
     'show_callback' => 'intel_is_plugin_active',
     'show_arguments' => array('wpcf7'),
     'is_active_callback' => 'intel_is_plugin_active',
