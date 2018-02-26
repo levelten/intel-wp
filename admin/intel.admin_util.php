@@ -30,12 +30,16 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.imapi.php';
 
-  $url = Intel_Df::drupal_parse_url('http://wp-bedrock.localhost/intelligence/demo/intel_example_addon');
+  $parse_url = Intel_Df::drupal_parse_url('http://wp-bedrock.localhost/intelligence/demo/intel_example_addon');
+  $url = Intel_Df::url($parse_url['path'], array('query' => $parse_url['query']));
 
+  intel_d($parse_url);
   intel_d($url);
 
-  $url = Intel_Df::drupal_parse_url('intelligence/demo/intel_example_addon');
+  $parse_url = Intel_Df::drupal_parse_url('/dir/intelligence/demo/intel_example_addon');
+  $url = Intel_Df::url($parse_url['path'], array('query' => $parse_url['query']));
 
+  intel_d($parse_url);
   intel_d($url);
 
   return 'OK';
