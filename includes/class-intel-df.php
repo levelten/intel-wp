@@ -711,6 +711,12 @@ class Intel_Df  {
 		return (bool) preg_match($regexps[$patterns], $path);
 	}
 
+	/**
+	 * Similar to php parse_url but produces components needed for Intel_Df::url
+	 *
+	 * @param $url
+	 * @return array
+	 */
 	public static function drupal_parse_url($url) {
 		$options = array(
 			'path' => NULL,
@@ -754,6 +760,23 @@ class Intel_Df  {
 		if (isset($options['query']['q'])) {
 			$options['path'] = $options['query']['q'];
 			unset($options['query']['q']);
+		}
+
+		$intel = intel();
+
+		// parse off base_paths
+		// check if admin page
+		if (strpos($options['path'], 'admin.php') !== FALSE) {
+			$a = explode($intel->base_path_admin, $options['path']);
+			if (!empty($a[1])) {
+				$options['path'] = $a[1];
+			}
+		}
+		else {
+			$a = explode($intel->base_path_front, $options['path']);
+			if (!empty($a[1])) {
+				$options['path'] = $a[1];
+			}
 		}
 
 		return $options;
@@ -1113,49 +1136,27 @@ class Intel_Df  {
 			$admin_page = 'intel_admin';
 		}
 
-		/*
-		if (substr($path, 0, 11) == 'admin/intel') {
-			$admin_page = 'intel_index';
+		// strip off wp-admin/ if on path
+		if (substr($path, 0, 9) == 'wp-admin/') {
+			$path = substr($path, 9);
 		}
-		elseif (substr($path, 0, 18) == 'admin/config/intel') {
-			$admin_page = 'intel_config';
-		}
-		elseif (strpos($path, 'admin/reports/intel') === 0) {
-			$admin_page = 'intel_reports';
-		}
-		elseif (strpos($path, 'admin/util') === 0) {
-			$admin_page = 'intel_util';
-		}
-		elseif (strpos($path, 'admin/help') === 0) {
-			$admin_page = 'intel_help';
-		}
-		elseif (strpos($path, 'admin/people/contacts') === 0) {
-			$admin_page = 'intel_visitor';
-		}
-		elseif (strpos($path, 'visitor/') === 0) {
-			$admin_page = 'intel_visitor';
-		}
-		*/
+
 		if ($admin_page) {
 			$options['query']['page'] = $admin_page;
 			$options['query']['q'] = $path;
-			$path = 'wp-admin/admin.php';
+			$path = 'admin.php';
 		}
 
-		if (substr($path, 0, 9) == 'wp-admin/') {
-			$base = $options['absolute'] ? $options['base_url'] . $intel->base_path : $intel->base_path;
+		if (substr($path, 0, 9) == 'admin.php') {
+			$base = $options['absolute'] ? $options['base_url'] . $intel->base_path_admin : $intel->base_path_admin;
 			$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
 		}
 		else {
-			$base = $options['absolute'] ? $options['base_url'] . '/' : '/';
+			$base = $options['absolute'] ? $options['base_url'] . $intel->base_path_front : $intel->base_path_front;
 			$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
 		}
 
-		//$base = $options['absolute'] ? $options['base_url'] . '/' : '/';
-
-
-
-
+		// WP shim for creating urls.
 		if ($options['query']) {
 			return $base . $path . '?' . self::drupal_http_build_query($options['query']) . $options['fragment'];
 		}
@@ -1163,6 +1164,8 @@ class Intel_Df  {
 			return $base . $path . $options['fragment'];
 		}
 		// WP shim end
+
+
 
 		// With Clean URLs.
 		if (!empty($GLOBALS['conf']['clean_url'])) {

@@ -739,6 +739,7 @@ function intel_demo_the_posts($posts){
 
     // GA tracking code embed
     $parse_url = Intel_Df::drupal_parse_url($_SERVER['REQUEST_URI']);
+    $intel = intel();
     $intel_embed_ga_tracking_code = get_option('intel_embed_ga_tracking_code', '');
     if (!empty($_GET['action'])) {
       if ($_GET['action'] == 'intel_embed_ga_tracking_code') {

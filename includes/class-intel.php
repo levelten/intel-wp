@@ -102,10 +102,17 @@ class Intel {
 	// path after domain where the CMS is installed
 	public $base_path;
 
+	// path after domain where the admin pages are accessed
+	public $base_path_admin;
+
 	// path after domain where the front pages are accessed
 	public $base_path_front;
 
 	public $base_root;
+
+	public $admin_url;
+
+	public $admin_dir;
 
 	public $vtk;
 
@@ -146,36 +153,37 @@ class Intel {
 		$this->base_secure_url = str_replace('http://', 'https://', $this->base_url);
 		$this->base_insecure_url = str_replace('https://', 'http://', $this->base_url);
 
-		// $_SERVER['SCRIPT_NAME'] can, in contrast to $_SERVER['PHP_SELF'], not
-		// be modified by a visitor.
+		$this->home_url = home_url();
+		$this->admin_url = admin_url();
+		$this->admin_dir = ABSPATH . 'wp-admin/';
+
+		// determine admin paths
 		$this->base_path = '';
-		$this->base_path_front = '';
-		if (defined('WP_HOME') && defined('WP_SITEURL')) {
-			$a = explode(WP_HOME, WP_SITEURL);
-			if (isset($a[1])) {
-				$this->base_path = $a[1];
-			}
-			if (substr($this->base_path, -1) != '/') {
-				$this->base_path .= '/';
-			}
+		$a = explode($this->domain, admin_url());
+		if (isset($a[1])) {
+			$this->base_path = $a[1];
 		}
-		elseif ($dir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/')) {
-			if ($dir == '/wp-admin') {
-				$dir = '';
-			}
-			$this->base_path = $dir;
-			$this->base_url .= $this->base_path;
+		if (substr($this->base_path, -1) != '/') {
 			$this->base_path .= '/';
 		}
-
 		if (!$this->base_path || substr($this->base_path, -1) != '/') {
 			$this->base_path .= '/';
 		}
-		if (!$this->base_path_front || substr($this->base_path_front , -1) != '/') {
+		$this->base_path_admin = $this->base_path;
+
+		// process front paths
+		$this->base_path_front = '';
+		$a = explode($this->domain, $this->home_url);
+		if (isset($a[1])) {
+			$this->base_path_front = $a[1];
+		}
+		if (substr($this->base_path_front, -1) != '/') {
 			$this->base_path_front .= '/';
 		}
 
-
+		if (!$this->base_path_front || substr($this->base_path_front , -1) != '/') {
+			$this->base_path_front .= '/';
+		}
 
 		// initialize constants
 		self::setup();
