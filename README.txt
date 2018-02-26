@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.9.4
-Stable tag: 1.2.9
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -100,6 +100,10 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 
 = 1.2.9 =
 * Add php extensions to all files
+
+= 1.3.0 =
+* Support for subdirectory and alternate directory installs
+* Auto enable base profile tracking
 
 == Upgrade Notice ==
 
