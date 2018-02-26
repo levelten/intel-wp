@@ -30,6 +30,12 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.imapi.php';
 
+  $url = Intel_Df::url('/wp/wp-admin/admin.php?page=intel_config&q=admin/config/intel/settings/setup');
+  intel_d($url);
+
+  $url = Intel_Df::url('/wp/wp-admin/admin.php?page=intel_config&q=admin/config/intel/settings/setup', array('absolute' => 1));
+  intel_d($url);
+
   $parse_url = Intel_Df::drupal_parse_url('http://wp-bedrock.localhost/intelligence/demo/intel_example_addon');
   $url = Intel_Df::url($parse_url['path'], array('query' => $parse_url['query']));
 
@@ -700,7 +706,18 @@ function intel_util_test_url_parsing() {
     '//www.beta.com/blog/beta',
     'http://www.alpha.com/blog/alpha?id=4',
     '//www.beta.com/blog/beta?id=4&view=full',
+    'inteligence/demo',
+    '/inteligence/demo',
+    '/wp/inteligence/demo',
     'admin/config/intel/settings',
+    'admin.php?page=intel_admin',
+    'wp-admin/admin.php?page=intel_admin',
+    '/wp-admin/admin.php?page=intel_admin',
+    '/wp/wp-admin/admin.php?page=intel_admin',
+    'post.php?post=1&action=edit',
+    'wp-admin/post.php?post=1&action=edit',
+    '/wp-admin/post.php?post=1&action=edit',
+    '/wp/wp-admin/post.php?post=1&action=edit',
     'mailto:tom@example.com',
     'tel:+1-214-555-1212',
     'urn::post:1',
@@ -727,6 +744,18 @@ function intel_util_test_url_parsing() {
   $vars['rows'] = array();
   foreach ($urls as $url) {
     $parse = intel_parse_url($url);
+    $url_out = Intel_Df::url($url);
+    $vars['rows'][] = array(
+      $url,
+      $url_out,
+      isset($parse['location']) ? $parse['location'] : '(notset)',
+      isset($parse['scheme']) ? $parse['scheme'] : '(notset)',
+      isset($parse['host']) ? $parse['host'] : '(notset)',
+      isset($parse['path']) ? $parse['path'] : '(notset)',
+      isset($parse['query']) ? $parse['query'] : '(notset)',
+      isset($parse['fragment']) ? $parse['fragment'] : '(notset)',
+    );
+    $parse = Intel_Df::drupal_parse_url($url);
     $url_out = Intel_Df::url($url);
     $vars['rows'][] = array(
       $url,

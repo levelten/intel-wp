@@ -985,7 +985,7 @@ class Intel_Df  {
 	}
 
 	public static function url($path = NULL, array $options = array()) {
-// Merge in defaults.
+    // Merge in defaults.
 		$options += array(
 			'fragment' => '',
 			'query' => array(),
@@ -993,6 +993,8 @@ class Intel_Df  {
 			'alias' => FALSE,
 			'prefix' => ''
 		);
+
+		$path0 = $path;
 
 		if ($path == '.') {
 			$path = self::current_path();
@@ -1133,26 +1135,43 @@ class Intel_Df  {
 			$admin_page = 'intel_admin';
 		}
 
-		// strip off wp-admin/ if on path
-		if (substr($path, 0, 9) == 'wp-admin/') {
-			$path = substr($path, 9);
+		// run admin path checks
+		$is_admin_path = 0;
+		if (substr($path, 0, 9) == 'admin.php') {
+			$is_admin_path = 1;
 		}
 
+
+		// if path uses /wp-admin/ or /subdir/wp-admin/ format, strip off base_path_admin
+		if (substr($path0, 0, strlen($intel->base_path_admin)) == $intel->base_path_admin) {
+			$path = substr($path0, strlen($intel->base_path_admin));
+			$is_admin_path = 1;
+		}
+		// strip off wp-admin/ if on path
+		elseif (substr($path, 0, 9) == 'wp-admin/') {
+			$path = substr($path, 9);
+			$is_admin_path = 1;
+		}
+
+		//
 		if ($admin_page) {
 			$options['query']['page'] = $admin_page;
 			$options['query']['q'] = $path;
 			$path = 'admin.php';
+			$is_admin_path = 1;
 		}
 
-		if (substr($path, 0, 9) == 'admin.php') {
+		if ($is_admin_path) {
 			$base = $options['absolute'] ? $options['base_url'] . $intel->base_path_admin : $intel->base_path_admin;
 			$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
 		}
 		else {
+			if (substr($path0, 0, strlen($intel->base_path_front)) == $intel->base_path_front) {
+				$path = substr($path0, strlen($intel->base_path_front));
+			}
 			$base = $options['absolute'] ? $options['base_url'] . $intel->base_path_front : $intel->base_path_front;
 			$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
 		}
-
 		// WP shim for creating urls.
 		if ($options['query']) {
 			return $base . $path . '?' . self::drupal_http_build_query($options['query']) . $options['fragment'];
