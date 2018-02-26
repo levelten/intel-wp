@@ -31,7 +31,7 @@ To learn more about Intelligence for WordPress visit [intelligencewp.com](https:
 
 == Installation ==
 
-For installation instructions, visit [intelligencewp.com/docs/installation](https://intelligencewp.com/docs/installation)
+For installation instructions, visit [intelligencewp.com/doc/installation](https://intelligencewp.com/doc/installation)
 
 == Changelog ==
 
