@@ -753,6 +753,20 @@ class Intel_Df  {
 			if (isset($parts['fragment'])) {
 				$options['fragment'] = $parts['fragment'];
 			}
+
+			$intel = intel();
+			// parse off base_paths
+			// check if admin page
+			if (strpos($options['path'], 'admin.php') !== FALSE) {
+				if (substr($options['path'], 0, strlen($intel->base_path_admin)) == $intel->base_path_admin) {
+					$options['path'] = substr($options['path'], strlen($intel->base_path_admin));
+				}
+			}
+			else {
+				if (substr($options['path'], 0, strlen($intel->base_path_front)) == $intel->base_path_front) {
+					$options['path'] = substr($options['path'], strlen($intel->base_path_front));
+				}
+			}
 		}
 		// The 'q' parameter contains the path of the current page if clean URLs are
 		// disabled. It overrides the 'path' of the URL when present, even if clean
@@ -760,23 +774,6 @@ class Intel_Df  {
 		if (isset($options['query']['q'])) {
 			$options['path'] = $options['query']['q'];
 			unset($options['query']['q']);
-		}
-
-		$intel = intel();
-
-		// parse off base_paths
-		// check if admin page
-		if (strpos($options['path'], 'admin.php') !== FALSE) {
-			$a = explode($intel->base_path_admin, $options['path']);
-			if (!empty($a[1])) {
-				$options['path'] = $a[1];
-			}
-		}
-		else {
-			$a = explode($intel->base_path_front, $options['path']);
-			if (!empty($a[1])) {
-				$options['path'] = $a[1];
-			}
 		}
 
 		return $options;
