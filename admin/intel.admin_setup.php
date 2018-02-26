@@ -430,7 +430,7 @@ function intel_admin_setup_intel_profile($form, &$form_state, $options = array()
   );
   $sl_options = array(
     'l_options' => $l_options,
-    'callback_destination' => !empty($options['imapi_property_setup']['callback_destination']) ? $options['imapi_property_setup']['callback_destination'] : Intel_Df::url('admin/config/intel/settings/setup'),
+    'callback_destination' => !empty($options['imapi_property_setup']['callback_destination']) ? $options['imapi_property_setup']['callback_destination'] : 'admin/config/intel/settings/setup',
   );
   if (!empty($ga_profile_base['propertyId'])) {
     $sl_options['ga_propertyid_base'] = $ga_profile_base['propertyId'];
