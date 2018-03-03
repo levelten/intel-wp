@@ -5008,6 +5008,7 @@ function intel_imapi_property_setup_l($text, $options = array()) {
 }
 
 function intel_activate_plugin($plugin_un) {
+  Intel_Df::watchdog('intel_activate_plugin', $plugin_un);
   require_once INTEL_DIR . 'includes/intel.update.php';
 
   // if plugin is intel, clear plugin_un name so that update scheme version is
@@ -5022,9 +5023,24 @@ function intel_activate_plugin($plugin_un) {
 }
 
 function intel_uninstall_plugin($plugin_un) {
+  Intel_Df::watchdog('intel_uninstall_plugin', $plugin_un);
   require_once INTEL_DIR . 'includes/intel.update.php';
 
   intel_uninstall_updates($plugin_un);
+
+  // remove any custom overrides for plugin provided intel_events
+  $event_custom = get_option('intel_intel_events_custom', array());
+  $event_info = intel_get_intel_event_info();
+  $save = 0;
+  foreach ($event_info as $k => $v) {
+    if (isset($v['plugin_un']) && ($v['plugin_un'] == $plugin_un) && isset($event_custom[$k])) {
+      unset($event_custom[$k]);
+      $save = 1;
+    }
+  }
+  if ($save) {
+    update_option('intel_intel_events_custom', $event_custom);
+  }
 }
 
 function intel_is_current_user_tracking_excluded() {

@@ -172,6 +172,9 @@ function L10iLinkTracker(_ioq, config) {
             else if (f.href.substr(0, 4) == 'tel:') {
                 f.hrefType = 'tel';
             }
+            else if (f.href.substr(0, 11) == 'javascript:') {
+                f.hrefType = 'javascript';
+            }
             else if (f.hrefObj.external) {
                 f.hrefType = 'external';
             }

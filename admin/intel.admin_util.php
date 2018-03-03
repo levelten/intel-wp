@@ -30,6 +30,20 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.imapi.php';
 
+  $custom = get_option('intel_intel_events_custom', array());
+
+  intel_d($custom);
+
+  $intel_events = intel_get_intel_event_info();
+
+  intel_d($intel_events);
+
+  if (!empty($_GET['uninstall'])) {
+    intel_uninstall_plugin($_GET['uninstall']);
+  }
+
+  return 'OK';
+
   $url = Intel_Df::url('/wp/wp-admin/admin.php?page=intel_config&q=admin/config/intel/settings/setup');
   intel_d($url);
 

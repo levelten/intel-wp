@@ -1557,7 +1557,8 @@ function intel_admin_goal_default_form_submit($form, &$form_state) {
 
 function intel_admin_intel_event_list_page() {
   require_once INTEL_DIR . "includes/intel.ga.php";
-
+  $custom = get_option('intel_intel_events_custom', array());
+  intel_d($custom);
   $events = intel_get_intel_event_info();
 
   if (!empty($_GET['debug'])) {
@@ -1634,7 +1635,7 @@ function intel_admin_intel_event_edit_page($event) {
 
 function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   wp_enqueue_script('intel-admin-config-intel-event-edit', INTEL_URL . 'admin/js/intel-admin-config-intel-event-edit.js');
-
+intel_d($event);
   if (!is_array($event)) {
     $event = array();
   }
@@ -2140,13 +2141,17 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
   $values = $form_state['values'];
   $add = empty($form_state['event']['key']) ? 1 : 0;
 
-  $event = array();
+
   if ($add) {
     $key = $values['key'];
   }
   else {
     $key = $form_state['event']['key'];
   }
+
+  $event = array(
+    'key' => $key,
+  );
 
   $overridable = $form_state['intel_overridable'];
 
@@ -2165,21 +2170,7 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
     $event['enable'] = $event['enable'] == '1' ? 1 : 0;
   }
 
-  /*
-  if (!empty($values['mode'])) {
-    if ($values['mode'] == 'valued') {
-      $event['valued_event'] = 1;
-    }
-    elseif ($values['mode'] == 'goal') {
-      $event['goal_event'] = 1;
-    }
-  }
-  */
-
-  $events = get_option('intel_intel_events_custom', array());
-  $events[$key] = $event;
-
-  update_option('intel_intel_events_custom', $events);
+  intel_intel_event_save($event);
 
   if ($add) {
     $msg = Intel_Df::t('Intel event %title has been added.', array(
@@ -2381,7 +2372,7 @@ function intel_admin_form_tracking_form($form, &$form_state) {
   $l_options = Intel_Df::l_options_add_destination(Intel_Df::current_path());
   $form['default']['intel_form_track_submission_default'] = array(
     '#type' => 'select',
-    '#title' => Intel_Df::t('Submission event/value'),
+    '#title' => Intel_Df::t('Submission event/goal'),
     '#options' => $eventgoal_options,
     '#default_value' => get_option('intel_form_track_submission_default', 'form_submission'),
     '#description' => Intel_Df::t('Select the goal or event you would like to trigger to be tracked in analytics when a form is submitted.'),

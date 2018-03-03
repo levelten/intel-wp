@@ -1409,12 +1409,13 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
       $events[$k]['event_category'] = intel_format_intel_event_eventcategory($v, $goal_info);
     }
 
-    $events[$k]['module']  = 'intel';
+    if (empty($events[$k]['plugin_un'])) {
+      $events[$k]['plugin_un'] = 'intel';
+    }
     $events[$k]['key']  = $k;
   }
 
   $custom = get_option('intel_intel_events_custom', array());
-
   foreach ($custom AS $k => $v) {
     // check if custom attribute
     if (isset($events[$k])) {
@@ -1422,9 +1423,21 @@ function intel_get_intel_event_info($name = NULL, $options = array()) {
       // rebuild event_category incase changed by custom settings
       unset($events[$k]['event_category']);
       $events[$k]['event_category'] = intel_format_intel_event_eventcategory($events[$k], $goal_info);
+      $events[$k]['overridden'] = 1;
+      if (isset($events[$k]['partial'])) {
+        unset($events[$k]['partial']);
+      }
     }
     else {
-      $custom[$k]['module']  = 'intel';
+      // if settings are a partial event, i.e. overrides of a coded event,
+      // events[$k] should exists. If it doesn't, for example when the plugin
+      // providing the original event is disabled, skip adding it
+      if (!empty($v['partial'])) {
+        continue;
+      }
+      if (empty($custom[$k]['plugin_un'])) {
+        $custom[$k]['plugin_un'] = 'intel';
+      }
       $custom[$k]['custom'] = 1;
       $events[$k] = $custom[$k];
       if (empty($v['event_category'])) {
@@ -1495,10 +1508,32 @@ function intel_intel_event_save($event) {
     return FALSE;
   }
 
+  $key = $event['key'];
+
+  // determine if event is partial or full custom
+  $event_info = array();
+  // get event info provided by hook_intel_intel_event_info;
+  $event_info = apply_filters('intel_intel_event_info', $event_info);
+  // if event exists in code, then custom settings are a partial event
+  if (isset($event_info[$key])) {
+    $event['partial'] = 1;
+    // if event plugin_un set, store to custom settings so settings can be
+    // removed when plugin uninstalled.
+    if (isset($event_info[$key]['plugin_un'])) {
+      $event['plugin_un'] = $event_info[$key]['plugin_un'];
+    }
+  }
+  // if event doesn not exist in code, it is a full custom event.
+  else {
+    $event['custom'] = 1;
+  }
+
   $events = get_option('intel_intel_events_custom', array());
-  $events[$event['key']] = $event;
+  $events[$key] = $event;
 
   update_option('intel_intel_events_custom', $events);
+
+  return $event;
 }
 
 function intel_get_enabled_intel_events($context) {
