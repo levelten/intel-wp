@@ -271,7 +271,7 @@ function intel_page_alter(&$page) {
 
   foreach ($page_events AS $key => $value) {
     $l10i_event_action = intel_filter_event_for_push($value);
-    if (!empty($value['js_setting'])) {
+    if (!empty($value['js_setting']) || !empty($value['config'])) {
       $l10i_event_action['id'] = $value['key'];
       $config['eventDefs'][] = $l10i_event_action;
     }

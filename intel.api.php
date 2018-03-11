@@ -335,7 +335,8 @@ function hook_intel_intel_event_info() {
     'description' => t('Click on social sharing widget'),
     'valued_event' => 1,
     'value' => 5,
-    'js_setting' => 1,
+    'config' => 1,
+    'push' => 0,
   );
 
   return $event;

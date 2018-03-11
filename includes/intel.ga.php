@@ -692,6 +692,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'description' => Intel_Df::t('Automatically available on pages with WP comments.'),
     ),
     'enable' => 1,
+    'config' => 1,
     'js_setting' => 1,
   );
 
@@ -709,6 +710,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'description' => Intel_Df::t('Automatically available.'),
     ),
     'enable' => 1,
+    'config' => 1,
     'js_setting' => 1,
   );
 
@@ -906,6 +908,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'trigger_auto' => array(
         'description' => Intel_Df::t('Automatically triggers on page unload set in Page Tracker script.'),
       ),
+      'config' => 1,
       'js_setting' => 1, // processed via _linktracker.js
       'overridable' => 0,
     );
@@ -922,6 +925,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'trigger_auto' => array(
         'description' => Intel_Df::t('Automatically triggers on page unload set in Page Tracker script.'),
       ),
+      'push' => 0,
       'js_setting' => 0, // processed via _linktracker.js
       'overridable' => 0,
     );
@@ -938,6 +942,7 @@ function intel_get_intel_event_info_default($event = array()) {
       'trigger_auto' => array(
         'description' => Intel_Df::t('Automatically triggers on page unload set in Page Tracker script.'),
       ),
+      'push' => 0,
       'js_setting' => 0, // processed via _linktracker.js
       'overridable' => 0,
     );
@@ -1503,19 +1508,58 @@ function intel_intel_event_load($key = NULL) {
   return intel_get_intel_event_info($key);
 }
 
+/**
+ * Saves intel event settings for custom events or overrides of coded events.
+ *
+ * @param $event
+ * @return bool
+ */
 function intel_intel_event_save($event) {
-  if (empty($event['key'])) {
+  if (empty($event['key']) && empty($event['un'])) {
     return FALSE;
   }
 
-  $key = $event['key'];
+  $key = !empty($event['key']) ? $event['key'] : $event['un'];
+  if (isset($event['key'])) {
+    unset($event['key']);
+  }
+  if (isset($event['un'])) {
+    unset($event['un']);
+  }
+
+  $events_custom = get_option('intel_intel_events_custom', array());
 
   // determine if event is partial or full custom
   $event_info = array();
   // get event info provided by hook_intel_intel_event_info;
   $event_info = apply_filters('intel_intel_event_info', $event_info);
   // if event exists in code, then custom settings are a partial event
+  $ignore = array(
+    'partial' => 1,
+    'plugin_un' => 1,
+  );
+  $event_empty = 1;
   if (isset($event_info[$key])) {
+    $defaults = $event_info[$key];
+    // remove any properties that are the same as default
+    foreach ($event as $k => $v) {
+      if (isset($defaults[$k]) && $defaults[$k] == $v) {
+        unset($event[$k]);
+      }
+      elseif (empty($ignore[$k])) {
+        $event_empty = 0;
+      }
+    }
+
+    // if no values left return without saving
+    if ($event_empty) {
+      // if custom settings exists, delete them
+      if (isset($events_custom[$key])) {
+        unset($events_custom[$key]);
+        update_option('intel_intel_events_custom', $events_custom);
+      }
+      return $event;
+    }
     $event['partial'] = 1;
     // if event plugin_un set, store to custom settings so settings can be
     // removed when plugin uninstalled.
@@ -1528,12 +1572,39 @@ function intel_intel_event_save($event) {
     $event['custom'] = 1;
   }
 
-  $events = get_option('intel_intel_events_custom', array());
-  $events[$key] = $event;
+  $events_custom[$key] = $event;
 
-  update_option('intel_intel_events_custom', $events);
+  update_option('intel_intel_events_custom', $events_custom);
 
   return $event;
+}
+
+/**
+ * Removes event custom settings. If the event is custom, event will be deleted.
+ * If a coded event, the overrides will be deleted.
+ *
+ * @param $event
+ */
+function intel_intel_event_delete($event) {
+  $event_un = '';
+  if (is_string($event)) {
+    $event_un = $event;
+  }
+  elseif(is_array($event) && (!empty($event['key']) || !empty($event['un']))) {
+    $event_un = !empty($event['key']) ? $event['key'] : $event['un'];
+  }
+  if (!$event_un) {
+    return FALSE;
+  }
+  $events = get_option('intel_intel_events_custom', array());
+  if (isset($events[$event_un])) {
+    $event = $events[$event_un];
+    unset($events[$event_un]);
+    update_option('intel_intel_events_custom', $events);
+    return $event;
+  }
+
+  return FALSE;
 }
 
 function intel_get_enabled_intel_events($context) {

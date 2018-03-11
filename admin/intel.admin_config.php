@@ -1134,7 +1134,7 @@ function intel_admin_scoring_scores_subform(&$form, &$form_state) {
       '#description' => $m['description'],
       '#size' => 8,
     );
-    if ($goals[$i]['type'] != 'INTL') {
+    if ($goals[$i]['type'] != 'INTEL' && $goals[$i]['type'] != 'INTL') {
       $f['goals']['score_goal_' . $i]['#disabled'] = 1;
       $f['goals']['score_goal_' . $i]['#description'] .= ' ' . Intel_Df::t('Goal value set in Google Analytics admin.');
     }
@@ -1558,7 +1558,7 @@ function intel_admin_goal_default_form_submit($form, &$form_state) {
 function intel_admin_intel_event_list_page() {
   require_once INTEL_DIR . "includes/intel.ga.php";
   $custom = get_option('intel_intel_events_custom', array());
-  intel_d($custom);
+
   $events = intel_get_intel_event_info();
 
   if (!empty($_GET['debug'])) {

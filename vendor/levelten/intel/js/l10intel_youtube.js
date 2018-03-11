@@ -163,7 +163,6 @@ function L10iYouTube(_ioq) {
             this.playerState[id].paused = false;
         }
         else if (event.data == YT.PlayerState.ENDED  && !this.playerState[id].paused) {
-console.log('ENDED');
             ga_event.eventCategory = 'Video scroll';
             ga_event.eventValue = 100;
             ga_event.eid = 'videoScroll';
@@ -195,7 +194,6 @@ console.log('ENDED');
             }
         }
         else if (event.data == YT.PlayerState.PAUSED && !this.playerState[id].paused){
-console.log('Paused');
             ga_event.eventCategory = 'Video stop';
             ga_event.eid = 'videoStop';
 
