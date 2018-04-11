@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.9.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1.0-dev
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,12 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 = 1.3.0 =
 * Support for subdirectory and alternate directory installs
 * Auto enable base profile tracking
+
+= 1.3.1 =
+* Visitor/contact export and delete methods
+* Fixes for GADWP v5.3 updates
+* intel_intel_event_save() enhancements
+
 
 == Upgrade Notice ==
 

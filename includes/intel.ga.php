@@ -1373,7 +1373,8 @@ function intel_get_intel_events_overridable_fields($event) {
 }
 
 function intel_get_intel_event_info($name = NULL, $options = array()) {
-  $events = &Intel_Df::drupal_static(__FUNCTION__);
+  $events = &Intel_Df::drupal_static( __FUNCTION__ );
+
   if (count($events)) {
     if (isset($name)) {
       if (isset($events[$name])) {
@@ -4161,7 +4162,9 @@ function intel_ga_api_data($request = array(), $cache_options = array()) {
   if (!$source) {
     if (is_callable('GADWP')) {
       $gadwp = GADWP();
-      if (!empty($gadwp->config->options['ga_dash_token'])) {
+      // if ga connection has been made the token from GA will be saved in gadwp config. ga_dash_token is for older
+      // versions of GADWP.
+      if (!empty($gadwp->config->options['token']) || !empty($gadwp->config->options['ga_dash_token'])) {
         update_option('intel_ga_data_source', 'gadwp');
       }
     }
@@ -4240,11 +4243,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   $feed = intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options );
 
   if (!is_object($feed)) {
-    $ret = array(
-      'results' => NULL,
-      'error' => $feed,
-    );
-    return $ret;
+
   }
   $feed->results = (object)array(
     'rows' => array(),
@@ -4272,6 +4271,9 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
     }
   }
 
+  //intel_d($feed);
+  Intel_Df::watchdog('feed', print_r($feed));
+
   return $feed;
 }
 
@@ -4287,6 +4289,81 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
  * @return bool|int|mixed
  */
 function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options = array() ) {
+
+  $ver = isset($gapi->error_timeout) ? 1 : 2;
+
+  if ($ver == 2) {
+    try {
+      if ( 'today' == $from ) {
+        $interval = 'hourly';
+      } else {
+        $interval = 'daily';
+      }
+
+      $transient = GADWP_Tools::get_cache( $serial );
+Intel_Df::watchdog('intel_gadwp_handle_corereports transient 1', print_r($transient));
+      if (!empty($cache_options['refresh'])) {
+        GADWP_Tools::delete_cache( $serial );
+        $transient = false;
+      }
+Intel_Df::watchdog('intel_gadwp_handle_corereports transient 2', print_r($transient));
+      if ( false === $transient ) {
+
+        if ($gapi->gapi_errors_handler()) {
+          $errors = GADWP_Tools::get_cache( 'gapi_errors' );
+          Intel_Df::drupal_set_message(Intel_Df::t('GAPI Errors'));
+          if (intel_is_debug()) {
+            intel_d($errors);
+          }
+          GADWP_Tools::delete_cache( 'gapi_errors' );
+          if (empty($cache_options['refresh'])) {
+            return - 23;
+          }
+
+        }
+        if (!empty($cache_options['realtime'])) {
+          $data = $gapi->service->data_realtime->get( 'ga:' . $projectId, $metrics, $options );
+          GADWP_Tools::set_cache($serial, $data, 10);
+        }
+        else {
+          $options['samplingLevel'] = 'HIGHER_PRECISION';
+          $data = $gapi->service->data_ga->get( 'ga:' . $projectId, $from, $to, $metrics, $options );
+          if ( method_exists( $data, 'getContainsSampledData' ) && $data->getContainsSampledData() ) {
+            $sampling['date'] = date( 'Y-m-d H:i:s' );
+            $sampling['percent'] = number_format( ( $data->getSampleSize() / $data->getSampleSpace() ) * 100, 2 ) . '%';
+            $sampling['sessions'] = $data->getSampleSize() . ' / ' . $data->getSampleSpace();
+            GADWP_Tools::set_cache( 'sampleddata', $sampling, 30 * 24 * 3600 );
+            GADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( 'hourly' ) ); // refresh every hour if data is sampled
+          } else {
+            GADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( $interval ) );
+          }
+        }
+      } else {
+        $data = $transient;
+      }
+    } catch ( Deconf_Service_Exception $e ) {
+      $timeout = $gapi->get_timeouts( 'midnight' );
+      GADWP_Tools::set_error( $e, $timeout );
+      return $e->getCode();
+    } catch ( Exception $e ) {
+      $timeout = $gapi->get_timeouts( 'midnight' );
+      GADWP_Tools::set_error( $e, $timeout );
+      return $e->getCode();
+    }
+
+    GADWP()->config->options['api_backoff'] = 0;
+    GADWP()->config->set_plugin_options();
+
+    if ( $data->getRows() > 0 ) {
+      return $data;
+    } else {
+      $data->rows = array();
+      return $data;
+    }
+  }
+
+  // gadwp v1 processing
+
   try {
 
     if ( $from == "today" ) {
@@ -4307,7 +4384,6 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
       }
     }
     else {
-      $transient = FALSE;
       $transient = GADWP_Tools::get_cache($serial);
       if ($transient === FALSE) {
         //if ($gapi->gapi_errors_handler()) {

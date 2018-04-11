@@ -418,7 +418,7 @@ function intel_visitor_set_fields_from_data($visitor) {
 /**
  * Button submit function: handle the 'Delete' button on the node form.
  */
-function intel_visitor_delete_submit($form, &$form_state) {
+function intel_visitor_edit_delete_submit($form, &$form_state) {
   $entity = $form_state['values']['entity'];
   $destination = array();
   if (isset($_GET['destination'])) {
@@ -429,15 +429,15 @@ function intel_visitor_delete_submit($form, &$form_state) {
 }
 
 function intel_visitor_delete_confirm_form($form, &$form_state, $entity) {
-  drupal_set_title(Intel_Df::t('Are you sure you want to delete visitor @title?', array('@title' => $entity->label())));
+  Intel_Df::drupal_set_title(Intel_Df::t('Are you sure you want to delete visitor @title?', array('@title' => $entity->label())));
   $form['entity'] = array(
     '#type' => 'value',
     '#value' => $entity,
   );
   $form['operation'] = array('#type' => 'hidden', '#value' => 'delete');
   $form['#submit'][] = 'intel_visitor_delete_confirm_form_submit';
-  $confirm_question = t('Are you sure you want to delete @name?', array('@name' => $entity->label()));
-  return confirm_form($form,
+  $confirm_question = Intel_Df::t('Are you sure you want to delete visitor @name?', array('@name' => $entity->label()));
+  return Intel_Form::confirm_form($form,
     $confirm_question,
     'admin/content',
     Intel_Df::t('This action cannot be undone.'),
@@ -461,7 +461,7 @@ function intel_visitor_delete_confirm_form_submit($form , &$form_state ) {
 function intel_visitor_page($entity) {
 
   // add fontawesome for icons
-  wp_enqueue_style( 'intel_fa', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css' );
+  //wp_enqueue_style( 'intel_fa', 'https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css' );
 
   $view_mode = 'full';
   $langcode = 'UND';
@@ -505,13 +505,11 @@ function intel_visitor_page($entity) {
         '!link' => Intel_Df::l(Intel_Df::t('Click here to sync the latest Google Analytics data for this visitor'), "visitor/{$entity->vid}/sync", $l_options),
       ));
       Intel_Df::drupal_set_message($msg, 'warning');
-
-
     }
   }
   else {
     $msg = Intel_Df::t('Visitor is anonymous.');
-    $msg .= ' ' . Intel_Df::t('Once the visitor has submitted a form they will become a known contact.');
+    $msg .= ' ' . Intel_Df::t('Once the visitor does an identifying event such as a form submission they will become a known contact.');
     Intel_Df::drupal_set_message($msg, 'warning');
   }
 
@@ -540,6 +538,40 @@ function intel_visitor_page($entity) {
 
   $output = Intel_Df::theme('intel_visitor_profile', $build);
   return $output;
+}
+
+function intel_visitor_export_page($visitor) {
+  if (isset($visitor->identifiers)) {
+    // remove internal id
+    if (isset($visitor->identifiers['vid'])) {
+      unset($visitor->identifiers['vid']);
+    }
+  }
+  if (isset($visitor->data)) {
+    if (isset($visitor->data['syncStatus'])) {
+      unset($visitor->data['syncStatus']);
+    }
+  }
+  if (isset($visitor->apiVisitor)) {
+    unset($visitor->apiVisitor);
+  }
+  if (isset($visitor->apiPerson)) {
+    unset($visitor->apiPerson);
+  }
+  // remove internal id
+  unset($visitor->vid);
+
+  // redundant info
+  unset($visitor->vtkid);
+  unset($visitor->vtkc);
+
+  // remove apiLevel
+  unset($visitor->apiLevel);
+
+  $data = array();
+  $data['intel_visitor'] = $visitor;
+
+  return '<pre>' . wp_json_encode($data, JSON_PRETTY_PRINT) . '</pre>';
 }
 
 function intel_visitor_tab_scorecard($visitor) {

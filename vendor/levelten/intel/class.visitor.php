@@ -196,7 +196,7 @@ class ApiVisitor {
       if (!$k) {
         continue;
       }
-      $str .= $k . '=' . $v + '^';
+      $str .= $k . '=' . $v . '^';
     }
     $str = substr($str, 0, -1);
     return $str;

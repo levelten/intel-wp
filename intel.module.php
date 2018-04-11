@@ -551,7 +551,7 @@ function intel_menu($items = array()) {
   */
 
   if (1 || $api_level == 'pro') {
-
+    $w = 0;
     $items['visitor/%intel_visitor'] = array(
       //'title callback' => 'intel_visitor_title',
       //'title arguments' => array(1),
@@ -586,16 +586,56 @@ function intel_menu($items = array()) {
       'file' => 'admin/intel.admin_visitor.php',
       'weight' => -19,
     );
+    */
+    $items['visitor/%intel_visitor/clickstream'] = array(
+      'title' => 'Clickstream',
+      'description' => 'LevelTen insight.',
+      //'page callback' => 'intel_visitor_tab_clickstream',
+      'page callback' => 'intel_visitor_clickstream_report_page',
+      'page arguments' => array('-', 'clickstream', '-', 'intel_visitor', 1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('view', 1),
+      'weight' => $w++,
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      //'file' => 'admin/intel.admin_visitor.php',
+      'file' => 'reports/intel.report_visitor_clickstream.php',
+      //'intel_api_access' => 'pro',
+    );
+    $items['visitor/%intel_visitor/analytics'] = array(
+      'title' => 'Analytics',
+      'page callback' => 'intel_scorecard_report_page',
+      'page arguments' => array('-', '-', '-', 'intel_visitor', 1),
+      'access callback' => '_intel_permission_access_content_report',
+      'access arguments' => array('view intel visitor data'),
+      'file' => 'reports/intel.report_scorecard.php',
+      'weight' => $w++,
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'context' => Intel_Df::MENU_CONTEXT_PAGE | Intel_Df::MENU_CONTEXT_INLINE,
+      'intel_api_access' => 'pro',
+    );
+    $items['visitor/%intel_visitor/export'] = array(
+      'title' => 'Export',
+      'page callback' => 'intel_visitor_export_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('view', 1),
+      //'type' => Intel_Df::MENU_CALLBACK,
+      'weight' => $w++,
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_visitor.php',
+    );
+
     $items['visitor/%intel_visitor/delete'] = array(
       'title' => 'Delete',
       'page callback' => 'drupal_get_form',
       'page arguments' => array('intel_visitor_delete_confirm_form', 1),
       'access callback' => 'intel_visitor_access',
       'access arguments' => array('delete', 1),
-      'type' => Intel_Df::MENU_CALLBACK,
+      //'type' => Intel_Df::MENU_CALLBACK,
+      'weight' => $w++,
+      'type' => Intel_Df::MENU_LOCAL_TASK,
       'file' => 'admin/intel.admin_visitor.php',
     );
-    */
 
     $items['visitor/%intel_visitor/sync'] = array(
       'title' => 'Sync data',
@@ -614,32 +654,8 @@ function intel_menu($items = array()) {
       'type' => Intel_Df::MENU_CALLBACK,
       'file' => 'includes/intel.visitor_sync.php',
     );
-    $items['visitor/%intel_visitor/clickstream'] = array(
-      'title' => 'Clickstream',
-      'description' => 'LevelTen insight.',
-      //'page callback' => 'intel_visitor_tab_clickstream',
-      'page callback' => 'intel_visitor_clickstream_report_page',
-      'page arguments' => array('-', 'clickstream', '-', 'intel_visitor', 1),
-      'access callback' => 'intel_visitor_access',
-      'access arguments' => array('view', 1),
-      'weight' => -9,
-      'type' => Intel_Df::MENU_LOCAL_TASK,
-      //'file' => 'admin/intel.admin_visitor.php',
-      'file' => 'reports/intel.report_visitor_clickstream.php',
-      //'intel_api_access' => 'pro',
-    );
-    $items['visitor/%intel_visitor/analytics'] = array(
-      'title' => 'Analytics',
-      'page callback' => 'intel_scorecard_report_page',
-      'page arguments' => array('-', '-', '-', 'intel_visitor', 1),
-      'access callback' => '_intel_permission_access_content_report',
-      'access arguments' => array('view intel visitor data'),
-      'file' => 'reports/intel.report_scorecard.php',
-      'weight' => -8,
-      'type' => Intel_Df::MENU_LOCAL_TASK,
-      'context' => Intel_Df::MENU_CONTEXT_PAGE | Intel_Df::MENU_CONTEXT_INLINE,
-      'intel_api_access' => 'pro',
-    );
+
+
 
     /*
     $items['visitor/%intel_visitor/analytics'] = array(
@@ -2548,8 +2564,17 @@ function intel_visitor_save(&$entity) {
   return intel()->get_entity_controller('intel_visitor')->save($entity);
 }
 
-
+/**
+ * Deletes a visitor entity
+ *
+ * @param $vid
+ * @return mixed
+ */
 function intel_visitor_delete($vid) {
+  // check if vid is a visitor entity, if so extract vid from entity
+  if (is_object($vid) && !empty($vid->vid)) {
+    $vid = $vid->vid;
+  }
   return intel()->get_entity_controller('intel_visitor')->deleteOne($vid);
 }
 

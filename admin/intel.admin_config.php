@@ -1635,7 +1635,7 @@ function intel_admin_intel_event_edit_page($event) {
 
 function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
   wp_enqueue_script('intel-admin-config-intel-event-edit', INTEL_URL . 'admin/js/intel-admin-config-intel-event-edit.js');
-intel_d($event);
+
   if (!is_array($event)) {
     $event = array();
   }
