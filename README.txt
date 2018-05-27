@@ -109,6 +109,7 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 * Visitor/contact export and delete methods
 * Fixes for GADWP v5.3 updates
 * intel_intel_event_save() enhancements
+* OGADWP support
 
 
 == Upgrade Notice ==

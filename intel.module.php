@@ -3539,6 +3539,14 @@ function intel_intel_plugin_path_info($info) {
       'gadwp.php'
     )
   );
+  $info['ogadwp'] = array(
+    'directory' => array(
+      'open-google-analytics'
+    ),
+    'filename' => array(
+      'ogadwp.php'
+    )
+  );
   $info['gravityforms'] = array(
     'directory' => array(
       'gravityforms'

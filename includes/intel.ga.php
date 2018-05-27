@@ -4139,7 +4139,14 @@ function intel_ga_data_source($check_connected = 0) {
     return FALSE;
   }
 
-  if ($ga_data_source == 'gadwp') {
+  if ($ga_data_source == 'ogadwp') {
+    if (!is_callable('OGADWP')) {
+      return FALSE;
+    }
+    $ogadwp = OGADWP();
+    return !empty($ogadwp->config->options['token']) ? $ga_data_source : FALSE;
+  }
+  elseif ($ga_data_source == 'gadwp') {
     if (!is_callable('GADWP')) {
       return FALSE;
     }
@@ -4160,7 +4167,15 @@ function intel_ga_api_data($request = array(), $cache_options = array()) {
   $source = intel_ga_data_source();
   // if source is not set, check if GADWP is setup and set it
   if (!$source) {
-    if (is_callable('GADWP')) {
+    if (is_callable('OGADWP')) {
+      $ogadwp = OGADWP();
+      // if ga connection has been made the token from GA will be saved in gadwp config. ga_dash_token is for older
+      // versions of GADWP.
+      if (!empty($ogadwp->config->options['token'])) {
+        update_option('intel_ga_data_source', 'ogadwp');
+      }
+    }
+    elseif (is_callable('GADWP')) {
       $gadwp = GADWP();
       // if ga connection has been made the token from GA will be saved in gadwp config. ga_dash_token is for older
       // versions of GADWP.
@@ -4169,11 +4184,115 @@ function intel_ga_api_data($request = array(), $cache_options = array()) {
       }
     }
   }
-  if ($source == 'gadwp') {
+  if ($source == 'ogadwp') {
+    $feed = intel_ga_api_data_ogadwp($request, $cache_options);
+    //$feed = intel_ga_api_data_internal($request, $cache_options);
+  }
+  elseif ($source == 'gadwp') {
     $feed = intel_ga_api_data_gadwp($request, $cache_options);
     //$feed = intel_ga_api_data_internal($request, $cache_options);
   }
   //$feed = google_analytics_reports_api_report_data($request, $cache_options);
+  return $feed;
+}
+
+function intel_ga_api_data_ogadwp($request = array(), $cache_options = array()) {
+  $ogadwp = OGADWP();
+  $ogapi = new OGADWP_GAPI_Controller();
+  $projectId = get_option('intel_ga_view');
+  $from = !empty($request['start_date']) ? date("Y-m-d", $request['start_date']) : '';
+  $to = !empty($request['end_date']) ? date("Y-m-d", $request['end_date']) : '';
+  //intel_d("$from - $to");
+  //$from = $request['start_date'];
+  //$to = $request['end_date'];
+  $metrics = implode(',', $request['metrics']);
+  $options = array(
+    'dimensions' => implode(',', $request['dimensions']),
+  );
+  $managequota = 'u' . get_current_user_id() . 's' . get_current_blog_id();
+  $options = array(
+    'dimensions' => implode(',', $request['dimensions']),
+    'quotaUser' => $managequota . 'p' . $projectId
+  );
+  if (!empty($request['sort_metric']) ) {
+    $options['sort'] = $request['sort_metric'];
+  }
+  if (!empty($request['filters']) ) {
+    $options['filters'] = $request['filters'];
+  }
+  if (!empty($request['segment']) ) {
+    $options['segment'] = $request['segment'];
+  }
+  if (!empty($request['max_results']) ) {
+    $options['max-results'] = $request['max_results'];
+  }
+  /*
+  $seed = $projectId . $from . $metrics;
+  if (!empty($options['dimensions'])) {
+    $seed .= $options['dimensions'];
+  }
+  if (!empty($options['filters'])) {
+    $seed .= $options['filters'];
+  }
+  if (!empty($options['segment'])) {
+    $seed .= $options['segment'];
+  }
+  */
+
+  // set caching for endates = 'now';
+  $request_cache = $request;
+  $cache_time = 900;
+
+  if (!empty($cache_options['realtime'])) {
+    $serial = 'intel_rt_' . md5(serialize(array_merge($request_cache, array())));
+  }
+  else {
+    if (!empty($cache_options['round_start'])) {
+      $request_cache['start_date'] = $cache_time * floor($request_cache['start_date'] / $cache_time);
+
+    }
+    if (!empty($cache_options['round_end'])) {
+      $request_cache['end_date'] = $cache_time * floor($request_cache['end_date'] / $cache_time);
+    }
+    $serial = 'intel_' . md5(serialize(array_merge($request_cache, array())));
+  }
+
+
+  //$serial = 'intel_' . $gapi->get_serial( $seed );
+  $feed = intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $ogapi, $cache_options );
+
+  if (!is_object($feed)) {
+
+  }
+  $feed->results = (object)array(
+    'rows' => array(),
+    'totalsForAllResults' => array(),
+  );
+  foreach ($feed->totalsForAllResults as $k => $v) {
+    $k = str_replace('ga:', '', $k);
+    $feed->results->totalsForAllResults[$k] = $v;
+  }
+  if (!empty($feed->rows)) {
+    $ch = $feed->getColumnHeaders();
+    if (!is_array($ch)) {
+      intel_d($feed);//
+    }
+    $colHeaders = array();
+    foreach ($ch as $v) {
+      $colHeaders[] = str_replace('ga:', '', $v->name);
+    }
+    foreach ($feed->rows as $i => $row0) {
+      $row = array();
+      foreach ($row0 as $ii => $v) {
+        $row[$colHeaders[$ii]] = $v;
+      }
+      $feed->results->rows[$i] = $row;
+    }
+  }
+
+  //intel_d($feed);
+  Intel_Df::watchdog('feed', print_r($feed));
+
   return $feed;
 }
 
@@ -4288,6 +4407,94 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
  * @param $gapi
  * @return bool|int|mixed
  */
+function intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options = array() ) {
+
+  $ver = isset($gapi->error_timeout) ? 1 : 2;
+
+  if ($ver == 2) {
+    try {
+      if ( 'today' == $from ) {
+        $interval = 'hourly';
+      } else {
+        $interval = 'daily';
+      }
+
+      $transient = OGADWP_Tools::get_cache( $serial );
+//Intel_Df::watchdog('intel_ogadwp_handle_corereports transient 1', print_r($transient));
+      if (!empty($cache_options['refresh'])) {
+        OGADWP_Tools::delete_cache( $serial );
+        $transient = false;
+      }
+//Intel_Df::watchdog('intel_ogadwp_handle_corereports transient 2', print_r($transient));
+      if ( false === $transient ) {
+
+        if ($gapi->gapi_errors_handler()) {
+          $errors = OGADWP_Tools::get_cache( 'gapi_errors' );
+          Intel_Df::drupal_set_message(Intel_Df::t('GAPI Errors'));
+          if (intel_is_debug()) {
+            intel_d($errors);
+          }
+          OGADWP_Tools::delete_cache( 'gapi_errors' );
+          if (empty($cache_options['refresh'])) {
+            return - 23;
+          }
+
+        }
+        if (!empty($cache_options['realtime'])) {
+          $data = $gapi->service->data_realtime->get( 'ga:' . $projectId, $metrics, $options );
+          OGADWP_Tools::set_cache($serial, $data, 10);
+        }
+        else {
+          $options['samplingLevel'] = 'HIGHER_PRECISION';
+          $data = $gapi->service->data_ga->get( 'ga:' . $projectId, $from, $to, $metrics, $options );
+          if ( method_exists( $data, 'getContainsSampledData' ) && $data->getContainsSampledData() ) {
+            $sampling['date'] = date( 'Y-m-d H:i:s' );
+            $sampling['percent'] = number_format( ( $data->getSampleSize() / $data->getSampleSpace() ) * 100, 2 ) . '%';
+            $sampling['sessions'] = $data->getSampleSize() . ' / ' . $data->getSampleSpace();
+            OGADWP_Tools::set_cache( 'sampleddata', $sampling, 30 * 24 * 3600 );
+            OGADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( 'hourly' ) ); // refresh every hour if data is sampled
+          } else {
+            OGADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( $interval ) );
+          }
+        }
+      } else {
+        $data = $transient;
+      }
+    } catch ( Deconf_Service_Exception $e ) {
+      $timeout = $gapi->get_timeouts( 'midnight' );
+      OGADWP_Tools::set_error( $e, $timeout );
+      return $e->getCode();
+    } catch ( Exception $e ) {
+      $timeout = $gapi->get_timeouts( 'midnight' );
+      OGADWP_Tools::set_error( $e, $timeout );
+      return $e->getCode();
+    }
+
+    OGADWP()->config->options['api_backoff'] = 0;
+    OGADWP()->config->set_plugin_options();
+
+    if ( $data->getRows() > 0 ) {
+      return $data;
+    } else {
+      $data->rows = array();
+      return $data;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Mimics private handle_corereports function in gadwp
+ * @param $projectId
+ * @param $from
+ * @param $to
+ * @param $metrics
+ * @param $options
+ * @param $serial
+ * @param $gapi
+ * @return bool|int|mixed
+ */
 function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options = array() ) {
 
   $ver = isset($gapi->error_timeout) ? 1 : 2;
@@ -4301,12 +4508,12 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
       }
 
       $transient = GADWP_Tools::get_cache( $serial );
-Intel_Df::watchdog('intel_gadwp_handle_corereports transient 1', print_r($transient));
+
       if (!empty($cache_options['refresh'])) {
         GADWP_Tools::delete_cache( $serial );
         $transient = false;
       }
-Intel_Df::watchdog('intel_gadwp_handle_corereports transient 2', print_r($transient));
+
       if ( false === $transient ) {
 
         if ($gapi->gapi_errors_handler()) {
@@ -5045,31 +5252,54 @@ function intel_get_base_plugin_ga_profile($ga_data_source = '') {
     return FALSE;
   }
 
-  if ($ga_data_source == 'gadwp' && !is_callable('GADWP')) {
-    return FALSE;
+  if ($ga_data_source == 'ogadwp') {
+    if (!is_callable('OGADWP')) {
+      return FALSE;
+    }
+    $ga_profile_list = !empty(OGADWP()->config->options['ga_profiles_list']) ? OGADWP()->config->options['ga_profiles_list'] : array();
+    $tableid_jail = !empty(OGADWP()->config->options['tableid_jail']) ? OGADWP()->config->options['tableid_jail'] : '';
+    if (empty($ga_profile_list)) {
+      return FALSE;
+    }
+
+    $profile = OGADWP_Tools::get_selected_profile( $ga_profile_list, $tableid_jail );
+    $ga_profile_base = array(
+      'name' => $profile[0],
+      'id' => $profile[1],
+      'propertyId' => $profile[2],
+      'websiteUrl' => $profile[3],
+      'timezone' => $profile[5],
+    );
+    return $ga_profile_base;
+  }
+  elseif($ga_data_source == 'gadwp') {
+    if (!is_callable('GADWP')) {
+      return FALSE;
+    }
+    if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
+      $ga_profile_list = !empty(GADWP()->config->options['ga_dash_profile_list']) ? GADWP()->config->options['ga_dash_profile_list'] : array();
+      $tableid_jail = !empty(GADWP()->config->options['ga_dash_tableid_jail']) ? GADWP()->config->options['ga_dash_tableid_jail'] : '';
+    }
+    else {
+      $ga_profile_list = !empty(GADWP()->config->options['ga_profiles_list']) ? GADWP()->config->options['ga_profiles_list'] : array();
+      $tableid_jail = !empty(GADWP()->config->options['tableid_jail']) ? GADWP()->config->options['tableid_jail'] : '';
+    }
+    if (empty($ga_profile_list)) {
+      return FALSE;
+    }
+
+    $profile = GADWP_Tools::get_selected_profile( $ga_profile_list, $tableid_jail );
+    $ga_profile_base = array(
+      'name' => $profile[0],
+      'id' => $profile[1],
+      'propertyId' => $profile[2],
+      'websiteUrl' => $profile[3],
+      'timezone' => $profile[5],
+    );
+    return $ga_profile_base;
   }
 
-  if (defined('GADWP_CURRENT_VERSION') && version_compare(GADWP_CURRENT_VERSION, '5.2', '<')) {
-    $ga_profile_list = !empty(GADWP()->config->options['ga_dash_profile_list']) ? GADWP()->config->options['ga_dash_profile_list'] : array();
-    $tableid_jail = !empty(GADWP()->config->options['ga_dash_tableid_jail']) ? GADWP()->config->options['ga_dash_tableid_jail'] : '';
-  }
-  else {
-    $ga_profile_list = !empty(GADWP()->config->options['ga_profiles_list']) ? GADWP()->config->options['ga_profiles_list'] : array();
-    $tableid_jail = !empty(GADWP()->config->options['tableid_jail']) ? GADWP()->config->options['tableid_jail'] : '';
-  }
-  if (empty($ga_profile_list)) {
-    return FALSE;
-  }
-
-  $profile = GADWP_Tools::get_selected_profile( $ga_profile_list, $tableid_jail );
-  $ga_profile_base = array(
-    'name' => $profile[0],
-    'id' => $profile[1],
-    'propertyId' => $profile[2],
-    'websiteUrl' => $profile[3],
-    'timezone' => $profile[5],
-  );
-  return $ga_profile_base;
+  return FALSE;
 }
 
 function intel_fetch_ga_profiles() {
@@ -5079,12 +5309,20 @@ function intel_fetch_ga_profiles() {
     return $ga_profiles;
   }
 
-  if (!is_callable('GADWP')) {
-    return $ga_profiles;
+  if (is_callable('OGADWP')) {
+    $gadwp = OGADWP();
+    if ( null === $gadwp->gapi_controller ) {
+      $gadwp->gapi_controller = new OGADWP_GAPI_Controller();
+    }
   }
-  $gadwp = GADWP();
-  if ( null === $gadwp->gapi_controller ) {
-    $gadwp->gapi_controller = new GADWP_GAPI_Controller();
+  elseif (is_callable('GADWP')) {
+    $gadwp = GADWP();
+    if ( null === $gadwp->gapi_controller ) {
+      $gadwp->gapi_controller = new GADWP_GAPI_Controller();
+    }
+  }
+  else {
+    return $ga_profiles;
   }
 
   $startindex = 1;
@@ -5135,7 +5373,7 @@ function intel_fetch_ga_goals($save = 0) {
 
   $ga_profile = get_option('intel_ga_profile', array());
 
-  $gadwp = GADWP();
+  $gadwp = intel_is_plugin_active('ogadwp') ? OGADWP() : GADWP();
   if ( null === $gadwp->gapi_controller ) {
     $gadwp->gapi_controller = new GADWP_GAPI_Controller();
   }
