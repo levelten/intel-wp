@@ -1483,6 +1483,10 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
       $l10iq_pushes[] = array('addTracker', $ga_tid_base, array('enhance' => 'base'));
     }
 
+    if (get_option('intel_tracking_anonymize_ip', 0)) {
+      $l10iq_pushes[] = array('ga.set', 'anonymizeIp', true);
+    }
+
     // trigger alter to enable other modules to add pushes
     $l10iq_pushes = apply_filters('intel_l10iq_pushes_alter', $l10iq_pushes);
     //drupal_alter('intel_l10iq_pushes', $l10iq_pushes);

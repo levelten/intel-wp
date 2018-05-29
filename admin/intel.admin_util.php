@@ -564,13 +564,58 @@ function intel_util_test_form($form, &$form_state) {
     '#type' => $type,
     '#title' => Intel_Df::t('title'),
     '#description' => Intel_Df::t('description'),
-    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : '',
+    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : array(),
     '#prefix' => '<div class="card"><h4 class="card-header">' . $type . '</h4><div class="card-block">',
     '#suffix' => '</div></div>',
     '#field_prefix' => 'field_prefix',
     '#field_suffix' => 'field_suffix',
     '#options' => $options,
   );
+
+  $type = 'radio';
+  $options = array(
+    0 => Intel_Df::t('No'),
+    1 => Intel_Df::t('Yes'),
+  );
+  $form['fs'][$type] = array(
+    '#type' => $type,
+    '#title' => Intel_Df::t('title'),
+    '#description' => Intel_Df::t('description'),
+    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : 0,
+    '#prefix' => '<div class="card"><h4 class="card-header">' . $type . '</h4><div class="card-block">',
+    '#suffix' => '</div></div>',
+    //'#field_prefix' => 'field_prefix',
+    //'#field_suffix' => 'field_suffix',
+    '#options' => $options,
+  );
+
+  $type = 'radios';
+  $form['fs'][$type] = array(
+    '#type' => $type,
+    '#title' => Intel_Df::t('title'),
+    '#description' => Intel_Df::t('description'),
+    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : 0,
+    '#prefix' => '<div class="card"><h4 class="card-header">' . $type . '</h4><div class="card-block">',
+    '#suffix' => '</div></div>',
+    //'#field_prefix' => 'field_prefix',
+    //'#field_suffix' => 'field_suffix',
+    '#options' => $options,
+  );
+
+  $type = 'select';
+  $form['fs'][$type] = array(
+    '#type' => $type,
+    '#title' => Intel_Df::t('title'),
+    '#description' => Intel_Df::t('description'),
+    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : array(),
+    '#prefix' => '<div class="card"><h4 class="card-header">' . $type . '</h4><div class="card-block">',
+    '#suffix' => '</div></div>',
+    '#field_prefix' => 'field_prefix',
+    '#field_suffix' => 'field_suffix',
+    '#options' => $options,
+  );
+
+  return $form;
 
   $type = 'date';
   $form['fs'][$type] = array(
@@ -618,49 +663,6 @@ function intel_util_test_form($form, &$form_state) {
     '#suffix' => '</div></div>',
     '#field_prefix' => 'field_prefix',
     '#field_suffix' => 'field_suffix',
-  );
-
-  $type = 'radio';
-  $options = array(
-    0 => Intel_Df::t('No'),
-    1 => Intel_Df::t('Yes'),
-  );
-  $form['fs'][$type] = array(
-    '#type' => $type,
-    '#title' => Intel_Df::t('title'),
-    '#description' => Intel_Df::t('description'),
-    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : 0,
-    '#prefix' => '<div class="card"><h4 class="card-header">' . $type . '</h4><div class="card-block">',
-    '#suffix' => '</div></div>',
-    //'#field_prefix' => 'field_prefix',
-    //'#field_suffix' => 'field_suffix',
-    '#options' => $options,
-  );
-
-  $type = 'radios';
-  $form['fs'][$type] = array(
-    '#type' => $type,
-    '#title' => Intel_Df::t('title'),
-    '#description' => Intel_Df::t('description'),
-    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : 0,
-    '#prefix' => '<div class="card"><h4 class="card-header">' . $type . '</h4><div class="card-block">',
-    '#suffix' => '</div></div>',
-    //'#field_prefix' => 'field_prefix',
-    //'#field_suffix' => 'field_suffix',
-    '#options' => $options,
-  );
-
-  $type = 'select';
-  $form['fs'][$type] = array(
-    '#type' => $type,
-    '#title' => Intel_Df::t('title'),
-    '#description' => Intel_Df::t('description'),
-    '#default_value' => !empty($defaults[$type]) ? $defaults[$type] : array(),
-    '#prefix' => '<div class="card"><h4 class="card-header">' . $type . '</h4><div class="card-block">',
-    '#suffix' => '</div></div>',
-    '#field_prefix' => 'field_prefix',
-    '#field_suffix' => 'field_suffix',
-    '#options' => $options,
   );
 
   $type = 'textfield';

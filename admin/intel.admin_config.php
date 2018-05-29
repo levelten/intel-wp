@@ -504,6 +504,22 @@ function intel_admin_settings($form, &$form_state) {
     '#description' => $desc,
   );
 
+
+  $form['tracking']['tracking_options_header'] = array(
+    '#type' => 'markup',
+    '#markup' => '<label>' . Intel_Df::t('Tracking options') . '</label>',
+  );
+
+  $desc = Intel_Df::t('Enables Google Analytics !link.', array(
+      '!link' => Intel_Df::l(Intel_Df::t('IP Anonymization'), 'https://support.google.com/analytics/answer/2763052', Intel_Df::l_options_add_target('ga')),
+  ));
+  $form['tracking']['intel_tracking_anonymize_ip'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Anonymize IP'),
+    '#default_value' => get_option('intel_tracking_anonymize_ip', 0),
+    '#description' => $desc,
+  );
+
   $form['tracking']['advanced'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Advanced'),
@@ -641,10 +657,12 @@ function intel_admin_settings($form, &$form_state) {
   */
 
 
+  $desc = Intel_Df::t('A GA data source is a plugin that provides data from Google Analtyics Reporting API.');
+  $desc .= ' ' . Intel_Df::t('You will need a data source if you want to enable Intelligence reports in WordPress.');
   $form['ga_data_source'] = array(
     '#type' => 'fieldset',
     '#title' => Intel_Df::t('Google Analytics Data Source'),
-    //'#description' => Intel_Df::t('Warning: do not use these settings unless you really know what you are doing.'),
+    '#description' => $desc,
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
@@ -695,21 +713,21 @@ function intel_admin_settings($form, &$form_state) {
   $instruction_config_add['ogadwp'] = Intel_Df::l(Intel_Df::t('Configure OGADWP'), 'wp-admin/admin.php?page=ogadwp_settings', $l_options ) . '.';
   foreach ($status as $k => $v) {
     if ($v == 0) {
-      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Not Installed.');
+      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Not Activated.');
     }
     elseif ($v == 1) {
-      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Installed but not configured.') . (!empty($instruction_config_add[$k]) ? ' ' . $instruction_config_add[$k] : '');
+      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Activated but not configured.') . (!empty($instruction_config_add[$k]) ? ' ' . $instruction_config_add[$k] : '');
     }
     elseif ($v == 2) {
       $options[$k] = $names[$k];
-      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Installed and configured.');
+      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Activated and configured.');
     }
   }
 
   $form['ga_data_source']['intel_ga_data_source'] = array(
     '#type' => 'radios',
     '#title' => Intel_Df::t('Google Analytics Data Source'),
-    '#description' => Intel_Df::t('Select your data source. Only sources that are active and setup will appear in the list.'),
+    '#description' => Intel_Df::t('Select your data source. Only sources that are active and properly configured will appear in the list.'),
     '#options' => $options,
     '#default_value' => get_option('intel_ga_data_source', ''),
   );

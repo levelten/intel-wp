@@ -3038,6 +3038,7 @@ class Intel_Form  {
 				$parents_for_id = array_merge($element['#parents'], array($key));
 				$element[$key] += array(
 					'#type' => 'radio',
+					'#super_type' => 'radios', // flag for element to determine if checkbox is a part of checkboxes
 					'#title' => $choice,
 					// The key is sanitized in drupal_attributes() during output from the
 					// theme function.
@@ -3183,6 +3184,7 @@ class Intel_Form  {
 				$element += array($key => array());
 				$element[$key] += array(
 					'#type' => 'checkbox',
+					'#super_type' => 'checkboxes', // flag for element to determine if checkbox is a part of checkboxes
 					'#title' => $choice,
 					'#return_value' => $key,
 					'#default_value' => isset($value[$key]) ? $key : NULL,
@@ -4200,9 +4202,18 @@ class Intel_Form  {
 
 		$attributes = array();
 		$attributes['class'] = 'control-label';
+
 		// Style the label as class option to display inline with the element.
 		if ($element['#title_display'] == 'after') {
 			$attributes['class'] = ' option';
+			// if element is a single checkbox, add control-label class
+			if (($element['#type'] == 'checkbox') && (empty($element['#super_type']) || $element['#super_type'] != 'checkboxes')) {
+				$attributes['class'] .= ' control-label';
+			}
+			// if element is a single radio, add control-label class
+			if (($element['#type'] == 'radio') && (empty($element['#super_type']) || $element['#super_type'] != 'radios')) {
+				$attributes['class'] .= ' control-label';
+			}
 		}
 		// Show label only to screen readers to avoid disruption in visual flows.
 		elseif ($element['#title_display'] == 'invisible') {
