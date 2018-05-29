@@ -107,11 +107,10 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 
 = 1.3.1 =
 * Visitor/contact export and delete methods
-* Fixes for GADWP v5.3 updates
-* intel_intel_event_save() enhancements
-* OGADWP support
 * Anonymize IP option
-
+* intel_intel_event_save() enhancements
+* Fixes for GADWP v5.3 updates
+* OGADWP support
 
 == Upgrade Notice ==
 
