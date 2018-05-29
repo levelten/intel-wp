@@ -2525,7 +2525,7 @@ function intel_page_attribute_entity_type_option_info($option_id, $data_options)
     'title' => '',
   );
   $types = node_type_get_types();
-  //print_r($types);
+
   $type = '';
   if (isset($types[$option_id])) {
     $data['title'] = $types[$option_id]->name;
@@ -4274,7 +4274,8 @@ function intel_ga_api_data_ogadwp($request = array(), $cache_options = array()) 
   }
   if (!empty($feed->rows)) {
     $ch = $feed->getColumnHeaders();
-    if (!is_array($ch)) {
+    if (0 && !is_array($ch)) {
+      intel_d('feed:');
       intel_d($feed);//
     }
     $colHeaders = array();
@@ -4291,7 +4292,7 @@ function intel_ga_api_data_ogadwp($request = array(), $cache_options = array()) 
   }
 
   //intel_d($feed);
-  Intel_Df::watchdog('feed', print_r($feed));
+  //Intel_Df::watchdog('feed', print_r($feed));
 
   return $feed;
 }
@@ -4391,7 +4392,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   }
 
   //intel_d($feed);
-  Intel_Df::watchdog('feed', print_r($feed));
+  //Intel_Df::watchdog('feed', print_r($feed));
 
   return $feed;
 }
@@ -4420,12 +4421,12 @@ function intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $opt
       }
 
       $transient = OGADWP_Tools::get_cache( $serial );
-//Intel_Df::watchdog('intel_ogadwp_handle_corereports transient 1', print_r($transient));
+
       if (!empty($cache_options['refresh'])) {
         OGADWP_Tools::delete_cache( $serial );
         $transient = false;
       }
-//Intel_Df::watchdog('intel_ogadwp_handle_corereports transient 2', print_r($transient));
+
       if ( false === $transient ) {
 
         if ($gapi->gapi_errors_handler()) {

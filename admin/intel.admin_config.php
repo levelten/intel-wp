@@ -639,6 +639,87 @@ function intel_admin_settings($form, &$form_state) {
     '#description' => Intel_Df::t('URL of picture to display for visitors with no custom picture. Leave blank for none.'),
   );
   */
+
+
+  $form['ga_data_source'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Google Analytics Data Source'),
+    //'#description' => Intel_Df::t('Warning: do not use these settings unless you really know what you are doing.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+
+  $status = array(
+    'ogadwp' => 0,
+    'gadwp' => 0,
+  );
+
+  if (intel_is_plugin_active( 'ogadwp' ) && function_exists('OGADWP')) {
+    $status['ogadwp'] = 1;
+    // check if ogadwp ga authorization is complete
+    $ogadwp = OGADWP();
+
+    if (!empty($ogadwp->config->options['token'])) {
+
+      $ga_profile_base = intel_get_base_plugin_ga_profile('ogadwp');
+
+      if (!empty($ga_profile_base)) {
+        $status['ogadwp'] = 2;
+      }
+    }
+  }
+  if (intel_is_plugin_active( 'gadwp' ) && function_exists('GADWP')) {
+    $status['gadwp'] = 1;
+    // check if gadwp ga authorization is complete
+    $gadwp = GADWP();
+    // $gadwp->config->options['token'] GADWP_CURRENT_VERSION >= 5.2, $gadwp->config->options['ga_dash_token'] < 5.2
+    if (!empty($gadwp->config->options['token']) || !empty($gadwp->config->options['ga_dash_token'])) {
+
+      $ga_profile_base = intel_get_base_plugin_ga_profile('gadwp');
+
+      if (!empty($ga_profile_base)) {
+        $status['gadwp'] = 2;
+      }
+    }
+  }
+
+  $options = array();
+  $instruction_items = array();
+  $names = array(
+    'ogadwp' => Intel_Df::t('Open Google Analtyics Dashboard for WordPress'),
+    'gadwp' => Intel_Df::t('ExactMetrics (previously Google Analtyics Dashboard for WordPress)'),
+  );
+  $instruction_adds = array();
+  $l_options = Intel_Df::l_options_add_target('ogadwp');
+  $instruction_config_add['ogadwp'] = Intel_Df::l(Intel_Df::t('Configure OGADWP'), 'wp-admin/admin.php?page=ogadwp_settings', $l_options ) . '.';
+  foreach ($status as $k => $v) {
+    if ($v == 0) {
+      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Not Installed.');
+    }
+    elseif ($v == 1) {
+      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Installed but not configured.') . (!empty($instruction_config_add[$k]) ? ' ' . $instruction_config_add[$k] : '');
+    }
+    elseif ($v == 2) {
+      $options[$k] = $names[$k];
+      $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Installed and configured.');
+    }
+  }
+
+  $form['ga_data_source']['intel_ga_data_source'] = array(
+    '#type' => 'radios',
+    '#title' => Intel_Df::t('Google Analytics Data Source'),
+    '#description' => Intel_Df::t('Select your data source. Only sources that are active and setup will appear in the list.'),
+    '#options' => $options,
+    '#default_value' => get_option('intel_ga_data_source', ''),
+  );
+
+  $form['ga_data_source']['instructions'] = array(
+    '#type' => 'markup',
+    '#title' => Intel_Df::t('Google Analytics Data Source'),
+    '#markup' => '<label>' . Intel_Df::t('Plugin status') . '</label>' . Intel_Df::theme('item_list', array('items' => $instruction_items)),
+  );
+
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => Intel_Df::t('Save settings'),

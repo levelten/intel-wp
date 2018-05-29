@@ -209,8 +209,6 @@ function intel_admin_setup_base_ga($form, &$form_state) {
   $items[] = Intel_Df::t('Please install and setup GADWP.');
   $items[] = '</p>';
 
-
-
   $setup_state = get_option('intel_setup', array());
   if (!isset($setup_state['install_plugins'])) {
     $setup_state['install_plugins'] = array();
@@ -415,6 +413,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
     }
 
     $form_state['ogadwp'] = $ogadwp;
+    update_option('intel_ga_data_source', 'ogadwp');
   }
   elseif (intel_is_plugin_active( 'gadwp' )) {
 // check if gadwp ga authorization is complete
@@ -453,6 +452,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
     }
 
     $form_state['gadwp'] = $gadwp;
+    update_option('intel_ga_data_source', 'gadwp');
   }
 
 
