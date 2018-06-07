@@ -697,7 +697,9 @@ function intel_add_icons_to_visitor_properties($props) {
 }
 
 function intel_create_icon($icon) {
-  if (!intel_api_access()) {
+  // TODO: performance problem with this function on some servers, assuming
+  // if don't have permissions to write files
+  if (!intel_is_api_level('pro')) {
     return '';
   }
   $url = '';

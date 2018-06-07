@@ -192,7 +192,7 @@ function intel_l10iapi_sync_visitordata($visitor, $options = array()) {
   $status = 1;
 
   if (
-    intel_api_access()
+    intel_api_level('pro')
     && get_option('intel_sync_visitordata_fullcontact', INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT)
     && $visitor->getVar('data', 'settings', 'sync_visitordata.fullcontact', INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT)
     && $visitor->getEmail()

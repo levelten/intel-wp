@@ -111,6 +111,7 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 * intel_intel_event_save() enhancements
 * Fixes for GADWP v5.3 updates
 * OGADWP support
+* GAPWP support
 
 == Upgrade Notice ==
 
