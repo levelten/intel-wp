@@ -87,9 +87,9 @@ function intel_admin_settings($form, &$form_state) {
     '#collapsible' => TRUE,
   );
   $desc = Intel_Df::t('Enter the Google Analytics property (view) would want the use for your reports.');
-  if ($ga_data_source == 'ogadwp') {
+  if ($ga_data_source == 'gainwp') {
     $link_options = array();
-    $page = 'ogadwp_settings';
+    $page = 'gainwp_settings';
     $desc .= ' ' . Intel_Df::t('This should be a seperate property than the primary tracking id set in the !link', array(
       '!link' => Intel_Df::l( Intel_Df::t('Google Analytics Dashboard for WP plugin'), '/wp-admin/admin.php?page=' . $page),
     ));
@@ -669,21 +669,21 @@ function intel_admin_settings($form, &$form_state) {
 
 
   $status = array(
-    'ogadwp' => 0,
+    'gainwp' => 0,
     'gadwp' => 0,
   );
 
-  if (intel_is_plugin_active( 'ogadwp' ) && function_exists('OGADWP')) {
-    $status['ogadwp'] = 1;
-    // check if ogadwp ga authorization is complete
-    $ogadwp = OGADWP();
+  if (intel_is_plugin_active( 'gainwp' ) && function_exists('GAINWP')) {
+    $status['gainwp'] = 1;
+    // check if gainwp ga authorization is complete
+    $gainwp = GAINWP();
 
-    if (!empty($ogadwp->config->options['token'])) {
+    if (!empty($gainwp->config->options['token'])) {
 
-      $ga_profile_base = intel_get_base_plugin_ga_profile('ogadwp');
+      $ga_profile_base = intel_get_base_plugin_ga_profile('gainwp');
 
       if (!empty($ga_profile_base)) {
-        $status['ogadwp'] = 2;
+        $status['gainwp'] = 2;
       }
     }
   }
@@ -702,15 +702,22 @@ function intel_admin_settings($form, &$form_state) {
     }
   }
 
+  // auto switch to gainwp if it is properly configured
+  $ga_data_source = get_option('intel_ga_data_source', '');
+  if ($status['gainwp'] == 2 && $ga_data_source != 'gainwp' && $status['gadwp'] != 2) {
+    $ga_data_source = 'gainwp';
+    update_option('intel_ga_data_source', $ga_data_source);
+  }
+
   $options = array();
   $instruction_items = array();
   $names = array(
-    'ogadwp' => Intel_Df::t('Open Google Analtyics Dashboard for WordPress'),
-    'gadwp' => Intel_Df::t('ExactMetrics (previously Google Analtyics Dashboard for WordPress)'),
+    'gainwp' => Intel_Df::t('GAinWP Google Analytics Integration for WordPress'),
+    'gadwp' => Intel_Df::t('ExactMetrics (previously Google Analytics Dashboard for WordPress)'),
   );
   $instruction_adds = array();
-  $l_options = Intel_Df::l_options_add_target('ogadwp');
-  $instruction_config_add['ogadwp'] = Intel_Df::l(Intel_Df::t('Configure OGADWP'), 'wp-admin/admin.php?page=ogadwp_settings', $l_options ) . '.';
+  $l_options = Intel_Df::l_options_add_target('gainwp');
+  $instruction_config_add['gainwp'] = Intel_Df::l(Intel_Df::t('Configure GAINWP'), 'wp-admin/admin.php?page=gainwp_settings', $l_options ) . '.';
   foreach ($status as $k => $v) {
     if ($v == 0) {
       $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Not Activated.');
@@ -729,7 +736,7 @@ function intel_admin_settings($form, &$form_state) {
     '#title' => Intel_Df::t('Google Analytics Data Source'),
     '#description' => Intel_Df::t('Select your data source. Only sources that are active and properly configured will appear in the list.'),
     '#options' => $options,
-    '#default_value' => get_option('intel_ga_data_source', ''),
+    '#default_value' => $ga_data_source,
   );
 
   $form['ga_data_source']['instructions'] = array(

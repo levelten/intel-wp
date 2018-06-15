@@ -4139,12 +4139,12 @@ function intel_ga_data_source($check_connected = 0) {
     return FALSE;
   }
 
-  if ($ga_data_source == 'ogadwp') {
-    if (!is_callable('OGADWP')) {
+  if ($ga_data_source == 'gainwp') {
+    if (!is_callable('GAINWP')) {
       return FALSE;
     }
-    $ogadwp = OGADWP();
-    return !empty($ogadwp->config->options['token']) ? $ga_data_source : FALSE;
+    $gainwp = GAINWP();
+    return !empty($gainwp->config->options['token']) ? $ga_data_source : FALSE;
   }
   elseif ($ga_data_source == 'gadwp') {
     if (!is_callable('GADWP')) {
@@ -4167,12 +4167,12 @@ function intel_ga_api_data($request = array(), $cache_options = array()) {
   $source = intel_ga_data_source();
   // if source is not set, check if GADWP is setup and set it
   if (!$source) {
-    if (is_callable('OGADWP')) {
-      $ogadwp = OGADWP();
+    if (is_callable('GAINWP')) {
+      $gainwp = GAINWP();
       // if ga connection has been made the token from GA will be saved in gadwp config. ga_dash_token is for older
       // versions of GADWP.
-      if (!empty($ogadwp->config->options['token'])) {
-        update_option('intel_ga_data_source', 'ogadwp');
+      if (!empty($gainwp->config->options['token'])) {
+        update_option('intel_ga_data_source', 'gainwp');
       }
     }
     elseif (is_callable('GADWP')) {
@@ -4184,8 +4184,8 @@ function intel_ga_api_data($request = array(), $cache_options = array()) {
       }
     }
   }
-  if ($source == 'ogadwp') {
-    $feed = intel_ga_api_data_ogadwp($request, $cache_options);
+  if ($source == 'gainwp') {
+    $feed = intel_ga_api_data_gainwp($request, $cache_options);
     //$feed = intel_ga_api_data_internal($request, $cache_options);
   }
   elseif ($source == 'gadwp') {
@@ -4196,9 +4196,9 @@ function intel_ga_api_data($request = array(), $cache_options = array()) {
   return $feed;
 }
 
-function intel_ga_api_data_ogadwp($request = array(), $cache_options = array()) {
-  $ogadwp = OGADWP();
-  $ogapi = new OGADWP_GAPI_Controller();
+function intel_ga_api_data_gainwp($request = array(), $cache_options = array()) {
+  $gainwp = GAINWP();
+  $ogapi = new GAINWP_GAPI_Controller();
   $projectId = get_option('intel_ga_view');
   $from = !empty($request['start_date']) ? date("Y-m-d", $request['start_date']) : '';
   $to = !empty($request['end_date']) ? date("Y-m-d", $request['end_date']) : '';
@@ -4259,7 +4259,7 @@ function intel_ga_api_data_ogadwp($request = array(), $cache_options = array()) 
 
 
   //$serial = 'intel_' . $gapi->get_serial( $seed );
-  $feed = intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $ogapi, $cache_options );
+  $feed = intel_gainwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $ogapi, $cache_options );
 
   if (!is_object($feed)) {
 
@@ -4408,7 +4408,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
  * @param $gapi
  * @return bool|int|mixed
  */
-function intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options = array() ) {
+function intel_gainwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options = array() ) {
 
   $ver = isset($gapi->error_timeout) ? 1 : 2;
 
@@ -4420,22 +4420,22 @@ function intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $opt
         $interval = 'daily';
       }
 
-      $transient = OGADWP_Tools::get_cache( $serial );
+      $transient = GAINWP_Tools::get_cache( $serial );
 
       if (!empty($cache_options['refresh'])) {
-        OGADWP_Tools::delete_cache( $serial );
+        GAINWP_Tools::delete_cache( $serial );
         $transient = false;
       }
 
       if ( false === $transient ) {
 
         if ($gapi->gapi_errors_handler()) {
-          $errors = OGADWP_Tools::get_cache( 'gapi_errors' );
+          $errors = GAINWP_Tools::get_cache( 'gapi_errors' );
           Intel_Df::drupal_set_message(Intel_Df::t('GAPI Errors'));
           if (intel_is_debug()) {
-            intel_d($errors);
+            intel_d($errors);//
           }
-          OGADWP_Tools::delete_cache( 'gapi_errors' );
+          GAINWP_Tools::delete_cache( 'gapi_errors' );
           if (empty($cache_options['refresh'])) {
             return - 23;
           }
@@ -4443,7 +4443,7 @@ function intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $opt
         }
         if (!empty($cache_options['realtime'])) {
           $data = $gapi->service->data_realtime->get( 'ga:' . $projectId, $metrics, $options );
-          OGADWP_Tools::set_cache($serial, $data, 10);
+          GAINWP_Tools::set_cache($serial, $data, 10);
         }
         else {
           $options['samplingLevel'] = 'HIGHER_PRECISION';
@@ -4452,10 +4452,10 @@ function intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $opt
             $sampling['date'] = date( 'Y-m-d H:i:s' );
             $sampling['percent'] = number_format( ( $data->getSampleSize() / $data->getSampleSpace() ) * 100, 2 ) . '%';
             $sampling['sessions'] = $data->getSampleSize() . ' / ' . $data->getSampleSpace();
-            OGADWP_Tools::set_cache( 'sampleddata', $sampling, 30 * 24 * 3600 );
-            OGADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( 'hourly' ) ); // refresh every hour if data is sampled
+            GAINWP_Tools::set_cache( 'sampleddata', $sampling, 30 * 24 * 3600 );
+            GAINWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( 'hourly' ) ); // refresh every hour if data is sampled
           } else {
-            OGADWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( $interval ) );
+            GAINWP_Tools::set_cache( $serial, $data, $gapi->get_timeouts( $interval ) );
           }
         }
       } else {
@@ -4463,16 +4463,16 @@ function intel_ogadwp_handle_corereports( $projectId, $from, $to, $metrics, $opt
       }
     } catch ( Deconf_Service_Exception $e ) {
       $timeout = $gapi->get_timeouts( 'midnight' );
-      OGADWP_Tools::set_error( $e, $timeout );
+      GAINWP_Tools::set_error( $e, $timeout );
       return $e->getCode();
     } catch ( Exception $e ) {
       $timeout = $gapi->get_timeouts( 'midnight' );
-      OGADWP_Tools::set_error( $e, $timeout );
+      GAINWP_Tools::set_error( $e, $timeout );
       return $e->getCode();
     }
 
-    OGADWP()->config->options['api_backoff'] = 0;
-    OGADWP()->config->set_plugin_options();
+    GAINWP()->config->options['api_backoff'] = 0;
+    GAINWP()->config->set_plugin_options();
 
     if ( $data->getRows() > 0 ) {
       return $data;
@@ -4521,7 +4521,7 @@ function intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $opti
           $errors = GADWP_Tools::get_cache( 'gapi_errors' );
           Intel_Df::drupal_set_message(Intel_Df::t('GAPI Errors'));
           if (intel_is_debug()) {
-            intel_d($errors);
+            intel_d($errors);//
           }
           GADWP_Tools::delete_cache( 'gapi_errors' );
           if (empty($cache_options['refresh'])) {
@@ -5253,17 +5253,17 @@ function intel_get_base_plugin_ga_profile($ga_data_source = '') {
     return FALSE;
   }
 
-  if ($ga_data_source == 'ogadwp') {
-    if (!is_callable('OGADWP')) {
+  if ($ga_data_source == 'gainwp') {
+    if (!is_callable('GAINWP')) {
       return FALSE;
     }
-    $ga_profile_list = !empty(OGADWP()->config->options['ga_profiles_list']) ? OGADWP()->config->options['ga_profiles_list'] : array();
-    $tableid_jail = !empty(OGADWP()->config->options['tableid_jail']) ? OGADWP()->config->options['tableid_jail'] : '';
+    $ga_profile_list = !empty(GAINWP()->config->options['ga_profiles_list']) ? GAINWP()->config->options['ga_profiles_list'] : array();
+    $tableid_jail = !empty(GAINWP()->config->options['tableid_jail']) ? GAINWP()->config->options['tableid_jail'] : '';
     if (empty($ga_profile_list)) {
       return FALSE;
     }
 
-    $profile = OGADWP_Tools::get_selected_profile( $ga_profile_list, $tableid_jail );
+    $profile = GAINWP_Tools::get_selected_profile( $ga_profile_list, $tableid_jail );
     $ga_profile_base = array(
       'name' => $profile[0],
       'id' => $profile[1],
@@ -5310,10 +5310,10 @@ function intel_fetch_ga_profiles() {
     return $ga_profiles;
   }
 
-  if (is_callable('OGADWP')) {
-    $gadwp = OGADWP();
+  if (is_callable('GAINWP')) {
+    $gadwp = GAINWP();
     if ( null === $gadwp->gapi_controller ) {
-      $gadwp->gapi_controller = new OGADWP_GAPI_Controller();
+      $gadwp->gapi_controller = new GAINWP_GAPI_Controller();
     }
   }
   elseif (is_callable('GADWP')) {
@@ -5374,7 +5374,7 @@ function intel_fetch_ga_goals($save = 0) {
 
   $ga_profile = get_option('intel_ga_profile', array());
 
-  $gadwp = intel_is_plugin_active('ogadwp') ? OGADWP() : GADWP();
+  $gadwp = intel_is_plugin_active('gainwp') ? GAINWP() : GADWP();
   if ( null === $gadwp->gapi_controller ) {
     $gadwp->gapi_controller = new GADWP_GAPI_Controller();
   }

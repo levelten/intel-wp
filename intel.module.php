@@ -3531,14 +3531,6 @@ function intel_intel_plugin_path_info($info) {
       'addthis-follow.php'
     )
   );
-  $info['gapwp'] = array(
-    'directory' => array(
-      'google-analytics-plus-wp'
-    ),
-    'filename' => array(
-      'gapwp.php'
-    )
-  );
   $info['gadwp'] = array(
     'directory' => array(
       'google-analytics-dashboard-for-wp'
@@ -3547,12 +3539,12 @@ function intel_intel_plugin_path_info($info) {
       'gadwp.php'
     )
   );
-  $info['ogadwp'] = array(
+  $info['gainwp'] = array(
     'directory' => array(
-      'open-google-analytics',
+      'ga-in',
     ),
     'filename' => array(
-      'ogadwp.php'
+      'gainwp.php'
     )
   );
   $info['gravityforms'] = array(
