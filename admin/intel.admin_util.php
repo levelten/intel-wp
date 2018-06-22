@@ -30,72 +30,12 @@ function intel_util() {
 function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.imapi.php';
 
-  $custom = get_option('intel_intel_events_custom', array());
+  $ga_access_token = intel_imapi_ga_access_token_get();
+  intel_d($ga_access_token);
 
-  intel_d($custom);
-
-  $intel_events = intel_get_intel_event_info();
-
-  intel_d($intel_events);
-
-  if (!empty($_GET['uninstall'])) {
-    intel_uninstall_plugin($_GET['uninstall']);
-  }
+  update_option('intel_ga_access_token', $ga_access_token);
 
   return 'OK';
-
-  $url = Intel_Df::url('/wp/wp-admin/admin.php?page=intel_config&q=admin/config/intel/settings/setup');
-  intel_d($url);
-
-  $url = Intel_Df::url('/wp/wp-admin/admin.php?page=intel_config&q=admin/config/intel/settings/setup', array('absolute' => 1));
-  intel_d($url);
-
-  $parse_url = Intel_Df::drupal_parse_url('http://wp-bedrock.localhost/intelligence/demo/intel_example_addon');
-  $url = Intel_Df::url($parse_url['path'], array('query' => $parse_url['query']));
-
-  intel_d($parse_url);
-  intel_d($url);
-
-  $parse_url = Intel_Df::drupal_parse_url('/dir/intelligence/demo/intel_example_addon');
-  $url = Intel_Df::url($parse_url['path'], array('query' => $parse_url['query']));
-
-  intel_d($parse_url);
-  intel_d($url);
-
-  return 'OK';
-
-
-  $intel_sys = get_option('intel_system', array());
-
-  intel_d($intel_sys);
-
-  return 'OK';
-
-  include_once(ABSPATH . 'wp-admin/includes/plugin-install.php'); //for plugins_api..
-
-  $plugin_slug = !empty($vars['plugin_slug']) ? $vars['plugin_slug'] : 'intelligence';
-  $args = array(
-    'slug' => $plugin_slug,
-  );
-  $plugin = plugins_api('plugin_information', $args);
-
-  $status = $status = install_plugin_install_status($plugin);
-
-  intel_d($plugin);
-  intel_d($status);
-
-  $args = array(
-    'slug' => 'social-warfare',
-  );
-  $plugin = plugins_api('plugin_information', $args);
-
-  $status = $status = install_plugin_install_status($plugin);
-
-  intel_d($plugin);
-  intel_d($status);
-
-  return 'OK';
-
 }
 
 /**
@@ -114,9 +54,10 @@ function intel_util_temp_form($form, &$form_state) {
   );
   */
 
+  $settings = update_option('intel_test_form', array());
 
 
-intel_d($settings);//
+  intel_d($settings);//
 
   $page_match = Intel_Df::drupal_match_path($settings['uri'], $settings['enable_pages']);
 

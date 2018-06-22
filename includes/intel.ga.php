@@ -4129,6 +4129,12 @@ function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1
   }
 }
 
+function intel_ga_data_api() {
+  $ga_data_api = get_option('intel_ga_data_api', '');
+
+  return $ga_data_api;
+}
+
 function intel_ga_data_source($check_connected = 0) {
   $ga_data_source = get_option('intel_ga_data_source', '');
   if (!$check_connected) {

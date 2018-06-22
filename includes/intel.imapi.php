@@ -86,6 +86,30 @@ function intel_imapi_property_get($options = array()) {
   return $response['property'];
 }
 
+function intel_imapi_ga_access_token_get($options = array()) {
+  $vars = array();
+  $apiclient = intel_imapi_get_client($vars, $options);
+  $response = FALSE;
+  $params = isset($options['params']) ? $options['params'] : array();
+  $params['tid'] = $vars['tid'];
+  $data = array(
+    'apikey' => $vars['apikey'],
+  );
+
+  try {
+    $response = $apiclient->getJSON('ga_access_token/get', $params, $data);
+  }
+  catch (Exception $e) {
+    throw($e);
+  }
+
+  if (empty($response['status']) || $response['status'] >= 300) {
+    throw new Exception($response['message'], $response['status']);
+  }
+
+  return $response['ga_access_token'];
+}
+
 function intel_imapi_ga_goal_get($goal_id = 0, $options = array()) {
   $vars = array();
   $apiclient = intel_imapi_get_client($vars, $options);
