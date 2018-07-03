@@ -969,6 +969,10 @@ function intel_admin_settings_iapi_auth_callback() {
         }
       }
     }
+
+    if (!empty()) {
+
+    }
   }
 
   Intel_Df::drupal_set_message(Intel_Df::t('Intelligence API is properly connected.'), 'success');

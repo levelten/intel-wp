@@ -5099,17 +5099,18 @@ function intel_get_tracking_exclude_user_role_default() {
 
 function intel_gainwp_gapi_client_alter($gapi_client) {
   $ga_data_api = intel_ga_data_api();
-
+//intel_d($ga_data_api);
   if ($ga_data_api != 'intel') {
     return $gapi_client;
   }
-
+//intel_d('use Intel_Gainwp_Auth');
   // switch out gainwp auth for intel auth class
   require_once INTEL_DIR . 'includes/class-intel-gainwp-auth.php';
   $auth = new Intel_Gainwp_Auth( $gapi_client );
   $auth_config = $gapi_client->getClassConfig('Deconfin_Auth_OAuth2');
   $gapi_client->setAuthClass($auth);
-  $gapi_client->setClassConfig('Intel_Gaiwp_Auth', $auth_config);
+  $gapi_client->setClassConfig('Intel_Gainwp_Auth', $auth_config);
+  $auth->setClient( $gapi_client );
 
   return $gapi_client;
 }

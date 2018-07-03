@@ -28,6 +28,7 @@ function intel_util() {
  * Testing function
  */
 function intel_util_temp() {
+  update_option('intel_ga_data_api', 'intel');
   include_once INTEL_DIR . 'includes/intel.imapi.php';
 
   $ga_access_token = intel_imapi_ga_access_token_get();

@@ -389,6 +389,20 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     '#markup' => implode(' ', $items),
   );
 
+  $items = array();
+  $items[] = '<label>' . Intel_Df::t('OR') . '</label><br>';
+  $f['instructions3'] = array(
+    '#type' => 'markup',
+    '#markup' => implode(' ', $items),
+  );
+
+  $f['intel_ga_data_api'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Use Intel for data api'),
+    '#return_value' => 'intel',
+    '#default_value' => intel_ga_data_api(),
+  );
+
   if (empty($form_state['intel_ga_profiles'])) {
     $items = array();
     $items[] = '<label>' . Intel_Df::t('OR') . '</label><br>';
@@ -403,9 +417,6 @@ function intel_admin_setup_base_ga($form, &$form_state) {
       '#default_value' => !empty($form_state['wizard_state']['ga_data_ignore']) ? $form_state['wizard_state']['ga_data_ignore'] : '',
     );
   }
-
-
-
 
   return $f;
 }
@@ -537,6 +548,7 @@ function intel_admin_setup_base_ga_validate($form, &$form_state, $status) {
 function intel_admin_setup_base_ga_submit($form, &$form_state) {
   $form_state['wizard_state']['ga_data_ignore'] = $form_state['values']['ga_data_ignore'];
 
+  update_option('intel_ga_data_api', $form_state['values']['intel_ga_data_api']);
 
   if (!empty($form_state['intel_ga_profiles'])) {
     $ga_data_source = intel_is_plugin_active( 'gainwp' ) ? 'gainwp' : 'gadwp';

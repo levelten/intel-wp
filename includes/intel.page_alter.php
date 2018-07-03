@@ -1470,9 +1470,9 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
       $params['cookieDomain'] =  $l10i_domain_name;
       //$l10iq_pushes[] = array('_setDomainName', $l10i_domain_name);
     }
-    if (!empty($user->uid)) {
-      $params['userId'] =  '.';
-    }
+    //if (!empty($user->uid)) {
+    //  $params['userId'] =  '.';
+    //}
     $l10iq_pushes[] = array('ga.create', $l10i_ga_account, 'auto', $params);
 
     //$ga_tid_base = get_option('intel_ga_tid_base', '');
@@ -2305,7 +2305,7 @@ function intel_process_form_submission($vars) {
 
   //$userId = Intel_Visitor::extractUserId();
 
-  intel_set_ga_userid($visitor);
+  //intel_set_ga_userid($visitor);
   /*
   if ($api_level == 'pro' && !empty($visitor->identifiers['vtk'][0])) {
     $vtk = $visitor->identifiers['vtk'][0];
