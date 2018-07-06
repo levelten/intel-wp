@@ -26,7 +26,8 @@ function intel_admin_settings($form, &$form_state) {
     }
     else {
       $msg = Intel_Df::t('Intelligence API not connected.');
-      $msg .= ' ' . $message;
+      $msg .= ' ' . Intel_Df::t('Intelligence API returned message:') . ' ' . $message;
+      $msg .= ' ' . Intel_Df::l(Intel_Df::t('Setup Intelligence API'), 'admin/config/intel/settings/setup') . '.';
       //$msg .= ' ' . Intel_Df::l(Intel_Df::t('View setup instructions tutorial.'), 'http://getlevelten.com/blog/tom-mccracken/intelligence-tutorial-install', array('attributes' =>  array('target' => 'getlevelten')));
       Intel_Df::drupal_set_message($msg, 'error');
     }
@@ -968,10 +969,6 @@ function intel_admin_settings_iapi_auth_callback() {
           Intel_Df::drupal_set_message($msg);
         }
       }
-    }
-
-    if (!empty()) {
-
     }
   }
 
@@ -2346,8 +2343,6 @@ function intel_admin_form_type_list_page() {
   $form_type_info = intel()->form_type_info();
 
   $form_type_form_info = intel()->form_type_form_info();
-
-  //intel_d($form_type_form_info);
 
   $header = array(
     Intel_Df::t('Title'),

@@ -868,6 +868,7 @@ class Intel {
 	}
 
 	public function form_type_form_info($form_type = NULL, $name = NULL) {
+		global $wp_filter;
 		$form_type_info = self::form_type_info($form_type);
 		$info = array();
 		foreach ($form_type_info as $ft => $v) {
@@ -880,7 +881,7 @@ class Intel {
 		return !empty($info[$form_type]) ? $info[$form_type] : NULL;
 	}
 
-	// depricated
+	// deprecated
 	public function form_type_forms_info($name = NULL) {
 		$info = self::build_info('form_type_forms');
 		if (!isset($name)) {

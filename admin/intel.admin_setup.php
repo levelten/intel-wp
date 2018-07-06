@@ -225,7 +225,7 @@ function intel_admin_setup_base_ga($form, &$form_state) {
   if (!isset($setup_state['install_plugins'])) {
     $setup_state['install_plugins'] = array();
   }
-  $setup_state['install_plugins']['google-analytics-dashboard-for-wp'] = 1;
+  $setup_state['install_plugins']['ga-in'] = 1;
 
   $items = array();
 
@@ -249,7 +249,7 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     'install_link_install_text' => Intel_Df::t('Install GAinWP'),
     'install_link_activate_text' => Intel_Df::t('Activate GAinWP'),
     'install_link_update_text' => Intel_Df::t('Update GAinWP'),
-    'install_link_active_text' => '<span class="icon glyphicon glyphicon-check" aria-hidden="true"></span> ' . Intel_Df::t('GADWP is Active'),
+    'install_link_active_text' => '<span class="icon glyphicon glyphicon-check" aria-hidden="true"></span> ' . Intel_Df::t('GAinWP is Active'),
   );
   $vars['install_link_activate_class'] = $vars['install_link_install_class'];
   $l_options = array();
@@ -389,6 +389,7 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     '#markup' => implode(' ', $items),
   );
 
+  /*
   $items = array();
   $items[] = '<label>' . Intel_Df::t('OR') . '</label><br>';
   $f['instructions3'] = array(
@@ -402,6 +403,7 @@ function intel_admin_setup_base_ga($form, &$form_state) {
     '#return_value' => 'intel',
     '#default_value' => intel_ga_data_api(),
   );
+  */
 
   if (empty($form_state['intel_ga_profiles'])) {
     $items = array();
@@ -446,7 +448,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
   }
 
   if ((!intel_is_plugin_active( 'gainwp' ) && !intel_is_plugin_active( 'gadwp' )) || (!is_callable('GAINWP') && !is_callable('GADWP'))) {
-    $status['error_msg'] = Intel_Df::t('Neither GAINWP or GADWP is active.');
+    $status['error_msg'] = Intel_Df::t('Neither GAinWP or GADWP is active.');
     $status['error_msg'] .= ' ' . Intel_Df::t('Please install a base GA plugin and activate before proceeding.');
     return $status;
   }
@@ -457,7 +459,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
     // $gadwp->config->options['token'] GADWP_CURRENT_VERSION >= 5.2, $gadwp->config->options['ga_dash_token'] < 5.2
     if (empty($gainwp->config->options['token'])) {
       $status['error_msg'] = Intel_Df::t('Google Analytics API is not connected.');
-      $status['error_msg'] .= ' ' . Intel_Df::t('Please complete the Google Analytics Dashboard For WP setup.');
+      $status['error_msg'] .= ' ' . Intel_Df::t('Please complete the Google Analytics Integration For WP (GAinWP) setup.');
       return $status;
     }
 
@@ -469,7 +471,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
     $ga_profiles = intel_fetch_ga_profiles();
     if (empty($ga_profiles)) {
       $status['error_msg'] = Intel_Df::t('Unable to retrieve profile list from Google Analytics.');
-      $status['error_msg'] .= ' ' . Intel_Df::t('Please complete the Google Analytics Dashboard For WP setup.');
+      $status['error_msg'] .= ' ' . Intel_Df::t('Please complete the Google Analytics Integration For WP (GAinWP) setup.');
       return $status;
     }
 
@@ -478,7 +480,7 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
     if (empty($ga_profile_base)) {
       // gadwp migrated admin page name
       $page = 'gainwp_settings';
-      $status['error_msg'] = Intel_Df::t('View not selected in GAINWP settings.');
+      $status['error_msg'] = Intel_Df::t('View not selected in GAinWP settings.');
       $status['error_msg'] .= ' ' . Intel_Df::t('Please set the Select View in !link.', array(
           '!link' => Intel_Df::l(Intel_Df::t('Google Analytics settings'), 'wp-admin/admin.php?page=' . $page, $gainwp_admin_l_options),
         ));
@@ -527,14 +529,9 @@ function intel_admin_setup_base_ga_check($form, &$form_state) {
     update_option('intel_ga_data_source', 'gadwp');
   }
 
-
-
   $status['success'] = 1;
 
-
   $form_state['intel_ga_profiles'] = $ga_profiles;
-
-
 
   return $status;
 }
@@ -548,7 +545,7 @@ function intel_admin_setup_base_ga_validate($form, &$form_state, $status) {
 function intel_admin_setup_base_ga_submit($form, &$form_state) {
   $form_state['wizard_state']['ga_data_ignore'] = $form_state['values']['ga_data_ignore'];
 
-  update_option('intel_ga_data_api', $form_state['values']['intel_ga_data_api']);
+  //update_option('intel_ga_data_api', $form_state['values']['intel_ga_data_api']);
 
   if (!empty($form_state['intel_ga_profiles'])) {
     $ga_data_source = intel_is_plugin_active( 'gainwp' ) ? 'gainwp' : 'gadwp';

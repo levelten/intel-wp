@@ -110,7 +110,7 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 * Anonymize IP option
 * intel_intel_event_save() enhancements
 * Fixes for GADWP v5.3 updates
-* GAINWP support
+* GAinWP support
 * Fix for social icon caching causing performance problems with some site/server configurations
 
 == Upgrade Notice ==
