@@ -1375,7 +1375,7 @@ function intel_get_intel_events_overridable_fields($event) {
 function intel_get_intel_event_info($name = NULL, $options = array()) {
   $events = &Intel_Df::drupal_static( __FUNCTION__ );
 
-  if (count($events)) {
+  if (!empty($events) && count($events)) {
     if (isset($name)) {
       if (isset($events[$name])) {
         return $events[$name];
