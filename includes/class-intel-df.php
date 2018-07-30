@@ -2053,7 +2053,7 @@ class Intel_Df  {
 		//$option_log = get_option('intel_debug_log', '');
 		$msg = __('WATCHDOG', 'intel') . ': ' . $type . ":\n" . $message;
 		//self::drupal_set_message($msg);
-		error_log($msg);
+		error_log(self::t($msg, $variables));
 
 		//$option_log .= $msg . "\n";
 		//update_option('intel_debug_log', $option_log);

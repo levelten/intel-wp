@@ -1375,7 +1375,7 @@ function intel_get_intel_events_overridable_fields($event) {
 function intel_get_intel_event_info($name = NULL, $options = array()) {
   $events = &Intel_Df::drupal_static( __FUNCTION__ );
 
-  if (!empty($events) && count($events)) {
+  if (is_array($events) && count($events)) {
     if (isset($name)) {
       if (isset($events[$name])) {
         return $events[$name];
@@ -4268,7 +4268,7 @@ function intel_ga_api_data_gainwp($request = array(), $cache_options = array()) 
   $feed = intel_gainwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $ogapi, $cache_options );
 
   if (!is_object($feed)) {
-
+    $feed = (object)array();
   }
   $feed->results = (object)array(
     'rows' => array(),

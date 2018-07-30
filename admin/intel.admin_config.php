@@ -727,9 +727,9 @@ function intel_admin_settings($form, &$form_state) {
       $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Activated but not configured.') . (!empty($instruction_config_add[$k]) ? ' ' . $instruction_config_add[$k] : '');
     }
     elseif ($v == 2) {
-      $options[$k] = $names[$k];
       $instruction_items[] = '<label>' . $names[$k] . ':</label> ' . Intel_Df::t('Activated and configured.');
     }
+    $options[$k] = $names[$k];
   }
 
   $form['ga_data_source']['intel_ga_data_source'] = array(

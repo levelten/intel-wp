@@ -1832,7 +1832,7 @@ function intel_process_form_submission($vars) {
   $form_values = &$vars['form_values'];
   $link_query = &$vars['link_query'];
   $visitor_properties = &$vars['visitor_properties'];
-Intel_Df::watchdog('intel_process_form_submission form_values', print_r($form_values, 1));
+
   // if no submission type set, exit
   if (empty($submission->type)) {
     return;
