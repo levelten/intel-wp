@@ -973,7 +973,19 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
     }
 
     $index = -1;
-    if ($method == 'set') {
+    // if method is passed with prefix, i.e. _.set (does set on ga base tracker)
+    // get the actually method
+    $method_elms = explode('.', $method);
+    $method_elms_method = $method_elms[count($method_elms)-1];
+
+    // direct ga push commands
+    if ($method_elms[0] == 'ga') {
+      if ($method_elms_method == 'set') {
+        $index = $push[0];
+        $value = $push[1];
+      }
+    }
+    elseif ($method == 'set') {
       $index = $push[0];
       $value = $push[1];
     }
@@ -1733,6 +1745,8 @@ function intel_form_submission_vars_default() {
   $vars['cta_context'] = array();
   // intel settings associated with form
   $vars['form_settings'] = array();
+  // values submitted in form
+  $vars['form_values'] = array();
   // any url query elements that should be added to a redirect url
   $vars['link_query'] = array();
   return $vars;
@@ -1815,9 +1829,10 @@ function intel_process_form_submission($vars) {
   $submit_context = &$vars['submit_context'];
   $cta_context = &$vars['cta_context'];
   $form_settings = &$vars['form_settings'];
+  $form_values = &$vars['form_values'];
   $link_query = &$vars['link_query'];
   $visitor_properties = &$vars['visitor_properties'];
-
+Intel_Df::watchdog('intel_process_form_submission form_values', print_r($form_values, 1));
   // if no submission type set, exit
   if (empty($submission->type)) {
     return;
@@ -2269,6 +2284,7 @@ function intel_process_form_submission($vars) {
   $hook_context = array(
     'type' => 'form_submit',
     'form_settings' => $form_settings,
+    'form_values' => $form_values,
     'submit_context' => $submit_context,
     'cta_context' => $cta_context,
   );
@@ -2333,6 +2349,7 @@ function intel_process_form_submission($vars) {
 
   // enable other plugins to alter track
   $track = apply_filters('intel_form_submission_track_alter', $track, $hook_context);
+
   if (!empty($track['event_category'])) {
     $call = array(
       'eventCategory' => $track['event_category'],

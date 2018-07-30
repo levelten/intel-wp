@@ -1322,7 +1322,10 @@ function intel_demo_form_submit_intel_vars($form, &$form_state) {
   );
   foreach ($form_state['values'] as $k => $v) {
     if (empty($ignore[$k])) {
+      // stores values as part of submission data
       $vars['submission_values'][$k] = $v;
+      // stored for hooks
+      $vars['form_values'][$k] = $v;
     }
   }
   //intel_d($submission);

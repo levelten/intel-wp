@@ -459,6 +459,23 @@ function hook_intel_form_submission_data(&$visitor, &$submission, &$track, $cont
 }
 
 /**
+ * Enables altering of visitor, submission and track data on form submission.
+ *
+ *
+ *
+ *
+ * @param $hook_data
+ *   - visitor: intel visitor associated with submission
+ *   - submission: intel submission object
+ *   - track: analytics tracking data
+ * @param $hook_context
+ *   -
+ */
+function hook_intel_form_submission_data_presave_alter($hook_data, $hook_context) {
+
+}
+
+/**
  * TODO
  *
  * @param $visitor

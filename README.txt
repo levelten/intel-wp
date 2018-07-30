@@ -4,7 +4,7 @@ Donate link: getlevelten.com/blog/tom
 Tags: analytics, google analytics, marketing, metrics, roi, stats, tracking, usability
 Requires at least: 4.5
 Tested up to: 4.9.4
-Stable tag: 1.3.1
+Stable tag: 1.3.1.1-dev
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,11 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 * Fixes for GADWP v5.3 updates
 * GAinWP support
 * Fix for social icon caching causing performance problems with some site/server configurations
+
+= 1.3.1.1 =
+* Make PHP 5.4 minimum
+* Add processing for ga.set pushes
+* Fix for https://github.com/levelten/wp-intelligence/issues/3
 
 == Upgrade Notice ==
 
