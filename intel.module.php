@@ -9,7 +9,7 @@ define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'https://api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'https://admin.intelligencewp.com/imapi/v1/intel');
 //define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
-define('INTEL_L10IAPI_JS_VER', '0.3.0');
+define('INTEL_L10IAPI_JS_VER', '0.3.1');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');

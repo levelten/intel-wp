@@ -4369,7 +4369,7 @@ function intel_ga_api_data_gadwp($request = array(), $cache_options = array()) {
   $feed = intel_gadwp_handle_corereports( $projectId, $from, $to, $metrics, $options, $serial, $gapi, $cache_options );
 
   if (!is_object($feed)) {
-
+    $feed = (object)array();
   }
   $feed->results = (object)array(
     'rows' => array(),

@@ -543,7 +543,7 @@ function intel_admin_setup_base_ga_validate($form, &$form_state, $status) {
 }
 
 function intel_admin_setup_base_ga_submit($form, &$form_state) {
-  $form_state['wizard_state']['ga_data_ignore'] = $form_state['values']['ga_data_ignore'];
+  $form_state['wizard_state']['ga_data_ignore'] = !empty($form_state['values']['ga_data_ignore']) ? $form_state['values']['ga_data_ignore'] : '';
 
   //update_option('intel_ga_data_api', $form_state['values']['intel_ga_data_api']);
 
