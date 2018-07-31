@@ -1745,8 +1745,8 @@ function intel_form_submission_vars_default() {
   $vars['cta_context'] = array();
   // intel settings associated with form
   $vars['form_settings'] = array();
-  // values submitted in form
-  $vars['form_values'] = array();
+  // used to pass custom data to intel_process_form_submission hooks
+  $vars['hook_context'] = array();
   // any url query elements that should be added to a redirect url
   $vars['link_query'] = array();
   return $vars;
@@ -1829,7 +1829,6 @@ function intel_process_form_submission($vars) {
   $submit_context = &$vars['submit_context'];
   $cta_context = &$vars['cta_context'];
   $form_settings = &$vars['form_settings'];
-  $form_values = &$vars['form_values'];
   $link_query = &$vars['link_query'];
   $visitor_properties = &$vars['visitor_properties'];
 
@@ -1876,12 +1875,14 @@ function intel_process_form_submission($vars) {
     }
   }
 
+  /* TODO: removed over GDPR concerns storing PII without export/delete
   if (isset($vars['submission_values'])) {
     $submission->data['submission_values'] = $vars['submission_values'];
   }
   if (isset($vars['submission_post'])) {
     $submission->data['submission_post'] = $vars['submission_post'];
   }
+  */
   
   // load file for scoring data
   require_once INTEL_DIR . "includes/intel.ga.php";
@@ -2283,12 +2284,16 @@ function intel_process_form_submission($vars) {
   );
   $hook_context = array(
     'type' => 'form_submit',
+    'visitor' => &$visitor,
+    'submission' => &$submission,
+    'track' => &$track,
     'form_settings' => $form_settings,
-    'form_values' => $form_values,
+    'submission_values' => isset($vars['submission_values']) ? $vars['submission_values'] : NULL,
     'submit_context' => $submit_context,
     'cta_context' => $cta_context,
+    'hook_context' => isset($vars['hook_context']) ? $vars['hook_context'] : NULL,
   );
-  $hook_data = apply_filters('intel_form_submission_data_presave_alter', $hook_data, $hook_context);
+  $hook_data = apply_filters('intel_form_submission_data_presave', $hook_data, $hook_context);
 
   // save submission object
   if (!empty($submission->vid)) {
@@ -2398,7 +2403,7 @@ function intel_process_form_submission($vars) {
   }
 
   // hook to allow other plugins to save data
-  do_action('intel_form_submission_data_save', $hook_data, $hook_context);
+  do_action('intel_form_submission_data_save', $hook_context);
 }
 
 function intel_set_ga_userid($visitor) {
