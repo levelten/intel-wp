@@ -80,4 +80,8 @@ class LevelTen_Service_Exception extends \Exception {
   public function getType() {
     return $this->type;
   }
+
+  public function getResponse() {
+    return $this->type;
+  }
 }

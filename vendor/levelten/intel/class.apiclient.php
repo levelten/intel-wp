@@ -27,6 +27,8 @@ class ApiClient {
   protected $path;
   protected $userAgent = 'LevelTen\Intel\ApiClient';
   protected $urlrewrite = 0;
+  protected $curlSetOp = array();
+  protected $returnRawResponse = 0;
 
   const STATUS_OK = 200;
   const STATUS_BAD_REQUEST = 400;
@@ -115,28 +117,53 @@ class ApiClient {
         curl_setopt($ch, CURLOPT_USERPWD, $this->apiUrl['httpauth_userpwd']);
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
       }
-      $retjson = curl_exec($ch);
+      // set custom ops
+      foreach ($this->curlSetOp as $k => $v) {
+        // convert strings to CURLOPT values
+        if (is_string($k)) {
+          if (defined($k)) {
+            curl_setopt($ch, constant($k), $v);
+          }
+        }
+      }
+
+      $response = curl_exec($ch);
       $errno = curl_errno($ch);
       $error = curl_error($ch);
       //$this->setLastStatusFromCurl($ch);
+
+      // check if header was set to captured
+      $header = '';
+      if (!empty($this->curlSetOp['CURLOPT_HEADER'])) {
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $header = substr($response, 0, $header_size);
+        $response = substr($response, $header_size);
+      }
+
       curl_close($ch);
     }
     if ($errno > 0) {
       throw new LevelTen_Service_Exception ('cURL error: ' . $error);
     } else {
-      $ret = json_decode($retjson, true);
+      if ($this->returnRawResponse) {
+
+        return $response;
+      }
+      $ret = json_decode($response, true);
       if (empty($ret['status'])) {
-        $msg = !empty($ret['message']) ? $ret['message'] : $retjson;
+        $msg = !empty($ret['message']) ? $ret['message'] : $response;
         $msg = (strlen($msg) > 210) ? substr($msg, 0, 200) . '...' : $msg;
-        $code = $ret['status'];
         throw new LevelTen_Service_Exception ('API response error. returned: ' . $msg, $ret['status']);
       }
       else if ((int)$ret['status'] >= 400) {
-        $msg = !empty($ret['message']) ? $ret['message'] : $retjson;
+        $msg = !empty($ret['message']) ? $ret['message'] : $response;
         if (!empty($ret['error']['message'])) {
           $msg = $ret['error']['message'];
         }
         throw new LevelTen_Service_Exception ($msg, $ret['status'], NULL, self::getResponseErrors($ret));
+      }
+      if ($header) {
+        $ret['_header'] = $header;
       }
       return $ret;
     }
@@ -226,7 +253,7 @@ class ApiClient {
    */
   public function __set( $key, $value ) {
     if (property_exists($this, $key)) {
-      $this->key = $value;
+      $this->$key = $value;
     }
   }
 }

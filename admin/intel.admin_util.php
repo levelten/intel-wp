@@ -270,7 +270,11 @@ function intel_util_log_form_submit($form, &$form_state) {
   }
 }
 
-function intel_util_environment() {
+function intel_util_debug() {
+  return Intel_Df::t('Debug Utilities');
+}
+
+function intel_util_debug_environment() {
   include_once( INTEL_DIR . 'includes/intel.env_info.php');
 
   $output = '';
@@ -280,6 +284,130 @@ function intel_util_environment() {
   $output .= intel_env_info_content();
 
   return $output;
+}
+
+/**
+ * Form Test function
+ */
+function intel_util_debug_apirequest_form($form, &$form_state) {
+
+  $settings = get_option('intel_util_debug_curl', array());
+  $settings += array(
+    'api_endpoint' => 'iapi//ping',
+    'custom_endpoint' => '',
+    'curlsetop' => '',
+    'params' => '',
+    'data' => '',
+  );
+
+  $options = array(
+    '_' => Intel_Df::t('Custom (raw response)'),
+    '_json'  => Intel_Df::t('Custom (json response)'),
+    'iapi//ping' => Intel_Df::t('IAPI/ping'),
+    'imapi//ping' => Intel_Df::t('IMAPI/ping'),
+  );
+  $form['api_endpoint'] = array(
+    '#type' => 'select',
+    '#title' => 'Request endpoint',
+    '#options' => $options,
+    '#default_value' => $settings['api_endpoint'],
+  );
+
+  $form['custom_endpoint'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Custom endpoint URL',
+    '#default_value' => $settings['custom_endpoint'],
+  );
+
+  $form['curlsetop'] = array(
+    '#type' => 'textarea',
+    '#title' => 'cURL Set Ops',
+    '#default_value' => intel_array_to_eolpipesv($settings['curlsetop']),
+    '#description' => Intel_Df::t('Enter one option per line with the format name|value.'),
+  );
+
+  $form['params'] = array(
+    '#type' => 'textarea',
+    '#title' => 'Params (query values)',
+    '#default_value' => intel_array_to_eolpipesv($settings['params']),
+    '#description' => Intel_Df::t('Enter one query string parameter per line with the format name|value.'),
+  );
+
+  $form['data'] = array(
+    '#type' => 'textarea',
+    '#title' => 'Data (body values)',
+    '#default_value' => intel_array_to_eolpipesv($settings['data']),
+    '#description' => Intel_Df::t('Enter one query string parameter per line with the format name|value.'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => Intel_Df::t('Make request'),
+  );
+
+  return $form;
+}
+
+function intel_util_debug_apirequest_form_submit($form, &$form_state) {
+  $settings = $values = $form_state['values'];
+  //$settings = update_option('intel_util_debug_curl', $values);
+
+  $a = explode('//', $values['api_endpoint']);
+  $api = $a[0];
+  $endpoint = $a[1];
+  if ($api == 'iapi') {
+    $apiclient = intel_iapi_get_client();
+  }
+  elseif ($api == 'imapi') {
+    include_once INTEL_DIR . 'includes/intel.imapi.php';
+    $apiclient = intel_imapi_get_client();
+  }
+  else {
+    intel_include_library_file('class.apiclient.php');
+    //$api_params = get_option('intel_l10iapi_custom_params', array());
+    $apiClientProps = array(
+      'apiUrl' => $values['custom_endpoint'],
+      //'apiConnector' => get_option('intel_l10iapi_connector', ''),
+      //'apiParams' => $api_params,
+    );
+    $apiclient = new \LevelTen\Intel\ApiClient($apiClientProps);
+
+    $apiclient->urlrewrite = 1;
+    $apiclient->returnRawResponse = 1;
+  }
+
+  $curlSetOp = $apiclient->curlSetOp;
+
+  $settings['curlsetop'] = intel_eolpipesv_to_array($values['curlsetop']);
+  foreach ($settings['curlsetop'] as $k => $v) {
+    if (is_numeric($v)) {
+      $v = intval($v);
+    }
+    $curlSetOp[$k] = $v;
+  }
+  $apiclient->curlSetOp = $curlSetOp;
+
+  $settings['params'] = intel_eolpipesv_to_array($values['params']);
+  $settings['data'] = intel_eolpipesv_to_array($values['data']);
+
+  try {
+    $response = $apiclient->getJSON($endpoint, $settings['params'], $settings['data']);
+    $msg = Intel_Df::t('API request successful.');
+    if ($values['api_endpoint'] == '_json') {
+      $response = json_decode($response, TRUE);
+    }
+    intel_d($response);
+    Intel_Df::drupal_set_message($msg, 'success');
+  }
+  catch (Exception $e) {
+    $msg = Intel_Df::t('API request error: @err_msg', array(
+      '@err_msg' => $e->getMessage(),
+    ));
+    Intel_Df::drupal_set_message($msg, 'error');
+  }
+
+  update_option('intel_util_debug_curl', $settings);
+
 }
 
 

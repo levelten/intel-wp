@@ -2354,7 +2354,7 @@ class Intel_Form  {
 			// WP sanitization
 			$input = is_scalar($input) ? (string) $input : '';
 			if (empty($element['#html'])) {
-				$input = sanitize_text_field($input);
+				$input = sanitize_textarea_field($input);
 			}
 			return $input;
 			//return is_scalar($input) ? (string) $input : ''; // Drupal version

@@ -1093,16 +1093,43 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_util.php',
   );
 
+  $items['admin/util/debug'] = array(
+    'title' => 'Debug',
+    //'description' => 'Analyze and optimize node content.',
+    'page callback' => 'intel_util_debug',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.php',
+    'intel_install_access' => 'active',
+  );
+
+  $items['admin/util/debug/environment'] = array(
+    'title' => 'Server environment',
+    'description' => 'Server environment info',
+    'page callback' => 'intel_util_debug_environment',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.php',
+    'intel_install_access' => 'active',
+  );
+
+  $items['admin/util/debug/apirequest'] = array(
+    'title' => 'API requests',
+    'description' => 'API request debugger',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_util_debug_apirequest_form'),
+    //'page callback' => 'intel_util_debug_curl',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.php',
+    'intel_install_access' => 'active',
+  );
+
   if (intel_test_mode()) {
-    $items['admin/util/environment'] = array(
-      'title' => 'Server Env.',
-      'description' => 'Server environment',
-      'page callback' => 'intel_util_environment',
-      'access callback' => 'user_access',
-      'access arguments' => array('admin intel'),
-      'type' => Intel_Df::MENU_LOCAL_TASK,
-      'file' => 'admin/intel.admin_util.php',
-    );
+
 
     $items['admin/util/test'] = array(
       'title' => 'Tests',
@@ -2146,6 +2173,18 @@ function intel_verify_library(&$message = '') {
   }
 
   return $lib_path;
+}
+
+function intel_iapi_get_client() {
+  intel_include_library_file('class.apiclient.php');
+  $api_params = get_option('intel_l10iapi_custom_params', array());
+  $apiClientProps = array(
+    'apiUrl' => intel_get_iapi_url() . '/',
+    'apiConnector' => get_option('intel_l10iapi_connector', ''),
+    'apiParams' => $api_params,
+  );
+  $apiclient = new \LevelTen\Intel\ApiClient($apiClientProps);
+  return $apiclient;
 }
 
 function intel_verify_apikey(&$message = '', &$property = array(), $options = array()) {
@@ -5096,6 +5135,38 @@ function intel_get_tracking_exclude_user_role_default() {
   return array();
   //array('administrator' => 'administrator');
 }
+
+function intel_eolpipesv_to_array($text, $options = array()) {
+  $arr = array();
+  if (!is_string($text)) {
+    return $arr;
+  }
+  $eol = PHP_EOL;
+  if (!empty($options['textarea'])) {
+    $eol = "\n";
+  }
+  $lines = explode($eol, $text);
+  foreach($lines as $line) {
+    $line = trim($line);
+    if (!empty($line)) {
+      $line = explode('|', $line);
+      $arr[$line[0]] = $line[1];
+    }
+  }
+  return $arr;
+}
+
+function intel_array_to_eolpipesv($arr, $options = array()) {
+  $text = '';
+  if (!is_array($arr)) {
+    return $text;
+  }
+  foreach($arr as $k => $v) {
+    $text .= "$k|$v" . PHP_EOL;
+  }
+  return $text;
+}
+
 
 function intel_gainwp_gapi_client_alter($gapi_client) {
   $ga_data_api = intel_ga_data_api();
