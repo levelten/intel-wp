@@ -360,7 +360,8 @@ function intel_util_debug_apirequest_form_submit($form, &$form_state) {
   }
   elseif ($api == 'imapi') {
     include_once INTEL_DIR . 'includes/intel.imapi.php';
-    $apiclient = intel_imapi_get_client();
+    $vars = array();
+    $apiclient = intel_imapi_get_client($vars);
   }
   else {
     intel_include_library_file('class.apiclient.php');
