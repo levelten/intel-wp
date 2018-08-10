@@ -445,6 +445,41 @@ function intel_util_clear_gapi_cache() {
   return 'OK';
 }
 
+function intel_util_debug_alt_setup_page() {
+  include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
+  include_once ( INTEL_DIR . 'admin/intel.admin_config.php' );
+  $form = Intel_Form::drupal_get_form('intel_admin_settings');
+
+  return Intel_Df::render($form);
+}
+
+function intel_util_debug_alt_setup_form($form, &$form_state) {
+  include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
+  include_once ( INTEL_DIR . 'admin/intel.admin_config.php' );
+  $form = intel_admin_settings($form, $form_state);
+
+  $keep = array(
+    'l10iapi' => 1,
+    'save' => 1,
+  );
+
+  foreach ($form as $k => $v) {
+    if (empty($keep[$k])) {
+      unset($form[$k]);
+    }
+  }
+
+  return $form;
+}
+
+function intel_util_debug_alt_setup_form_validate($form, &$form_state) {
+  intel_admin_settings_validate($form, $form_state);
+}
+
+function intel_util_debug_alt_setup_form_submit($form, &$form_state) {
+  intel_admin_settings_submit($form, $form_state);
+}
+
 function intel_util_test() {
   return Intel_Df::t('Test Utilities');
 }

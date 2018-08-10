@@ -1120,13 +1120,26 @@ function intel_menu($items = array()) {
     'description' => 'API request debugger',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('intel_util_debug_apirequest_form'),
-    //'page callback' => 'intel_util_debug_curl',
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_TASK,
     'file' => 'admin/intel.admin_util.php',
     'intel_install_access' => 'active',
   );
+
+  if (!intel_is_installed()) {
+    $items['admin/util/debug/alt_setup'] = array(
+      'title' => 'Alt setup',
+      'description' => 'Alternative setup bypass',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('intel_util_debug_alt_setup_form'),
+      'access callback' => 'user_access',
+      'access arguments' => array('admin intel'),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_util.php',
+      'intel_install_access' => 'active',
+    );
+  }
 
   if (intel_test_mode()) {
 
@@ -5150,6 +5163,7 @@ function intel_eolpipesv_to_array($text, $options = array()) {
     $line = trim($line);
     if (!empty($line)) {
       $line = explode('|', $line);
+      $arr[$line[0]] = $line[1];
       $arr[$line[0]] = $line[1];
     }
   }
