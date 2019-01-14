@@ -1492,7 +1492,15 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
     if ($sync_events_base) {
       $ga_profile_base = get_option('intel_ga_profile_base', array());
       $ga_tid_base = !empty($ga_profile_base['propertyId']) ? $ga_profile_base['propertyId'] : '';
-      $l10iq_pushes[] = array('addTracker', $ga_tid_base, array('enhance' => 'base'));
+      $fields = array(
+        'enhance' => 'base',
+      );
+      // if base ga profile is tracked via GTM, the name for the base profile tracker
+      // should be gtm1 rather than an empty name.
+      if (get_option('intel_tracker_is_gtm_base', '')) {
+        $fields['name'] = 'gtm1';
+      }
+      $l10iq_pushes[] = array('addTracker', $ga_tid_base, $fields);
     }
 
     if (get_option('intel_tracking_anonymize_ip', 0)) {

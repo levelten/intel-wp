@@ -118,6 +118,9 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 * Add processing for ga.set pushes
 * Fix for https://github.com/levelten/wp-intelligence/issues/3
 
+= 1.3.2 =
+* Added support for GTM base profile tracking
+
 == Upgrade Notice ==
 
 = 1.0.0 =

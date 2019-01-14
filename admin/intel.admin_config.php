@@ -457,7 +457,21 @@ function intel_admin_settings($form, &$form_state) {
     '#markup' => !empty($ga_profile_base['name']) ? $ga_profile_base['name'] : Intel_Df::t('(not set)'),
   );
 
-  $form['tracking']['base_ga']['intel_sync_intel_events_base'] = array(
+  $form['tracking']['base_ga']['intel_tracker_is_gtm_base'] = array(
+    '#type' => 'checkbox',
+    '#title' => Intel_Df::t('Tracking done via Google Tag Manager'),
+    '#default_value' => get_option('intel_tracker_is_gtm_base', ''),
+    '#description' => Intel_Df::t('Select if the Google Analtyics tracking for the base profile is done using Google Tag Manager rather than a standard GA embed code.'),
+  );
+
+  $form['tracking']['base_ga']['tracking_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Tracking options'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['tracking']['base_ga']['tracking_options']['intel_sync_intel_events_base'] = array(
     '#type' => 'checkbox',
     '#title' => Intel_Df::t('Track Intelligence events & goals in base profile'),
     '#default_value' => get_option('intel_sync_intel_events_base', ''),
@@ -465,7 +479,7 @@ function intel_admin_settings($form, &$form_state) {
   );
 
   $form_state['intel_sync_goal_management_base0'] = get_option('intel_sync_goal_management_base', '');
-  $form['tracking']['base_ga']['intel_sync_goal_management_base'] = array(
+  $form['tracking']['base_ga']['tracking_options']['intel_sync_goal_management_base'] = array(
     '#type' => 'checkbox',
     '#title' => Intel_Df::t('Sync Intelligence goals configuration to base profile'),
     '#default_value' => $form_state['intel_sync_goal_management_base0'],
@@ -476,7 +490,7 @@ function intel_admin_settings($form, &$form_state) {
     $msg = Intel_Df::t('Warning: Enabling Sync Intelligence goals option will overwrite any existing goals in the base main data view.');
     $msg .= ' ' . Intel_Df::t('If you have existing goals, it is recommended to setup a new view in your base Google Analytics property for Intelligence.');
     $msg .= ' ' . Intel_Df::t('Make sure to set the "Main data view" above to the view for Intelligence using the Change profile link.');
-    $form['tracking']['base_ga']['intel_sync_goal_management_base_warning'] = array(
+    $form['tracking']['base_ga']['tracking_options']['intel_sync_goal_management_base_warning'] = array(
       '#type' => 'markup',
       '#markup' => '<span class="text-warning">' . $msg . '</span>',
     );

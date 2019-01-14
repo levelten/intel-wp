@@ -28,8 +28,9 @@ class ApiClient {
   protected $userAgent = 'LevelTen\Intel\ApiClient';
   protected $urlrewrite = 0;
   protected $curlSetOp = array();
+  protected $contentType = 'application/x-www-form-urlencoded';
+  protected $headers = array();
   protected $returnRawResponse = 0;
-
   const STATUS_OK = 200;
   const STATUS_BAD_REQUEST = 400;
   const STATUS_UNAUTHORIZED = 401;
@@ -107,16 +108,26 @@ class ApiClient {
         curl_setopt($ch, CURLOPT_POST, false);
       }
       curl_setopt($ch, CURLOPT_URL, $url);
+      if (!empty($this->apiUrl['httpauth_userpwd'])) {
+        curl_setopt($ch, CURLOPT_USERPWD, $this->apiUrl['httpauth_userpwd']);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
+      }
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
       curl_setopt($ch, CURLOPT_USERAGENT, $this->userAgent);
       curl_setopt($ch, CURLOPT_REFERER, $this->host . $this->path);
       //curl_setopt($ch, CURLOPT_URL, "");
       //curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-      curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
-      if (!empty($this->apiUrl['httpauth_userpwd'])) {
-        curl_setopt($ch, CURLOPT_USERPWD, $this->apiUrl['httpauth_userpwd']);
-        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
+      //curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+
+      if (!empty($this->contentType)) {
+        $this->headers[] = 'Content-Type: ' . $this->contentType;
       }
+
+      // set headers
+      if (!empty($this->headers) && is_array($this->headers)) {
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $this->headers);
+      }
+
       // set custom ops
       foreach ($this->curlSetOp as $k => $v) {
         // convert strings to CURLOPT values

@@ -295,14 +295,16 @@ function intel_util_debug_apirequest_form($form, &$form_state) {
   $settings += array(
     'api_endpoint' => 'iapi//ping',
     'custom_endpoint' => '',
+    'content_type' => 'application/x-www-form-urlencoded',
+    'headers' => '',
     'curlsetop' => '',
     'params' => '',
     'data' => '',
   );
 
   $options = array(
-    '_' => Intel_Df::t('Custom (raw response)'),
-    '_json'  => Intel_Df::t('Custom (json response)'),
+    '_' => Intel_Df::t('custom (raw response)'),
+    '_json'  => Intel_Df::t('custom (json response)'),
     'iapi//ping' => Intel_Df::t('IAPI/ping'),
     'imapi//ping' => Intel_Df::t('IMAPI/ping'),
   );
@@ -319,25 +321,50 @@ function intel_util_debug_apirequest_form($form, &$form_state) {
     '#default_value' => $settings['custom_endpoint'],
   );
 
-  $form['curlsetop'] = array(
-    '#type' => 'textarea',
-    '#title' => 'cURL Set Ops',
-    '#default_value' => intel_array_to_eolpipesv($settings['curlsetop']),
-    '#description' => Intel_Df::t('Enter one option per line with the format name|value.'),
-  );
-
   $form['params'] = array(
     '#type' => 'textarea',
-    '#title' => 'Params (query values)',
+    '#title' => 'URL parameters',
     '#default_value' => intel_array_to_eolpipesv($settings['params']),
-    '#description' => Intel_Df::t('Enter one query string parameter per line with the format name|value.'),
+    '#description' => Intel_Df::t('Enter one query string parameter per line with the format key|value.'),
   );
 
   $form['data'] = array(
     '#type' => 'textarea',
-    '#title' => 'Data (body values)',
+    '#title' => 'Body',
     '#default_value' => intel_array_to_eolpipesv($settings['data']),
-    '#description' => Intel_Df::t('Enter one query string parameter per line with the format name|value.'),
+    '#description' => Intel_Df::t('Enter one form urlencoded data input per line with the format key|value.'),
+  );
+
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Advanced'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+
+  $options = array(
+    'application/x-www-form-urlencoded' => 'x-www-form-urlencoded',
+    'application/json'  => 'json',
+  );
+  $form['advanced']['content_type'] = array(
+    '#type' => 'select',
+    '#title' => 'Content type',
+    '#options' => $options,
+    '#default_value' => $settings['content_type'],
+  );
+
+  $form['advanced']['headers'] = array(
+    '#type' => 'textarea',
+    '#title' => 'Headers',
+    '#default_value' => intel_array_to_eolpipesv($settings['headers']),
+    '#description' => Intel_Df::t('Enter one header entry per line with the format key|value.'),
+  );
+
+  $form['advanced']['curlsetop'] = array(
+    '#type' => 'textarea',
+    '#title' => 'cURL Set Ops',
+    '#default_value' => intel_array_to_eolpipesv($settings['curlsetop']),
+    '#description' => Intel_Df::t('Enter one option per line with the format name|value.'),
   );
 
   $form['submit'] = array(
