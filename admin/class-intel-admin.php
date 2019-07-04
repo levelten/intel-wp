@@ -198,6 +198,7 @@ class Intel_Admin {
 			add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
+			add_submenu_page( 'intel_admin', esc_html__( "Annotations", 'intel' ), esc_html__( "Annotations", 'intel' ), 'manage_options', 'intel_annotation', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
 			add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
@@ -298,6 +299,13 @@ class Intel_Admin {
 				'path' => Intel_Df::url($q),
 			);
 		}
+		if ($_GET['page'] == 'intel_annotation') {
+			$q = 'admin/annotations';
+			$breadcrumbs[] = array(
+				'text' => esc_html__('Annotations', 'intel'),
+				'path' => Intel_Df::url($q),
+			);
+		}
 		if (isset($_GET['q'])) {
 			$q = $_GET['q'];
 		}
@@ -316,6 +324,7 @@ class Intel_Admin {
 		$entities = array(
 			'submission',
 			'visitor',
+			'annotation',
 		);
 		$this->args = $path_args = explode('/', $q);
 
@@ -393,6 +402,12 @@ class Intel_Admin {
 							);
 						}
 						if ($path_args[0] == 'submission') {
+							$breadcrumbs[] = array(
+								'text' => $entity->label(),
+								'path' => Intel_Df::url($entity->uri()),
+							);
+						}
+						if ($path_args[0] == 'annotation') {
 							$breadcrumbs[] = array(
 								'text' => $entity->label(),
 								'path' => Intel_Df::url($entity->uri()),

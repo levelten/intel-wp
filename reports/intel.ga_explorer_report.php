@@ -85,6 +85,49 @@ function intel_ga_explorer_report() {
     //'#description' => Intel_Df::t('Enter a value to assign to the event when the CTA is clicked. Must be an whole number.'),
     '#default_value' => (isset($request['custom']['sort_metric'])) ? $request['custom']['sort_metric'] : '',
   );
+  $form['advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => Intel_Df::t('Advanced'),
+    '#collapsable' => 1,
+    '#collapsed' => 0,
+  );
+  $form['advanced']['annotation_launched'] = array(
+    '#type' => 'textfield',
+    '#title' => Intel_Df::t('Annotation launched'),
+    //'#description' => Intel_Df::t('Enter a value to assign to the event when the CTA is clicked. Must be an whole number.'),
+    '#default_value' => (isset($request['custom']['annotation_launched'])) ? $request['custom']['annotation_launched'] : '',
+  );
+  $options = array(
+    '1' => Intel_Df::t('1 hr'),
+    '2' => Intel_Df::t('2 hr'),
+    '4' => Intel_Df::t('4 hr'),
+    '8' => Intel_Df::t('8 hr'),
+    '24' => Intel_Df::t('24 hrs'),
+    '48' => Intel_Df::t('2 days'),
+    '96' => Intel_Df::t('4 days'),
+    '168' => Intel_Df::t('1 week'),
+    '336' => Intel_Df::t('2 weeks'),
+    '672' => Intel_Df::t('4 weeks'),
+    '2184' => Intel_Df::t('1 Quarter'),
+  );
+  $form['advanced']['annotation_timeframe'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Annotation timeframe'),
+    //'#description' => Intel_Df::t('Enter a value to assign to the event when the CTA is clicked. Must be an whole number.'),
+    '#options' => $options,
+    '#default_value' => (isset($request['custom']['annotation_timeframe'])) ? $request['custom']['annotation_timeframe'] : '',
+  );
+  $options = array(
+    'a' => Intel_Df::t('After'),
+    'b' => Intel_Df::t('Before'),
+  );
+  $form['advanced']['annotation_variant'] = array(
+    '#type' => 'select',
+    '#title' => Intel_Df::t('Annotation variant'),
+    //'#description' => Intel_Df::t('Enter a value to assign to the event when the CTA is clicked. Must be an whole number.'),
+    '#options' => $options,
+    '#default_value' => (isset($request['custom']['annotation_variant'])) ? $request['custom']['annotation_variant'] : '',
+  );
   $form['markup2'] = array(
     '#type' => 'markup',
     '#markup' => '</div><div class="col-md-5">',
@@ -122,6 +165,13 @@ function intel_ga_explorer_report() {
     '#type' => 'submit',
     '#value' => 'Submit',
   );
+  $items = array();
+  $items[] = Intel_Df::l(Intel_Df::t('GA Query Explorer'), 'https://ga-dev-tools.appspot.com/query-explorer');
+  $items[] = Intel_Df::l(Intel_Df::t('GA Dimensions & Metrics Explorer'), 'https://ga-dev-tools.appspot.com/dimensions-metrics-explorer/');
+  $form['markup_reference'] = array(
+    '#type' => 'markup',
+    '#markup' => '<br><br><h4>' . Intel_Df::t('Tools &amp; Reference') . '</h4>' . Intel_Df::theme('item_list', array('items' => $items)),
+  );
   $form['markup3'] = array(
     '#type' => 'markup',
     '#markup' => '</div></div>',
@@ -143,6 +193,51 @@ function intel_ga_explorer_report() {
     if (!empty($request['custom']['metrics'])) {
       $req['metrics'] = array_merge($req['metrics'], $request['custom']['metrics']);
     }
+    intel_d($req);
+
+    if (!empty($req['annotation_launched'])) {
+
+      $timeframe = (int)$req['annotation_timeframe'];
+
+      $timestamp_a0 = strtotime($req['annotation_launched']);
+      // temp timezone correction for testing
+      $timestamp_a0 = $timestamp_a0 + (60 * 60 * 9);
+
+      $timestamp_b0 = $timestamp_a0 - (60 * 60 * 168);
+      if ($timeframe > 168) {
+        $timestamp_b0 = $timestamp_a0 - (60 * 60 * $timeframe);
+      }
+
+      $timestamp_a1 = $timestamp_a0 + (60 * 60 * $timeframe);
+      $timestamp_b1 = $timestamp_b0 + (60 * 60 * $timeframe);
+
+      intel_d('Annotation After: ' . date('D d/m/Y H:i', $timestamp_a0) . ' - ' . date('D d/m/Y H:i', $timestamp_a1));
+      intel_d('Annotation Before: ' . date('D d/m/Y H:i', $timestamp_b0) . ' - ' . date('D d/m/Y H:i', $timestamp_b1));
+
+      if (!isset($req['filters'])) {
+        $req['filters'] = '';
+      }
+      $filter0 = $filter1 = '';
+      if ($req['annotation_variant'] = 'b') {
+        $filter0 = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', date('ymdHi', $timestamp_b0), '', array('fixed_width' => 1, 'prefix' => '20'));
+        $filter1 = LevelTen\Intel\GAModel::formatLtRegexFilter('ga:dateHourMinute', date('ymdHi', $timestamp_b1), '', array('fixed_width' => 1, 'prefix' => '20'));
+      }
+      else {
+        $filter0 = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', date('ymdHi', $timestamp_a0), '', array('fixed_width' => 1, 'prefix' => '20'));
+        $filter1 = LevelTen\Intel\GAModel::formatLtRegexFilter('ga:dateHourMinute', date('ymdHi', $timestamp_a1), '', array('fixed_width' => 1, 'prefix' => '20'));
+      }
+
+      intel_d($filter0);
+      intel_d($filter1);
+      if (!empty($filter0)) {
+        $req['filters'] .= (!empty($req['filters']) ? ';' : '') . $filter0;
+      }
+      if (!empty($filter1)) {
+        $req['filters'] .= (!empty($req['filters']) ? ';' : '') . $filter1;
+      }
+    }
+
+
 
     if (intel_is_debug()) {
       intel_d($req);//
@@ -219,6 +314,17 @@ function intel_ga_explorer_report() {
   return $form;
 }
 
+function intel_ga_explorer_report_validate($form, &$form_state) {
+  $values = &$form_state['values'];
+
+  $ts = strtotime($values['annotation_launched']);
+
+  if (!is_numeric($ts)) {
+    $msg = Intel_Df::t('Annotation launced is invalid. Please provide a time in a valid format.');
+    form_set_error('annotation_launched', $msg);
+  }
+}
+
 function intel_ga_explorer_report_submit($form, &$form_state) {
   $values = $form_state['values'];
 
@@ -243,6 +349,9 @@ function intel_ga_explorer_report_submit($form, &$form_state) {
     'start_date' => '',
     'end_date' => '',
     'max_results' => '',
+    'annotation_launched' => '',
+    'annotation_timeframe' => '',
+    'annotation_variant' => '',
   );
   $d = $values['dimensions'];
   $d = str_replace("'", '', $d);
@@ -266,13 +375,44 @@ function intel_ga_explorer_report_submit($form, &$form_state) {
   $request['custom']['start_date'] = strtotime(str_replace("'", '', $values['start_date']));
   $request['custom']['end_date'] = strtotime(str_replace("'", '', $values['end_date']));
   $request['custom']['max_results'] = str_replace("'", '', $values['max_results']);
+  $request['custom']['annotation_launched'] = str_replace("'", '', $values['annotation_launched']);
+  $request['custom']['annotation_timeframe'] = str_replace("'", '', $values['annotation_timeframe']);
+  $request['custom']['annotation_variant'] = str_replace("'", '', $values['annotation_variant']);
   $request['realtime_mode'] = str_replace("'", '', $values['realtime_mode']);
 
   update_option('intel_ga_explorer_request', $request);
 }
 
 function intel_ga_explorer_presets() {
+
+  intel_include_library_file('ga/class.ga_model.php');
+
   $presets = array();
+
+  $metrics = array('ga:sessions', 'ga:pageviews', 'ga:goalValueAll', 'ga:goalCompletionsAll', 'ga:pageValue');
+  $dimensions = array();
+  // standard pageviews metrics w/o dimensions
+  $presets['annotation_sessions'] = array(
+    'title' => Intel_Df::t('Annotation Base All Times'),
+    'metrics' => $metrics,
+  );
+  $filter_gt0900o = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '201907040905');
+  //intel_d($filter_gt0900o);
+  $filter_gt0900 = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '1907040905', '', array('fixed_width' => 1, 'prefix' => '20'));
+  //intel_d($filter_gt0900);
+  $filter_gteq0900o = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '201907040905');
+  //intel_d($filter_gteq0900o);
+  $filter_gteq0900 = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '1907040905', '', array('fixed_width' => 1, 'prefix' => '20'));
+  //intel_d($filter_gteq0900);
+  $filter_lt1000o = LevelTen\Intel\GAModel::formatLtRegexFilter('ga:dateHourMinute', '201907040900');
+  //intel_d($filter_lt1000o);
+  $filter_lt1000 = LevelTen\Intel\GAModel::formatLtRegexFilter('ga:dateHourMinute', '1907040900', '', array('fixed_width' => 1, 'prefix' => '20'));
+  //intel_d($filter_lt1000);
+  $presets['annotation_sessions_lt9000'] = array(
+    'title' => Intel_Df::t('Annotation Base > 09:00'),
+    'metrics' => $metrics,
+    'filters' => $filter_gt0900,
+  );
 
   // standard pageviews metrics w/o dimensions
   $presets['pageviews'] = array(

@@ -28,13 +28,25 @@ function intel_util() {
  * Testing function
  */
 function intel_util_temp() {
-  update_option('intel_ga_data_api', 'intel');
-  include_once INTEL_DIR . 'includes/intel.imapi.php';
 
-  $ga_access_token = intel_imapi_ga_access_token_get();
-  intel_d($ga_access_token);
+  $annotation = intel_annotation_construct();
 
-  update_option('intel_ga_access_token', $ga_access_token);
+  $annotation->type = 'test_type';
+  $annotation->message = 'test message';
+
+  intel_d($annotation);
+
+  $annotation->save();
+
+  $info = get_plugins();
+
+  intel_d($info);
+
+  $changes = array();
+  $versions = array();
+  foreach ($info AS $k => $v) {
+
+  }
 
   return 'OK';
 }

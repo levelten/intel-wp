@@ -393,6 +393,7 @@ class Intel {
 			'intel_admin' => 1,
 			'intel_reports' => 1,
 			'intel_visitor' => 1,
+			'intel_annotation' => 1,
 			'intel_config' => 1,
 			'intel_util' => 1,
 			'intel_help' => 1,

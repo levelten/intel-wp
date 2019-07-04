@@ -46,7 +46,7 @@ function intel_visitor_admin_settings_form($form, $form_state) {
       }
     }
   }
-  dsm($prop_options);
+  //dsm($prop_options);
 
   $tax_options = array(
     '' => '- ' . t('None (Do sync data)') . ' -',

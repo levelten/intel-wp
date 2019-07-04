@@ -157,3 +157,32 @@ function intel_update_1004() {
 		delete_option('intel_form_submission_tracking_event_value_default');
 	}
 }
+
+/**
+ * Adding annotation table
+ */
+function intel_update_1005() {
+	global $wpdb;
+
+	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+	$charset_collate = $wpdb->get_charset_collate();
+
+	$table_name = $wpdb->prefix . "intel_annotation";
+
+  $sql = "CREATE TABLE $table_name (
+    aid int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    created int(10) UNSIGNED NOT NULL DEFAULT '0',
+    updated int(10) UNSIGNED NOT NULL DEFAULT '0',
+    timestamp int(10) UNSIGNED NOT NULL DEFAULT '0',
+    type varchar(128) NOT NULL DEFAULT '',
+    message longtext NOT NULL,
+    variables longtext NOT NULL,
+    data longtext NOT NULL,
+    PRIMARY KEY (aid),
+    KEY timestamp (timestamp),
+    KEY type (type)
+    ) $charset_collate;";
+
+	dbDelta( $sql );
+}

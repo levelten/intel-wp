@@ -2263,20 +2263,36 @@ class GAModel {
    * @param $param
    * @param $number
    * @param string $key
+   * @param array options
    * @return string
    */
-  static function formatGtRegexFilter($param, $number, $key = '') {
+  static function formatGtRegexFilter($param, $number, $key = '', $options = array()) {
     $k = ($key) ? "&$key=" : "^";
     $end = ($key) ? '&' : "$";
+
     $nstr = (string)$number;
     $num_arr = str_split($nstr);
     $digits = count($num_arr);
-    $regex = $param . '=~' . $k . '\d{' . ($digits+1) . '\,}' . $end;
+
+    $prefix = '';
+    $prefix_digits = 0;
+    if (!empty($options['prefix'])) {
+      $prefix = $options['prefix'];
+      $nstr = (string)$prefix;
+      $prefix_num_arr = str_split($nstr);
+      $prefix_digits = count($prefix_num_arr);
+    }
+
+    $regex = '';
+    if (empty($options['fixed_width'])) {
+      $regex .= $param . '=~' . $k . '\d{' . ($prefix_digits + $digits + 1) . '\,}' . $end;
+    }
+
     $p = '';
     foreach ($num_arr AS $i => $digit) {
       $digit = (int)$digit;
       if ($digit < 9) {
-        $regex .= ',' . $param .  '=~' . $k . $p;
+        $regex .= ($regex ? ',' : '') . $param .  '=~'  . $k . $prefix . $p;
         if ((1 + $digit) == 9) {
           $regex .= '9';
         }
@@ -2302,7 +2318,7 @@ class GAModel {
    * @param string $key
    * @return string
    */
-  static function formatGtEqRegexFilter($param, $number, $key = '') {
+  static function formatGtEqRegexFilter($param, $number, $key = '', $options = array()) {
     $regex = '';
     $k = ($key) ? "&$key=" : "^";
     $end = ($key) ? '&' : "$";
@@ -2322,7 +2338,21 @@ class GAModel {
       $digits = count($num_arr);
     }
 
-    $regex .= $param . '=~' . $k . '\d{' . ($digits + 1) . '\,}' . $end;
+    $prefix = '';
+    $prefix_digits = 0;
+    if (!empty($options['prefix'])) {
+      $prefix = $options['prefix'];
+      $nstr = (string)$prefix;
+      $prefix_num_arr = str_split($nstr);
+      $prefix_digits = count($prefix_num_arr);
+    }
+
+    $regex = '';
+    if (empty($options['fixed_width'])) {
+      $regex .= $param . '=~' . $k . '\d{' . ($prefix_digits + $digits + 1) . '\,}' . $end;
+    }
+
+
     $p = '';
     $rs = $nstr;
 
@@ -2333,7 +2363,7 @@ class GAModel {
 
       if ($r > 0) {
         if ($digit < 9) {
-          $regex .= ',' . $param . '=~' . $k . $p;
+          $regex .= ',' . $param . '=~' . $k . $prefix . $p;
           if ((1 + $digit) == 9) {
             $regex .= '9';
           }
@@ -2345,7 +2375,7 @@ class GAModel {
       }
       else {
         if ($digit > 0) {
-          $regex .= ',' . $param . '=~' . $k . $p;
+          $regex .= ',' . $param . '=~' . $k . $prefix . $p;
           if ($digit == 9) {
             $regex .= '9';
           }
@@ -2390,9 +2420,12 @@ class GAModel {
     return $regex;
   }
 
-  static function formatLtRegexFilter($param, $number, $key = '') {
+  static function formatLtRegexFilter($param, $number, $key = '', $options = array()) {
     $end = ($key) ? '&' : "$";
     $nstr = (string)$number;
+    if (isset($options['prefix'])) {
+      $nstr = (string)$options['prefix'] . $nstr;
+    }
     $num_arr = str_split($nstr);
     $digits = count($num_arr);
     $regex = '';
@@ -2425,7 +2458,7 @@ class GAModel {
       $p .= (string)$digit;
     }
     if (($digits) > 1) {
-      $regex .= (($regex) ? ',' : '') . $param . '=~^\d{0\,' . ($digits-1) . '}' . $end;
+      $regex .= (($regex) ? ',' : '') . $param . '=~^\d{0\,' . ($digits - 1) . '}' . $end;
     }
 
     return $regex;
@@ -2438,9 +2471,12 @@ class GAModel {
    * @param string $key
    * @return string
    */
-  static function formatLtEqRegexFilter($param, $number, $key = '') {
+  static function formatLtEqRegexFilter($param, $number, $key = '', $options = array()) {
     $end = ($key) ? '&' : "$";
     $nstr = (string)$number;
+    if (isset($options['prefix'])) {
+      $nstr = (string)$options['prefix'] . $nstr;
+    }
     $num_arr = str_split($nstr);
     $digits = count($num_arr);
     $regex = '';

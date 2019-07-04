@@ -1126,6 +1126,9 @@ class Intel_Df  {
 				elseif ($path_args[1] == 'people') {
 					$admin_page = 'intel_visitor';
 				}
+				elseif ($path_args[1] == 'annotations') {
+					$admin_page = 'intel_annotation';
+				}
 			}
 		}
 		elseif($path_args[0] == 'visitor') {
@@ -1133,6 +1136,9 @@ class Intel_Df  {
 		}
 		elseif($path_args[0] == 'submission') {
 			$admin_page = 'intel_admin';
+		}
+		elseif($path_args[0] == 'annotation') {
+			$admin_page = 'intel_annotation';
 		}
 
 		// run admin path checks

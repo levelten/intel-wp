@@ -167,6 +167,19 @@ function intel_menu($items = array()) {
     'weight' => $w++,
     'file' => 'admin/intel.admin_setup.php',
   );
+
+  $items['admin/config/intel/settings/annotation'] = array(
+    'title' => 'Annotations',
+    'description' => 'Annotation configuration.',
+    'page callback' => 'intel_admin_annotation_list_page',
+    'access callback' => 'user_access',
+    //'access callback' => '_intel_user_access_extended',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'weight' => $w++,
+    'file' => 'admin/intel.admin_annotation.php',
+  );
+
   $items['admin/config/intel/settings/scoring'] = array(
     'title' => 'Scoring',
     'description' => 'Set objects and scoring',
@@ -847,6 +860,56 @@ function intel_menu($items = array()) {
         'file' => 'admin/intel.admin_emailclick.php',
       );
     }
+
+    $items['admin/annotations'] = array(
+      'title' => 'Annotations',
+      'description' => 'Information about annotations',
+      'page callback' => 'intel_admin_annotation_list_page',
+      //'page arguments' => array(4),
+      'access callback' => 'intel_annotation_access',
+      'access arguments' => array('list'),
+      'type' => Intel_Df::MENU_NORMAL_ITEM,
+      'file' => 'admin/intel.admin_annotation.php',
+      //'intel_api_access' => 'pro',
+    );
+    $items['admin/annotations/add'] = array(
+      'title' => 'Add',
+      'description' => 'Add new annotation',
+      'page callback' => 'intel_admin_annotation_add_page',
+      //'page arguments' => array(4),
+      'access callback' => 'intel_annotation_access',
+      'access arguments' => array('update'),
+      'type' => Intel_Df::MENU_NORMAL_ITEM,
+      'file' => 'admin/intel.admin_annotation.php',
+      //'intel_api_access' => 'pro',
+    );
+
+    $items['annotation/%intel_annotation'] = array(
+      'title' => 'Annotation',
+      'page callback' => 'intel_annotation_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('view', 1),
+      'file' => 'admin/intel.admin_annotation.php',
+    );
+    $items['annotation/%intel_annotation/view'] = array(
+      'title' => 'View',
+      'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -20,
+    );
+    $items['annotation/%intel_annotation/edit'] = array(
+      'title' => 'Edit',
+      'description' => 'Edit annotation',
+      //'page callback' => 'intel_visitor_tab_clickstream',
+      'page callback' => 'intel_admin_annotation_edit_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_visitor_access',
+      'access arguments' => array('update', 1),
+      'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_annotation.php',
+    );
+
+
   }
 
   // admin reports callbacks
@@ -1936,6 +1999,7 @@ function intel_admin_paths() {
     'submission/*' => 1,
     'phonecall/*' => 1,
     'emailclick/*' => 1,
+    'annotation/*' => 1,
   );
   return $paths;
 }
@@ -1989,6 +2053,11 @@ function intel_permission() {
   $permissions['view all intel emailclicks'] = array(
     'title' => Intel_Df::t('View emailclicks'),
     'description' => Intel_Df::t('Grants access to view emailclicks.'),
+    'roles' => array('editor', 'author'),
+  );
+  $permissions['view all intel annotations'] = array(
+    'title' => Intel_Df::t('View annotations'),
+    'description' => Intel_Df::t('Grants access to view annotations.'),
     'roles' => array('editor', 'author'),
   );
   return $permissions;
@@ -2060,6 +2129,28 @@ function intel_emailclick_access($op, $emailclick = NULL, $account = NULL) {
     case 'view':
       return $module_access || $general_access;
     case 'list':
+      return $module_access || $general_access;
+  }
+}
+
+function intel_annotation_access($op, $annotation = NULL, $account = NULL) {
+
+  $account = isset($account) ? $account : wp_get_current_user();
+
+  $general_access = Intel_Df::user_access('view all intel annotations', $account);
+
+  $module_access = FALSE;
+  //$module_access = count(array_filter(module_invoke_all('intel_submission_access', $submission, $op, $account))) > 0;
+
+  switch ($op) {
+    case 'view':
+      return $module_access || $general_access;
+    case 'list':
+      return $module_access || $general_access;
+    case 'create':
+    case 'update':
+      return $module_access || $general_access;
+    case 'delete':
       return $module_access || $general_access;
   }
 }
@@ -2403,6 +2494,35 @@ function intel_entity_info($info = array()) {
       'cta_page_uri' => '',
       'cta_page_id' => '',
       'cta_id' => '',
+      'data' => array(),
+    ),
+  );
+
+  $info['intel_annotation'] = array(
+    // A human readable label to identify our entity.
+    'label' => Intel_Df::t('Intel annotation'),
+    'entity class' => 'Intel_Annotation',
+    'controller class' => 'Intel_Annotation_Controller',
+    'base table' => 'intel_annotation',
+    'label callback' => 'intel_annotation_label',
+    'uri callback' => 'intel_annotation_uri',
+    'fieldable' => FALSE,
+    'module' => 'intel',
+    'entity keys' => array(
+      'id' => 'aid',
+    ),
+    'file' => array(
+      'includes/class-intel-annotation.php',
+      'includes/class-intel-annotation-controller.php',
+    ),
+    'fields' => array(
+      'aid' => null,
+      'created' => REQUEST_TIME,
+      'updated' => REQUEST_TIME,
+      'timestamp' => REQUEST_TIME,
+      'type' => '',
+      'message' => '',
+      'variables' => array(),
       'data' => array(),
     ),
   );
@@ -3419,6 +3539,52 @@ function intel_value_str_load($id) {
   }
 
   return $query->execute()->fetchObject();
+}
+
+/**
+ * Initializes properties of submission stdClass object
+ */
+function intel_annotation_construct() {
+  $annotation = intel()->get_entity_controller('intel_annotation')->create();
+  return $annotation;
+}
+
+/**
+ * Saves annotation objects
+ *
+ * @param stdClass $annotation
+ */
+function intel_annotation_save($annotation) {
+  return $annotation->save();
+}
+
+/**
+ * Loads annotation object from database
+ *
+ * @param $aid Primary annotation_id
+ *
+ * @return Annotation stdClass object
+ */
+function intel_annotation_load($aid) {
+  $annotation = intel()->get_entity_controller('intel_annotation')->load($aid);
+  if (!empty($annotation)) {
+    return array_shift($annotation);
+  }
+  return FALSE;
+}
+
+/**
+ * Deletes annotation entity
+ *
+ * @param $vid
+ * @return mixed
+ */
+function intel_annotation_delete($aid) {
+  // check if vid is a visitor entity, if so extract vid from entity
+  if (is_object($aid) && !empty($aid->aid)) {
+    $aid = $aid->aid;
+  }
+  return intel()->get_entity_controller('intel_annotation')->deleteOne($aid);
 }
 
 
