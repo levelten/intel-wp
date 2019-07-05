@@ -26,14 +26,18 @@ function intel_admin_annotation_list_page() {
   $sql = "
 		  SELECT *
 		  FROM {$wpdb->prefix}intel_annotation
-      ORDER BY timestamp DESC
+      ORDER BY implemented DESC
       LIMIT %d OFFSET %d
 		";
+
+  $timezone_info = intel_get_timezone_info();
+
+  intel_d(intel_annotation_display_time_offset());
 
   $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
 
   $header = array(
-    Intel_Df::t('Launched'),
+    Intel_Df::t('Initiated'),
     Intel_Df::t('Type'),
     Intel_Df::t('Summary'),
     Intel_Df::t('Value ') . '&Delta;',
@@ -59,7 +63,7 @@ function intel_admin_annotation_list_page() {
       //$ops[] = Intel_Df::t('NA');
     }
     $rows[] = array(
-      date("Y-m-d H:i", $row->timestamp),
+      date("Y-m-d H:i", $row->implemented + intel_annotation_display_time_offset()),
       $row->type,
       $row->message,
       ($lift[$i] > 0 ? '+' : '') . $lift[$i] . '%',
@@ -88,6 +92,8 @@ function intel_annotation_page($annotation) {
 
   $output = '';
 
+  $timezone_info = intel_get_timezone_info();
+
   //Intel_Df::drupal_set_title(Intel_Df::t('Annotation @title', array('@title' => $annotation->message)));
   //$form = Intel_Form::drupal_get_form('intel_admin_annotation_form', $annotation, 1);
 
@@ -99,8 +105,10 @@ function intel_annotation_page($annotation) {
   $output .= '<div class="col-md-4">';
 
   $output .= '<div>';
-  $output .= '<dt>Launched</dt>';
-  $output .= '<dd>' . date("m/d/Y H:i", $annotation->timestamp) . '</dd>';
+  $output .= '<dt>Implemented</dt>';
+  $output .= '<dd>';
+  $output .= Intel_Df::t('GA') . ': ' . date("m/d/Y H:i", $annotation->implemented + $timezone_info['ga_offset']) . ' (' . $timezone_info['ga_timezone_abv'] . ")\n<br />";
+  $output .= Intel_Df::t('WP') . ': ' . date("m/d/Y H:i", $annotation->implemented  + $timezone_info['cms_offset']) . ' (' . $timezone_info['cms_timezone_abv'] . ')</dd>';
   $output .= '</div>';
 
   $output .= '<div>';
@@ -112,7 +120,7 @@ function intel_annotation_page($annotation) {
   $output .= '<div class="col-md-8">';
 
   $output .= '<div>';
-  $output .= '<dt>Message</dt>';
+  $output .= '<dt>Description</dt>';
   $output .= '<dd>' . $annotation->message . '</dd>';
   $output .= '</div>';
 
@@ -382,4 +390,10 @@ function intel_admin_annotation_delete_form_submit($form, &$form_state) {
   ));
   Intel_Df::drupal_set_message($msg);
   Intel_Df::drupal_goto('admin/config/intel/settings/annotation');
+}
+
+function intel_annotation_display_time_offset() {
+  $timezone_info = intel_get_timezone_info();
+
+  return $timezone_info['ga_offset'];
 }

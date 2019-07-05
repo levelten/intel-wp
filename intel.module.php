@@ -2478,7 +2478,7 @@ function intel_entity_info($info = array()) {
     'fields' => array(
       'sid' => null,
       'vid' => 0,
-      'submitted' => time(),
+      'submitted' => REQUEST_TIME,
       'type' => '',
       'fid' => '',
       'fsid' => '',
@@ -2519,7 +2519,9 @@ function intel_entity_info($info = array()) {
       'aid' => null,
       'created' => REQUEST_TIME,
       'updated' => REQUEST_TIME,
-      'timestamp' => REQUEST_TIME,
+      'implemented' => REQUEST_TIME,
+      'removed' => REQUEST_TIME,
+      'analytics_period' => 0,
       'type' => '',
       'message' => '',
       'variables' => array(),
@@ -5191,6 +5193,11 @@ function intel_get_imapi_url($component = '') {
   $url_obj = &Intel_Df::drupal_static( __FUNCTION__);
   if (empty($url_obj)) {
     $url = get_option('intel_imapi_url', '');
+    $a = explode('//', $url);
+    if (count($a) == 1) {
+      $url = '//' . $url;
+    }
+
     if (!$url) {
       $url = INTEL_IMAPI_URL;
     }
@@ -5366,5 +5373,44 @@ function intel_gainwp_gapi_client_alter($gapi_client) {
   return $gapi_client;
 }
 add_filter('gainwp_gapi_client_alter', 'intel_gainwp_gapi_client_alter');
+
+function intel_get_timezone_info() {
+
+  $timezone_info = &Intel_Df::drupal_static( __FUNCTION__, array());
+
+  if (empty($timezone_info)) {
+    $ga_profile = get_option('intel_ga_profile', array());
+    $timezone_info['ga_timezone'] = '';
+    $timezone_info['ga_offset'] = 0;
+    if (!empty($ga_profile['timezone'])) {
+      $timezone_info['ga_timezone'] = $ga_profile['timezone'];
+      $dtz = new DateTimeZone($timezone_info['ga_timezone']);
+      $time = new DateTime("now", $dtz);
+      $timezone_info['ga_timezone_abv'] = $time->format('T');
+      $timezone_info['ga_offset'] = $dtz->getOffset($time);
+      $timezone_info['ga_offset_hours'] = $timezone_info['ga_offset'] / 60 / 60;
+    }
+
+    $timezone_info['cms_timezone'] = get_option('timezone_string', '');
+    $timezone_info['cms_offset_hours'] = get_option('gmt_offset', '');
+
+    if (!empty($timezone_info['cms_timezone'])) {
+      $dtz = new DateTimeZone($timezone_info['cms_timezone']);
+      $time = new DateTime("now", $dtz);
+      $timezone_info['cms_timezone_abv'] = $time->format('T');
+      $timezone_info['cms_offset'] = $dtz->getOffset($time);
+      $timezone_info['cms_offset_hours'] = $timezone_info['cms_offset'] / 60 / 60;
+    }
+    else if ($timezone_info['cms_offset_hours'] != '' ) {
+      $timezone_info['cms_offset_hours'] = (int) $timezone_info['cms_offset_hours'];
+      $timezone_info['cms_offset'] = $timezone_info['cms_offset_hours'] * 60 * 60;
+    }
+    else {
+      $timezone_info['cms_offset_hours'] = $timezone_info['cms_offset'] = 0;
+    }
+  }
+
+  return $timezone_info;
+}
 
 

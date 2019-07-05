@@ -42,20 +42,23 @@ function intel_admin_settings($form, &$form_state) {
 
   // check if imapi_property needs to be fetched
   $imapi_property = get_option('intel_imapi_property', array());
-  if (empty($imapi_property) || empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 86400) || !empty($_GET['refresh'])) {
+  if ((empty($imapi_property) || empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 86400) || !empty($_GET['refresh']))) {
     if ($ga_tid && $apikey) {
       $options = array(
         'tid' => $ga_tid,
         'apikey' => $apikey,
       );
+
       try {
         $imapi_property = intel_imapi_property_get($options);
+
         $op_meta['imapi_property_updated'] = time();
       }
       catch (Exception $e) {
         $imapi_property = array();
         unset($op_meta['imapi_property_updated']);
       }
+
       update_option('intel_imapi_property', $imapi_property);
       update_option('intel_option_meta', $op_meta);
       update_option('intel_ga_profile', (!empty($imapi_property['ga_profile']) ? $imapi_property['ga_profile'] : array()));
@@ -157,8 +160,6 @@ function intel_admin_settings($form, &$form_state) {
       $form['l10iapi']['intel_ga_tid']['#type'] = 'value';
     }
   }
-
-
 
 
   /*
@@ -770,6 +771,7 @@ function intel_admin_settings($form, &$form_state) {
 
 function intel_admin_settings_validate($form, &$form_state) {
   $values = $form_state['values'];
+
   // convert string to array
   parse_str($form_state['values']['intel_l10iapi_custom_params'], $params);
   $form_state['values']['intel_l10iapi_custom_params'] = $params;
@@ -780,10 +782,13 @@ function intel_admin_settings_validate($form, &$form_state) {
   if (empty($imapi_property->intel_tid)
     || ($values['intel_ga_tid'] != $imapi_property->intel_tid)
   ) {
+    $values['intel_imapi_url'] = trim($values['intel_imapi_url']);
     $options = array(
       'tid' => $values['intel_ga_tid'],
-      'apikey' => $values['intel_apikey']
+      'apikey' => $values['intel_apikey'],
+      'api_url' => !empty($values['intel_imapi_url']) ? $values['intel_imapi_url'] : INTEL_IMAPI_URL,
     );
+
     try {
       $form_state['intel_imapi_property'] = $imapi_property = intel_imapi_property_get($options);
       $form_state['intel_tid_changed'] = 1;

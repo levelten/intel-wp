@@ -211,8 +211,8 @@ function intel_ga_explorer_report() {
       $timestamp_a1 = $timestamp_a0 + (60 * 60 * $timeframe);
       $timestamp_b1 = $timestamp_b0 + (60 * 60 * $timeframe);
 
-      intel_d('Annotation After: ' . date('D d/m/Y H:i', $timestamp_a0) . ' - ' . date('D d/m/Y H:i', $timestamp_a1));
-      intel_d('Annotation Before: ' . date('D d/m/Y H:i', $timestamp_b0) . ' - ' . date('D d/m/Y H:i', $timestamp_b1));
+      intel_d('Annotation After: ' . date('D d/m/Y H:i', $timestamp_a0) . ' - ' . date('D m/d/Y H:i', $timestamp_a1));
+      intel_d('Annotation Before: ' . date('D d/m/Y H:i', $timestamp_b0) . ' - ' . date('D m/d/Y H:i', $timestamp_b1));
 
       if (!isset($req['filters'])) {
         $req['filters'] = '';
@@ -388,31 +388,6 @@ function intel_ga_explorer_presets() {
   intel_include_library_file('ga/class.ga_model.php');
 
   $presets = array();
-
-  $metrics = array('ga:sessions', 'ga:pageviews', 'ga:goalValueAll', 'ga:goalCompletionsAll', 'ga:pageValue');
-  $dimensions = array();
-  // standard pageviews metrics w/o dimensions
-  $presets['annotation_sessions'] = array(
-    'title' => Intel_Df::t('Annotation Base All Times'),
-    'metrics' => $metrics,
-  );
-  $filter_gt0900o = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '201907040905');
-  //intel_d($filter_gt0900o);
-  $filter_gt0900 = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '1907040905', '', array('fixed_width' => 1, 'prefix' => '20'));
-  //intel_d($filter_gt0900);
-  $filter_gteq0900o = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '201907040905');
-  //intel_d($filter_gteq0900o);
-  $filter_gteq0900 = LevelTen\Intel\GAModel::formatGtRegexFilter('ga:dateHourMinute', '1907040905', '', array('fixed_width' => 1, 'prefix' => '20'));
-  //intel_d($filter_gteq0900);
-  $filter_lt1000o = LevelTen\Intel\GAModel::formatLtRegexFilter('ga:dateHourMinute', '201907040900');
-  //intel_d($filter_lt1000o);
-  $filter_lt1000 = LevelTen\Intel\GAModel::formatLtRegexFilter('ga:dateHourMinute', '1907040900', '', array('fixed_width' => 1, 'prefix' => '20'));
-  //intel_d($filter_lt1000);
-  $presets['annotation_sessions_lt9000'] = array(
-    'title' => Intel_Df::t('Annotation Base > 09:00'),
-    'metrics' => $metrics,
-    'filters' => $filter_gt0900,
-  );
 
   // standard pageviews metrics w/o dimensions
   $presets['pageviews'] = array(

@@ -4050,23 +4050,9 @@ function _intel_get_report_dates_from_ops($ops = 'l30d', &$cache_options = array
 }
 
 function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1 day", $return_hash = FALSE) {
-  $timezone_info = &Intel_Df::drupal_static( __FUNCTION__, array());
-  if (empty($timezone_info)) {
-    $timezone_info['wp_timezone'] = get_option('timezone_string', '');
-    $ga_profile = get_option('intel_ga_profile', array());
-    $timezone_info['ga_timezone'] = !empty($ga_profile['timezone']) ? $ga_profile['timezone'] : '';
-    if (0 && !empty($timezone_info['wp_timezone'])) {
-      $timezone_info['timezone'] = $timezone_info['wp_timezone'];
-    }
-    elseif (!empty($timezone_info['ga_timezone'])) {
-      $timezone_info['timezone'] = $timezone_info['ga_timezone'];
-    }
-    else {
-      $timezone_info['timezone'] = 'UTC';
-    }
 
-  }
-  $timezone = $timezone_info['timezone'];
+  $timezone_info = intel_get_timezone_info();
+
   if (!empty($_GET['dates'])) {
     $a = explode(":", $_GET['dates']);
     $_GET['start_date'] = $a[0];
@@ -4075,56 +4061,30 @@ function _intel_get_report_dates($start_default = "-31 days", $end_default = "-1
   $start = (!empty($_GET['start_date'])) ? $_GET['start_date'] : $start_default;
   $end = (!empty($_GET['end_date'])) ? $_GET['end_date'] : $end_default;
 
-  // do this to correct for CMS timezone.
-  $timezone_obj = new DateTimeZone($timezone);
-  $start_date_obj = new DateTime($start, $timezone_obj);
-  $start_date = $start_date_obj->format('U');
-  $end_date_obj = new DateTime($end, $timezone_obj);
-  $end_date = $end_date_obj->format('U');
+  $start_date = strtotime($start);
+  $end_date = strtotime($end);
 
-  $offset = $timezone_obj->getOffset($end_date_obj);
+  $ga_start_date = $start_date + $timezone_info['ga_offset'];
+  $ga_end_date = $end_date + $timezone_info['ga_offset'];
 
-  //intel_d($offset);
-
-  //intel_d(date('Y-m-d G:i', $end_date_strtotime) . " {$end_date_strtotime}");
-  //intel_d(date('Y-m-d G:i', $start_date) . " {$start_date}");
-  //intel_d(date('Y-m-d G:i', $end_date) . " {$end_date}");
-
-
-  //intel_d(Intel_Df::format_date($end_date_strtotime, 'Y-m-d G:i') . " {$end_date_strtotime}");
-  //intel_d(Intel_Df::format_date($end_date, 'Y-m-d G:i') . " {$end_date}");
-
-  $start_date_local = $start_date + $offset;
-  $end_date_local = $end_date + $offset;
-
-  //intel_d(date('Y-m-d G:i', $start_date_local) . " {$start_date_local}");
-  //intel_d(date('Y-m-d G:i', $end_date_local) . " {$end_date_local}");
-  //intel_d(Intel_Df::format_date($end_date_local, 'Y-m-d G:i') . " {$end_date_local}");
-
-  //$start_date = (!empty($_GET['start_date'])) ? strtotime($_GET['start_date']) : strtotime($start_default);
-  //$end_date = (!empty($_GET['end_date'])) ? strtotime($_GET['end_date']) : strtotime($end_default);
   $number_of_days = ceil(($end_date - $start_date)/60/60/24);
   if (!$return_hash) {
     return array(
-      $start_date_local,
-      $end_date_local,
+      $ga_start_date,
+      $ga_end_date,
       $number_of_days,
-      $offset,
-    );
-    return array(
-      $start_date,
-      $end_date,
-      $number_of_days,
-      $start_date_local,
-      $end_date_local,
+      $timezone_info['ga_offset'],
     );
   }
   else {
     return array(
       'start_date' => $start_date,
       'end_date' => $end_date,
+      'ga_start_date' => $ga_start_date,
+      'ga_end_date' => $ga_end_date,
       'number_of_days' => $number_of_days,
-      'timezone_offset' => $offset,
+      'number_of_seconds' => $end_date - $start_date,
+      'timezone_info' => $timezone_info,
     );
   }
 }

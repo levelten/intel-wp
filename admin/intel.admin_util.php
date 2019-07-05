@@ -29,6 +29,29 @@ function intel_util() {
  */
 function intel_util_temp() {
 
+  $ga_profile = get_option('intel_ga_profile', array());
+
+  intel_d($ga_profile);
+
+  intel_d(REQUEST_TIME);
+
+  $tstr = date("c", REQUEST_TIME);
+
+  intel_d($tstr);
+
+  $dates = _intel_get_report_dates("yesterday 09:15", $tstr, 1);
+
+  $dates['ga_start_date_hour_minute'] = date('YmdHi', $dates['ga_start_date']);
+  $dates['ga_start_date_readable'] = date('D m/d/Y H:i', $dates['ga_start_date']);
+  $dates['ga_end_date_hour_minute'] = date('YmdHi', $dates['ga_end_date']);
+  $dates['ga_end_date_readable'] = date('D m/d/Y H:i', $dates['ga_end_date']);
+
+  intel_d($dates);
+
+  intel_d(date(''));
+
+  return '';
+
   $annotation = intel_annotation_construct();
 
   $annotation->type = 'test_type';
