@@ -414,7 +414,18 @@ function intel_init_reports_vars($report_name, $report_type, $report_params = '-
   if (empty($vars['timeframe'])) {
     $vars['timeframe'] = 'l30d';
   }
+
   list($vars['start_date'], $vars['end_date'], $vars['number_of_days'], $vars['timezone_offset']) = _intel_get_report_dates_from_ops($vars['timeframe'], $vars['cache_options']);
+
+  // check for DateHourMinute format
+  $a = explode(',', $vars['timeframe']);
+  if (count($a) == 2 && strlen($a[0]) == 12 && strlen($a[1]) == 12) {
+    if (!isset($vars['filters']['datetime'])) {
+      $vars['filters']['datetime'] = array();
+    }
+    // make not to use the input timestamp and used the ga timezone corrected start_date & end_date
+    $vars['filters']['datetime'][] = "dateHourMinute:" . date('YmdHi', $vars['start_date']) . "-" . date('YmdHi', $vars['end_date']) ;
+  }
 
   if (!empty($_GET['refresh'])) {
     $vars['cache_options']['refresh'] = 1;

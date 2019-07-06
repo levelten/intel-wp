@@ -7,6 +7,7 @@
  */
 
 include_once INTEL_DIR . 'includes/class-intel-form.php';
+include_once INTEL_DIR . 'includes/intel.annotation.php';
 
 function intel_admin_annotation_list_page() {
 
@@ -90,6 +91,12 @@ function intel_annotation_page($annotation) {
     intel_d($annotation);//
   }
 
+  intel_d($annotation->data['analytics'][0]);
+
+  if (empty($annotation->data['analytics'])) {
+    $annotation = $annotation->controller->sync_ga($annotation);
+  }
+
   $output = '';
 
   $timezone_info = intel_get_timezone_info();
@@ -158,44 +165,38 @@ function intel_annotation_page($annotation) {
     ),
   );
 
-  $data = array();
-  $data[] = array(
-    'sessions' => 5684,
-    'vsessions' => 4523,
-    'vevents' => 450,
-    'goals' => 142,
-  );
-  $data[] = array(
-    'sessions' => 5845,
-    'vsessions' => 4543,
-    'vevents' => 498,
-    'goals' => 162,
-  );
-
-  $timedelta = 60 * 60 * 8;
-  $secinweek = 60 * 60 * 24 * 7;
-
   $keys = array('sessions', 'avalue', 'evalue', 'goals', 'cvalue', 'value');
 
   $rows = array();
-  for ($i = 0; $i < count($data); $i++) {
-    $data[$i]['avalue'] = .105 * $data[$i]['vsessions'];
-    $data[$i]['evalue'] = 3.21 * $data[$i]['vevents'];
-    $data[$i]['cvalue'] = 117 * $data[$i]['goals'];
-    $data[$i]['value']  = $data[$i]['avalue'] + $data[$i]['evalue'] + $data[$i]['cvalue'];
+  $data = array(array(), array());
+  $col_decimals = array(
+    0, 2, 2, 0, 2, 2,
+  );
+  for ($i = 0; $i <= 1; $i++) {
+    $d = $annotation->data['analytics'][$i];
+    $s = $d['score_components']['_all'];
     $row = array();
     if ($i == 0) {
-      $row[] = 'Before: ' . date("m/d/Y H:i", $annotation->timestamp) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta);
+      $row[] = 'Before';
+      //$row[] = 'Before: ' . date("m/d/Y H:i", $annotation->timestamp) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta);
     }
     else {
-      $row[] = 'After: ' . date("m/d/Y H:i", $annotation->timestamp - $secinweek) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta - $secinweek);
+      $row[] = 'After';
+      //$row[] = 'After: ' . date("m/d/Y H:i", $annotation->timestamp - $secinweek) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta - $secinweek);
     }
-    foreach ($keys as $k) {
+    $data[$i][] = $d['entrance']['entrances'];
+    $data[$i][] = $s['attraction'];
+    $data[$i][] = $s['engagement'];
+    $data[$i][] = $d['entrance']['goalCompletionsAll'];
+    $data[$i][] = $s['conversion'];
+    $data[$i][] = $s['_all'];
+    foreach ($col_decimals as $c => $cd) {
       $row[] = array(
-        'data' => number_format($data[$i][$k]),
+        'data' => number_format($data[$i][$c], $cd),
         'class' => array('text-right'),
       );
     }
+
     $rows[] = $row;
   }
 
@@ -206,17 +207,28 @@ function intel_annotation_page($annotation) {
     '% Change',
   );
 
-  foreach ($keys as $k) {
-    $v = $data[1][$k] - $data[0][$k];
-    $v2 = 100 * ($v) / $data[0][$k];
+  foreach ($col_decimals as $c => $cd) {
+    $v = $data[1][$c] - $data[0][$c];
     $row[] = array(
-      'data' => '<strong>' . ($v > 0 ? '+' : '') . number_format($v, 0) . '</strong>',
+      'data' => '<strong>' . ($v > 0 ? '+' : '') . number_format($v, $cd) . '</strong>',
       'class' => array('text-right'),
     );
-    $row2[] = array(
-      'data' => ($v > 0 ? '+' : '') . number_format($v2, 2) . '%',
-      'class' => array('text-right'),
-    );
+    if ($data[0][$c] == 0) {
+      $row2[] = array(
+        'data' => '&infin;',
+        'class' => array('text-right'),
+      );
+    }
+    else {
+      $v2 = 100 * ($v) / $data[0][$c];
+      $row2[] = array(
+        'data' => ($v > 0 ? '+' : '') . number_format($v2, 1) . '%',
+        'class' => array('text-right'),
+      );
+    }
+
+
+
 
   }
   $rows[] = $row;
@@ -263,15 +275,18 @@ function intel_admin_annotation_form($form, &$form_state, $annotation = NULL, $v
     $annotation = intel_annotation_construct();
     $add = 1;
   }
-
   $form_state['add'] = $add;
   $form_state['annotation'] = $annotation;
+  $timezone_info = $form_state['timezone_info'] = intel_get_timezone_info();
 
-  $name = 'timestamp';
+  $dtz = new DateTimeZone($timezone_info['ga_timezone']);
+  $implemented = new DateTime(date('c', $annotation->implemented), $dtz);
+
+  $name = 'implemented';
   $form[$name] = array(
     '#type' => 'textfield',
-    '#title' => Intel_Df::t('Launched'),
-    '#default_value' => date("Y-m-d H:i", $annotation->timestamp),
+    '#title' => Intel_Df::t('Implemented'),
+    '#default_value' => $implemented->format("Y-m-d H:i"),
     '#description' => Intel_Df::t('Date and time change was initiated.'),
   );
   if ($view) {
@@ -316,14 +331,14 @@ function intel_admin_annotation_form($form, &$form_state, $annotation = NULL, $v
 function intel_admin_annotation_form_validate(&$form, &$form_state) {
   $values = &$form_state['values'];
 
-  $ts = strtotime($values['timestamp']);
+  $ts = strtotime($values['implemented']);
 
   if (!is_numeric($ts)) {
     $msg = Intel_Df::t('Timestamp is invalid. Please provide a timestamp in a valid format.');
-    form_set_error('timestamp', $msg);
+    form_set_error('implemented', $msg);
   }
   else {
-    $values['timestamp'] = $ts;
+    $values['implemented'] = $ts;
   }
 }
 

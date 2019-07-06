@@ -29,17 +29,30 @@ function intel_util() {
  */
 function intel_util_temp() {
 
-  $ga_profile = get_option('intel_ga_profile', array());
+  require_once INTEL_DIR . "includes/intel.reports.php";
+  require_once INTEL_DIR . "includes/intel.ga.php";
+  require_once INTEL_DIR . "includes/intel.annotation.php";
+  intel_include_library_file('ga/class.ga_model.php');
 
-  intel_d($ga_profile);
+  $annotation = intel_annotation_load(5);
 
-  intel_d(REQUEST_TIME);
+  intel_d($annotation);
 
-  $tstr = date("c", REQUEST_TIME);
+  $vars = array(
+    'timeframe' => date('YmdHi', $annotation->implemented) . ',' . date('YmdHi', $annotation->implemented + 24 * 60 * 60),
+  );
+  $vars = intel_init_reports_vars('scorecard', 'scorecard', '-', '-', '-', $vars);
 
-  intel_d($tstr);
+  $vars['ga_start_date_hour_minute'] = date('YmdHi', $vars['start_date']);
+  $vars['ga_start_date_readable'] = date('D m/d/Y H:i', $vars['start_date']);
+  $vars['ga_end_date_hour_minute'] = date('YmdHi', $vars['end_date']);
+  $vars['ga_end_date_readable'] = date('D m/d/Y H:i', $vars['end_date']);
 
-  $dates = _intel_get_report_dates("yesterday 09:15", $tstr, 1);
+  intel_d($vars);
+
+
+  /*
+  $dates = _intel_get_report_dates("7 days ago", "NOW", 1);
 
   $dates['ga_start_date_hour_minute'] = date('YmdHi', $dates['ga_start_date']);
   $dates['ga_start_date_readable'] = date('D m/d/Y H:i', $dates['ga_start_date']);
@@ -47,8 +60,34 @@ function intel_util_temp() {
   $dates['ga_end_date_readable'] = date('D m/d/Y H:i', $dates['ga_end_date']);
 
   intel_d($dates);
+  */
 
-  intel_d(date(''));
+  $filters = array();
+  $ga_data = new LevelTen\Intel\GAModel();
+  $ga_data->setContext('site');
+
+  $ga_data->buildFilters($filters);
+  $ga_data->setAttributeInfoAll($vars['attribute_info']);
+  $ga_data->buildFilters($vars['filters'], $vars['subsite']);
+  $ga_data->setDateRange($vars['start_date'], $vars['end_date']);
+  $ga_data->setRequestCallback('intel_ga_feed_request_callback', array('cache_options' => $vars['cache_options']));
+  $ga_data->setFeedRowsCallback('intel_get_ga_feed_rows_callback');
+
+  $ga_data->setRequestSetting('details', 0);
+
+  //$ga_data->loadFeedData('pageviews');
+
+  // get traffic metrics
+  //$ga_data->setDebug(1);
+  $ga_data->loadFeedData('entrances');
+  //$ga_data->setDebug(0);
+
+  // get valued events
+  //$ga_data->loadFeedData('entrances_events_valued', 'date', 0);
+
+  $d = $ga_data->data;
+
+  intel_d($d['date']['_all']);
 
   return '';
 

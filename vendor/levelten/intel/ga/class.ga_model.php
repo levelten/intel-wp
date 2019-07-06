@@ -344,7 +344,6 @@ class GAModel {
         else {
           $gafilters['visitor'][] = "ga:{$a[0]}==" . $a[1];
         }
-
       }
     }
 
@@ -354,6 +353,22 @@ class GAModel {
       //$query = l10insight_build_ga_filter_from_serialized_customvar($a);
       //$ga_segments['visitor-attr'] = "dynamic::ga:dimension3=" . $query;
     }
+
+    if (!empty($filters['datetime'])) {
+      $gafilters['datetime'] = array();
+      foreach ($filters['datetime'] AS $i => $filter) {
+        $a = explode(":", $filter);
+        if ($a[0] == 'dateHourMinute') {
+          $f = '';
+          $ts = explode('-', $a[1]);
+          $f .= $this->formatGtRegexFilter('ga:dateHourMinute', substr($ts[0], 2), '', array('fixed_width' => 1, 'prefix' => '20'));
+          $f .= ';';
+          $f .= $this->formatLtRegexFilter('ga:dateHourMinute', substr($ts[1], 2), '', array('fixed_width' => 1, 'prefix' => '20'));
+          $gafilters['datetime'][] = $f;
+        }
+      }
+    }
+
     $this->gaFilters = array(
       'filters' => $gafilters,
       //'segments' => $gasegments,
@@ -972,82 +987,88 @@ class GAModel {
     }
 
     $segment_scope = ($indexBy == 'visitor') ? 'users' : 'sessions';
+//intel_d($type);
+//intel_d($types);
+//intel_d($gaFilters);
     foreach ($gaFilters AS $filter_type => $gafarr) {
       foreach ($gafarr AS $i => $filt) {
-
-        if ($types[0] == 'entrances') {
-
-          // traffic sources cannot be used in segments, make exception
-          if ($filter_type == 'trafficsource') {
-            $filters[] = $filt;
-          }
-          elseif ($filter_type == 'page') {
-            // change default of pagePath to landingPagePath
-            $filters[] = str_replace('pagePath', 'landingPagePath', $filt);
-          }
-          else {
-            if ($indexBy == 'trafficsources_intersite') {
-              $notfilt = str_replace('=@', '!@', $filt);
-              $notfilt = str_replace('==', '!=', $notfilt);
-              $notfilt = str_replace('=~', '!~', $notfilt);
-              $segments[] = 'sessions::sequence::^' . $notfilt . ';->>' . $filt;
+        if ($filter_type == 'datetime') {
+          $filters[] = $filt;
+        }
+        else {
+          if ($types[0] == 'entrances') {
+            // traffic sources cannot be used in segments, make exception
+            if ($filter_type == 'trafficsource') {
+              $filters[] = $filt;
+            }
+            elseif ($filter_type == 'page') {
+              // change default of pagePath to landingPagePath
+              $filters[] = str_replace('pagePath', 'landingPagePath', $filt);
             }
             else {
-              // if filter is page_group, don't apply as segment
-              if ($filter_type == 'page-attr' && ($filt == $this->gaSubsite)) {
-                $filters[] = $filt;
+              if ($indexBy == 'trafficsources_intersite') {
+                $notfilt = str_replace('=@', '!@', $filt);
+                $notfilt = str_replace('==', '!=', $notfilt);
+                $notfilt = str_replace('=~', '!~', $notfilt);
+                $segments[] = 'sessions::sequence::^' . $notfilt . ';->>' . $filt;
               }
               else {
-
-                if ($filter_type == 'event') {
-                  $segments[] = $segment_scope . '::sequence::' . $filt;
+                // if filter is page_group, don't apply as segment
+                if ($filter_type == 'page-attr' && ($filt == $this->gaSubsite)) {
+                  $filters[] = $filt;
                 }
                 else {
-                  $segments[] = 'sessions::sequence::^' . $filt;
+
+                  if ($filter_type == 'event') {
+                    $segments[] = $segment_scope . '::sequence::' . $filt;
+                  }
+                  else {
+                    $segments[] = 'sessions::sequence::^' . $filt;
+                  }
+
                 }
 
+                /*
+                if ($context_mode == 'subsite') {
+                  $filters[] = $filt;
+                }
+                */
               }
-
-              /*
-              if ($context_mode == 'subsite') {
+            }
+          }
+          elseif ($types[0] == 'sessions') {
+            if ($filter_type == 'page-attr' && ($filt == $this->gaSubsite)) {
+              if ($type != 'sessions') {
                 $filters[] = $filt;
               }
-              */
             }
-          }
-        }
-        elseif ($types[0] == 'sessions') {
-          if ($filter_type == 'page-attr' && ($filt == $this->gaSubsite)) {
-            if ($type != 'sessions') {
-              $filters[] = $filt;
-            }
-          }
-          else {
-            if ($type == 'sessions') {
-              $segments[] = 'sessions::sequence::' . $filt;
-            }
-            elseif($types[1] == 'events') {
-              if (isset($types[2]) && $types[2] == 'valued') {
-                $segments[] = 'sessions::sequence::' . $filt . ';->>ga:eventCategory=~\!$';
+            else {
+              if ($type == 'sessions') {
+                $segments[] = 'sessions::sequence::' . $filt;
+              }
+              elseif($types[1] == 'events') {
+                if (isset($types[2]) && $types[2] == 'valued') {
+                  $segments[] = 'sessions::sequence::' . $filt . ';->>ga:eventCategory=~\!$';
+                }
+              }
+              elseif($types[1] == 'goals') {
+                $segments[] = 'sessions::sequence::' . $filt . ';->>ga:eventCategory=~\+$';
               }
             }
-            elseif($types[1] == 'goals') {
-              $segments[] = 'sessions::sequence::' . $filt . ';->>ga:eventCategory=~\+$';
-            }
           }
-        }
-        // pageview request type
-        else {
-          if ($filter_type == 'event') {
-            if ($indexBy == 'trafficsource' || $indexBy == 'visitor' || $indexBy == 'visit') {
-              $segments[] = $segment_scope . '::condition::' . $filt;
+          // pageview request type
+          else {
+            if ($filter_type == 'event') {
+              if ($indexBy == 'trafficsource' || $indexBy == 'visitor' || $indexBy == 'visit') {
+                $segments[] = $segment_scope . '::condition::' . $filt;
+              }
+              else {
+                $filters[] = $filt;
+              }
             }
             else {
               $filters[] = $filt;
             }
-          }
-          else {
-            $filters[] = $filt;
           }
         }
       }
@@ -2474,9 +2495,6 @@ class GAModel {
   static function formatLtEqRegexFilter($param, $number, $key = '', $options = array()) {
     $end = ($key) ? '&' : "$";
     $nstr = (string)$number;
-    if (isset($options['prefix'])) {
-      $nstr = (string)$options['prefix'] . $nstr;
-    }
     $num_arr = str_split($nstr);
     $digits = count($num_arr);
     $regex = '';

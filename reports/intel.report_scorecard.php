@@ -51,7 +51,7 @@ function intel_scorecard_report($vars) {
   $row_count = 100;
   
   $output = '';
-
+intel_d($vars);
   $start_date = $vars['start_date'];
   $end_date = $vars['end_date'];
   $number_of_days = $vars['number_of_days'];
@@ -90,7 +90,9 @@ function intel_scorecard_report($vars) {
 
   $ga_data->setRequestSetting('details', 1);
   $ga_data->setRequestDefaultParam('max_results', 10 *  ($number_of_days+1));
+  $ga_data->setDebug(1);
   $ga_data->loadFeedData('pageviews_events_valued', 'date', 1);
+  $ga_data->setDebug(0);
 
   //d($ga_data->data);
   //return;
@@ -164,7 +166,7 @@ function intel_scorecard_report($vars) {
   }
   $d = $ga_data->data;
 
-  //intel_d($d['date']);
+  intel_d($d['date']);
 
   if (!empty($path)) {
     $created = intel_get_node_created($path);
