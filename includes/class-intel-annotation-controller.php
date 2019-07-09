@@ -35,10 +35,61 @@ class Intel_Annotation_Controller extends Intel_Entity_Controller  {
 		add_filter('intel_sync_annotation', 'Intel_Annotation_Controller::sync_ga');
 	}
 
-	public static function sync_ga($annotation) {
-		$data = self::fetch_ga_data($annotation);
+	public function load($ids, $conditions = array(), $reset = FALSE) {
+		global $wpdb;
+
+		$entities = parrent::load($ids, $conditions, $reset);
+
+		// create summary for annotation
+		foreach ($entities as $k => $v) {
+			$entities[$k]->summary = intel_annotation_format_summary($v->message);
+		}
+
+		return $entities;
+	}
+
+	public static function sync_ga($annotation, $options = array()) {
+
+		include_once INTEL_DIR . 'includes/intel.annotation.php';
+
+		$available_period = intel_annotation_get_latest_available_period($annotation);
+
+		$period = !empty($options['period']) ? $options['period'] : $available_period;
+
+		// check if new period timeframe is larger than what is currently cached in
+		// annotation data.
+		if (($annotation->analytics_period >= $period) && empty($options['refresh'])) {
+			return $annotation;
+		}
+
+		$timeframe = !empty($timeframe['options']) ? $timeframe['options'] : array();
+
+		if (empty($timeframe)) {
+			// if period is less than a week, select the similar hours from the prior week
+			// 360 secs in hour, 168 hours in a week
+			if ($period < (168 * 3600)) {
+				$timeframe[] = array(
+					$annotation->started - (168 * 3600), // a week before start
+					$annotation->started - (168 * 3600) + $period, // week prior plus period time
+				);
+			}
+			else {
+				$timeframe[] = array(
+					$annotation->started - $period, // a week before start
+					$annotation->started, // week prior plus period time
+				);
+			}
+			$timeframe[] = array(
+				$annotation->started,
+				$annotation->started + $period,
+			);
+		}
+
+		$data = self::fetch_ga_data($annotation, $timeframe, $options);
 
 		$annotation->data['analytics'] = $data;
+		$annotation->data['analytics_timeframe'] = $timeframe;
+		$annotation->analytics_period = $period;
 		$annotation->save();
 
 		$annotation->setSyncProcessStatus('ga', 1);
@@ -46,38 +97,16 @@ class Intel_Annotation_Controller extends Intel_Entity_Controller  {
 		return $annotation;
 	}
 
-	public static function fetch_ga_data($annotation) {
+	public static function fetch_ga_data($annotation, $timeframe, $options = array()) {
 		require_once INTEL_DIR . "includes/intel.reports.php";
 		require_once INTEL_DIR . "includes/intel.ga.php";
-		require_once INTEL_DIR . "includes/intel.annotation.php";
 		intel_include_library_file('ga/class.ga_model.php');
-
-		$period = 7 * 24;
-
-		$timeframes = array();
-		// if period is less than a week, select the similar hours from the prior week
-		if ($period < 168) {
-			$timeframes[] = array(
-				$annotation->implemented - (168 * 360), // a week before start
-				$annotation->implemented - (168 * 360) + ($period * 360), // week prior plus period time
-			);
-		}
-		else {
-			$timeframes[] = array(
-				$annotation->implemented - ($period * 360), // a week before start
-				$annotation->implemented, // week prior plus period time
-			);
-		}
-		$timeframes[] = array(
-			$annotation->implemented,
-			$annotation->implemented + ($period * 360),
-		);
 
 		$data = array();
 
 		for ($i = 0; $i <= 1; $i++) {
 			$vars = array(
-				'timeframe' => date('YmdHi', $timeframes[$i][0]) . ',' . date('YmdHi', $timeframes[$i][1]),
+				'timeframe' => date('YmdHi', $timeframe[$i][0]) . ',' . date('YmdHi', $timeframe[$i][1]),
 			);
 			$vars = intel_init_reports_vars('scorecard', 'scorecard', '-', '-', '-', $vars);
 
@@ -111,7 +140,6 @@ class Intel_Annotation_Controller extends Intel_Entity_Controller  {
   		$d['score'] = intel_score_item($d, 1, $score_components, '', 'entrance');
 			$d['score_components'] = $score_components;
 
-			intel_d($d);
 			$data[$i] = $d;
 		}
 

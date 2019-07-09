@@ -888,7 +888,7 @@ function intel_menu($items = array()) {
       'title' => 'Annotation',
       'page callback' => 'intel_annotation_page',
       'page arguments' => array(1),
-      'access callback' => 'intel_visitor_access',
+      'access callback' => 'intel_annotation_access',
       'access arguments' => array('view', 1),
       'file' => 'admin/intel.admin_annotation.php',
     );
@@ -903,9 +903,20 @@ function intel_menu($items = array()) {
       //'page callback' => 'intel_visitor_tab_clickstream',
       'page callback' => 'intel_admin_annotation_edit_page',
       'page arguments' => array(1),
-      'access callback' => 'intel_visitor_access',
+      'access callback' => 'intel_annotation_access',
       'access arguments' => array('update', 1),
       'type' => Intel_Df::MENU_LOCAL_TASK,
+      'file' => 'admin/intel.admin_annotation.php',
+    );
+    $items['annotation/%intel_annotation/sync_ga'] = array(
+      'title' => 'GA Sync',
+      'description' => 'Edit annotation',
+      //'page callback' => 'intel_visitor_tab_clickstream',
+      'page callback' => 'intel_admin_annotation_sync_ga_page',
+      'page arguments' => array(1),
+      'access callback' => 'intel_annotation_access',
+      'access arguments' => array('update', 1),
+      'type' => Intel_Df::MENU_CALLBACK,
       'file' => 'admin/intel.admin_annotation.php',
     );
 
@@ -2519,8 +2530,8 @@ function intel_entity_info($info = array()) {
       'aid' => null,
       'created' => REQUEST_TIME,
       'updated' => REQUEST_TIME,
-      'implemented' => REQUEST_TIME,
-      'removed' => REQUEST_TIME,
+      'started' => REQUEST_TIME,
+      'ended' => REQUEST_TIME,
       'analytics_period' => 0,
       'type' => '',
       'message' => '',

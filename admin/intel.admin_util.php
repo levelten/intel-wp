@@ -29,17 +29,41 @@ function intel_util() {
  */
 function intel_util_temp() {
 
+
+
   require_once INTEL_DIR . "includes/intel.reports.php";
   require_once INTEL_DIR . "includes/intel.ga.php";
   require_once INTEL_DIR . "includes/intel.annotation.php";
   intel_include_library_file('ga/class.ga_model.php');
+
+  $tz_info = intel_get_timezone_info();
+
+  $strs = array(
+    "now",
+    "2019-07-09 19:37",
+    "2019-07-09 19:37 CDT",
+  );
+
+  foreach ($strs as $str) {
+    $ts = strtotime($str);
+    intel_d($str);
+    intel_d(date('m/d/Y H:i', $ts + $tz_info['ga_offset']));
+  }
+
+
+  for ($i = 60; $i < (8000 * 360); $i *= (1.5)) {
+    $period = intel_get_latest_available_period(REQUEST_TIME - $i);
+    intel_d("time since started: " . number_format($i / 360, 1) . " hrs, period: " . ($period/360) . " hrs");
+  }
+
+  return '';
 
   $annotation = intel_annotation_load(5);
 
   intel_d($annotation);
 
   $vars = array(
-    'timeframe' => date('YmdHi', $annotation->implemented) . ',' . date('YmdHi', $annotation->implemented + 24 * 60 * 60),
+    'timeframe' => date('YmdHi', $annotation->started) . ',' . date('YmdHi', $annotation->started + 24 * 60 * 60),
   );
   $vars = intel_init_reports_vars('scorecard', 'scorecard', '-', '-', '-', $vars);
 

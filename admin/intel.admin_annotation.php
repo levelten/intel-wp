@@ -13,13 +13,6 @@ function intel_admin_annotation_list_page() {
 
   global $wpdb;
 
-  $lift = array(
-    -53.7,
-    13.50,
-    26.6,
-    0.1,
-  );
-
   $data = array(
     100,
     0,
@@ -27,21 +20,23 @@ function intel_admin_annotation_list_page() {
   $sql = "
 		  SELECT *
 		  FROM {$wpdb->prefix}intel_annotation
-      ORDER BY implemented DESC
+      ORDER BY started DESC
       LIMIT %d OFFSET %d
 		";
 
   $timezone_info = intel_get_timezone_info();
 
-  intel_d(intel_annotation_display_time_offset());
-
   $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
 
   $header = array(
-    Intel_Df::t('Initiated'),
+    Intel_Df::t('Start time'),
     Intel_Df::t('Type'),
     Intel_Df::t('Summary'),
-    Intel_Df::t('Value ') . '&Delta;',
+    array(
+      'data' => Intel_Df::t('Score ') . '&Delta;',
+      'class' => array('text-right'),
+    ),
+
     Intel_Df::t('Ops'),
   );
   $rows = array();
@@ -63,11 +58,20 @@ function intel_admin_annotation_list_page() {
     else {
       //$ops[] = Intel_Df::t('NA');
     }
+    $change = Intel_Df::t('NA');
+    $data = unserialize($row->data);
+    if (!empty($data['analytics'][0]['score'])) {
+      $change = 100 * ($data['analytics'][1]['score'] - $data['analytics'][0]['score']) / $data['analytics'][0]['score'];
+      $change = (($change > 0) ? '+' : '') . number_format($change, 1) . '%';
+    }
     $rows[] = array(
-      date("Y-m-d H:i", $row->implemented + intel_annotation_display_time_offset()),
+      date("Y-m-d H:i", $row->started + intel_annotation_display_time_offset()),
       $row->type,
-      $row->message,
-      ($lift[$i] > 0 ? '+' : '') . $lift[$i] . '%',
+      intel_annotation_format_summary($row->message),
+      array(
+        'data' => $change,
+        'class' => array('text-right'),
+      ),
       //$row['type'],
       //$row['message'],
       implode(' ', $ops),
@@ -82,6 +86,10 @@ function intel_admin_annotation_list_page() {
 
   $output = Intel_Df::theme('table', $vars);
 
+  $output .= '<div>' . Intel_Df::t('All displayed times based on %timezone timezone set in Google Analytics.', array(
+      '%timezone' => $timezone_info['ga_timezone'],
+    )) . '</div>';
+
   return $output;
 }
 
@@ -90,8 +98,6 @@ function intel_annotation_page($annotation) {
   if (intel_is_debug()) {
     intel_d($annotation);//
   }
-
-  intel_d($annotation->data['analytics'][0]);
 
   if (empty($annotation->data['analytics'])) {
     $annotation = $annotation->controller->sync_ga($annotation);
@@ -112,10 +118,11 @@ function intel_annotation_page($annotation) {
   $output .= '<div class="col-md-4">';
 
   $output .= '<div>';
-  $output .= '<dt>Implemented</dt>';
+  $output .= '<dt>' . Intel_Df::t('Start time') . '</dt>';
   $output .= '<dd>';
-  $output .= Intel_Df::t('GA') . ': ' . date("m/d/Y H:i", $annotation->implemented + $timezone_info['ga_offset']) . ' (' . $timezone_info['ga_timezone_abv'] . ")\n<br />";
-  $output .= Intel_Df::t('WP') . ': ' . date("m/d/Y H:i", $annotation->implemented  + $timezone_info['cms_offset']) . ' (' . $timezone_info['cms_timezone_abv'] . ')</dd>';
+  $output .= date("m/d/Y H:i", $annotation->started + $timezone_info['ga_offset']) . ' ' . $timezone_info['ga_timezone_abv'] . "\n<br />";
+  //$output .= '<small>' . date("m/d/Y H:i", $annotation->started  + $timezone_info['cms_offset']) . ' ' . $timezone_info['cms_timezone_abv'] . '</small>';
+  $output .= '</dd>';
   $output .= '</div>';
 
   $output .= '<div>';
@@ -128,121 +135,159 @@ function intel_annotation_page($annotation) {
 
   $output .= '<div>';
   $output .= '<dt>Description</dt>';
-  $output .= '<dd>' . $annotation->message . '</dd>';
+  $output .= '<dd>' . preg_replace('/\r\n|[\r\n]/', "<br />\n", $annotation->message) . '</dd>';
   $output .= '</div>';
 
   $output .= '</div>';
   $output .= '</div>';
   $output .= '</div>';
   $output .= '</div>';
-
-
-  $header = array(
-    '',
-    array(
-      'data' => 'Sessions',
-      'class' => array('text-right'),
-    ),
-    array(
-      'data' => 'Attraction value',
-      'class' => array('text-right'),
-    ),
-    array(
-      'data' => 'Engagement value',
-      'class' => array('text-right'),
-    ),
-    array(
-      'data' => 'Conversions',
-      'class' => array('text-right'),
-    ),
-    array(
-      'data' => 'Conversion value',
-      'class' => array('text-right'),
-    ),
-    array(
-      'data' => 'Total value',
-      'class' => array('text-right'),
-    ),
-  );
-
-  $keys = array('sessions', 'avalue', 'evalue', 'goals', 'cvalue', 'value');
-
-  $rows = array();
-  $data = array(array(), array());
-  $col_decimals = array(
-    0, 2, 2, 0, 2, 2,
-  );
-  for ($i = 0; $i <= 1; $i++) {
-    $d = $annotation->data['analytics'][$i];
-    $s = $d['score_components']['_all'];
-    $row = array();
-    if ($i == 0) {
-      $row[] = 'Before';
-      //$row[] = 'Before: ' . date("m/d/Y H:i", $annotation->timestamp) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta);
-    }
-    else {
-      $row[] = 'After';
-      //$row[] = 'After: ' . date("m/d/Y H:i", $annotation->timestamp - $secinweek) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta - $secinweek);
-    }
-    $data[$i][] = $d['entrance']['entrances'];
-    $data[$i][] = $s['attraction'];
-    $data[$i][] = $s['engagement'];
-    $data[$i][] = $d['entrance']['goalCompletionsAll'];
-    $data[$i][] = $s['conversion'];
-    $data[$i][] = $s['_all'];
-    foreach ($col_decimals as $c => $cd) {
-      $row[] = array(
-        'data' => number_format($data[$i][$c], $cd),
-        'class' => array('text-right'),
-      );
-    }
-
-    $rows[] = $row;
-  }
-
-  $row = array(
-    '<strong>Change</strong>',
-  );
-  $row2 = array(
-    '% Change',
-  );
-
-  foreach ($col_decimals as $c => $cd) {
-    $v = $data[1][$c] - $data[0][$c];
-    $row[] = array(
-      'data' => '<strong>' . ($v > 0 ? '+' : '') . number_format($v, $cd) . '</strong>',
-      'class' => array('text-right'),
-    );
-    if ($data[0][$c] == 0) {
-      $row2[] = array(
-        'data' => '&infin;',
-        'class' => array('text-right'),
-      );
-    }
-    else {
-      $v2 = 100 * ($v) / $data[0][$c];
-      $row2[] = array(
-        'data' => ($v > 0 ? '+' : '') . number_format($v2, 1) . '%',
-        'class' => array('text-right'),
-      );
-    }
-
-
-
-
-  }
-  $rows[] = $row;
-  $rows[] = $row2;
-
-  $vars = array(
-    'header' => $header,
-    'rows' => $rows,
-  );
 
   $output .= '<div class="card">';
   $output .= '<h4 class="card-header">Analytics</h4>';
-  $output .= Intel_Df::theme('table', $vars);
+
+  if (!empty($annotation->data['analytics'])) {
+    $header = array(
+      '',
+      array(
+        'data' => 'Sessions',
+        'class' => array('text-right'),
+      ),
+      array(
+        'data' => 'Attraction score',
+        'class' => array('text-right'),
+      ),
+      array(
+        'data' => 'Engagement score',
+        'class' => array('text-right'),
+      ),
+      array(
+        'data' => 'Conversions',
+        'class' => array('text-right'),
+      ),
+      array(
+        'data' => 'Conversion score',
+        'class' => array('text-right'),
+      ),
+      array(
+        'data' => 'Total score',
+        'class' => array('text-right'),
+      ),
+    );
+
+    $keys = array('sessions', 'avalue', 'evalue', 'goals', 'cvalue', 'value');
+
+    $rows = array();
+    $data = array(array(), array());
+    $col_decimals = array(
+      0,
+      2,
+      2,
+      0,
+      2,
+      2,
+    );
+    for ($i = 0; $i <= 1; $i++) {
+      $d = $annotation->data['analytics'][$i];
+      $s = $d['score_components']['_all'];
+      $row = array();
+      if ($i == 0) {
+        $row[] = 'Before';
+        //$row[] = 'Before: ' . date("m/d/Y H:i", $annotation->timestamp) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta);
+      }
+      else {
+        $row[] = 'After';
+        //$row[] = 'After: ' . date("m/d/Y H:i", $annotation->timestamp - $secinweek) . ' - ' . date("m/d/Y H:i", $annotation->timestamp + $timedelta - $secinweek);
+      }
+      $data[$i][] = $d['entrance']['entrances'];
+      $data[$i][] = $s['attraction'];
+      $data[$i][] = $s['engagement'];
+      $data[$i][] = $d['entrance']['goalCompletionsAll'];
+      $data[$i][] = $s['conversion'];
+      $data[$i][] = $s['_all'];
+      foreach ($col_decimals as $c => $cd) {
+        $row[] = array(
+          'data' => number_format($data[$i][$c], $cd),
+          'class' => array('text-right'),
+        );
+      }
+
+      $rows[] = $row;
+    }
+
+    $row = array(
+      '<strong>Change</strong>',
+    );
+    $row2 = array(
+      '% Change',
+    );
+
+    foreach ($col_decimals as $c => $cd) {
+      $v = $data[1][$c] - $data[0][$c];
+      $row[] = array(
+        'data' => '<strong>' . ($v > 0 ? '+' : '') . number_format($v, $cd) . '</strong>',
+        'class' => array('text-right'),
+      );
+      if ($data[0][$c] == 0) {
+        $row2[] = array(
+          'data' => '&infin;',
+          'class' => array('text-right'),
+        );
+      }
+      else {
+        $v2 = 100 * ($v) / $data[0][$c];
+        $row2[] = array(
+          'data' => ($v > 0 ? '+' : '') . number_format($v2, 1) . '%',
+          'class' => array('text-right'),
+        );
+      }
+
+    }
+    $rows[] = $row;
+    $rows[] = $row2;
+
+    $vars = array(
+      'header' => $header,
+      'rows' => $rows,
+    );
+
+
+    $output .= Intel_Df::theme('table', $vars);
+
+    $timeframe_options = intel_annotation_period_options();
+    $period_hrs = $annotation->analytics_period / 3600;
+    $timeframe_label = number_format(($annotation->analytics_period / 3600)) . ' hrs';
+    if (isset($timeframe_options["$period_hrs"])) {
+      $timeframe_label = $timeframe_options["$period_hrs"];
+    }
+
+    $output .= '<div class="card-footer"><small>';
+    $output .= Intel_Df::t('Timeframe') . ': ';
+    $output .= $timeframe_label;
+    if (isset($annotation->data['analytics_timeframe'])) {
+      $tf = $annotation->data['analytics_timeframe'];
+      $output .= ' (' . Intel_Df::t('Before') . ': ' . date("m/d/Y H:i", $tf[0][0] + $timezone_info['ga_offset']) . ' - ' . date("m/d/Y H:i", $tf[0][1] + $timezone_info['ga_offset']);
+      $output .= ', ' . Intel_Df::t('After') . ': '  . ' ' . date("m/d/Y H:i", $tf[1][0] + $timezone_info['ga_offset']) . ' - ' . date("m/d/Y H:i", $tf[1][1] + $timezone_info['ga_offset']) . ')';
+    }
+
+  }
+  else {
+    $output .= '<div class="card-block">' . Intel_Df::t('No analytics have been gathered on this annotation yet.') . '</div>';
+    $output .= '<div class="card-footer"><small>';
+  }
+
+  $output .= '<div>' . Intel_Df::l(Intel_Df::t('refresh data'), 'annotation/' . $annotation->aid . '/sync_ga') . '</div>';
+  $output .= '</small>';
   $output .= '</div>';
+  $output .= '</div>';
+
+
+
+
+  $output .= '<div>' . Intel_Df::t('All displayed times based on %timezone timezone set in Google Analytics.', array(
+    '%timezone' => $timezone_info['ga_timezone'],
+  )) . '</div>';
+
 
   //return $form;
   return $output;
@@ -280,13 +325,13 @@ function intel_admin_annotation_form($form, &$form_state, $annotation = NULL, $v
   $timezone_info = $form_state['timezone_info'] = intel_get_timezone_info();
 
   $dtz = new DateTimeZone($timezone_info['ga_timezone']);
-  $implemented = new DateTime(date('c', $annotation->implemented), $dtz);
+  $started = new DateTime(date('c', $annotation->started), $dtz);
 
-  $name = 'implemented';
+  $name = 'started';
   $form[$name] = array(
     '#type' => 'textfield',
     '#title' => Intel_Df::t('Implemented'),
-    '#default_value' => $implemented->format("Y-m-d H:i"),
+    '#default_value' => date("Y-m-d H:i", $annotation->started + $timezone_info['ga_offset']) . ' ' . $timezone_info['ga_timezone_abv'],
     '#description' => Intel_Df::t('Date and time change was initiated.'),
   );
   if ($view) {
@@ -331,14 +376,14 @@ function intel_admin_annotation_form($form, &$form_state, $annotation = NULL, $v
 function intel_admin_annotation_form_validate(&$form, &$form_state) {
   $values = &$form_state['values'];
 
-  $ts = strtotime($values['implemented']);
+  $ts = strtotime($values['started']);
 
   if (!is_numeric($ts)) {
     $msg = Intel_Df::t('Timestamp is invalid. Please provide a timestamp in a valid format.');
-    form_set_error('implemented', $msg);
+    form_set_error('started', $msg);
   }
   else {
-    $values['implemented'] = $ts;
+    $values['started'] = $ts;
   }
 }
 
@@ -405,6 +450,52 @@ function intel_admin_annotation_delete_form_submit($form, &$form_state) {
   ));
   Intel_Df::drupal_set_message($msg);
   Intel_Df::drupal_goto('admin/config/intel/settings/annotation');
+}
+
+function intel_admin_annotation_sync_ga_page($annotation) {
+  $period0 = $annotation->analytics_period;
+  $available_period = intel_annotation_get_latest_available_period($annotation->started);
+  $max_period = intel_annotation_get_max_period($annotation);
+  $next_period = intel_get_next_available_period($annotation->started);
+
+  if ($annotation->analytics_period >= $max_period) {
+    $msg = Intel_Df::t('The analytics for this annotation are up to date with the max timeframe. No more updates are required.');
+  }
+  else {
+    $options = array();
+    $annotation = $annotation->controller->sync_ga($annotation, $options);
+
+    if ($period0 == $annotation->analytics_period) {
+      $msg = Intel_Df::t('New analytics data not available yet.');
+    }
+    else {
+      $msg = Intel_Df::t('Annotation analytics have been updated.', array(
+        '%title' => $annotation->label(),
+      ));
+    }
+
+    if ((REQUEST_TIME - $annotation->started) < $max_period) {
+      $next = ($annotation->started + $next_period - REQUEST_TIME) / 3600;
+      if ($next < 48) {
+        $msg .= ' ' . Intel_Df::t('The next scheduled update will be in %time hrs.', array(
+            '%time' => number_format($next),
+          ));
+      }
+      else {
+        $msg .= ' ' . Intel_Df::t('The next scheduled update will be in %time days.', array(
+            '%time' => number_format($next / 24, 1),
+          ));
+      }
+    }
+  }
+
+
+
+  Intel_Df::drupal_set_message($msg);
+
+  Intel_Df::drupal_goto($annotation->uri());
+
+  return '';
 }
 
 function intel_annotation_display_time_offset() {

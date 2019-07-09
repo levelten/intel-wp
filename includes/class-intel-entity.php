@@ -67,6 +67,12 @@ class Intel_Entity {
 			if (is_array($v) && is_string($this->{$k})) {
 				$this->{$k} = unserialize($this->{$k});
 			}
+			else if (is_int($v)) {
+				$this->{$k} = (int)$this->{$k};
+			}
+			else if (is_float($v)) {
+				$this->{$k} = (float)$this->{$k};
+			}
 		}
 
 		if (!isset($this->data['syncStatus'])) {
@@ -87,7 +93,10 @@ class Intel_Entity {
 	}
 
 	public function uri() {
-		return 'entity/' . $this->{$this->entity_info['entity keys']['id']};
+		//intel_d($this->entity_info);
+		$entity_info = intel()->entity_info($this->entity_type);
+		return $this->entity_type . '/' . $this->{$entity_info['entity keys']['id']};
+		//return 'entity/' . $this->{$this->entity_info['entity keys']['id']};
 	}
 
 	public function save() {

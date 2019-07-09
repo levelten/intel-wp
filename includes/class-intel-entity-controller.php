@@ -137,7 +137,7 @@ class Intel_Entity_Controller {
 			return FALSE;
 		}
 		$entities = array();
-		foreach ($results as  $row) {
+		foreach ($results as $row) {
 			$entity = new $this->entity_class((array)$row, $this);
 			$entities[$entity->id] = $entity;
 		}
