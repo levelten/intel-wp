@@ -216,6 +216,47 @@ class Intel_Entity_Controller {
 		return $entities;
 	}
 
+	public function loadFiltered($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
+		global $wpdb;
+
+		$query = db_select('intel_submission', 's')
+			->extend('PagerDefault')
+			->limit($limit);
+		$v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = s.vid');
+		$query->fields('s');
+		$query->addField($v, 'name', 'name');
+		//$query->addField($v, 'email', 'email');
+		//$query->addField($v, 'vtkid', 'vtkid');
+		$query->addField($v, 'data', 'visitor_data');
+		$query->addField($v, 'ext_data', 'visitor_ext_data');
+		$query->addTag('intel_submission_load_filtered');
+
+		if (!empty($header)) {
+			$query->extend('TableSort')->orderByHeader($header);
+		}
+
+		//TODO get filters working
+		if (!empty($filter['where'])) {
+			//$sql .= " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') . $filter['where'];
+			//$count_sql .=  " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') .  $filter['where'];
+		}
+		if (!empty($filter['conditions'])) {
+			foreach ($filter['conditions'] AS $condition) {
+				if (count($condition) == 3) {
+					$query->condition($condition[0], $condition[1], $condition[2]);
+				}
+				else {
+					$query->condition($condition[0], $condition[1]);
+				}
+			}
+		}
+
+		$result = $query->execute();
+
+		return $result;
+	}
+
+
 	public function deleteOne($id) {
 		global $wpdb;
 		$wpdb->delete( $wpdb->prefix . $this->base_table, array( $this->key_id => $id ) );
