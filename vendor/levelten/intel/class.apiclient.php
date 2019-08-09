@@ -161,6 +161,9 @@ class ApiClient {
         return $response;
       }
       $ret = json_decode($response, true);
+      if (!empty($_GET['debug'])) {
+        Debug::printVar($ret);
+      }
       if (empty($ret['status'])) {
         $msg = !empty($ret['message']) ? $ret['message'] : $response;
         $msg = (strlen($msg) > 210) ? substr($msg, 0, 200) . '...' : $msg;

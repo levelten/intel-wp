@@ -62,6 +62,10 @@ function intel_imapi_get_client(&$vars, $options = array()) {
   return $apiclient;
 }
 
+function intel_imapi_do_reauth() {
+
+}
+
 function intel_imapi_property_get($options = array()) {
   $vars = array();
   $apiclient = intel_imapi_get_client($vars, $options);

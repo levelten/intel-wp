@@ -197,9 +197,10 @@ class Intel_Tracker {
 	 * Generates tracking code
 	 */
 	public function tracking_head($is_admin = 0) {
-		if (!intel_is_installed('min')) {
-			return '';
-		}
+    $is_framework = intel_is_framework();
+    if (!intel_is_installed('min') && !$is_framework) {
+      return '';
+    }
 		$io_name = 'io';
 
 		// check if intel should embed ga tracking code
@@ -216,9 +217,11 @@ class Intel_Tracker {
 			$script .= "\n" . $this->tracking_settings_js();
 		}
 
-		if ($this->pageview_placement == 'head') {
-			$script .= "\n" . "io('pageview');";
-		}
+    if (!$is_framework) {
+      if ($this->pageview_placement == 'head') {
+        $script .= "\n" . "io('pageview');";
+      }
+    }
 
 		print '<script>' . $script . '</script>';
 
@@ -230,7 +233,8 @@ class Intel_Tracker {
 	}
 
 	public function tracking_footer($is_admin = 0) {
-		if (!intel_is_installed('min')) {
+    $is_framework = intel_is_framework();
+		if (!intel_is_installed('min') && !$is_framework) {
 			return '';
 		}
 		$io_name = 'io';
@@ -247,11 +251,14 @@ class Intel_Tracker {
 			$script .= $this->get_intel_pushes_js();
 		}
 
-		intel_page_footer_alter();
+    intel_page_footer_alter();
 
-		if ($this->pageview_placement != 'head') {
-			$script .= "\n" . "io('pageview');";
-		}
+		if (!$is_framework) {
+      if ($this->pageview_placement != 'head') {
+        $script .= "\n" . "io('pageview');";
+      }
+    }
+
 		//$script .= "$io_name('set', intel_settings.intel.pushes.set);\n";
 		//if (!empty($js_settings['intel']['pushes']['events'])) {
 		//	$script .= "$io_name('event', intel_settings.intel.pushes.event);\n";
@@ -288,6 +295,8 @@ class Intel_Tracker {
 	public function tracking_settings_js() {
 		$io_name = 'io';
 
+    $is_framework = intel_is_framework();
+
 		$page = array();
 		intel_page_alter($page);
 
@@ -297,20 +306,23 @@ class Intel_Tracker {
 		//$script .= "var wp_intel = wp_intel || {}; wp_intel.settings = " . json_encode($js_settings) . ";\n";
 		$script .= "var wp_intel = wp_intel || { 'settings': {}, 'behaviors': {}, 'locale': {} };\n";
 		$script .= "jQuery.extend(wp_intel.settings, " . json_encode($js_settings) . ");\n";
-		$script .= "$io_name('setConfig', wp_intel.settings.intel.config);\n";
-		if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
-			foreach ($js_settings['intel']['pushes'] as $cm => $push) {
-				if (0 && $cm == 'setUserId') {
-					$script .= $io_name . '("' . $cm . '","' . $push[0][0];
-					if (!empty($push[0][1])) {
-						$script .= '","' . $push[0][1];
-					}
-					$script .= '");' . "\n";
-				} else {
-					$script .= "$io_name('$cm', wp_intel.settings.intel.pushes['$cm']);\n";
-				}
-			}
-		}
+		if (!$is_framework) {
+      $script .= "$io_name('setConfig', wp_intel.settings.intel.config);\n";
+      if (isset($js_settings['intel']['pushes']) && is_array($js_settings['intel']['pushes'])) {
+        foreach ($js_settings['intel']['pushes'] as $cm => $push) {
+          if (0 && $cm == 'setUserId') {
+            $script .= $io_name . '("' . $cm . '","' . $push[0][0];
+            if (!empty($push[0][1])) {
+              $script .= '","' . $push[0][1];
+            }
+            $script .= '");' . "\n";
+          } else {
+            $script .= "$io_name('$cm', wp_intel.settings.intel.pushes['$cm']);\n";
+          }
+        }
+      }
+    }
+
 		//$script .= "$io_name('pageview');\n";
 
 		return $script;

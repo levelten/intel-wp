@@ -2288,7 +2288,21 @@ function intel_is_installed($level = 'min') {
   return FALSE;
 }
 
+/**
+ * Returns if is framework flag is set
+ *
+ * @return array|bool|mixed
+ */
+function intel_is_framework() {
+  $flag = &Intel_Df::drupal_static( __FUNCTION__, NULL);
 
+  if (!isset($flag)) {
+    $flag = get_option('intel_framework_mode', FALSE);
+  }
+
+
+  return $flag;
+}
 
 /**
  * Implements hook_entity_info().
