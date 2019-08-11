@@ -32,7 +32,7 @@ function intel_util_temp() {
   include_once INTEL_DIR . 'includes/intel.imapi.php';
 
   $ga_access_token = intel_imapi_ga_access_token_get();
-  intel_d($ga_access_token);
+  intel_d($ga_access_token);//
 
   update_option('intel_ga_access_token', $ga_access_token);
 

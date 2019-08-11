@@ -35,9 +35,9 @@ class Intel_Tracker {
 
 	protected $pushes;
 
-	public $settings_placement = 'head';
+	public $settings_placement = 'footer';
 
-	public $pageview_placement = 'head';
+	public $pageview_placement = 'footer';
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -246,6 +246,8 @@ class Intel_Tracker {
 			$script .= "\n" . $this->tracking_settings_js();
 		}
 		else {
+$js_settings = intel()->get_js_settings();
+Intel_Df::watchdog('tracking_footer js_settings', json_encode($js_settings));
 			// if settings processed in head, embed any pushes after page_alter was
 			// run
 			$script .= $this->get_intel_pushes_js();
