@@ -119,6 +119,18 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_config.php',
     'weight' => -10,
   );
+  $items['admin/config/intel/settings/framework'] = array(
+    'title' => 'Framework settings',
+    'description' => 'Basic setup',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_framework_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'weight' => -1,
+    'file' => 'admin/intel.admin_framework.php',
+    'intel_install_access' => 'active',
+  );
   $items['admin/config/intel/settings/general'] = array(
     'title' => 'General',
     'description' => 'Basic setup',
@@ -2297,11 +2309,15 @@ function intel_is_framework() {
   $flag = &Intel_Df::drupal_static( __FUNCTION__, NULL);
 
   if (!isset($flag)) {
-    $flag = get_option('intel_framework_mode', FALSE);
+    $flag = (boolean) get_option('intel_framework_mode', FALSE);
   }
 
 
   return $flag;
+}
+
+function intel_is_framework_only() {
+  return intel_is_framework() && !intel_is_installed();
 }
 
 /**

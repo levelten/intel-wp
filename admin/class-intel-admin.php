@@ -194,14 +194,19 @@ class Intel_Admin {
 		global $wp_version;
 
 		if ( current_user_can( 'manage_options' ) ) {
-			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
-			add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
-  	}
+			if (intel_is_framework_only()) {
+              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ), 'dashicons-analytics');
+            }
+			else {
+              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
+              add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
+            }
+  	    }
 	}
 
 	// for return_type json, page needs to be called earlier than standard menu routing
@@ -244,16 +249,16 @@ class Intel_Admin {
 
 		$q = '';
 		if ($_GET['page'] == 'intel_admin') {
-			$q = 'admin/reports/intel';
-			//$navbar_exclude[$q] = 1;
-			$breadcrumbs[] = array(
-				'text' => esc_html__('Reports', 'intel'),
-				'path' => Intel_Df::url($q),
-			);
-			$navbar_base_q = $navbar_base_qt = $q;
-      if (!$install_levels['ga_data']) {
-				$install_access_error = intel_get_install_access_error_message(array('level' => 'ga_data'));
-			}
+          $q = 'admin/reports/intel';
+          //$navbar_exclude[$q] = 1;
+          $breadcrumbs[] = array(
+            'text' => esc_html__('Reports', 'intel'),
+            'path' => Intel_Df::url($q),
+          );
+          $navbar_base_q = $navbar_base_qt = $q;
+          if (!$install_levels['ga_data']) {
+            $install_access_error = intel_get_install_access_error_message(array('level' => 'ga_data'));
+          }
 		}
 		if ($_GET['page'] == 'intel_reports') {
 			$q = 'admin/reports/intel';
@@ -298,6 +303,9 @@ class Intel_Admin {
 				'path' => Intel_Df::url($q),
 			);
 		}
+		if (intel_is_framework_only()) {
+          $q = 'admin/config/intel/settings/framework';
+        }
 		if (isset($_GET['q'])) {
 			$q = $_GET['q'];
 		}
