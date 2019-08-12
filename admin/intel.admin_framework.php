@@ -15,7 +15,6 @@ include_once INTEL_DIR . 'includes/class-intel-form.php';
 function intel_admin_framework_settings($form, &$form_state, $options = array()) {
   //global $base_url;
 
-
   $form['intel_framework_mode'] = array(
     '#type' => 'checkbox',
     '#title' => Intel_Df::t('Enable framework mode'),

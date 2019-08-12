@@ -756,7 +756,7 @@ class Intel_Admin {
 		$output = '';
 		// Don't show the connect notice anywhere but the plugins.php after activating
 		$current = get_current_screen();
-		if (!intel_is_installed('min') && 'plugins' === $current->parent_base  ) {
+		if (!intel_is_installed('min') && !intel_is_framework() && 'plugins' === $current->parent_base  ) {
 			$l_options = Intel_Df::l_options_add_class('btn btn-info');
 			$output .= '  <div class="panel panel-info m-t-1">';
 			$output .= '    <h2 class="panel-heading m-t-0">' . __( 'Get Intelligence!', 'intel' ) . '</h2>';

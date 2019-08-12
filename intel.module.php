@@ -119,18 +119,7 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_config.php',
     'weight' => -10,
   );
-  $items['admin/config/intel/settings/framework'] = array(
-    'title' => 'Framework settings',
-    'description' => 'Basic setup',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('intel_admin_framework_settings'),
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_CALLBACK,
-    'weight' => -1,
-    'file' => 'admin/intel.admin_framework.php',
-    'intel_install_access' => 'active',
-  );
+
   $items['admin/config/intel/settings/general'] = array(
     'title' => 'General',
     'description' => 'Basic setup',
@@ -490,6 +479,19 @@ function intel_menu($items = array()) {
       'file' => 'admin/intel.admin_config.php',
     );
   }
+
+  $items['admin/config/intel/settings/framework'] = array(
+    'title' => 'Framework settings',
+    'description' => 'Basic setup',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_framework_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'weight' => -1,
+    'file' => 'admin/intel.admin_framework.php',
+    'intel_install_access' => 'active',
+  );
 
   // intel visitor config
   $items['admin/config/people/intel'] = array(
