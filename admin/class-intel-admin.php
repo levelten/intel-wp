@@ -361,6 +361,18 @@ class Intel_Admin {
 						);
 					}
 				}
+                else if (!empty($path_args[1]) && $path_args[1] == 'util') {
+                  if ($path_args[2] == 'log') {
+                    $bc_title = Intel_Df::t('Log');
+                  }
+                  if (!empty($bc_title)) {
+                    $a = array_slice($path_args, 0, 4);
+                    $breadcrumbs[] = array(
+                      'text' => $bc_title,
+                      'path' => Intel_Df::url(implode('/', $a)),
+                    );
+                  }
+                }
 			}
 			else {
 				if (in_array($path_args[0], $entities)) {
@@ -413,61 +425,67 @@ class Intel_Admin {
 					$load_index = 0;
 					$load_type = '';
 					$load_title = '';
+					$entity_title = '';
 					if ($path_args[1] == 'config') {
-						if ($path_args[4] == 'intel_event') {
-							$load_index = 5;
-							$load_type = 'intel_intel_event';
-							$load_title = Intel_Df::t('Intel Event');
-							$bc_title = Intel_Df::t('Event');
-						}
-						elseif ($path_args[4] == 'goal') {
-							$load_index = 5;
-							$load_type = 'intel_goal';
-							$bc_title = $load_title = Intel_Df::t('Goal');
-						}
-						elseif ($path_args[4] == 'taxonomy') {
-							$load_index = 5;
-							$load_type = 'intel_taxonomy';
-							$bc_title = $load_title = Intel_Df::t('Taxonomy');
-						}
+                      if ($path_args[4] == 'intel_event') {
+                        $load_index = 5;
+                        $load_type = 'intel_intel_event';
+                        $load_title = Intel_Df::t('Intel Event');
+                        $bc_title = Intel_Df::t('Event');
+                      }
+                      elseif ($path_args[4] == 'goal') {
+                        $load_index = 5;
+                        $load_type = 'intel_goal';
+                        $bc_title = $load_title = Intel_Df::t('Goal');
+                      }
+                      elseif ($path_args[4] == 'taxonomy') {
+                        $load_index = 5;
+                        $load_type = 'intel_taxonomy';
+                        $bc_title = $load_title = Intel_Df::t('Taxonomy');
+                      }
+                    }
+					else if ($path_args[1] == 'util') {
+                      if ($path_args[2] == 'log') {
+                        $load_index = 3;
+                        $load_type = 'intel_log';
+                        $load_title = Intel_Df::t('Intel Log');
+                        $bc_title = Intel_Df::t('Log');
+                      }
+                    }
 
-						if ($load_index) {
-							$func = $load_type . '_load';
-							$path_args_t[$load_index] = $func($path_args[$load_index]);
-							$entity = $path_args_t[$load_index];
-						  if(empty($entity)) {
-								$vars = array(
-									'title' => esc_html__('404 Error', 'intel'),
-									'markup' => Intel_Df::t('@load_title not found', array(
-										'@load_title' => $load_title,
-									)),
-									//'markup' => esc_html__('@load_title not found', 'intel'),
-									'messages' => Intel_Df::drupal_get_messages(),
-								);
-								print Intel_Df::theme('intel_page', $vars);
-								return;
-							}
-							$a = $path_args;
-							$a[$load_index] = '%' . $load_type;
-							$qt = implode('/', $a);
-							if (!empty($menu_info[$qt])) {
-								$info = $menu_info[$qt];
-							}
-							$a = array_slice($path_args, 0, 5);
-							$breadcrumbs[] = array(
-								'text' => $bc_title,
-								'path' => Intel_Df::url(implode('/', $a)),
-							);
-							$a = array_slice($path_args, 0, 6);
-							$breadcrumbs[] = array(
-								'text' => $entity['title'],
-								//'path' => Intel_Df::url(implode('/', $a)),
-							);
-						}
-
-					}
-
-
+                    if ($load_index) {
+                        $func = $load_type . '_load';
+                        $path_args_t[$load_index] = $func($path_args[$load_index]);
+                        $entity = $path_args_t[$load_index];
+                        if(empty($entity)) {
+                            $vars = array(
+                                'title' => esc_html__('404 Error', 'intel'),
+                                'markup' => Intel_Df::t('@load_title not found', array(
+                                    '@load_title' => $load_title,
+                                )),
+                                //'markup' => esc_html__('@load_title not found', 'intel'),
+                                'messages' => Intel_Df::drupal_get_messages(),
+                            );
+                            print Intel_Df::theme('intel_page', $vars);
+                            return;
+                        }
+                        $a = $path_args;
+                        $a[$load_index] = '%' . $load_type;
+                        $qt = implode('/', $a);
+                        if (!empty($menu_info[$qt])) {
+                            $info = $menu_info[$qt];
+                        }
+                        $a = array_slice($path_args, 0, $load_index);
+                        $breadcrumbs[] = array(
+                            'text' => $bc_title,
+                            'path' => Intel_Df::url(implode('/', $a)),
+                        );
+                        $a = array_slice($path_args, 0, $load_index + 1);
+                        $breadcrumbs[] = array(
+                            'text' => ($entity instanceof Intel_Entity) ? $entity->label() : $entity['title'],
+                            //'path' => Intel_Df::url(implode('/', $a)),
+                        );
+                    }
 				}
 			}
 		}

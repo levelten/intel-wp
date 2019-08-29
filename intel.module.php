@@ -1074,6 +1074,27 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_util.php',
   );
 
+  $items['admin/util/log'] = array(
+    'title' => 'Log',
+    'description' => 'Watchdog log',
+    'page callback' => 'intel_util_log_list_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.php',
+  );
+
+  $items['admin/util/log/%intel_log'] = array(
+    'title' => 'Log',
+    'description' => 'Watchdog log',
+    'page callback' => 'intel_util_log_page',
+    'page arguments' => array(3),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.php',
+  );
+
   $items['admin/util/update/run'] = array(
     'title' => 'Run update',
     'description' => 'View and run plugin updates',
@@ -2439,6 +2460,38 @@ function intel_entity_info($info = array()) {
     ),
   );
 
+  $info['intel_log'] = array(
+    // A human readable label to identify our entity.
+    'label' => Intel_Df::t('Intel log'),
+    'entity class' => 'Intel_Log',
+    'controller class' => 'Intel_Log_Controller',
+    'base table' => 'intel_log',
+    'label callback' => 'intel_log_label',
+    'uri callback' => 'intel_log_uri',
+    'fieldable' => FALSE,
+    'module' => 'intel',
+    'entity keys' => array(
+      'id' => 'lid',
+    ),
+    'file' => array(
+      'includes/class-intel-log.php',
+      'includes/class-intel-log-controller.php',
+    ),
+    'fields' => array(
+      'lid' => null,
+      'uid' => 0,
+      'type' => '',
+      'message' => '',
+      'variables' => array(),
+      'severity' => 0,
+      'link' => '',
+      'location' => '',
+      'referer' => '',
+      'hostname' => '',
+      'timestamp' => '',
+    ),
+  );
+
   $info['post'] = array(
     // A human readable label to identify our entity.
     'label' => Intel_Df::t('Post'),
@@ -2556,6 +2609,53 @@ function intel_get_ApiClientProps() {
     'apikey' => get_option('intel_apikey', ''),
   );
   return $apiClientProps;
+}
+
+function intel_log_create($values = array()) {
+  $entity = intel()->get_entity_controller('intel_log')->create($values);
+  return $entity ;
+}
+
+/**
+ * We save the entity by calling the controller.
+ */
+function intel_log_save(&$entity) {
+  return intel()->get_entity_controller('intel_log')->save($entity);
+}
+
+/**
+ * Loads log object from database
+ *
+ * @param $lid Primary session id
+ *
+ * @return Submission stdClass object
+ */
+function intel_log_load($lid) {
+  //$submission = &Intel_Df::drupal_static(__FUNCTION__);
+  $entities = intel()->get_entity_controller('intel_log')->load($lid);
+  if (!empty($entities)) {
+    return array_shift($entities);
+  }
+  return FALSE;
+}
+
+/**
+ * Loads submission object using any table field
+ *
+ * @param $vars Array of key value pairs used to identify submission in table
+ *
+ * @return Submission stdClass object
+ */
+function intel_log_load_by_vars($vars) {
+  //$submission = &Intel_Df::drupal_static(__FUNCTION__);
+
+  $entities = intel()->get_entity_controller('intel_log')->loadByVars($vars);
+
+  if (!empty($entities) && is_array($entities)) {
+    return array_shift($entities);
+  }
+
+  return FALSE;
 }
 
 function intel_visitor_load($id = NULL, $reset = FALSE, $id_type = NULL) {

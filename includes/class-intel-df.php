@@ -2226,16 +2226,103 @@ class Intel_Df  {
 
 	public static function watchdog($type, $message = '', $variables = array(), $severity = Intel_Df::WATCHDOG_NOTICE, $link = NULL) {
 		//$option_log = get_option('intel_debug_log', '');
-		$msg = __('WATCHDOG', 'intel') . ': ' . $type . ":\n" . $message;
-		//self::drupal_set_message($msg);
-    if (!is_array($variables)) {
-      $variables = array();
-    }
-    error_log(self::t($msg, $variables, array('html' => 1)));
+    static $in_error_state = FALSE;
 
-		//$option_log .= $msg . "\n";
-		//update_option('intel_debug_log', $option_log);
+    // It is possible that the error handling will itself trigger an error. In that case, we could
+    // end up in an infinite loop. To avoid that, we implement a simple static semaphore.
+    if (!$in_error_state && function_exists('apply_filters')) {
+      $in_error_state = TRUE;
+
+      // The user object may not exist in all conditions, so 0 is substituted if needed.
+      $user_uid = get_current_user_id();
+
+      // Prepare the fields to be logged
+      $log_entry = [
+        'type' => $type,
+        'message' => $message,
+        'variables' => $variables,
+        'severity' => $severity,
+        'link' => $link,
+        //'user' => $user,
+        'uid' => $user_uid,
+        'request_uri' => self::request_uri(), //$base_root . request_uri(),
+        'referer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '',
+        //'ip' => ip_address(),
+        // Request time isn't accurate for long processes, use time() instead.
+        'timestamp' => time(),
+      ];
+
+      $log_entry = apply_filters('intel_watchdog', $log_entry);
+
+      $mode = get_option('intel_watchdog_mode', '');
+      if ($mode == 'db') {
+        $intel_log = intel_log_create($log_entry);
+        intel_log_save($intel_log);
+      }
+      else if ($mode == 'error_log') {
+        $msg = __('WATCHDOG', 'intel') . ': ' . $type . ":\n" . $message;
+        //self::drupal_set_message($msg);
+        error_log(self::t($log_entry['message'], $log_entry['variables'], ['html' => 1]));
+      }
+
+      // It is critical that the semaphore is only cleared here, in the parent
+      // watchdog() call (not outside the loop), to prevent recursive execution.
+      $in_error_state = FALSE;
+    }
 	}
+
+	public static function watchdog_save($log_entry) {
+    global $wpdb;
+
+    $data = array();
+    $format = array();
+    $data = array(
+      'uid' => $log_entry['uid'],
+      'type' => substr($log_entry['type'], 0, 64),
+      'message' => $log_entry['message'],
+      'variables' => serialize($log_entry['variables']),
+      'severity' => $log_entry['severity'],
+      'link' => substr($log_entry['link'], 0, 255),
+      'location' => $log_entry['request_uri'],
+      'referer' => $log_entry['referer'],
+      'hostname' => substr($log_entry['ip'], 0, 128),
+      'timestamp' => $log_entry['timestamp'],
+    );
+
+    $i = 0;
+    foreach ($data as $k => $v) {
+      $format[$i] = '%s';
+      if (is_array($v) || is_object($v)) {
+        $data[$k] = serialize($data[$k]);
+      }
+      elseif(is_integer($v)) {
+        $format[$i] = '%d';
+      }
+      elseif (is_float($v)) {
+        $format[$i] = '%f';
+      }
+      $i++;
+    }
+
+    $wpdb->insert($wpdb->prefix . 'intel_log', $data, $format );
+    return $wpdb->insert_id;
+  }
+
+  public static function watchdog_load($wid) {
+    global $wpdb;
+
+    $data = array();
+    $data[] = $wid;
+    $sql = "
+		  SELECT *
+		  FROM {$wpdb->prefix}{'intel_log'}
+		  WHERE {'wid'} = %d
+		";
+
+    $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
+    intel_d($results);
+    return '';
+  }
 }
 
 /**

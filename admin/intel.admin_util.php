@@ -195,13 +195,130 @@ function intel_util_update() {
   return $output;
 }
 
-function intel_util_log_page() {
+function intel_util_log_page($entity) {
+  $output = '';
+
+  if (intel_is_debug()) {
+    intel_d($entity->variables);
+  }
+
+  $rows = array();
+  $rows[] = array(
+    Intel_Df::t('Type'),
+    $entity->type,
+  );
+  $rows[] = array(
+    Intel_Df::t('Date'),
+    Intel_Df::format_date($entity->timestamp, ''),
+  );
+  $rows[] = array(
+    Intel_Df::t('User'),
+    '',
+  );
+  $rows[] = array(
+    Intel_Df::t('Location'),
+    $entity->location,
+  );
+  $rows[] = array(
+    Intel_Df::t('Referrer'),
+    $entity->referrer,
+  );
+  $rows[] = array(
+    Intel_Df::t('Message'),
+    Intel_Df::t($entity->message, $entity->variables),
+  );
+  /*
+  $rows[] = array(
+    Intel_Df::t('Variables'),
+    intel_d($entity->variables),
+  );
+  */
+  $rows[] = array(
+    Intel_Df::t('Severity'),
+    $entity->severity,
+  );
+  $rows[] = array(
+    Intel_Df::t('Hostname'),
+    $entity->hostname,
+  );
+  $rows[] = array(
+    Intel_Df::t('Operations'),
+    '' , //$entity->hostname,
+  );
+
+
+  $vars = array(
+    'header' => array(),
+    'rows' => $rows,
+  );
+
+  $output .= Intel_Df::theme('table', $vars);
+  // TODO
+  return $output;
+}
+
+function intel_util_log_list_page() {
   $output = '';
 
   include_once ( INTEL_DIR . 'includes/class-intel-form.php' );
   $form = Intel_Form::drupal_get_form('intel_util_log_form');
 
   $output .= Intel_Df::render($form);
+
+  $variables = array(
+    '%foo' => 'Foo',
+  );
+  //Intel_Df::watchdog('test', 'foo: %foo', $variables, Intel_Df::WATCHDOG_INFO);
+
+  $watchdog_mode = get_option('intel_watchdog_mode', '');
+
+  if ($watchdog_mode != 'db') {
+    return $output;
+  }
+
+  $row_limit = 100;
+
+  $header = array(
+    Intel_Df::t('Type'),
+    Intel_Df::t('Date'),
+    Intel_Df::t('Message'),
+    Intel_Df::t('User'),
+    Intel_Df::t('Ops'),
+  );
+
+  $filter = array();
+  $options = array();
+  $options['order_by'] = 'timestamp DESC';
+  $entities = intel()->get_entity_controller('intel_log')->loadByFilter($filter, $options, $header, $row_limit, 0);
+  intel_d($entities);
+
+  $rows = array();
+
+
+  $options = array();
+  $custom_default_value = '';
+  $link_options = array(
+    'query' => Intel_Df::drupal_get_destination(),
+  );
+  $count = 0;
+  foreach ($entities as $entity) {
+    $row = array();
+    $row[] = $entity->type;
+    $row[] = Intel_Df::format_date($entity->timestamp, $format = '');
+    $row[] = Intel_df::l(substr($entity->message, 0, 64), 'admin/util/log/' . $entity->lid);
+    $row[] = '';
+    $row[] = '';
+    $rows[] = $row;
+  }
+
+
+  $vars = array(
+    'header' => $header,
+    'rows' => $rows,
+    'empty' => Intel_Df::t('No log entries found.'),
+  );
+
+  $output .= Intel_Df::theme('table', $vars);
 
   return $output;
 }
@@ -220,7 +337,7 @@ function intel_util_log_form($form, &$form_state) {
 
   $options = array(
     '' => Intel_Df::t('None'),
-    'log' => Intel_Df::t('Log'),
+    'error_log' => Intel_Df::t('Error log'),
     'db' => Intel_Df::t('Database'),
   );
   $form['settings']['watchdog_mode'] = array(
@@ -262,12 +379,80 @@ function intel_util_log_form_submit($form, &$form_state) {
 
   if (!empty($form_state['input']['submit_settings'])) {
     update_option('intel_watchdog_mode', $values['watchdog_mode']);
+    if ($values['watchdog_mode'] == 'db') {
+      if (!intel_log_table_exists()) {
+        intel_log_table_create();
+        Intel_Df::drupal_set_message(Intel_Df::t('intel_log db table created.'));
+      }
+    }
+    else {
+      if (intel_log_table_exists()) {
+        intel_log_table_drop();
+        Intel_Df::drupal_set_message(Intel_Df::t('intel_log db table dropped.'));
+      }
+    }
     Intel_Df::drupal_set_message(Intel_Df::t('Settings have been updated.'));
   }
 
   if (!empty($form_state['input']['submit_clear'])) {
     Intel_Df::drupal_set_message(Intel_Df::t('Log has been cleared.'));
   }
+}
+
+function intel_log_table_exists() {
+  global $wpdb;
+
+  $table_name = $wpdb->prefix . "intel_log";
+
+  if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) === $table_name ) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+function intel_log_table_create() {
+  global $wpdb;
+
+  require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+  $charset_collate = $wpdb->get_charset_collate();
+
+  $table_name = $wpdb->prefix . "intel_log";
+
+  $sql = "CREATE TABLE $table_name (
+    lid int(11) NOT NULL AUTO_INCREMENT,
+    uid int(11) NOT NULL DEFAULT '0',
+    type varchar(64) NOT NULL DEFAULT '',
+    message longtext NOT NULL,
+    variables longblob NOT NULL,
+    severity tinyint(3) UNSIGNED NOT NULL DEFAULT '0',
+    link varchar(255) DEFAULT '',
+    location text NOT NULL,
+    referer text,
+    hostname varchar(128) NOT NULL DEFAULT '',
+    timestamp int(11) NOT NULL DEFAULT '0',
+    PRIMARY KEY (lid),
+    KEY type (type),
+    KEY uid (uid),
+    KEY severity (severity)
+  ) $charset_collate;";
+
+  dbDelta( $sql );
+}
+
+function intel_log_table_drop() {
+  global $wpdb;
+
+  require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+  $charset_collate = $wpdb->get_charset_collate();
+
+  $table_name = $wpdb->prefix . "intel_log";
+
+  $sql = "DROP TABLE IF EXISTS $table_name;";
+
+  $wpdb->query($sql);
 }
 
 function intel_util_debug() {

@@ -69,7 +69,7 @@ class Intel_Entity {
 			}
 		}
 
-		if (!isset($this->data['syncStatus'])) {
+		if (isset($this->data) && !isset($this->data['syncStatus'])) {
 			$this->data['syncStatus'] = $this->syncStatusConstruct();
 		}
 	}
