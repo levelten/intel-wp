@@ -2305,6 +2305,7 @@ function intel_process_form_submission($vars) {
 
   // save submission object
   if (!empty($submission->vid)) {
+Intel_Df::watchdog('intel_process_form', 'submission', $submission);
     $sid = intel_submission_save($submission);
     if (empty($submission->sid)) {
       $submission->sid = $sid;
@@ -2352,6 +2353,7 @@ function intel_process_form_submission($vars) {
 
   // save visitor
   if (!empty($visitor->vid)) {
+Intel_Df::watchdog('intel_process_form', 'visitor', $visitor);
     intel_visitor_save($visitor);
     //watchdog('intel.page_alter 992', print_r($visitor, 1));
   }
@@ -2373,7 +2375,7 @@ function intel_process_form_submission($vars) {
       'oa' => $track['oa'],
     );
     //Intel_Df::watchdog('form_submission', json_encode($call));
-
+Intel_Df::watchdog('intel_process_form', 'intel_push', $call);
     intel_add_page_intel_push(array('event', $call));
 //dpm('page_intel_push=');dpm($call);//
   }

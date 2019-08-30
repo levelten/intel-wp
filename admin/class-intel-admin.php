@@ -445,7 +445,7 @@ class Intel_Admin {
                       }
                     }
 					else if ($path_args[1] == 'util') {
-                      if ($path_args[2] == 'log') {
+                      if ($path_args[2] == 'log' && !empty($path_args[3])) {
                         $load_index = 3;
                         $load_type = 'intel_log';
                         $load_title = Intel_Df::t('Intel Log');

@@ -320,12 +320,7 @@ class Intel_Entity_Controller {
       $data[] = $offset;
     }
 
-    intel_d($sql);
-    intel_d($data);
-
     $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
-
-    intel_d($results);
 
     return $results;
   }

@@ -2270,59 +2270,6 @@ class Intel_Df  {
       $in_error_state = FALSE;
     }
 	}
-
-	public static function watchdog_save($log_entry) {
-    global $wpdb;
-
-    $data = array();
-    $format = array();
-    $data = array(
-      'uid' => $log_entry['uid'],
-      'type' => substr($log_entry['type'], 0, 64),
-      'message' => $log_entry['message'],
-      'variables' => serialize($log_entry['variables']),
-      'severity' => $log_entry['severity'],
-      'link' => substr($log_entry['link'], 0, 255),
-      'location' => $log_entry['request_uri'],
-      'referer' => $log_entry['referer'],
-      'hostname' => substr($log_entry['ip'], 0, 128),
-      'timestamp' => $log_entry['timestamp'],
-    );
-
-    $i = 0;
-    foreach ($data as $k => $v) {
-      $format[$i] = '%s';
-      if (is_array($v) || is_object($v)) {
-        $data[$k] = serialize($data[$k]);
-      }
-      elseif(is_integer($v)) {
-        $format[$i] = '%d';
-      }
-      elseif (is_float($v)) {
-        $format[$i] = '%f';
-      }
-      $i++;
-    }
-
-    $wpdb->insert($wpdb->prefix . 'intel_log', $data, $format );
-    return $wpdb->insert_id;
-  }
-
-  public static function watchdog_load($wid) {
-    global $wpdb;
-
-    $data = array();
-    $data[] = $wid;
-    $sql = "
-		  SELECT *
-		  FROM {$wpdb->prefix}{'intel_log'}
-		  WHERE {'wid'} = %d
-		";
-
-    $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
-    intel_d($results);
-    return '';
-  }
 }
 
 /**

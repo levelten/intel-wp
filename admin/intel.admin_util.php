@@ -223,9 +223,11 @@ function intel_util_log_page($entity) {
     Intel_Df::t('Referrer'),
     $entity->referrer,
   );
+  intel_d($entity->variables);
+  $vars = (is_array($entity->variables)) ?$entity->variables : array();
   $rows[] = array(
     Intel_Df::t('Message'),
-    Intel_Df::t($entity->message, $entity->variables),
+    Intel_Df::t($entity->message, $vars),
   );
   /*
   $rows[] = array(
@@ -373,6 +375,7 @@ function intel_util_log_form($form, &$form_state) {
 }
 
 function intel_util_log_form_submit($form, &$form_state) {
+  global $wpdb;
   //intel_d($form_state);
   $values = $form_state['values'];
   //intel_d($values); //
@@ -395,6 +398,8 @@ function intel_util_log_form_submit($form, &$form_state) {
   }
 
   if (!empty($form_state['input']['submit_clear'])) {
+    $table_name = $wpdb->prefix . "intel_log";
+    $delete = $wpdb->query("TRUNCATE TABLE $table_name");
     Intel_Df::drupal_set_message(Intel_Df::t('Log has been cleared.'));
   }
 }
