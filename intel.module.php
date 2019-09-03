@@ -14,7 +14,7 @@ define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
 define('INTEL_TRACK_PAGE_TERMS_DEFAULT', 0);
-define('INTEL_TRACK_PAGE_TERMS_VISITOR_DEFAULT', 0);
+define('INTEL_TRACK_VISITOR_TERMS_DEFAULT', 0);
 define('INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT', 0);
 define('INTEL_TRACK_PHONECALLS_DEFAULT', 0);
 define('INTEL_TRACK_EMAILCLICKS_DEFAULT', 0);
@@ -34,6 +34,7 @@ define('INTEL_STATUS_NOT_FOUND', 404);
 define('INTEL_STATUS_SERVER_ERROR', 500);
 
 // include required files
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.common.php";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_alter.php";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.php";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.php";
@@ -3571,11 +3572,24 @@ function intel_entity_delete($entity, $entity_type) {
  * @return null
  */
 function intel_intel_scripts() {
-  return intel()->intel_script_info();
+  //return intel()->intel_script_info();
+  return intel_get_intel_script_info();
+}
+
+/**
+ * Returns information about intel_scripts
+ * @return array
+ */
+function intel_get_intel_script_info() {
+  $scripts = array();
+
+  $scripts = intel_build_info('intel_script');
+
+  return $scripts;
 }
 
 // add _intel_intel_script_info to hook_intel_script_info
-add_filter('intel_intel_script_info', '_intel_intel_script_info');
+intel_add_hook('intel_intel_script_info', '_intel_intel_script_info');
 /**
  * Implements hook_intel_intel_script
  */
@@ -4035,16 +4049,20 @@ function intel_get_field_page_intent_allowed_values() {
   return $values;
 }
 
-function intel_add_visitor_sync_request($visitor, $delay = 0) {
+function intel_add_visitor_sync_request($vtk, $delay = 0) {
   //$intel = intel();
+  // check if visitor was passed instead of vtk
+  if (is_object($vtk) && !empty($vtk->vtk)) {
+    $vtk = $vtk->vtk;
+  }
   $items = get_option('intel_sync_visitor_requests', array());
-  if (!isset($items[$visitor->vtk])) {
+  if (!isset($items[$vtk])) {
     $item = new stdClass;
     $item->created = time();
     $item->run_after =  time() + $delay;
-    $item->vtk = $visitor->vtk;
+    $item->vtk = $vtk;
     $item->attempts = 0;
-    $items[$visitor->vtk] = $item;
+    $items[$vtk] = $item;
     update_option('intel_sync_visitor_requests', $items);
   }
 }
@@ -5129,12 +5147,9 @@ function intel_get_extended_post_entity_attrs($post) {
   return $entity_attrs;
 }
 
-function intel_format_un($name) {
-  return str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($name)));
-}
-
 function intel_get_iapi_url($component = '') {
   $url_obj = &Intel_Df::drupal_static( __FUNCTION__);
+
   if (empty($url_obj)) {
     $url = get_option('intel_l10iapi_url', '');
     if (!$url) {
@@ -5150,11 +5165,12 @@ function intel_get_iapi_url($component = '') {
     return $url_obj[$component];
   }
 
-  return http_build_url($url_obj);
+  return intel_http_build_url($url_obj);
 }
 
 function intel_get_imapi_url($component = '') {
   $url_obj = &Intel_Df::drupal_static( __FUNCTION__);
+
   if (empty($url_obj)) {
     $url = get_option('intel_imapi_url', '');
     if (!$url) {
@@ -5170,7 +5186,7 @@ function intel_get_imapi_url($component = '') {
     return $url_obj[$component];
   }
 
-  return http_build_url($url_obj);
+  return intel_http_build_url($url_obj);
 }
 
 function intel_imapi_property_setup_l($text, $options = array()) {

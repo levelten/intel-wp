@@ -7,8 +7,12 @@
  */
 
 function intel_page_alter(&$page) {
-  require_once INTEL_DIR . "includes/intel.ga.php";
-  $user = wp_get_current_user();
+
+  intel_load_include('includes/intel.ga');
+
+  $user = intel_get_current_user();
+
+  $uid = intel_get_user_id($user);
 
   $q = isset($_GET['q']) ? $_GET['q'] : '';
 
@@ -26,26 +30,23 @@ function intel_page_alter(&$page) {
   $config = array(
     'debug' => intel_debug_mode(),
     // cmsHostpath, modulePath & apiPath are not standard io settings. They are used
-    // exclusivly by intel module js.
+    // exclusively by intel module js.
     'cmsHostpath' => $parsed_url['hostpath'],
     'modulePath' => $modulePath,
+    // path to intel library files
     'libPath' => $modulePath . '/vendor/levelten/intel',
-    //'cms_hostpath' => $parsed_url['hostpath'],
-    //'module_path' => drupal_get_path('module', 'intel'),
     'systemPath' => $q,
     'systemHost' => $parsed_url['host'],
     'systemBasepath' => $parsed_url['base_path'],
     'srl' => $q,
-    //'lib_path' => intel_get_library_path(),
     'pageTitle' => '(not set)',
     'trackAnalytics' => 1, // this is set in intel_js_alter if ga script exists
-    //'trackAdhocCtas' => ($api_level == 'pro') ? 'track-cta' : '', // Check if CTA tracking is supported in IPAI level
-    //'trackAdhocEvents' => 'track-event',
+    'trackAdhocCtas' => ($api_level == 'pro') ? 'track-cta' : '', // Check if CTA tracking is supported in IPAI level
+    'trackAdhocEvents' => 'track-event',
     'trackForms' => array(),
     'trackRealtime' => (integer)get_option('intel_track_realtime', INTEL_TRACK_REALTIME_DEFAULT),
     'fetchGaRealtime' => (integer)get_option('intel_fetch_ga_realtime', 0),
     'isLandingpage' => 0,
-    //'scorings' => intel_get_scorings('js_setting'),
     'scorings' => array(
       'events' => array(),
       'goals' => array(),
@@ -65,9 +66,11 @@ function intel_page_alter(&$page) {
     'eventDefs' => array(),
   );
 
-  if (!empty($_GET['io-admin']) && Intel_Df::user_access('admin intel')) {
-    wp_enqueue_style('intel_front_admin', INTEL_URL . 'css/intel-front-admin.css');
-    $config['admin'] = 1;
+  if (INTEL_PLATFORM == 'wp') {
+    if (!empty($_GET['io-admin']) && Intel_Df::user_access('admin intel')) {
+      wp_enqueue_style('intel_front_admin', INTEL_URL . 'css/intel-front-admin.css');
+      $config['admin'] = 1;
+    }
   }
 
   $goals = intel_goal_load();
@@ -104,10 +107,15 @@ function intel_page_alter(&$page) {
     $config['cookieDomain'] = $a;
   }
 
-  $path_is_admin = is_admin();
+  if (INTEL_PLATFORM == 'wp') {
+    $path_is_admin = is_admin();
+  }
+  else {
+    $path_is_admin = path_is_admin(current_path());
+  }
   
   $ga_va = array();
-  if (!empty($user->ID)) {
+  if ($uid) {
     if (intel_include_library_file('class.visitor.php')) {
       $ga_va = \LevelTen\Intel\ApiVisitor::extractCookieVa();
     }
@@ -122,28 +130,30 @@ function intel_page_alter(&$page) {
 
   intel_add_page_intel_push(array('set', "p.systemPath", $q));
 
-  // if entity not provided, lookup based on menu path
-  if (is_single() || is_page()) {
-    global $post;
-    $entity = $post;
-    $entity_type = 'post';
-    $config['pageTitle'] = get_the_title( $post );
-    $config['pageUri'] = ':post:' . $post->ID;
+  // determine entity from url
+  if (INTEL_PLATFORM == 'wp') {
+    if (is_single() || is_page()) {
+      global $post;
+      $entity = $post;
+      $entity_type = 'post';
+      $config['pageTitle'] = get_the_title( $post );
+      $config['pageUri'] = ':post:' . $post->ID;
+    }
+  }
+  else {
+    // if entity not provided, lookup based on menu path
+    if (arg(0) == 'node') {
+      $entity = menu_get_object();
+      $entity_type = 'node';
+    }
+    elseif (arg(0) == 'user') {
+      $entity = menu_get_object('user');
+      $entity_type = 'user';
+    }
+    $config['pageTitle'] = isset($entity->title) ? $entity->title : drupal_get_title();
+    $config['pageUri'] = current_path();
   }
 
-  /*
-  if (arg(0) == 'node') {
-    $entity = menu_get_object();
-    $entity_type = 'node';
-  }
-  elseif (arg(0) == 'user') {
-    $entity = menu_get_object('user');
-    $entity_type = 'user';
-  }
-  */
-
-  // TODO WP
-  //$config['pageTitle'] = isset($entity->title) ? $entity->title : drupal_get_title();
   if ($entity_type && !empty($entity)) {
     $attrs = intel_get_entity_intel_attributes($entity, $entity_type, 1);
     $page_attrs = $attrs['page'];
@@ -158,15 +168,11 @@ function intel_page_alter(&$page) {
   // check if page intent is landing page
   if (isset($page_attrs['pi']) && isset($page_attrs['pi']['l'])) {
     $config['isLandingpage'] = 1;
-    // Check if landingpage tracking is supported in IPAI level
-    if ($api_level == 'pro') {
-      //$page_events['landing_page_view'] = $intel_events['landing_page_view'];
-    }
   }
 
   // set user role visitor attribute
   // only when user is logged in (otherwise page caching will cause errors)
-  if (!empty($user->ID)) {
+  if ($uid) {
     if (INTEL_PLATFORM == 'wp') {
       // don't exclude on intel_demo_pages to allow testing
       if (!intel_is_demo_page()) {
@@ -194,7 +200,6 @@ function intel_page_alter(&$page) {
           }
         }
       }
-
     }
     elseif (INTEL_PLATFORM == 'drupal') {
       $cur = isset($ga_va['ur']) ? $ga_va['ur'] : array();
@@ -213,7 +218,6 @@ function intel_page_alter(&$page) {
         }
       }
     }
-
   }
 
   $page_attrs_info = intel_get_page_attribute_info();
@@ -287,20 +291,7 @@ function intel_page_alter(&$page) {
       $def = intel_filter_link_info_for_push($value);
       intel_add_page_intel_push(array('linktracker:setLinkTypeDef', $key, $def));
     }
-    //intel_add_page_intel_push(array('linktracker:setLinkDef', $key, $def));
-    //intel_d($link_infos);
   }
-
-  /*
-  $def = array(
-    'selector' => 'form#test',
-    'trackImpression'
-  );
-  intel_add_page_intel_push(array('formtracker:trackForm', $def));
-  intel_add_page_intel_push(array('formtracker:trackForm', 'test', $def));
-  */
-
-  //intel_check_user_login($page);
 
   intel_check_form_submission($page);
   
@@ -319,25 +310,12 @@ function intel_page_alter(&$page) {
   //}
 
   // call hook for modules to add page pushes
-  do_action('intel_page_intel_pushes');
-  //module_invoke_all('intel_page_intel_pushes');
+  intel_do_hook_action('intel_page_intel_pushes');
 
   $pushes = intel_get_flush_page_intel_pushes();
 
   // add page title and system path to any IntelEvent that is missing values
   /*
-  foreach ($pushes AS $i => $push) {
-    if ($push['method'] == '_addIntelEvent') {
-      if (empty($push['action'])) {
-        $pushes[$i]['action'] = $page_title;
-      }
-      if (empty($push['label'])) {
-        $pushes[$i]['label'] = $_GET['q'];
-      }
-    }
-  }
-  */
-
   if (isset($pushes['event']) && is_array($pushes['event'])) {
     foreach ($pushes['event'] AS $i => $push) {
       if (empty($push['action']) && empty($push['eventAction']) ) {
@@ -348,6 +326,7 @@ function intel_page_alter(&$page) {
       }
     }
   }
+  */
 
   //watchdog('intel_page_alter_pushes', print_r($pushes, 1));
 
@@ -369,70 +348,67 @@ function intel_page_alter(&$page) {
     $js['intel']['config']['cookieDomain'] = $ga_domain;
   }
 
-  // Get page status code for visibility filtering.
-
+  // determine if page should be tracked
   $track = 1;
-  /*
-  if (!(_googleanalytics_visibility_pages() || in_array($status, $trackable_status_codes)) && _googleanalytics_visibility_user($user)) {
-    $track = 0;
-    // TODO: Intel GA tracking should track google_analytics module settings
-    //$js['intel']['config']['track_analytics'] = 0;
+
+  if (INTEL_PLATFORM == 'wp') {
+
   }
-  if (path_is_admin(current_path())) {
-    $track = 0;  
+  else {
+    // check page tracking settings in googleanaltyics module
+    // Get page status code for visibility filtering.
+    $id = variable_get('googleanalytics_account', '');
+    $status = drupal_get_http_header('Status');
+    $trackable_status_codes = array(
+      '403 Forbidden',
+      '404 Not Found',
+    );
+    $track = 1;
+    if (!(_googleanalytics_visibility_pages() || in_array($status, $trackable_status_codes)) && _googleanalytics_visibility_user($user)) {
+      $track = 0;
+      // TODO: Intel GA tracking should track google_analytics module settings
+      //$js['intel']['config']['track_analytics'] = 0;
+    }
+    if (path_is_admin(current_path())) {
+      $track = 0;
+    }
   }
-  */
+
   if (!$track) {
     $js['intel']['config']['track_forms'] = 0;
     $js['intel']['config']['track_adhoc_ctas'] = 0;
     $js['intel']['config']['track_adhoc_events'] = 0;
   }
   else {
-    //$scripts = intel()->intel_script_info();
-    //$enabled = get_option('intel_intel_scripts_enabled', array());
-    //foreach ($scripts AS $key => $script) {
-    //  if (!empty($enabled[$key]) || (!isset($enabled[$key]) && !empty($script['enabled']))) {
-    //    wp_enqueue_script('intel_script_' . $key, $script['path']);
-    //  }
-    //}
-  }
+    // add intel scripts to page
+    if (INTEL_PLATFORM == 'wp') {
+      // for WP, js scripts are enqueued in class-intel-tracker
+    }
+    else {
+      $scripts = intel_get_intel_script_info();
+      $enabled = variable_get('intel_intel_scripts_enabled', array());
+      foreach ($scripts AS $key => $script) {
+        if (!empty($enabled[$key]) || (!isset($enabled[$key]) && !empty($script['enabled']))) {
+          drupal_add_js($script['path']);
+        }
+      }
 
+      if (!empty($_GET['debug'])) {
+        if ($_GET['debug'] == 'ie9') {
+          $script = "http://ie.microsoft.com/testdrive/HTML5/CompatInspector/inspector.js";
+          drupal_add_js($script, array('scope' => 'header', 'type' => 'external', 'weight' => -10, 'group' => JS_LIBRARY));
+        }
+      }
 
-  
-  if (!empty($_GET['debug'])) {
-    if ($_GET['debug'] == 'ie9') {
-      $script = "http://ie.microsoft.com/testdrive/HTML5/CompatInspector/inspector.js";
-      // TODO WP
-      //drupal_add_js($script, array('scope' => 'header', 'type' => 'external', 'weight' => -10, 'group' => JS_LIBRARY));
+      // add js embed script
+      $script = intel_get_js_embed('l10i', 'local');
+      drupal_add_js($script, array('type' => 'inline', 'scope' => 'header', 'weight' => 0));
     }
   }
-  /*
-  $script = get_option('intel_js_monitor_script', '');
-  if ($script) {
-    drupal_add_js($script, array('type' => 'inline', 'scope' => 'header', 'weight' => -99, 'group' => -101));
-  }
-  */
-
-  //$script = intel_get_js_embed('l10i', 'local');
-  //wp_enqueue_script('intel_tracker_embed', $script);
-  //drupal_add_js($script, array('type' => 'inline', 'scope' => 'header', 'weight' => 0));
-
-  /**
-   * check admin alter enhancements
-   */
-
-  /*
-  if ($_GET['q'] == 'admin/content' && user_access('view all intel reports')) {
-    drupal_add_css(drupal_get_path('module', 'intel') . '/css/intel.report.css');
-    drupal_add_js(drupal_get_path('module', 'intel') . '/js/intel.admin_content_alter.js');
-  }
-  if ($_GET['q'] == 'admin/content/cta' && user_access('view all intel reports')) {
-    drupal_add_js(drupal_get_path('module', 'intel') . '/js/intel.admin_content_cta_alter.js');
-  }
-  */
-
+  
   //drupal_alter('intel_page_settings_js', $js, $page);
-  $js = apply_filters('intel_page_settings_js', $js, $page);
+  intel_do_hook_alter('intel_page_settings_js', $js, $page);
+
   if (!empty($_GET['debug'])) {
     intel_d($js);//
   }
@@ -1147,8 +1123,6 @@ function intel_filter_event_for_push($event) {
         unset($event[$k]);
       }
 
-
-
     }
     else {
       unset($event[$k]);
@@ -1234,6 +1208,7 @@ function intel_filter_link_info_for_push($def) {
 
 function intel_cache_busting_url($url) {
   $enable = &Intel_Df::drupal_static( __FUNCTION__ );
+
   if (!isset($enable)) {
     $enable = get_option('intel_cache_busting', INTEL_CACHE_BUSTING_DEFAULT);
   }
@@ -1828,7 +1803,7 @@ function intel_form_submission_vars_default() {
  * @return string|void
  */
 function intel_process_form_submission($vars) {
-//Intel_Df::watchdog('intel_process_form_submission vars', json_encode($vars));
+Intel_Df::watchdog('intel_process_form', 'vars', $vars);
   // set defaults
   $vars += intel_form_submission_vars_default();
 
@@ -2009,7 +1984,6 @@ function intel_process_form_submission($vars) {
     else {
       $submission->vid = 0;
     }
-
   }
 
   // check if api vtk was loaded succesfully
@@ -2301,18 +2275,25 @@ function intel_process_form_submission($vars) {
     'cta_context' => $cta_context,
     'hook_context' => isset($vars['hook_context']) ? $vars['hook_context'] : NULL,
   );
-  $hook_data = apply_filters('intel_form_submission_data_presave', $hook_data, $hook_context);
+//Intel_Df::watchdog('intel_process_form_submissionhook_presave', 'hook_data', $hook_data);
+  //$hook_data = apply_filters('intel_form_submission_data_presave', $hook_data, $hook_context);
+  $hook_data = intel_do_hook('intel_form_submission_data_presave', $hook_data, $hook_context);
 
   // save submission object
   if (!empty($submission->vid)) {
-Intel_Df::watchdog('intel_process_form', 'submission', $submission);
+//Intel_Df::watchdog('intel_process_form', 'submission', $submission);
     $sid = intel_submission_save($submission);
     if (empty($submission->sid)) {
       $submission->sid = $sid;
     }
   }
 
-  if ($submission->sid) {
+  // if submission path does not exist, set default
+  if (empty($track['submission_path']) && !empty($sid)) {
+    $track['submission_path'] = 'submission/' . $sid;
+  }
+
+  if (!empty($submission->sid)) {
     $track['oa']['3rk'] = $submission->sid;
     $track['oa']['3ri'] = ':intel_submission:' . $submission->sid;
   }
@@ -2353,9 +2334,8 @@ Intel_Df::watchdog('intel_process_form', 'submission', $submission);
 
   // save visitor
   if (!empty($visitor->vid)) {
-Intel_Df::watchdog('intel_process_form', 'visitor', $visitor);
+//Intel_Df::watchdog('intel_process_form', 'visitor', $visitor);
     intel_visitor_save($visitor);
-    //watchdog('intel.page_alter 992', print_r($visitor, 1));
   }
 
   // queue to sync visitor data
@@ -2365,6 +2345,7 @@ Intel_Df::watchdog('intel_process_form', 'visitor', $visitor);
   // enable other plugins to alter track
   $track = apply_filters('intel_form_submission_track_alter', $track, $hook_context);
 
+  // create form submission intel event
   if (!empty($track['event_category'])) {
     $call = array(
       'eventCategory' => $track['event_category'],
@@ -2374,10 +2355,9 @@ Intel_Df::watchdog('intel_process_form', 'visitor', $visitor);
       'nonInteraction' => FALSE,
       'oa' => $track['oa'],
     );
-    //Intel_Df::watchdog('form_submission', json_encode($call));
-Intel_Df::watchdog('intel_process_form', 'intel_push', $call);
+
+//Intel_Df::watchdog('intel_process_form', 'intel_push', $call);
     intel_add_page_intel_push(array('event', $call));
-//dpm('page_intel_push=');dpm($call);//
   }
 
 
@@ -2413,7 +2393,8 @@ Intel_Df::watchdog('intel_process_form', 'intel_push', $call);
   }
 
   // hook to allow other plugins to save data
-  do_action('intel_form_submission_data_save', $hook_context);
+  intel_do_hook_action('intel_form_submission_data_save', $hook_context);
+  //do_action('intel_form_submission_data_save', $hook_context);
 }
 
 function intel_set_ga_userid($visitor) {

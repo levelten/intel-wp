@@ -15,7 +15,8 @@ include_once INTEL_DIR . 'includes/class-intel-form.php';
 function intel_admin_settings($form, &$form_state) {
   //global $base_url;
 
-  include_once INTEL_DIR . 'includes/intel.ga.php';
+  //include_once INTEL_DIR . 'includes/intel.ga.php';
+  intel_load_include('includes/intel.ga');
 
   // check dependencies
   $message = '';
@@ -33,7 +34,8 @@ function intel_admin_settings($form, &$form_state) {
     }
   }
 
-  include_once INTEL_DIR . 'includes/intel.imapi.php';
+  //include_once INTEL_DIR . 'includes/intel.imapi.php';
+  intel_load_include('includes/intel.imapi');
 
   $ga_data_source = intel_ga_data_source();
   $ga_tid = get_option('intel_ga_tid', '');
@@ -236,6 +238,7 @@ function intel_admin_settings($form, &$form_state) {
       )),
     '#field_suffix' => '/',
   );
+
   $options = array(
     '' => Intel_Df::t('Default'),
     'standard' => Intel_Df::t('Standard'),
@@ -1361,13 +1364,14 @@ function intel_admin_scoring_submit(&$form, &$form_state) {
 }
 
 function intel_admin_goal_list_page() {
-  require_once INTEL_DIR . "includes/intel.ga.php";
+  //require_once INTEL_DIR . "includes/intel.ga.php";
+  intel_load_include('includes/intel.ga');
 
 
   if (!empty($_GET['resync'])) {
     intel_sync_goals_ga_goals();
     Intel_Df::drupal_set_message(Intel_Df::t('Goal data has been resynced'));
-    $l_option = Intel_Df::l_options_add_query(array());
+    $l_option = intel_l_options_add_query(array());
     Intel_Df::drupal_goto(Intel_Df::current_path(), $l_option);
   }
 
@@ -1384,7 +1388,7 @@ function intel_admin_goal_list_page() {
 
   if (isset($_GET['refresh'])) {
     Intel_Df::drupal_set_message(Intel_Df::t('Goal data has been refreshed'));
-    $l_option = Intel_Df::l_options_add_query(array());
+    $l_option = intel_l_options_add_query(array());
     Intel_Df::drupal_goto(Intel_Df::current_path(), $l_option);
   }
 

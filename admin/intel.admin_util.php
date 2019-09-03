@@ -28,13 +28,16 @@ function intel_util() {
  * Testing function
  */
 function intel_util_temp() {
-  update_option('intel_ga_data_api', 'intel');
-  include_once INTEL_DIR . 'includes/intel.imapi.php';
+  $info = intel_do_hook('intel_intel_script_info');
+  intel_d($info);
 
-  $ga_access_token = intel_imapi_ga_access_token_get();
-  intel_d($ga_access_token);//
-
-  update_option('intel_ga_access_token', $ga_access_token);
+  $context = array(
+    '_temp' => 'alpha',
+  );
+  $return = intel_do_hook_alter('intel_intel_script_info', $info, $context);
+  intel_d($info);
+  intel_d($context);
+  intel_d($return);
 
   return 'OK';
 }
@@ -292,10 +295,8 @@ function intel_util_log_list_page() {
   $options = array();
   $options['order_by'] = 'timestamp DESC';
   $entities = intel()->get_entity_controller('intel_log')->loadByFilter($filter, $options, $header, $row_limit, 0);
-  intel_d($entities);
 
   $rows = array();
-
 
   $options = array();
   $custom_default_value = '';

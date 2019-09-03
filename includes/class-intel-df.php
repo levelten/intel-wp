@@ -1194,7 +1194,7 @@ class Intel_Df  {
 
 		if ($options['external'] && strpos($path, '//') == FALSE) {
 			$hook_data = apply_filters('intel_url_urn_resolver', $hook_data);
-			// check if path returned from resover is external
+			// check if path returned from resolver is external
 			$options['external'] = self::url_is_external($path);
 		}
 
