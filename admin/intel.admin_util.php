@@ -28,6 +28,26 @@ function intel_util() {
  * Testing function
  */
 function intel_util_temp() {
+
+  $events_custom = get_option('intel_intel_events_custom', array());
+  intel_d($events_custom);
+
+  ksort($events_custom['click_to_call_click']);
+  intel_d($events_custom['click_to_call_click']);
+
+  $intel_event_info = intel_get_intel_event_info();
+  intel_d($intel_event_info);
+
+  $scorings = intel_get_scorings();
+  intel_d($scorings);
+
+  return 'OK';
+
+  $visitor = intel_visitor_load(1);
+
+  intel_d($visitor);
+
+  /*
   $info = intel_do_hook('intel_intel_script_info');
   intel_d($info);
 
@@ -38,6 +58,7 @@ function intel_util_temp() {
   intel_d($info);
   intel_d($context);
   intel_d($return);
+  */
 
   return 'OK';
 }

@@ -6,6 +6,10 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
+/*******************************************************************************
+ * Goal functions
+ */
+
 /**
  * Constructs a new goal initializing properties.
  *
@@ -741,8 +745,8 @@ function intel_get_phonecall_goals_default() {
 }
 
 
-/***********************************************************
- * intel_event functions
+/*******************************************************************************
+ * Intel Event functions
  */
 
 /**
@@ -901,6 +905,7 @@ function intel_get_link_type_info_default($info = array()) {
   $info['download'] = array(
     'title' => Intel_Df::t('Download link'),
     'track' => 1,
+    'track_file_extension' => intel_get_link_type_download_track_file_extensions_default(),
   );
   $info['external'] = array(
     'title' => Intel_Df::t('External link'),
@@ -937,8 +942,9 @@ function intel_get_link_type_info($name = '', $options = array()) {
             $link_type[$k]['click_value'] = $scorings['event_' . $event_k];
           }
         }
-
-
+        if ($event['key'] == 'linktracker_download_click') {
+          $link_type[$k]['track_file_extension'] = !empty($event['track_file_extension']) ? $event['track_file_extension'] : intel_get_link_type_download_track_file_extensions_default();
+        }
       }
     }
 
@@ -1871,6 +1877,34 @@ function intel_get_enabled_intel_events($context) {
 
   return $events;
 }
+
+function intel_get_link_type_download_track_file_extensions_default() {
+  return "7z|aac|arc|arj|asf|asx|avi|bin|csv|doc(x|m)?|dot(x|m)?|exe|flv|gif|gz|gzip|hqx|jar|jpe?g|js|mp(2|3|4|e?g)|mov(ie)?|msi|msp|pdf|phps|png|ppt(x|m)?|pot(x|m)?|pps(x|m)?|ppam|sld(x|m)?|thmx|qtm?|ra(m|r)?|sea|sit|tar|tgz|torrent|txt|wav|wma|wmv|wpd|xls(x|m|b)?|xlt(x|m)|xlam|xml|z|zip";
+}
+
+function intel_form_intel_admin_intel_event_form_alter(&$form, &$form_state) {
+
+  $event = $form['#intel_event'];
+
+  // if linktracker_download_click add field to provide file extensions
+  if ($event['key'] == 'linktracker_download_click') {
+    $default = intel_get_link_type_download_track_file_extensions_default();
+    $key = 'track_file_extension';
+    $form['trigger'][$key] = array(
+      '#type' => 'textfield',
+      '#title' => Intel_Df::t('Track file extensions'),
+      '#default_value' => !empty($event[$key]) ? $event[$key] : $default,
+      '#description' => Intel_Df::t("A file extension list separated by the | character that will be tracked as download when clicked. Regular expressions are supported. For example: %default", array('%default' => $default)),
+      '#maxlength' => 500,
+    );
+    $form_state['intel_overridable'][$key] = 1;
+  }
+}
+add_filter('intel_form_intel_admin_intel_event_form_alter', 'intel_form_intel_admin_intel_event_form_alter', 10, 2);
+
+/*******************************************************************************
+ * Page and Visitor attribute functions
+ */
 
 /**
  * types = flag, list, scalar, vector

@@ -44,7 +44,13 @@ function intel_admin_settings($form, &$form_state) {
 
   // check if imapi_property needs to be fetched
   $imapi_property = get_option('intel_imapi_property', array());
-  if (empty($imapi_property) || empty($op_meta['imapi_property_updated']) || (time() - $op_meta['imapi_property_updated'] < 86400) || !empty($_GET['refresh'])) {
+  if (
+    empty($imapi_property) || empty($imapi_property['intel_tid'])
+    || ($imapi_property['intel_tid'] != $ga_tid)
+    || empty($op_meta['imapi_property_updated'])
+    || (time() - $op_meta['imapi_property_updated'] < 86400)
+    || !empty($_GET['refresh'])
+  ) {
     if ($ga_tid && $apikey) {
       $options = array(
         'tid' => $ga_tid,
@@ -1770,7 +1776,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     $event = array();
   }
 
-  $form_state['event'] = $event;
+  $form['#intel_event'] = $form_state['intel_event'] = $event;
   $add = empty($event['key']);
   $custom = (!$event || !empty($event['custom'])) ? 1 : 0;
 
@@ -2189,7 +2195,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
     $form['availability'][$key] = array(
       '#type' => (1 || $custom || !empty($overridable[$key])) ? 'textarea' : 'item',
       '#title' => Intel_Df::t('Page list'),
-      '#default_value' => !empty($event[$key]) ? $event[$key] : 0,
+      '#default_value' => !empty($event[$key]) ? $event[$key] : '',
       '#disabled' => !($custom || !empty($overridable[$key])),
       '#description' => Intel_Df::t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. For example, if all blog pages are Example paths are blog for the blog page and blog/* for every personal blog. <home> is the front page."),
       '#html' => 1,
@@ -2244,7 +2250,7 @@ function intel_admin_intel_event_form($form, &$form_state, $event = array()) {
 
 function intel_admin_intel_event_form_validate(&$form, &$form_state) {
   $values = $form_state['values'];
-  $event = $form_state['event'];
+  $event = $form_state['intel_event'];
   $key = '';
   if (!empty($values['key'])) {
     $key = $values['key'];
@@ -2269,14 +2275,14 @@ function intel_admin_intel_event_form_validate(&$form, &$form_state) {
 
 function intel_admin_intel_event_form_submit(&$form, &$form_state) {
   $values = $form_state['values'];
-  $add = empty($form_state['event']['key']) ? 1 : 0;
+  $add = empty($form_state['intel_event']['key']) ? 1 : 0;
 
 
   if ($add) {
     $key = $values['key'];
   }
   else {
-    $key = $form_state['event']['key'];
+    $key = $form_state['intel_event']['key'];
   }
 
   $event = array(
@@ -2304,12 +2310,12 @@ function intel_admin_intel_event_form_submit(&$form, &$form_state) {
 
   if ($add) {
     $msg = Intel_Df::t('Intel event %title has been added.', array(
-      '%title' => $event['title'],
+      '%title' => !empty($event['title']) ? $event['title'] : $form_state['intel_event']['title'],
     ));
   }
   else {
     $msg = Intel_Df::t('Intel event %title has been updated.', array(
-      '%title' => $event['title'],
+      '%title' => !empty($event['title']) ? $event['title'] : $form_state['intel_event']['title'],
     ));
   }
   Intel_Df::drupal_set_message($msg);

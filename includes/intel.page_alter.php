@@ -177,9 +177,11 @@ function intel_page_alter(&$page) {
       // don't exclude on intel_demo_pages to allow testing
       if (!intel_is_demo_page()) {
         $tracking_exclude_roles = get_option('intel_tracking_exclude_role', intel_get_tracking_exclude_user_role_default());
-
         // WP roles do not have ids, so we create them
         $role_index = get_option('intel_role_index', array());
+        if (empty($role_index)) {
+          $role_index['anonymous'] = 0;
+        }
         $cur = isset($ga_va['ur']) ? $ga_va['ur'] : array();
         if (!empty($user->roles) && is_array($user->roles)) {
           foreach ($user->roles AS $i => $role) {
@@ -313,7 +315,7 @@ function intel_page_alter(&$page) {
   intel_do_hook_action('intel_page_intel_pushes');
 
   $pushes = intel_get_flush_page_intel_pushes();
-
+intel_d($pushes);
   // add page title and system path to any IntelEvent that is missing values
   /*
   if (isset($pushes['event']) && is_array($pushes['event'])) {
@@ -999,7 +1001,6 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
   if ($action == 'save_flush' || $action == 'save_db_flush') {
     intel()->quick_session_cache();
     unset($_SESSION['intel']['page_pushes']);
-
   }
   elseif ($action == 'save_cookie_flush') {
     // format pushes into an array
@@ -1186,6 +1187,8 @@ function intel_filter_link_info_for_push($def) {
     'track' => 1,
     'clickMode' => 1,
     'clickValue' => 1,
+    'track_file_extension' => 'trackFileExtension',
+    'trackFileExtension' => 1,
   );
 
   foreach ($def as $k => $v) {
@@ -1342,7 +1345,7 @@ function intel_get_ga_js_embed($embed_ga_tracking_code = '') {
  * @return string - embed code
  */
 function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'latest', $terminator = "") {
-  global $user;
+  $user = intel_get_current_user();
 
   $script = '';
   $l10i_ga_account = get_option('intel_ga_tid', '');
@@ -1483,7 +1486,7 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
     }
 
     // trigger alter to enable other modules to add pushes
-    $l10iq_pushes = apply_filters('intel_l10iq_pushes_alter', $l10iq_pushes);
+    intel_do_hook_alter('intel_js_embed_intel_push', $l10iq_pushes);
     //drupal_alter('intel_l10iq_pushes', $l10iq_pushes);
 
     if ($version == 'simple') {
@@ -2486,8 +2489,8 @@ function intel_setrawcookie($name, $value, $time = 0, $path = '/', $domain = '')
 }
 
 function intel_deletecookie($name) {
-  if (isset($_COOKIOE[$name])) {
-    unset($_COOKIOE[$name]);
+  if (isset($_COOKIE[$name])) {
+    unset($_COOKIE[$name]);
   }
   intel_setcookie($name, '', time() - 999);
 }

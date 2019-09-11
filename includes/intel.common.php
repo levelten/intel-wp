@@ -8,6 +8,13 @@
  * a cached page are instead located in bootstrap.inc.
  */
 
+if (INTEL_PLATFORM == 'wp') {
+  intel_load_include('includes/intel.common_wp');
+}
+else {
+  intel_load_include('includes/intel.common_d');
+}
+
 function intel_l_options_add_class ($class, $l_options = array()) {
   if (is_string($class)) {
     $class = array($class);
