@@ -3598,7 +3598,7 @@ function intel_get_scorings($filter = '') {
     if (($filter == 'js_setting') && (empty($m['js_setting']))) {
       //continue;
     }
-    $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : $m['value'];
+    $scorings[$filter][$i] = (float) (isset($custom[$i]) ? $custom[$i] : $m['value']);
   }
 
   $goals = intel_goal_load();
