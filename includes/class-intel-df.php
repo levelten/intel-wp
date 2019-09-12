@@ -129,8 +129,17 @@ class Intel_Df  {
 	 */
 	const MENU_CONTEXT_INLINE = 0x0002;
 
-	const WATCHDOG_NOTICE = 5;
-	const WATCHDOG_ERROR = 3;
+  /**
+   * Watchdog status flags
+   */
+  const WATCHDOG_EMERGENCY = 0;
+  const WATCHDOG_ALERT = 1;
+  const WATCHDOG_CRITICAL = 2;
+  const WATCHDOG_ERROR = 3;
+  const WATCHDOG_WARNING = 4;
+  const WATCHDOG_NOTICE = 5;
+  const WATCHDOG_INFO = 6;
+  const WATCHDOG_DEBUG = 7;
 
 	private function __construct() {
 
@@ -177,6 +186,165 @@ class Intel_Df  {
 			return $current_url;
 		}
 	}
+
+  /**
+   * Adds a JavaScript file, setting, or inline code to the page.
+   *
+   * The behavior of this function depends on the parameters it is called with.
+   * Generally, it handles the addition of JavaScript to the page, either as
+   * reference to an existing file or as inline code. The following actions can be
+   * performed using this function:
+   * - Add a file ('file'): Adds a reference to a JavaScript file to the page.
+   * - Add inline JavaScript code ('inline'): Executes a piece of JavaScript code
+   *   on the current page by placing the code directly in the page (for example,
+   *   to tell the user that a new message arrived, by opening a pop up, alert
+   *   box, etc.). This should only be used for JavaScript that cannot be executed
+   *   from a file. When adding inline code, make sure that you are not relying on
+   *   $() being the jQuery function. Wrap your code in
+   *   @code (function ($) {... })(jQuery); @endcode
+   *   or use jQuery() instead of $().
+   * - Add external JavaScript ('external'): Allows the inclusion of external
+   *   JavaScript files that are not hosted on the local server. Note that these
+   *   external JavaScript references do not get aggregated when preprocessing is
+   *   on.
+   * - Add settings ('setting'): Adds settings to Drupal's global storage of
+   *   JavaScript settings. Per-page settings are required by some modules to
+   *   function properly. All settings will be accessible at Drupal.settings.
+   *
+   * Examples:
+   * @code
+   *   drupal_add_js('misc/collapse.js');
+   *   drupal_add_js('misc/collapse.js', 'file');
+   *   drupal_add_js('jQuery(document).ready(function () { alert("Hello!"); });', 'inline');
+   *   drupal_add_js('jQuery(document).ready(function () { alert("Hello!"); });',
+   *     array('type' => 'inline', 'scope' => 'footer', 'weight' => 5)
+   *   );
+   *   drupal_add_js('http://example.com/example.js', 'external');
+   *   drupal_add_js(array('myModule' => array('key' => 'value')), 'setting');
+   * @endcode
+   *
+   * Calling drupal_static_reset('drupal_add_js') will clear all JavaScript added
+   * so far.
+   *
+   * If JavaScript aggregation is enabled, all JavaScript files added with
+   * $options['preprocess'] set to TRUE will be merged into one aggregate file.
+   * Preprocessed inline JavaScript will not be aggregated into this single file.
+   * Externally hosted JavaScripts are never aggregated.
+   *
+   * The reason for aggregating the files is outlined quite thoroughly here:
+   * http://www.die.net/musings/page_load_time/ "Load fewer external objects. Due
+   * to request overhead, one bigger file just loads faster than two smaller ones
+   * half its size."
+   *
+   * $options['preprocess'] should be only set to TRUE when a file is required for
+   * all typical visitors and most pages of a site. It is critical that all
+   * preprocessed files are added unconditionally on every page, even if the
+   * files are not needed on a page. This is normally done by calling
+   * drupal_add_js() in a hook_init() implementation.
+   *
+   * Non-preprocessed files should only be added to the page when they are
+   * actually needed.
+   *
+   * @param $data
+   *   (optional) If given, the value depends on the $options parameter, or
+   *   $options['type'] if $options is passed as an associative array:
+   *   - 'file': Path to the file relative to base_path().
+   *   - 'inline': The JavaScript code that should be placed in the given scope.
+   *   - 'external': The absolute path to an external JavaScript file that is not
+   *     hosted on the local server. These files will not be aggregated if
+   *     JavaScript aggregation is enabled.
+   *   - 'setting': An associative array with configuration options. The array is
+   *     merged directly into Drupal.settings. All modules should wrap their
+   *     actual configuration settings in another variable to prevent conflicts in
+   *     the Drupal.settings namespace. Items added with a string key will replace
+   *     existing settings with that key; items with numeric array keys will be
+   *     added to the existing settings array.
+   * @param $options
+   *   (optional) A string defining the type of JavaScript that is being added in
+   *   the $data parameter ('file'/'setting'/'inline'/'external'), or an
+   *   associative array. JavaScript settings should always pass the string
+   *   'setting' only. Other types can have the following elements in the array:
+   *   - type: The type of JavaScript that is to be added to the page. Allowed
+   *     values are 'file', 'inline', 'external' or 'setting'. Defaults
+   *     to 'file'.
+   *   - scope: The location in which you want to place the script. Possible
+   *     values are 'header' or 'footer'. If your theme implements different
+   *     regions, you can also use these. Defaults to 'header'.
+   *   - group: A number identifying the group in which to add the JavaScript.
+   *     Available constants are:
+   *     - JS_LIBRARY: Any libraries, settings, or jQuery plugins.
+   *     - JS_DEFAULT: Any module-layer JavaScript.
+   *     - JS_THEME: Any theme-layer JavaScript.
+   *     The group number serves as a weight: JavaScript within a lower weight
+   *     group is presented on the page before JavaScript within a higher weight
+   *     group.
+   *   - every_page: For optimal front-end performance when aggregation is
+   *     enabled, this should be set to TRUE if the JavaScript is present on every
+   *     page of the website for users for whom it is present at all. This
+   *     defaults to FALSE. It is set to TRUE for JavaScript files that are added
+   *     via module and theme .info files. Modules that add JavaScript within
+   *     hook_init() implementations, or from other code that ensures that the
+   *     JavaScript is added to all website pages, should also set this flag to
+   *     TRUE. All JavaScript files within the same group and that have the
+   *     'every_page' flag set to TRUE and do not have 'preprocess' set to FALSE
+   *     are aggregated together into a single aggregate file, and that aggregate
+   *     file can be reused across a user's entire site visit, leading to faster
+   *     navigation between pages. However, JavaScript that is only needed on
+   *     pages less frequently visited, can be added by code that only runs for
+   *     those particular pages, and that code should not set the 'every_page'
+   *     flag. This minimizes the size of the aggregate file that the user needs
+   *     to download when first visiting the website. JavaScript without the
+   *     'every_page' flag is aggregated into a separate aggregate file. This
+   *     other aggregate file is likely to change from page to page, and each new
+   *     aggregate file needs to be downloaded when first encountered, so it
+   *     should be kept relatively small by ensuring that most commonly needed
+   *     JavaScript is added to every page.
+   *   - weight: A number defining the order in which the JavaScript is added to
+   *     the page relative to other JavaScript with the same 'scope', 'group',
+   *     and 'every_page' value. In some cases, the order in which the JavaScript
+   *     is presented on the page is very important. jQuery, for example, must be
+   *     added to the page before any jQuery code is run, so jquery.js uses the
+   *     JS_LIBRARY group and a weight of -20, jquery.once.js (a library drupal.js
+   *     depends on) uses the JS_LIBRARY group and a weight of -19, drupal.js uses
+   *     the JS_LIBRARY group and a weight of -1, other libraries use the
+   *     JS_LIBRARY group and a weight of 0 or higher, and all other scripts use
+   *     one of the other group constants. The exact ordering of JavaScript is as
+   *     follows:
+   *     - First by scope, with 'header' first, 'footer' last, and any other
+   *       scopes provided by a custom theme coming in between, as determined by
+   *       the theme.
+   *     - Then by group.
+   *     - Then by the 'every_page' flag, with TRUE coming before FALSE.
+   *     - Then by weight.
+   *     - Then by the order in which the JavaScript was added. For example, all
+   *       else being the same, JavaScript added by a call to drupal_add_js() that
+   *       happened later in the page request gets added to the page after one for
+   *       which drupal_add_js() happened earlier in the page request.
+   *   - requires_jquery: Set this to FALSE if the JavaScript you are adding does
+   *     not have a dependency on jQuery. Defaults to TRUE, except for JavaScript
+   *     settings where it defaults to FALSE. This is used on sites that have the
+   *     'javascript_always_use_jquery' variable set to FALSE; on those sites, if
+   *     all the JavaScript added to the page by drupal_add_js() does not have a
+   *     dependency on jQuery, then for improved front-end performance Drupal
+   *     will not add jQuery and related libraries and settings to the page.
+   *   - defer: If set to TRUE, the defer attribute is set on the <script>
+   *     tag. Defaults to FALSE.
+   *   - cache: If set to FALSE, the JavaScript file is loaded anew on every page
+   *     call; in other words, it is not cached. Used only when 'type' references
+   *     a JavaScript file. Defaults to TRUE.
+   *   - preprocess: If TRUE and JavaScript aggregation is enabled, the script
+   *     file will be aggregated. Defaults to TRUE.
+   *
+   * @return
+   *   The current array of JavaScript files, settings, and in-line code,
+   *   including Drupal defaults, anything previously added with calls to
+   *   drupal_add_js(), and this function call's additions.
+   *
+   * @see drupal_get_js()
+   */
+  public static function drupal_add_js($data = NULL, $options = NULL) {
+    intel()->add_js($data, $options);
+  }
 
 	/**
 	 * Sets a value in a nested array with variable depth.
@@ -1026,7 +1194,7 @@ class Intel_Df  {
 
 		if ($options['external'] && strpos($path, '//') == FALSE) {
 			$hook_data = apply_filters('intel_url_urn_resolver', $hook_data);
-			// check if path returned from resover is external
+			// check if path returned from resolver is external
 			$options['external'] = self::url_is_external($path);
 		}
 
@@ -1050,7 +1218,8 @@ class Intel_Df  {
 				$path .= (strpos($path, '?') !== FALSE ? '&' : '?') . self::drupal_http_build_query($options['query']);
 			}
 
-			if (isset($options['https']) && variable_get('https', FALSE)) {
+      //if (isset($options['https']) && variable_get('https', FALSE)) {
+      if (isset($options['https'])) {
 				if ($options['https'] === TRUE) {
 					$path = str_replace('http://', 'https://', $path);
 				}
@@ -1386,7 +1555,13 @@ class Intel_Df  {
 
 		// if template file, process variables via template file
 		if (!empty($info['template'])) {
-			$file = INTEL_DIR . 'templates/' . $info['template'] . '.tpl.php';
+      if (!empty($info['path'])) {
+        $file = $info['path'] . $info['template'] . '.tpl.php';
+      }
+      else {
+        $file = INTEL_DIR . 'templates/' . $info['template'] . '.tpl.php';
+      }
+
 			if (file_exists($file)) {
 				$output = self::process_template($file, $variables);
 			}
@@ -2057,12 +2232,49 @@ class Intel_Df  {
 
 	public static function watchdog($type, $message = '', $variables = array(), $severity = Intel_Df::WATCHDOG_NOTICE, $link = NULL) {
 		//$option_log = get_option('intel_debug_log', '');
-		$msg = __('WATCHDOG', 'intel') . ': ' . $type . ":\n" . $message;
-		//self::drupal_set_message($msg);
-		error_log(self::t($msg, $variables));
+    static $in_error_state = FALSE;
 
-		//$option_log .= $msg . "\n";
-		//update_option('intel_debug_log', $option_log);
+    // It is possible that the error handling will itself trigger an error. In that case, we could
+    // end up in an infinite loop. To avoid that, we implement a simple static semaphore.
+    if (!$in_error_state && function_exists('apply_filters')) {
+      $in_error_state = TRUE;
+
+      // The user object may not exist in all conditions, so 0 is substituted if needed.
+      $user_uid = get_current_user_id();
+
+      // Prepare the fields to be logged
+      $log_entry = [
+        'type' => $type,
+        'message' => $message,
+        'variables' => $variables,
+        'severity' => $severity,
+        'link' => $link,
+        //'user' => $user,
+        'uid' => $user_uid,
+        'request_uri' => self::request_uri(), //$base_root . request_uri(),
+        'referer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '',
+        //'ip' => ip_address(),
+        // Request time isn't accurate for long processes, use time() instead.
+        'timestamp' => time(),
+      ];
+
+      $log_entry = apply_filters('intel_watchdog', $log_entry);
+
+      $mode = get_option('intel_watchdog_mode', '');
+      if ($mode == 'db') {
+        $intel_log = intel_log_create($log_entry);
+        intel_log_save($intel_log);
+      }
+      else if ($mode == 'error_log') {
+        $msg = __('WATCHDOG', 'intel') . ': ' . $type . ":\n" . $message;
+        //self::drupal_set_message($msg);
+        error_log(self::t($log_entry['message'], $log_entry['variables'], ['html' => 1]));
+      }
+
+      // It is critical that the semaphore is only cleared here, in the parent
+      // watchdog() call (not outside the loop), to prevent recursive execution.
+      $in_error_state = FALSE;
+    }
 	}
 }
 

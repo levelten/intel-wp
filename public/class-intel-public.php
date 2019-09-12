@@ -110,7 +110,7 @@ class Intel_Public {
 	public function admin_bar_menu($wp_admin_bar) {
 
 		// check permissions to access reports
-		if (!Intel_Df::user_access('view all intel reports')) {
+		if (!Intel_Df::user_access('view all intel reports') || intel_is_framework_only()) {
 			return;
 		}
 

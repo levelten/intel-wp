@@ -14,7 +14,7 @@ define('INTEL_L10IAPI_VER_MIN', '2.0.0');
 define('INTEL_PAGE_INTENT_DEFAULT', 'i');
 define('INTEL_TRACK_PAGE_UID_DEFAULT', 'a');
 define('INTEL_TRACK_PAGE_TERMS_DEFAULT', 0);
-define('INTEL_TRACK_PAGE_TERMS_VISITOR_DEFAULT', 0);
+define('INTEL_TRACK_VISITOR_TERMS_DEFAULT', 0);
 define('INTEL_SYNC_VISITORDATA_FULLCONTACT_DEFAULT', 0);
 define('INTEL_TRACK_PHONECALLS_DEFAULT', 0);
 define('INTEL_TRACK_EMAILCLICKS_DEFAULT', 0);
@@ -34,6 +34,7 @@ define('INTEL_STATUS_NOT_FOUND', 404);
 define('INTEL_STATUS_SERVER_ERROR', 500);
 
 // include required files
+require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.common.php";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_alter.php";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.page_data.php";
 require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.ga.php";
@@ -119,6 +120,7 @@ function intel_menu($items = array()) {
     'file' => 'admin/intel.admin_config.php',
     'weight' => -10,
   );
+
   $items['admin/config/intel/settings/general'] = array(
     'title' => 'General',
     'description' => 'Basic setup',
@@ -491,6 +493,19 @@ function intel_menu($items = array()) {
       'file' => 'admin/intel.admin_config.php',
     );
   }
+
+  $items['admin/config/intel/settings/framework'] = array(
+    'title' => 'Framework settings',
+    'description' => 'Basic setup',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('intel_admin_framework_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_CALLBACK,
+    'weight' => -1,
+    'file' => 'admin/intel.admin_framework.php',
+    'intel_install_access' => 'active',
+  );
 
   // intel visitor config
   $items['admin/config/people/intel'] = array(
@@ -1128,6 +1143,27 @@ function intel_menu($items = array()) {
     'title' => 'Update',
     'description' => 'View and run plugin updates',
     'page callback' => 'intel_util_update',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.php',
+  );
+
+  $items['admin/util/log'] = array(
+    'title' => 'Log',
+    'description' => 'Watchdog log',
+    'page callback' => 'intel_util_log_list_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('admin intel'),
+    'type' => Intel_Df::MENU_LOCAL_TASK,
+    'file' => 'admin/intel.admin_util.php',
+  );
+
+  $items['admin/util/log/%intel_log'] = array(
+    'title' => 'Log',
+    'description' => 'Watchdog log',
+    'page callback' => 'intel_util_log_page',
+    'page arguments' => array(3),
     'access callback' => 'user_access',
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_TASK,
@@ -2390,7 +2426,25 @@ function intel_is_installed($level = 'min') {
   return FALSE;
 }
 
+/**
+ * Returns if is framework flag is set
+ *
+ * @return array|bool|mixed
+ */
+function intel_is_framework() {
+  $flag = &Intel_Df::drupal_static( __FUNCTION__, NULL);
 
+  if (!isset($flag)) {
+    $flag = (boolean) get_option('intel_framework_mode', FALSE);
+  }
+
+
+  return $flag;
+}
+
+function intel_is_framework_only() {
+  return intel_is_framework() && !intel_is_installed();
+}
 
 /**
  * Implements hook_entity_info().
@@ -2509,6 +2563,7 @@ function intel_entity_info($info = array()) {
     ),
   );
 
+
   $info['intel_annotation'] = array(
     // A human readable label to identify our entity.
     'label' => Intel_Df::t('Intel annotation'),
@@ -2537,6 +2592,38 @@ function intel_entity_info($info = array()) {
       'message' => '',
       'variables' => array(),
       'data' => array(),
+    ),
+  );
+
+  $info['intel_log'] = array(
+    // A human readable label to identify our entity.
+    'label' => Intel_Df::t('Intel log'),
+    'entity class' => 'Intel_Log',
+    'controller class' => 'Intel_Log_Controller',
+    'base table' => 'intel_log',
+    'label callback' => 'intel_log_label',
+    'uri callback' => 'intel_log_uri',
+    'fieldable' => FALSE,
+    'module' => 'intel',
+    'entity keys' => array(
+      'id' => 'lid',
+    ),
+    'file' => array(
+      'includes/class-intel-log.php',
+      'includes/class-intel-log-controller.php',
+    ),
+    'fields' => array(
+      'lid' => null,
+      'uid' => 0,
+      'type' => '',
+      'message' => '',
+      'variables' => array(),
+      'severity' => 0,
+      'link' => '',
+      'location' => '',
+      'referer' => '',
+      'hostname' => '',
+      'timestamp' => '',
     ),
   );
 
@@ -2657,6 +2744,53 @@ function intel_get_ApiClientProps() {
     'apikey' => get_option('intel_apikey', ''),
   );
   return $apiClientProps;
+}
+
+function intel_log_create($values = array()) {
+  $entity = intel()->get_entity_controller('intel_log')->create($values);
+  return $entity ;
+}
+
+/**
+ * We save the entity by calling the controller.
+ */
+function intel_log_save(&$entity) {
+  return intel()->get_entity_controller('intel_log')->save($entity);
+}
+
+/**
+ * Loads log object from database
+ *
+ * @param $lid Primary session id
+ *
+ * @return Submission stdClass object
+ */
+function intel_log_load($lid) {
+  //$submission = &Intel_Df::drupal_static(__FUNCTION__);
+  $entities = intel()->get_entity_controller('intel_log')->load($lid);
+  if (!empty($entities)) {
+    return array_shift($entities);
+  }
+  return FALSE;
+}
+
+/**
+ * Loads submission object using any table field
+ *
+ * @param $vars Array of key value pairs used to identify submission in table
+ *
+ * @return Submission stdClass object
+ */
+function intel_log_load_by_vars($vars) {
+  //$submission = &Intel_Df::drupal_static(__FUNCTION__);
+
+  $entities = intel()->get_entity_controller('intel_log')->loadByVars($vars);
+
+  if (!empty($entities) && is_array($entities)) {
+    return array_shift($entities);
+  }
+
+  return FALSE;
 }
 
 function intel_visitor_load($id = NULL, $reset = FALSE, $id_type = NULL) {
@@ -3618,11 +3752,24 @@ function intel_entity_delete($entity, $entity_type) {
  * @return null
  */
 function intel_intel_scripts() {
-  return intel()->intel_script_info();
+  //return intel()->intel_script_info();
+  return intel_get_intel_script_info();
+}
+
+/**
+ * Returns information about intel_scripts
+ * @return array
+ */
+function intel_get_intel_script_info() {
+  $scripts = array();
+
+  $scripts = intel_build_info('intel_script');
+
+  return $scripts;
 }
 
 // add _intel_intel_script_info to hook_intel_script_info
-add_filter('intel_intel_script_info', '_intel_intel_script_info');
+intel_add_hook('intel_intel_script_info', '_intel_intel_script_info');
 /**
  * Implements hook_intel_intel_script
  */
@@ -4082,16 +4229,20 @@ function intel_get_field_page_intent_allowed_values() {
   return $values;
 }
 
-function intel_add_visitor_sync_request($visitor, $delay = 0) {
+function intel_add_visitor_sync_request($vtk, $delay = 0) {
   //$intel = intel();
+  // check if visitor was passed instead of vtk
+  if (is_object($vtk) && !empty($vtk->vtk)) {
+    $vtk = $vtk->vtk;
+  }
   $items = get_option('intel_sync_visitor_requests', array());
-  if (!isset($items[$visitor->vtk])) {
+  if (!isset($items[$vtk])) {
     $item = new stdClass;
     $item->created = time();
     $item->run_after =  time() + $delay;
-    $item->vtk = $visitor->vtk;
+    $item->vtk = $vtk;
     $item->attempts = 0;
-    $items[$visitor->vtk] = $item;
+    $items[$vtk] = $item;
     update_option('intel_sync_visitor_requests', $items);
   }
 }
@@ -4419,55 +4570,6 @@ function intel_print_var($var, $console = FALSE) {
   }
   else {
     intel_d($var);//
-  }
-}
-
-if ( !function_exists( 'intel_d' ) ) {
-  function intel_d() {
-    // check if user has access to this data
-    static $access;
-    if (!isset($access)) {
-      $access = Intel_Df::user_access('debug intel');
-    }
-    if (!$access) {
-      return;
-    }
-
-    static $kint_aliases;
-    $_ = func_get_args();
-
-    if (class_exists('Kint')) {
-      if (!Kint::enabled()) {
-        return '';
-      }
-
-      // add to static aliases so the function caller info translates
-      if (empty($kint_aliases)) {
-        $kint_aliases = Kint::$aliases;
-        $kint_aliases['functions'][] = 'intel_d';
-        $kint_aliases['functions'][] = 'intel_dd';
-        $kint_aliases['functions'][] = 'intel_print_var';
-        Kint::$aliases = $kint_aliases;
-      }
-
-      ob_start();
-      call_user_func_array(array('Kint', 'dump'), $_);
-      $output = ob_get_clean();
-      if (intel()->is_intel_admin_page()) {
-        Intel_Df::drupal_set_message($output);
-      }
-      else {
-        print $output;
-      }
-    }
-    else {
-      if (intel()->is_intel_admin_page()) {
-        Intel_Df::drupal_set_message(json_encode($_[0]));
-      }
-      else {
-        print json_encode($_[0]);
-      }
-    }
   }
 }
 
@@ -5176,12 +5278,9 @@ function intel_get_extended_post_entity_attrs($post) {
   return $entity_attrs;
 }
 
-function intel_format_un($name) {
-  return str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($name)));
-}
-
 function intel_get_iapi_url($component = '') {
   $url_obj = &Intel_Df::drupal_static( __FUNCTION__);
+
   if (empty($url_obj)) {
     $url = get_option('intel_l10iapi_url', '');
     if (!$url) {
@@ -5197,11 +5296,12 @@ function intel_get_iapi_url($component = '') {
     return $url_obj[$component];
   }
 
-  return http_build_url($url_obj);
+  return intel_http_build_url($url_obj);
 }
 
 function intel_get_imapi_url($component = '') {
   $url_obj = &Intel_Df::drupal_static( __FUNCTION__);
+
   if (empty($url_obj)) {
     $url = get_option('intel_imapi_url', '');
     $a = explode('//', $url);
@@ -5222,7 +5322,7 @@ function intel_get_imapi_url($component = '') {
     return $url_obj[$component];
   }
 
-  return http_build_url($url_obj);
+  return intel_http_build_url($url_obj);
 }
 
 function intel_imapi_property_setup_l($text, $options = array()) {

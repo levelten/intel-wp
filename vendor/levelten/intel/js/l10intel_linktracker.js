@@ -29,7 +29,8 @@ function L10iLinkTracker(_ioq, config) {
     };
     this.linkTypeDefs.download = {
         title: 'Download link',
-        track: 1
+        track: 1,
+        trackFileExtension: 'zip|exe|dmg|pdfx|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav|png|jpg|jpeg|gif',
     };
     this.linkTypeDefs.mailto = {
         title: 'Mailto link',
@@ -114,7 +115,7 @@ function L10iLinkTracker(_ioq, config) {
     };
 
     this.addHrefType = function addHrefType(name, obj) {
-      this.hrefTypeDefs[name] = obj;
+        this.hrefTypeDefs[name] = obj;
     };
 
     this.removeHrefType = function removeHrefType(name) {
@@ -158,9 +159,9 @@ function L10iLinkTracker(_ioq, config) {
         }
 
         f.hrefType = '';
-
         if (!f.hrefType) {
-            var downloadPattern = /\.(zip|exe|dmg|pdf|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav|png|jpg|jpeg|gif)$/i;
+            //var downloadPattern = /\.(zip|exe|dmg|pdf|doc.*|xls.*|ppt.*|mp3|txt|rar|wma|mov|avi|wmv|flv|wav|png|jpg|jpeg|gif)$/i;
+            var downloadPattern = new RegExp('\\.(' + f.linkTypeDefs['download']['trackFileExtension'] + ')$', 'i');
 
             f.hrefObj = _ioq.parseUrl(f.href);
 
@@ -196,7 +197,6 @@ function L10iLinkTracker(_ioq, config) {
         ioq.triggerCallbacks('handleLinkEventAlter', f);
         linkDef = f.linkTypeDefs[f.linkType] || {};
         if (linkDef.track || f.$obj.objSettings['link-track'] || f.$obj.objSettings['link-' + f.eventType + '-track']) {
-            console.log();
             f.evtDef.eventCategory = linkDef.title;
             if (f.eventType) {
                 f.evtDef.eventCategory += ' ' + f.eventType

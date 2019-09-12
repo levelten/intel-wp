@@ -6,70 +6,18 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
+/*******************************************************************************
+ * Goal functions
+ */
 
 /**
- * Loads a goal or all goals if no key is provided.
+ * Constructs a new goal initializing properties.
  *
- * If options.refresh is set, will also check if all goals are saved in GA and
- * add intel goal to ga if not.
+ * @param $goal
+ * @param array $ga_goal
  *
- * @param string $name
- * @param array $options
- * @return int|mixed|void
+ * @return array|bool
  */
-function intel_goal_load($key = '', $options = array()) {
-  $index_by = 'name';
-  if (!empty($options['index_by'])) {
-    $index_by = $options['index_by'];
-  }
-  else if ($key && is_numeric($key)) {
-    $index_by = 'ga_id';
-  }
-  $goal_static = &Intel_Df::drupal_static(__FUNCTION__, array());
-
-  // option to not use static caching. Important if multiple goal_saves are
-  // called in same request
-  if (!empty($options['force_reload'])) {
-    $goal_static = array();
-  }
-
-  $rebuild_cache = 0;
-
-  //$goals = get_option('intel_goals', array());
-
-  // if refresh, sync goals with ga_goals
-  // first, update ga goals with goals data, then check if any new data is in
-  // ga that needs to be updated in goal data.
-  if (!empty($options['refresh'])) {
-    $op_meta = get_option('intel_option_meta', array());
-    $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
-    $ga_goals_updated = !empty($op_meta['ga_goals_updated']) ? $op_meta['ga_goals_updated'] : 0;
-    if ((time() - $ga_goals_updated) > $time) {
-      //$goals = intel_sync_goals_ga_goals();
-      $goal_static['ga_id'] = intel_sync_goals_ga_goals();
-      $op_meta['ga_goals_updated'] = time();
-      update_option('intel_option_meta', $op_meta);
-      $rebuild_cache = 1;
-    }
-  }
-
-  if (!isset($goal_static['ga_id'])) {
-    $goal_static['ga_id'] = get_option('intel_goals', array());
-  }
-
-  if (!isset($goal_static['name']) || $rebuild_cache) {
-    $goal_static['name'] = array();
-    foreach ($goal_static['ga_id'] as $id => $goal) {
-      $goal_static['name'][$goal['name']] = $goal;
-    }
-  }
-
-  if (!empty($key) && !empty($goal_static[$index_by])) {
-    return !empty($goal_static[$index_by][$key]) ? $goal_static[$index_by][$key] : 0;
-  }
-  return !empty($goal_static[$index_by]) ? $goal_static[$index_by] : array();
-}
-
 function intel_goal_const($goal, $ga_goal = array()) {
   if (!empty($ga_goal)) {
     if (!isset($goal['title']) && isset($ga_goal['name'])) {
@@ -187,55 +135,74 @@ function intel_goal_save($goal, $options = array()) {
   return $goal;
 }
 
-function intel_ga_goal_load($name = '', $options = array()) {
+/**
+ * Loads a goal or all goals if no key is provided.
+ *
+ * If options.refresh is set, will also check if all goals are saved in GA and
+ * add intel goal to ga if not.
+ *
+ * @param string $name
+ * @param array $options
+ * @return int|mixed|void
+ */
+function intel_goal_load($key = '', $options = array()) {
+  $index_by = 'name';
+  if (!empty($options['index_by'])) {
+    $index_by = $options['index_by'];
+  }
+  else if ($key && is_numeric($key)) {
+    $index_by = 'ga_id';
+  }
+  $goal_static = &Intel_Df::drupal_static(__FUNCTION__, array());
 
-  $op_meta = get_option('intel_option_meta', array());
-
-  $gapt = '';
-  if (!empty($options['ga_profile_type']) && $options['ga_profile_type'] == 'base') {
-    $gapt = '_base';
+  // option to not use static caching. Important if multiple goal_saves are
+  // called in same request
+  if (!empty($options['force_reload'])) {
+    $goal_static = array();
   }
 
-  // refresh if goal have never been updated
-  if (empty($op_meta['ga_goals' . $gapt . '_updated'])) {
-    $options['refresh'] = 1;
-  }
+  $rebuild_cache = 0;
 
-  // cache for one day unless requested
-  if (!isset($options['refresh'])) {
-    $options['refresh'] = 86400;
-  }
+  //$goals = get_option('intel_goals', array());
 
-  // load goals from ga
+  // if refresh, sync goals with ga_goals
+  // first, update ga goals with goals data, then check if any new data is in
+  // ga that needs to be updated in goal data.
   if (!empty($options['refresh'])) {
+    $op_meta = get_option('intel_option_meta', array());
     $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
-    $ga_goals_updated = !empty($op_meta['ga_goals' . $gapt . '_updated']) ? $op_meta['ga_goals' . $gapt . '_updated'] : 0;
+    $ga_goals_updated = !empty($op_meta['ga_goals_updated']) ? $op_meta['ga_goals_updated'] : 0;
     if ((time() - $ga_goals_updated) > $time) {
-
-      include_once INTEL_DIR . 'includes/intel.imapi.php';
-
-      try {
-        $ga_goals = intel_imapi_ga_goal_get(0, $options);
-        update_option('intel_ga_goals' . $gapt, $ga_goals);
-        $op_meta['ga_goals' . $gapt . '_updated'] = time();
-        update_option('intel_option_meta', $op_meta);
-      }
-      catch (Exception $e) {
-        Intel_Df::drupal_set_message($e->getMessage(), 'error');
-        $ga_goals = array();
-      }
+      //$goals = intel_sync_goals_ga_goals();
+      $goal_static['ga_id'] = intel_sync_goals_ga_goals();
+      $op_meta['ga_goals_updated'] = time();
+      update_option('intel_option_meta', $op_meta);
+      $rebuild_cache = 1;
     }
   }
 
-  if (!isset($ga_goals)) {
-    $ga_goals = get_option('intel_ga_goals' . $gapt, array());
+  if (!isset($goal_static['ga_id'])) {
+    $goal_static['ga_id'] = get_option('intel_goals', array());
   }
 
-  if (!empty($name)) {
-    return !empty($ga_goals[$name]) ? $ga_goals[$name] : 0;
+  if (!isset($goal_static['name']) || $rebuild_cache) {
+    $goal_static['name'] = array();
+    foreach ($goal_static['ga_id'] as $id => $goal) {
+      $goal_static['name'][$goal['name']] = $goal;
+    }
   }
-  return $ga_goals;
+
+  if (!empty($key) && !empty($goal_static[$index_by])) {
+    return !empty($goal_static[$index_by][$key]) ? $goal_static[$index_by][$key] : 0;
+  }
+  return !empty($goal_static[$index_by]) ? $goal_static[$index_by] : array();
 }
+
+
+
+
+
+
 
 function intel_ga_goal_const($ga_goal) {
   if (empty($ga_goal['name'])) {
@@ -412,6 +379,56 @@ function intel_ga_goal_save($ga_goal, $options = array()) {
   return $ga_goal;
 }
 
+function intel_ga_goal_load($name = '', $options = array()) {
+
+  $op_meta = get_option('intel_option_meta', array());
+
+  $gapt = '';
+  if (!empty($options['ga_profile_type']) && $options['ga_profile_type'] == 'base') {
+    $gapt = '_base';
+  }
+
+  // refresh if goal have never been updated
+  if (empty($op_meta['ga_goals' . $gapt . '_updated'])) {
+    $options['refresh'] = 1;
+  }
+
+  // cache for one day unless requested
+  if (!isset($options['refresh'])) {
+    $options['refresh'] = 86400;
+  }
+
+  // load goals from ga
+  if (!empty($options['refresh'])) {
+    $time = is_numeric($options['refresh']) ? $options['refresh'] : 0;
+    $ga_goals_updated = !empty($op_meta['ga_goals' . $gapt . '_updated']) ? $op_meta['ga_goals' . $gapt . '_updated'] : 0;
+    if ((time() - $ga_goals_updated) > $time) {
+
+      include_once INTEL_DIR . 'includes/intel.imapi.php';
+
+      try {
+        $ga_goals = intel_imapi_ga_goal_get(0, $options);
+        update_option('intel_ga_goals' . $gapt, $ga_goals);
+        $op_meta['ga_goals' . $gapt . '_updated'] = time();
+        update_option('intel_option_meta', $op_meta);
+      }
+      catch (Exception $e) {
+        Intel_Df::drupal_set_message($e->getMessage(), 'error');
+        $ga_goals = array();
+      }
+    }
+  }
+
+  if (!isset($ga_goals)) {
+    $ga_goals = get_option('intel_ga_goals' . $gapt, array());
+  }
+
+  if (!empty($name)) {
+    return !empty($ga_goals[$name]) ? $ga_goals[$name] : 0;
+  }
+  return $ga_goals;
+}
+
 function intel_sync_goals_ga_goals() {
 
   $goals = get_option('intel_goals', array());
@@ -534,7 +551,23 @@ function intel_sync_goals_ga_goals() {
   return $goals;
 }
 
+/**
+ * alias of intel_is_intel_goal()
+ * @param $ga_goal
+ *
+ * @return bool
+ */
 function intel_is_intl_goal($ga_goal) {
+  return intel_is_intel_goal($ga_goal);
+}
+
+/**
+ * Tests if the goal is formated as a Intel goal
+ * @param $ga_goal
+ *
+ * @return bool
+ */
+function intel_is_intel_goal($ga_goal) {
   if (!empty($ga_goal['type']) && $ga_goal['type'] == 'EVENT') {
     if (!empty($ga_goal['details']['conditions'])) {
       $cat_cond = array();
@@ -566,7 +599,300 @@ function intel_get_goal_categories() {
   return $goal_categories;
 }
 
-add_filter('intel_link_type_info', 'intel_get_link_type_info_default');
+function intel_goal_type_titles() {
+  return array(
+    'INTL' => Intel_Df::t('Intelligence'),
+    'INTEL' => Intel_Df::t('Intelligence'),
+    'EVENT' => Intel_Df::t('Event'),
+    'VISIT_TIME_ON_SITE' => Intel_Df::t('Duration'),
+    'VISIT_NUM_PAGES' => Intel_Df::t('Pages/session'),
+    'URL_DESTINATION' => Intel_Df::t('Destination'),
+  );
+}
+
+function intel_get_intel_goals_default($info = array()) {
+
+  $title = Intel_Df::t('General');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('General conversion. Use as a default goal.'),
+    'value' => 100,
+  );
+
+  $title = Intel_Df::t('Contact');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('General contact. Use as a default goal that creates a contact.'),
+    'value' => 100,
+  );
+
+  $title = Intel_Df::t('Sales inquiry');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to initiate sales communication'),
+    'value' => 200,
+  );
+
+  $title = Intel_Df::t('Research request');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive top of the funnel education premium offer.'),
+    'value' => 100,
+  );
+
+  $title = Intel_Df::t('Research request');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive educational (ToFu) premium offer.'),
+    'value' => 50,
+  );
+
+  $title = Intel_Df::t('Consideration request');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive brand building (MoFu) premium offer.'),
+    'value' => 100,
+  );
+
+  $title = Intel_Df::t('Decision request');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to receive sales (BoFu) premium offer.'),
+    'value' => 200,
+  );
+
+  $title = Intel_Df::t('Subscribe');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Request to subscribe to newsletter style updates.'),
+    'value' => 100,
+  );
+
+  $title = Intel_Df::t('Job application');
+  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
+  $info[$name] = array(
+    'title' => $title,
+    'name' => $name,
+    'description' => Intel_Df::t('Job posting submission.'),
+    'value' => 100,
+  );
+
+  return $info;
+}
+
+function intel_get_submission_goals_default() {
+  $defs = array();
+  $defs['tofu-conversion'] = array(
+    'title' => Intel_Df::t('ToFu conversion'),
+    'description' => Intel_Df::t('Top of the funnel conversion'),
+    'value' => 15,
+    'ga_id' => 1,
+  );
+  $defs['mofu-conversion'] = array(
+    'title' => Intel_Df::t('MoFu conversion'),
+    'description' => Intel_Df::t('Middle of the funnel conversion'),
+    'value' => 50,
+    'ga_id' => 2,
+  );
+  $defs['bofu-conversion'] = array(
+    'title' => Intel_Df::t('BoFu conversion'),
+    'description' => Intel_Df::t('Bottom of the funnel conversion'),
+    'value' => 100,
+    'ga_id' => 3,
+  );
+  $defs['subscribe-form'] = array(
+    'title' => Intel_Df::t('Subscribe form'),
+    'description' => Intel_Df::t('Subscribe to email updates form submission'),
+    'value' => 25,
+    'ga_id' => 4,
+  );
+  $defs['contact-form'] = array(
+    'title' => Intel_Df::t('Contact form'),
+    'description' => Intel_Df::t('Main contact form submission'),
+    'value' => 25,
+    'ga_id' => 5,
+  );
+
+  return $defs;
+}
+
+function intel_get_phonecall_goals_default() {
+  $defs = array();
+  $defs['contact-call'] = array(
+    'title' => Intel_Df::t('Contact call'),
+    'description' => Intel_Df::t('Main contact number called'),
+    'value' => 25,
+    'ga_id' => 6,
+  );
+
+  return $defs;
+}
+
+
+/*******************************************************************************
+ * Intel Event functions
+ */
+
+/**
+ * Returns intel_event info.
+ * @param null $name: if null returns all intel_events, or if name given returns
+ *   specific intel_event
+ * @param array $options
+ *
+ * @return array|bool|mixed|void
+ */
+function intel_get_intel_event_info($name = NULL, $options = array()) {
+  $events = &Intel_Df::drupal_static( __FUNCTION__ );
+
+  if (is_array($events) && count($events)) {
+    if (isset($name)) {
+      if (isset($events[$name])) {
+        return $events[$name];
+      }
+    }
+    else {
+      return $events;
+    }
+  }
+  //$events = intel_get_intel_event_info_default();
+  $events = array();
+  // get event info provided by hook_intel_intel_event_info;
+  $events = apply_filters('intel_intel_event_info', $events);
+
+  $events = array_merge($events, intel_get_event_goal_info());
+  $goal_info = get_option('intel_goals', array());
+
+  foreach ($events AS $k => $v) {
+    if (isset($v['static_options'])) {
+      $events[$k]['options'] = $v['static_options'];
+    }
+
+    if (!empty($v['valued_event']) && empty($v['ga_id'])) {
+      $events[$k]['mode'] = $v['mode'] = 'valued';
+    }
+    if (!empty($v['mode'])) {
+      if ($v['mode'] == 'valued') {
+        $events[$k]['valued_event'] = 1;
+      }
+    }
+    else {
+      $events[$k]['mode'] = '';
+    }
+
+    // construct eventCategory
+    if (empty($v['event_category'])) {
+      $events[$k]['event_category'] = intel_format_intel_event_eventcategory($v, $goal_info);
+    }
+
+    if (empty($events[$k]['plugin_un'])) {
+      $events[$k]['plugin_un'] = 'intel';
+    }
+    $events[$k]['key']  = $k;
+  }
+
+  $custom = get_option('intel_intel_events_custom', array());
+  foreach ($custom AS $k => $v) {
+    // check if custom attribute
+    if (isset($events[$k])) {
+      $events[$k] = Intel_Df::drupal_array_merge_deep($events[$k], $v);
+      // rebuild event_category incase changed by custom settings
+      unset($events[$k]['event_category']);
+      $events[$k]['event_category'] = intel_format_intel_event_eventcategory($events[$k], $goal_info);
+      $events[$k]['overridden'] = 1;
+      if (isset($events[$k]['partial'])) {
+        unset($events[$k]['partial']);
+      }
+    }
+    else {
+      // if settings are a partial event, i.e. overrides of a coded event,
+      // events[$k] should exists. If it doesn't, for example when the plugin
+      // providing the original event is disabled, skip adding it
+      if (!empty($v['partial'])) {
+        continue;
+      }
+      if (empty($custom[$k]['plugin_un'])) {
+        $custom[$k]['plugin_un'] = 'intel';
+      }
+      $custom[$k]['custom'] = 1;
+      $events[$k] = $custom[$k];
+      if (empty($v['event_category'])) {
+        $events[$k]['event_category'] = intel_format_intel_event_eventcategory($v, $goal_info);
+      }
+    }
+    if (!empty($custom[$k]['custom_options'])) {
+      //sdm($custom[$k]['custom_options']);
+      if (!isset($events[$k]['options'])) {
+        $events[$k]['options'] = $custom[$k]['custom_options'];
+      }
+      else {
+        $events[$k]['options'] += $custom[$k]['custom_options'];
+      }
+    }
+    $events[$k]['key']  = $k;
+  }
+
+  /* TODO WP
+  foreach (module_implements('intel_intel_event_info') AS $module) {
+    $function = $module . '_intel_intel_event_info';
+    $a = $function();
+    if (empty($a) || !is_array($a)) {
+      continue;
+    }
+    foreach ($a AS $k => $v) {
+      $v['module'] = $module;
+      $v['key']  = $k;
+      $events[$k] = $v;
+    }
+  }
+
+  drupal_alter('intel_intel_event_info', $events);
+  END TODO WP */
+
+  // allow plugins to alter events
+  $events = apply_filters('intel_intel_event_info_alter', $events);
+
+  uasort($events, '_intel_sort_by_eventcategory');
+
+  // allow plugins to alter theme_info
+
+  if (isset($name)) {
+    if (isset($events[$name])) {
+      return $events[$name];
+    }
+    else {
+      return FALSE;
+    }
+  }
+  else {
+    return $events;
+  }
+}
+
+/**
+ * Implements hook_intel_link_type_info()
+ */
+function intel_intel_link_type_info($info = array()) {
+  $info = intel_get_link_type_info_default($info);
+  return $info;
+}
+add_filter('intel_link_type_info', 'intel_intel_link_type_info');
+
 function intel_get_link_type_info_default($info = array()) {
   $info['mailto'] = array(
     'title' => Intel_Df::t('Mailto link'),
@@ -579,6 +905,7 @@ function intel_get_link_type_info_default($info = array()) {
   $info['download'] = array(
     'title' => Intel_Df::t('Download link'),
     'track' => 1,
+    'track_file_extension' => intel_get_link_type_download_track_file_extensions_default(),
   );
   $info['external'] = array(
     'title' => Intel_Df::t('External link'),
@@ -615,8 +942,9 @@ function intel_get_link_type_info($name = '', $options = array()) {
             $link_type[$k]['click_value'] = $scorings['event_' . $event_k];
           }
         }
-
-
+        if ($event['key'] == 'linktracker_download_click') {
+          $link_type[$k]['track_file_extension'] = !empty($event['track_file_extension']) ? $event['track_file_extension'] : intel_get_link_type_download_track_file_extensions_default();
+        }
       }
     }
 
@@ -637,9 +965,18 @@ function intel_get_link_type_info($name = '', $options = array()) {
 }
 
 /**
+ * Implements hook_intel_intel_event_info()
+ */
+function intel_intel_intel_event_info($event = array()) {
+  $info = intel_get_intel_event_info_default($event);
+  return $info;
+}
+add_filter('intel_intel_event_info', 'intel_intel_intel_event_info');
+
+/**
  * types = flag, list, scalar, vector
  */
-add_filter('intel_intel_event_info', 'intel_get_intel_event_info_default');
+//add_filter('intel_intel_event_info', 'intel_get_intel_event_info_default');
 function intel_get_intel_event_info_default($event = array()) {
   $scripts_enabled = get_option('intel_intel_scripts_enabled', array());
 
@@ -1372,132 +1709,7 @@ function intel_get_intel_events_overridable_fields($event) {
   return $overridable;
 }
 
-function intel_get_intel_event_info($name = NULL, $options = array()) {
-  $events = &Intel_Df::drupal_static( __FUNCTION__ );
 
-  if (is_array($events) && count($events)) {
-    if (isset($name)) {
-      if (isset($events[$name])) {
-        return $events[$name];
-      }
-    }
-    else {
-      return $events;
-    }
-  }
-  //$events = intel_get_intel_event_info_default();
-  $events = array();
-  // get event info provided by hook_intel_intel_event_info;
-  $events = apply_filters('intel_intel_event_info', $events);
-
-  $events = array_merge($events, intel_get_event_goal_info());
-  $goal_info = get_option('intel_goals', array());
-
-  foreach ($events AS $k => $v) {
-    if (isset($v['static_options'])) {
-      $events[$k]['options'] = $v['static_options'];
-    }
-
-    if (!empty($v['valued_event']) && empty($v['ga_id'])) {
-      $events[$k]['mode'] = $v['mode'] = 'valued';
-    }
-    if (!empty($v['mode'])) {
-      if ($v['mode'] == 'valued') {
-        $events[$k]['valued_event'] = 1;
-      }
-    }
-    else {
-      $events[$k]['mode'] = '';
-    }
-
-    // construct eventCategory
-    if (empty($v['event_category'])) {
-      $events[$k]['event_category'] = intel_format_intel_event_eventcategory($v, $goal_info);
-    }
-
-    if (empty($events[$k]['plugin_un'])) {
-      $events[$k]['plugin_un'] = 'intel';
-    }
-    $events[$k]['key']  = $k;
-  }
-
-  $custom = get_option('intel_intel_events_custom', array());
-  foreach ($custom AS $k => $v) {
-    // check if custom attribute
-    if (isset($events[$k])) {
-      $events[$k] = Intel_Df::drupal_array_merge_deep($events[$k], $v);
-      // rebuild event_category incase changed by custom settings
-      unset($events[$k]['event_category']);
-      $events[$k]['event_category'] = intel_format_intel_event_eventcategory($events[$k], $goal_info);
-      $events[$k]['overridden'] = 1;
-      if (isset($events[$k]['partial'])) {
-        unset($events[$k]['partial']);
-      }
-    }
-    else {
-      // if settings are a partial event, i.e. overrides of a coded event,
-      // events[$k] should exists. If it doesn't, for example when the plugin
-      // providing the original event is disabled, skip adding it
-      if (!empty($v['partial'])) {
-        continue;
-      }
-      if (empty($custom[$k]['plugin_un'])) {
-        $custom[$k]['plugin_un'] = 'intel';
-      }
-      $custom[$k]['custom'] = 1;
-      $events[$k] = $custom[$k];
-      if (empty($v['event_category'])) {
-        $events[$k]['event_category'] = intel_format_intel_event_eventcategory($v, $goal_info);
-      }
-    }
-    if (!empty($custom[$k]['custom_options'])) {
-//sdm($custom[$k]['custom_options']);
-      if (!isset($events[$k]['options'])) {
-        $events[$k]['options'] = $custom[$k]['custom_options'];
-      }
-      else {
-        $events[$k]['options'] += $custom[$k]['custom_options'];
-      }
-    }
-    $events[$k]['key']  = $k;
-  }
-
-  /* TODO WP
-  foreach (module_implements('intel_intel_event_info') AS $module) {
-    $function = $module . '_intel_intel_event_info';
-    $a = $function();
-    if (empty($a) || !is_array($a)) {
-      continue;
-    }
-    foreach ($a AS $k => $v) {
-      $v['module'] = $module;
-      $v['key']  = $k;
-      $events[$k] = $v;
-    }
-  }
-
-  drupal_alter('intel_intel_event_info', $events);
-  END TODO WP */
-
-  // allow plugins to alter events
-  $events = apply_filters('intel_intel_event_info_alter', $events);
-
-  uasort($events, '_intel_sort_by_eventcategory');
-
-  // allow plugins to alter theme_info
-
-  if (isset($name)) {
-    if (isset($events[$name])) {
-      return $events[$name];
-    }
-    else {
-      return FALSE;
-    }
-  }
-  else {
-    return $events;
-  }
-}
 
 /**
  * Alias of intel_get_intel_event_info for use with hook_menu autoloading
@@ -1635,7 +1847,7 @@ function intel_get_enabled_intel_events($context) {
   if (substr($alias, -1) == '/') {
     $to_match[] = substr($alias, 0, -1);
   }
-
+//Intel_df::watchdog('enabled_intel_events', 'to_match', $to_match);
   foreach ($e AS $key => $event) {
     if (!empty($event['enable_all_pages'])) {
       $events[$key] = $event;
@@ -1665,6 +1877,34 @@ function intel_get_enabled_intel_events($context) {
 
   return $events;
 }
+
+function intel_get_link_type_download_track_file_extensions_default() {
+  return "7z|aac|arc|arj|asf|asx|avi|bin|csv|doc(x|m)?|dot(x|m)?|exe|flv|gif|gz|gzip|hqx|jar|jpe?g|js|mp(2|3|4|e?g)|mov(ie)?|msi|msp|pdf|phps|png|ppt(x|m)?|pot(x|m)?|pps(x|m)?|ppam|sld(x|m)?|thmx|qtm?|ra(m|r)?|sea|sit|tar|tgz|torrent|txt|wav|wma|wmv|wpd|xls(x|m|b)?|xlt(x|m)|xlam|xml|z|zip";
+}
+
+function intel_form_intel_admin_intel_event_form_alter(&$form, &$form_state) {
+
+  $event = $form['#intel_event'];
+
+  // if linktracker_download_click add field to provide file extensions
+  if ($event['key'] == 'linktracker_download_click') {
+    $default = intel_get_link_type_download_track_file_extensions_default();
+    $key = 'track_file_extension';
+    $form['trigger'][$key] = array(
+      '#type' => 'textfield',
+      '#title' => Intel_Df::t('Track file extensions'),
+      '#default_value' => !empty($event[$key]) ? $event[$key] : $default,
+      '#description' => Intel_Df::t("A file extension list separated by the | character that will be tracked as download when clicked. Regular expressions are supported. For example: %default", array('%default' => $default)),
+      '#maxlength' => 500,
+    );
+    $form_state['intel_overridable'][$key] = 1;
+  }
+}
+add_filter('intel_form_intel_admin_intel_event_form_alter', 'intel_form_intel_admin_intel_event_form_alter', 10, 2);
+
+/*******************************************************************************
+ * Page and Visitor attribute functions
+ */
 
 /**
  * types = flag, list, scalar, vector
@@ -3322,139 +3562,7 @@ function intel_get_base_scorings() {
   return $scoring;
 }
 
-function intel_get_intel_goals_default($info = array()) {
 
-  $title = Intel_Df::t('General');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('General conversion. Use as a default goal.'),
-    'value' => 100,
-  );
-
-  $title = Intel_Df::t('Contact');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('General contact. Use as a default goal that creates a contact.'),
-    'value' => 100,
-  );
-
-  $title = Intel_Df::t('Sales inquiry');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('Request to initiate sales communication'),
-    'value' => 200,
-  );
-
-  $title = Intel_Df::t('Research request');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('Request to receive top of the funnel education premium offer.'),
-    'value' => 100,
-  );
-
-  $title = Intel_Df::t('Research request');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('Request to receive educational (ToFu) premium offer.'),
-    'value' => 50,
-  );
-
-  $title = Intel_Df::t('Consideration request');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('Request to receive brand building (MoFu) premium offer.'),
-    'value' => 100,
-  );
-
-  $title = Intel_Df::t('Decision request');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('Request to receive sales (BoFu) premium offer.'),
-    'value' => 200,
-  );
-
-  $title = Intel_Df::t('Subscribe');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('Request to subscribe to newsletter style updates.'),
-    'value' => 100,
-  );
-
-  $title = Intel_Df::t('Job application');
-  $name = strtolower(Intel_Df::drupal_clean_machinename($title));
-  $info[$name] = array(
-    'title' => $title,
-    'name' => $name,
-    'description' => Intel_Df::t('Job posting submission.'),
-    'value' => 100,
-  );
-
-  return $info;
-}
-
-function intel_get_submission_goals_default() {
-  $defs = array();
-  $defs['tofu-conversion'] = array(
-    'title' => Intel_Df::t('ToFu conversion'),
-    'description' => Intel_Df::t('Top of the funnel conversion'),
-    'value' => 15,
-    'ga_id' => 1,
-  );
-  $defs['mofu-conversion'] = array(
-    'title' => Intel_Df::t('MoFu conversion'),
-    'description' => Intel_Df::t('Middle of the funnel conversion'),
-    'value' => 50,
-    'ga_id' => 2,
-  );
-  $defs['bofu-conversion'] = array(
-    'title' => Intel_Df::t('BoFu conversion'),
-    'description' => Intel_Df::t('Bottom of the funnel conversion'),
-    'value' => 100,
-    'ga_id' => 3,
-  );
-  $defs['subscribe-form'] = array(
-    'title' => Intel_Df::t('Subscribe form'),
-    'description' => Intel_Df::t('Subscribe to email updates form submission'),
-    'value' => 25,
-    'ga_id' => 4,
-  );
-  $defs['contact-form'] = array(
-    'title' => Intel_Df::t('Contact form'),
-    'description' => Intel_Df::t('Main contact form submission'),
-    'value' => 25,
-    'ga_id' => 5,
-  );
-
-  return $defs;
-}
-
-function intel_get_phonecall_goals_default() {
-  $defs = array();
-  $defs['contact-call'] = array(
-    'title' => Intel_Df::t('Contact call'),
-    'description' => Intel_Df::t('Main contact number called'),
-    'value' => 25,
-    'ga_id' => 6,
-  );
-
-  return $defs;
-}
 
 function intel_event_value_format($value, $options = array()) {
   $options += intel_get_valued_value_options();
@@ -3490,7 +3598,7 @@ function intel_get_scorings($filter = '') {
     if (($filter == 'js_setting') && (empty($m['js_setting']))) {
       //continue;
     }
-    $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : $m['value'];
+    $scorings[$filter][$i] = (float) (isset($custom[$i]) ? $custom[$i] : $m['value']);
   }
 
   $goals = intel_goal_load();
@@ -3520,11 +3628,6 @@ function intel_get_scorings($filter = '') {
       $scorings[$filter][$i] = isset($custom[$i]) ? $custom[$i] : (isset($goal['value']) ? $goal['value'] : 0);
     }
   }
-
-  //$goals = intel_goal_load();
-  //$goals = array_merge($goals, get_option('intel_submission_goals', intel_get_submission_goals_default()));
-  //$goals = array_merge($goals, get_option('intel_phonecall_goals', intel_get_phonecall_goals_default()));
-
 
   return $scorings[$filter];
 }
@@ -5460,17 +5563,6 @@ function intel_fetch_ga_goals($save = 0) {
   }
 
   return $ga_goals;
-}
-
-function intel_goal_type_titles() {
-  return array(
-    'INTL' => Intel_Df::t('Intelligence'),
-    'INTEL' => Intel_Df::t('Intelligence'),
-    'EVENT' => Intel_Df::t('Event'),
-    'VISIT_TIME_ON_SITE' => Intel_Df::t('Duration'),
-    'VISIT_NUM_PAGES' => Intel_Df::t('Pages/session'),
-    'URL_DESTINATION' => Intel_Df::t('Destination'),
-  );
 }
 
 function intel_fetch_ga_goals_page() {

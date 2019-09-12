@@ -49,7 +49,7 @@ class Intel_Entity_Controller {
 
 	public function __construct($entityType, $entity_info) {
 		$this->entity_type = $entityType;
-		$this->entity_info =$entity_info;
+		$this->entity_info = $entity_info;
 		$this->entity_class = !empty($entity_info['entity class']) ? $entity_info['entity class'] : 'Intel_Entity';
 		$this->base_table = $entity_info['base table'];
 
@@ -58,6 +58,7 @@ class Intel_Entity_Controller {
 	}
 
 	public function create(array $values = array()) {
+	  intel_d($values);
 		if (class_exists($this->entity_class)) {
 			$entity = new $this->entity_class($values, $this);
 		}
@@ -216,46 +217,140 @@ class Intel_Entity_Controller {
 		return $entities;
 	}
 
-	public function loadFiltered($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
-		global $wpdb;
+  public function loadByFilter($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
+    global $wpdb;
 
-		$query = db_select('intel_submission', 's')
-			->extend('PagerDefault')
-			->limit($limit);
-		$v = $query->leftJoin('intel_visitor', 'v', '%alias.vid = s.vid');
-		$query->fields('s');
-		$query->addField($v, 'name', 'name');
-		//$query->addField($v, 'email', 'email');
-		//$query->addField($v, 'vtkid', 'vtkid');
-		$query->addField($v, 'data', 'visitor_data');
-		$query->addField($v, 'ext_data', 'visitor_ext_data');
-		$query->addTag('intel_submission_load_filtered');
+    $sql = "
+		  SELECT *
+		  FROM {$wpdb->prefix}{$this->base_table}
+		";
+    $data = array();
 
-		if (!empty($header)) {
-			$query->extend('TableSort')->orderByHeader($header);
-		}
+    if (!empty($filter['where'])) {
+      $where = $this->processWhere($filter['where'], $data);
+      if ($where) {
+        $sql .= "\n";
+        $sql .= "WHERE\n";
+        $sql .= $where;
+      }
+    }
+    if (!empty($filter['conditions'])) {
+      foreach ($filter['conditions'] AS $condition) {
+        if (count($condition) == 3) {
+          $query->condition($condition[0], $condition[1], $condition[2]);
+        }
+        else {
+          $query->condition($condition[0], $condition[1]);
+        }
+      }
+    }
 
-		//TODO get filters working
-		if (!empty($filter['where'])) {
-			//$sql .= " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') . $filter['where'];
-			//$count_sql .=  " WHERE " . (($options['mode'] == 'site') ? 'k.priority >= 0 AND ' : '') .  $filter['where'];
-		}
-		if (!empty($filter['conditions'])) {
-			foreach ($filter['conditions'] AS $condition) {
-				if (count($condition) == 3) {
-					$query->condition($condition[0], $condition[1], $condition[2]);
-				}
-				else {
-					$query->condition($condition[0], $condition[1]);
-				}
-			}
-		}
+    if ($options['order_by']) {
+      $sql .= "\n";
+      $sql .= "ORDER BY {$options['order_by']}\n";
+    }
 
-		$result = $query->execute();
+    $sql .= "\n";
+    $sql .= "LIMIT %d";
+    $data[] = $limit;
+    if ($offset) {
+      $sql .= " OFFSET %d";
+      $data[] = $offset;
+    }
 
-		return $result;
-	}
+    $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
 
+    return $results;
+  }
+
+	public function processWhere($vars, &$data = array()) {
+	  $sql = '';
+    if (!empty($vars)) {
+      $where_cnt = 0;
+      foreach ($vars as $k => $v) {
+        if ($where_cnt) {
+          $sql .= ' AND ';
+        }
+        $where_cnt++;
+        if (is_array($v)) {
+          if (count($v) == 3) {
+            $d0 = $d1 = (is_string($v[1])) ? '"' : '';
+            $sql .= $v[0] . ' ' . $v[2] . ' ';
+            if (strtolower($v[2]) == 'in') {
+              if (!is_array($v[1])) {
+                $v[1] = array($v[1]);
+              }
+              $placeholder = is_numeric($v[1]) ? '%d' : '%s';
+              $placeholders = array_fill(0, count($v[1]), $placeholder);
+              $vars_query = implode(', ', $placeholders);
+              $sql .= "( $vars_query )";
+              $data = array_merge($data, $v[1]);
+            }
+            else {
+              $sql .= ((is_string($v[1])) ? '%s' : '%d');
+              $data[] = $v[1];
+            }
+          }
+          elseif (count($v) == 2) {
+            $sql .= $v[0] . ' = ' . ((is_string($v[1])) ? '%s' : '%d') . "\n";
+            $data[] = $v[1];
+          }
+        }
+        else {
+          $sql .= "$k = " . ((is_string($v)) ? '%s' : '%d') . "\n";
+          $data[] = $v;
+        }
+      }
+    }
+
+	  return $sql;
+  }
+
+  public function loadByFilter($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
+    global $wpdb;
+
+    $sql = "
+		  SELECT *
+		  FROM {$wpdb->prefix}{$this->base_table}
+		";
+    $data = array();
+
+    if (!empty($filter['where'])) {
+      $where = $this->processWhere($filter['where'], $data);
+      if ($where) {
+        $sql .= "\n";
+        $sql .= "WHERE\n";
+        $sql .= $where;
+      }
+    }
+    if (!empty($filter['conditions'])) {
+      foreach ($filter['conditions'] AS $condition) {
+        if (count($condition) == 3) {
+          $query->condition($condition[0], $condition[1], $condition[2]);
+        }
+        else {
+          $query->condition($condition[0], $condition[1]);
+        }
+      }
+    }
+
+    if ($options['order_by']) {
+      $sql .= "\n";
+      $sql .= "ORDER BY {$options['order_by']}\n";
+    }
+
+    $sql .= "\n";
+    $sql .= "LIMIT %d";
+    $data[] = $limit;
+    if ($offset) {
+      $sql .= " OFFSET %d";
+      $data[] = $offset;
+    }
+
+    $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
+
+    return $results;
+  }
 
 	public function deleteOne($id) {
 		global $wpdb;

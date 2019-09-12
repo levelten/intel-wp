@@ -194,14 +194,19 @@ class Intel_Admin {
 		global $wp_version;
 
 		if ( current_user_can( 'manage_options' ) ) {
-			add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
-			add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Annotations", 'intel' ), esc_html__( "Annotations", 'intel' ), 'manage_options', 'intel_annotation', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
-			add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
+			if (intel_is_framework_only()) {
+              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ), 'dashicons-analytics');
+            }
+			else {
+              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
+              add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Annotations", 'intel' ), esc_html__( "Annotations", 'intel' ), 'manage_options', 'intel_annotation', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
+            }
   	    }
 	}
 
@@ -245,16 +250,16 @@ class Intel_Admin {
 
 		$q = '';
 		if ($_GET['page'] == 'intel_admin') {
-			$q = 'admin/reports/intel';
-			//$navbar_exclude[$q] = 1;
-			$breadcrumbs[] = array(
-				'text' => esc_html__('Reports', 'intel'),
-				'path' => Intel_Df::url($q),
-			);
-			$navbar_base_q = $navbar_base_qt = $q;
-      if (!$install_levels['ga_data']) {
-				$install_access_error = intel_get_install_access_error_message(array('level' => 'ga_data'));
-			}
+          $q = 'admin/reports/intel';
+          //$navbar_exclude[$q] = 1;
+          $breadcrumbs[] = array(
+            'text' => esc_html__('Reports', 'intel'),
+            'path' => Intel_Df::url($q),
+          );
+          $navbar_base_q = $navbar_base_qt = $q;
+          if (!$install_levels['ga_data']) {
+            $install_access_error = intel_get_install_access_error_message(array('level' => 'ga_data'));
+          }
 		}
 		if ($_GET['page'] == 'intel_reports') {
 			$q = 'admin/reports/intel';
@@ -306,6 +311,9 @@ class Intel_Admin {
 				'path' => Intel_Df::url($q),
 			);
 		}
+		if (intel_is_framework_only()) {
+          $q = 'admin/config/intel/settings/framework';
+        }
 		if (isset($_GET['q'])) {
 			$q = $_GET['q'];
 		}
@@ -362,6 +370,18 @@ class Intel_Admin {
 						);
 					}
 				}
+                else if (!empty($path_args[1]) && $path_args[1] == 'util') {
+                  if ($path_args[2] == 'log') {
+                    $bc_title = Intel_Df::t('Log');
+                  }
+                  if (!empty($bc_title)) {
+                    $a = array_slice($path_args, 0, 4);
+                    $breadcrumbs[] = array(
+                      'text' => $bc_title,
+                      'path' => Intel_Df::url(implode('/', $a)),
+                    );
+                  }
+                }
 			}
 			else {
 				if (in_array($path_args[0], $entities)) {
@@ -420,61 +440,67 @@ class Intel_Admin {
 					$load_index = 0;
 					$load_type = '';
 					$load_title = '';
+					$entity_title = '';
 					if ($path_args[1] == 'config') {
-						if ($path_args[4] == 'intel_event') {
-							$load_index = 5;
-							$load_type = 'intel_intel_event';
-							$load_title = Intel_Df::t('Intel Event');
-							$bc_title = Intel_Df::t('Event');
-						}
-						elseif ($path_args[4] == 'goal') {
-							$load_index = 5;
-							$load_type = 'intel_goal';
-							$bc_title = $load_title = Intel_Df::t('Goal');
-						}
-						elseif ($path_args[4] == 'taxonomy') {
-							$load_index = 5;
-							$load_type = 'intel_taxonomy';
-							$bc_title = $load_title = Intel_Df::t('Taxonomy');
-						}
+                      if ($path_args[4] == 'intel_event') {
+                        $load_index = 5;
+                        $load_type = 'intel_intel_event';
+                        $load_title = Intel_Df::t('Intel Event');
+                        $bc_title = Intel_Df::t('Event');
+                      }
+                      elseif ($path_args[4] == 'goal') {
+                        $load_index = 5;
+                        $load_type = 'intel_goal';
+                        $bc_title = $load_title = Intel_Df::t('Goal');
+                      }
+                      elseif ($path_args[4] == 'taxonomy') {
+                        $load_index = 5;
+                        $load_type = 'intel_taxonomy';
+                        $bc_title = $load_title = Intel_Df::t('Taxonomy');
+                      }
+                    }
+					else if ($path_args[1] == 'util') {
+                      if ($path_args[2] == 'log' && !empty($path_args[3])) {
+                        $load_index = 3;
+                        $load_type = 'intel_log';
+                        $load_title = Intel_Df::t('Intel Log');
+                        $bc_title = Intel_Df::t('Log');
+                      }
+                    }
 
-						if ($load_index) {
-							$func = $load_type . '_load';
-							$path_args_t[$load_index] = $func($path_args[$load_index]);
-							$entity = $path_args_t[$load_index];
-						  if(empty($entity)) {
-								$vars = array(
-									'title' => esc_html__('404 Error', 'intel'),
-									'markup' => Intel_Df::t('@load_title not found', array(
-										'@load_title' => $load_title,
-									)),
-									//'markup' => esc_html__('@load_title not found', 'intel'),
-									'messages' => Intel_Df::drupal_get_messages(),
-								);
-								print Intel_Df::theme('intel_page', $vars);
-								return;
-							}
-							$a = $path_args;
-							$a[$load_index] = '%' . $load_type;
-							$qt = implode('/', $a);
-							if (!empty($menu_info[$qt])) {
-								$info = $menu_info[$qt];
-							}
-							$a = array_slice($path_args, 0, 5);
-							$breadcrumbs[] = array(
-								'text' => $bc_title,
-								'path' => Intel_Df::url(implode('/', $a)),
-							);
-							$a = array_slice($path_args, 0, 6);
-							$breadcrumbs[] = array(
-								'text' => $entity['title'],
-								//'path' => Intel_Df::url(implode('/', $a)),
-							);
-						}
-
-					}
-
-
+                    if ($load_index) {
+                        $func = $load_type . '_load';
+                        $path_args_t[$load_index] = $func($path_args[$load_index]);
+                        $entity = $path_args_t[$load_index];
+                        if(empty($entity)) {
+                            $vars = array(
+                                'title' => esc_html__('404 Error', 'intel'),
+                                'markup' => Intel_Df::t('@load_title not found', array(
+                                    '@load_title' => $load_title,
+                                )),
+                                //'markup' => esc_html__('@load_title not found', 'intel'),
+                                'messages' => Intel_Df::drupal_get_messages(),
+                            );
+                            print Intel_Df::theme('intel_page', $vars);
+                            return;
+                        }
+                        $a = $path_args;
+                        $a[$load_index] = '%' . $load_type;
+                        $qt = implode('/', $a);
+                        if (!empty($menu_info[$qt])) {
+                            $info = $menu_info[$qt];
+                        }
+                        $a = array_slice($path_args, 0, $load_index);
+                        $breadcrumbs[] = array(
+                            'text' => $bc_title,
+                            'path' => Intel_Df::url(implode('/', $a)),
+                        );
+                        $a = array_slice($path_args, 0, $load_index + 1);
+                        $breadcrumbs[] = array(
+                            'text' => ($entity instanceof Intel_Entity) ? $entity->label() : $entity['title'],
+                            //'path' => Intel_Df::url(implode('/', $a)),
+                        );
+                    }
 				}
 			}
 		}
@@ -763,7 +789,7 @@ class Intel_Admin {
 		$output = '';
 		// Don't show the connect notice anywhere but the plugins.php after activating
 		$current = get_current_screen();
-		if (!intel_is_installed('min') && 'plugins' === $current->parent_base  ) {
+		if (!intel_is_installed('min') && !intel_is_framework() && 'plugins' === $current->parent_base  ) {
 			$l_options = Intel_Df::l_options_add_class('btn btn-info');
 			$output .= '  <div class="panel panel-info m-t-1">';
 			$output .= '    <h2 class="panel-heading m-t-0">' . __( 'Get Intelligence!', 'intel' ) . '</h2>';

@@ -91,6 +91,11 @@ class Intel_Visitor extends Intel_Entity  {
 
 		intel_include_library_file('class.person.php');
 		$this->apiPerson = new \LevelTen\Intel\ApiPerson(array('email' => $this->getEmail()), $apiClientProps);
+
+		if (class_exists('\Kint\Parser\BlacklistPlugin')) {
+      Kint\Parser\BlacklistPlugin::$shallow_blacklist[] = 'Intel';
+      intel_d('YES');
+    }
 	}
 
 	public function completeLoad() {
