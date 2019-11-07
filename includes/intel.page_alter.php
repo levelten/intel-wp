@@ -68,7 +68,7 @@ function intel_page_alter(&$page) {
 
   if (INTEL_PLATFORM == 'wp') {
     if (!empty($_GET['io-admin']) && Intel_Df::user_access('admin intel')) {
-      wp_enqueue_style('intel_front_admin', INTEL_URL . 'css/intel-front-admin.css');
+      wp_enqueue_style('intel_front_admin', INTEL_URL . 'css/intel.intel_script_admin.css');
       $config['admin'] = 1;
     }
   }
@@ -315,7 +315,7 @@ function intel_page_alter(&$page) {
   intel_do_hook_action('intel_page_intel_pushes');
 
   $pushes = intel_get_flush_page_intel_pushes();
-intel_d($pushes);
+
   // add page title and system path to any IntelEvent that is missing values
   /*
   if (isset($pushes['event']) && is_array($pushes['event'])) {
@@ -819,15 +819,6 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   return $attrs;
 }
 
-function intel_page_footer_alter() {
-  return;
-  global $post;
-  if (!empty($post)) {
-    $stats = intel_get_post_stats($post);
-  }
-}
-
-
 function intel_get_post_entity_attr_default($post = NULL) {
   if (!isset($post)) {
     global $post;
@@ -903,11 +894,18 @@ function intel_get_flush_page_intel_pushes() {
   return intel_page_intel_pushes('get_flush');
 }
 
+function intel_get_page_intel_pushes_cookie() {
+  return intel_page_intel_pushes('get_cookie');
+}
+
+function intel_get_flush_page_intel_pushes_cookie() {
+  return intel_page_intel_pushes('get_cookie_flush');
+}
+
 /**
  * Used to store intel pushes for redirects.
  * @return mixed
  */
-
 function intel_save_flush_page_intel_pushes() {
   $push_storage = get_option('intel_save_push_storage', INTEL_SAVE_PUSH_STORAGE_DEFAULT);
   if ($push_storage == 'cookie') {
@@ -935,6 +933,14 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
   if (!isset($_SESSION['intel']['page_pushes'])) {
     $_SESSION['intel']['page_pushes'] = array();
   }
+  if (!isset($_SESSION['intel']['page_pushes_cookie'])) {
+    $_SESSION['intel']['page_pushes_cookie'] = array();
+  }
+
+  $data = &$_SESSION['intel']['page_pushes'];
+  if (!empty($options['cookie'])) {
+    $data = &$_SESSION['intel']['page_pushes_cookie'];
+  }
 
   if ($action == 'add') {
     // if push is assoc array containing method key, use that key
@@ -946,8 +952,8 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
       $method = array_shift($push);
     }
 
-    if (!isset($_SESSION['intel']['page_pushes'][$method])) {
-      $_SESSION['intel']['page_pushes'][$method] = array();
+    if (!isset($data[$method])) {
+      $data[$method] = array();
     }
 
     $index = -1;
@@ -968,7 +974,7 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
       $value = $push[1];
     }
     elseif ($method == 'event') {
-      $index = count($_SESSION['intel']['page_pushes'][$method]);
+      $index = count($data[$method]);
       $value = $push[0];
     }
     elseif ($method == 'setUserId') {
@@ -977,26 +983,26 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
     else {
       // check if push uses command(def) format
       if (count($push) == 1 && is_array($push[0])) {
-        $index = count($_SESSION['intel']['page_pushes'][$method]);
+        $index = count($data[$method]);
         $value = $push[0];
       }
       else {
-        $index = count($_SESSION['intel']['page_pushes'][$method]);
+        $index = count($data[$method]);
         $value = $push;
       }
 
     }
 
     if ($index == -1) {
-      $_SESSION['intel']['page_pushes'][$method] = $value;
+      $data[$method] = $value;
     }
     else {
-      $_SESSION['intel']['page_pushes'][$method][$index] = $value;
+      $data[$method][$index] = $value;
     }
 
   }
 
-  $ret = $_SESSION['intel']['page_pushes'];
+  $ret = $data;
 
   if ($action == 'save_flush' || $action == 'save_db_flush') {
     intel()->quick_session_cache();
@@ -1011,11 +1017,19 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
       $pushes[] = array($k, $v);
     }
     $json = json_encode($pushes);
-    intel_setrawcookie('l10i_push', $json);
+    intel_setrawcookie('l10i_page_pushes', $json);
     unset($_SESSION['intel']['page_pushes']);
+    unset($_SESSION['intel']['page_pushes_cookie']);
   }
   elseif ($action == 'get_flush') {
     unset($_SESSION['intel']['page_pushes']);
+  }
+  elseif ($action == 'get_cookie') {
+    $ret = $_SESSION['intel']['page_pushes_cookie'];
+  }
+  elseif ($action == 'get_cookie_flush') {
+    $ret = $_SESSION['intel']['page_pushes_cookie'];
+    unset($_SESSION['intel']['page_pushes_cookie']);
   }
 
   return $ret;
@@ -2469,7 +2483,7 @@ function intel_setcookie($name, $value, $time = 0, $path = '/', $domain = '', $r
     $domain = get_option('intel_domain_name', '');
   }
   if (!$domain) {
-    $domain = '.' . intel()->domain;
+    $domain = '.';
   }
 
   //Intel_Df::watchdog('intel_setcookie', "$name\n$value\n$time\n$path\n$domain\n$raw");
@@ -2484,7 +2498,7 @@ function intel_setcookie($name, $value, $time = 0, $path = '/', $domain = '', $r
   }
 }
 
-function intel_setrawcookie($name, $value, $time = 0, $path = '/', $domain = '') {
+function intel_setrawcookie($name, $value, $time = 0, $path = '/', $domain = '.') {
   intel_setcookie($name, $value, $time, $path, $domain, 1);
 }
 

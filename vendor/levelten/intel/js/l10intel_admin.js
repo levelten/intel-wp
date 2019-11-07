@@ -25,6 +25,7 @@ function L10iAdmin(_ioq, config) {
     };
 
     this.bindEventCallback = function bindEventCallback(evtDef, $target) {
+//console.log('admin:bindEventCallback()', evtDef, $target);
         var evt = {};
         var options = {
             test: 1,

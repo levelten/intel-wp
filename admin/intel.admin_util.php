@@ -1,4 +1,7 @@
 <?php
+
+use function d7\db_query;
+
 /**
  * @file
  * Administration of visitors
@@ -28,7 +31,34 @@ function intel_util() {
  * Testing function
  */
 function intel_util_temp() {
+  intel_load_include('includes/intel.imapi');
 
+  $ga_tid = get_option('intel_ga_tid', '');
+  $apikey = get_option('intel_apikey', '');
+
+  $options = array(
+    'tid' => $ga_tid,
+    'apikey' => $apikey,
+  );
+  $imapi_property = intel_imapi_property_get($options);
+  intel_d($imapi_property);
+
+  return '';
+
+
+  return '';
+  $result = d7\db_query($sql, $data);
+  foreach ($result as $row) {
+    intel_d($row);
+  }
+
+
+  return '';
+  $visitor = Intel_Df::entity_get_controller('intel_visitor')->create();
+  intel_d($visitor);
+
+  $annotation = intel_annotation_construct();
+  intel_d($annotation);
   return 'OK';
 }
 
@@ -192,7 +222,7 @@ function intel_util_log_page($entity) {
   $output = '';
 
   if (intel_is_debug()) {
-    intel_d($entity->variables);
+    //intel_d($entity->variables);
   }
 
   $rows = array();
@@ -706,6 +736,16 @@ function intel_util_test_webform_page() {
 function intel_util_test_webform_form($form, &$form_state) {
 
   $account = wp_get_current_user();
+
+  $form_id = $form_state['build_info']['form_id'];
+  $form_def = array(
+    'formType' => 'intel_form',
+    'formId' => $form_id,
+    'formTitle' => ucwords(str_replace('_', ' ', $form_id)),
+    'selector' => "form#{$form_id}",
+    'trackView' => 1,
+  );
+  intel_add_page_intel_push(array('formtracker:trackForm', $form_def));
 
   $form['data.givenName'] = array(
     '#type' => 'textfield',

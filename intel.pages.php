@@ -106,6 +106,10 @@ function template_process_intel_shortcode(&$variables) {
 
 }
 
+function template_process_intel_bootstrap_card(&$variables) {
+
+}
+
 function template_process_intel_visitor_profile(&$variables) {
   //$visitor = $variables['elements']['#visitor'];
 

@@ -6,8 +6,10 @@
  * @author Tom McCracken <tomm@getlevelten.com>
  */
 
-include_once INTEL_DIR . 'includes/class-intel-form.php';
-include_once INTEL_DIR . 'includes/intel.annotation.php';
+//include_once INTEL_DIR . 'includes/class-intel-form.php';
+//include_once INTEL_DIR . 'includes/intel.annotation.php';
+intel_load_include('includes/class-intel-form');
+intel_load_include('includes/intel.annotation');
 
 function intel_admin_annotation_list_page() {
 
@@ -33,7 +35,7 @@ function intel_admin_annotation_list_page() {
     Intel_Df::t('Type'),
     Intel_Df::t('Summary'),
     array(
-      'data' => Intel_Df::t('Score ') . '&Delta;',
+      'data' => Intel_Df::t('Score') . ' &Delta;',
       'class' => array('text-right'),
     ),
 
@@ -104,6 +106,7 @@ function intel_annotation_page($annotation) {
   }
 
   $output = '';
+  $build = array();
 
   $timezone_info = intel_get_timezone_info();
 
@@ -112,40 +115,37 @@ function intel_annotation_page($annotation) {
 
   //$output = Intel_Df::render($form);
 
-  $output .= '<div class="card">';
-  $output .= '<div class="card-block">';
-  $output .= '<div class="row">';
-  $output .= '<div class="col-md-4">';
+  $rows = array();
+  $rows[] = array(
+    array('data' => t('Start time'), 'header' => TRUE),
+    date("m/d/Y H:i", $annotation->started + $timezone_info['offset']) . ' ' . $timezone_info['timezone_abv'] . ' - ' . $annotation->started,
+  );
+  $rows[] = array(
+    array('data' => t('Timezone'), 'header' => TRUE),
+    $timezone_info['timezone'] . ' (GMT ' . (($timezone_info['offset_hours'] >= 0) ? '+' : '') . $timezone_info['offset_hours'] . ')',
+  );
+  $rows[] = array(
+    array('data' => Intel_Df::t('Type'), 'header' => TRUE),
+    $annotation->type,
+  );
+  $rows[] = array(
+    array('data' => Intel_Df::t('Description'), 'header' => TRUE),
+    preg_replace('/\r\n|[\r\n]/', "<br />\n", $annotation->message),
+  );
 
-  $output .= '<div>';
-  $output .= '<dt>' . Intel_Df::t('Start time') . '</dt>';
-  $output .= '<dd>';
-  $output .= date("m/d/Y H:i", $annotation->started + $timezone_info['ga_offset']) . ' ' . $timezone_info['ga_timezone_abv'] . "\n<br />";
-  //$output .= '<small>' . date("m/d/Y H:i", $annotation->started  + $timezone_info['cms_offset']) . ' ' . $timezone_info['cms_timezone_abv'] . '</small>';
-  $output .= '</dd>';
-  $output .= '</div>';
+  $vars = array(
+    'rows' => $rows
+  );
+  $table = Intel_Df::theme('table', $vars);
 
-  $output .= '<div>';
-  $output .= '<dt>Type</dt>';
-  $output .= '<dd>' . $annotation->type . '</dd>';
-  $output .= '</div>';
+  $build['annotation_settings'] = array(
+    '#theme' => 'intel_bootstrap_card',
+    '#header' => Intel_Df::t('Settings'),
+    '#body' => $table,
+  );
 
-  $output .= '</div>';
-  $output .= '<div class="col-md-8">';
-
-  $output .= '<div>';
-  $output .= '<dt>Description</dt>';
-  $output .= '<dd>' . preg_replace('/\r\n|[\r\n]/', "<br />\n", $annotation->message) . '</dd>';
-  $output .= '</div>';
-
-  $output .= '</div>';
-  $output .= '</div>';
-  $output .= '</div>';
-  $output .= '</div>';
-
-  $output .= '<div class="card">';
-  $output .= '<h4 class="card-header">Analytics</h4>';
-
+  $body = '';
+  $footer = '';
   if (!empty($annotation->data['analytics'])) {
     $header = array(
       '',
@@ -250,9 +250,7 @@ function intel_annotation_page($annotation) {
       'header' => $header,
       'rows' => $rows,
     );
-
-
-    $output .= Intel_Df::theme('table', $vars);
+    $body = Intel_Df::theme('table', $vars);
 
     $timeframe_options = intel_annotation_period_options();
     $period_hrs = $annotation->analytics_period / 3600;
@@ -261,32 +259,41 @@ function intel_annotation_page($annotation) {
       $timeframe_label = $timeframe_options["$period_hrs"];
     }
 
-    $output .= '<div class="card-footer"><small>';
-    $output .= Intel_Df::t('Timeframe') . ': ';
-    $output .= $timeframe_label;
+    $footer .= Intel_Df::t('Timeframe') . ': ';
+    $footer .= $timeframe_label;
     if (isset($annotation->data['analytics_timeframe'])) {
       $tf = $annotation->data['analytics_timeframe'];
-      $output .= ' (' . Intel_Df::t('Before') . ': ' . date("m/d/Y H:i", $tf[0][0] + $timezone_info['ga_offset']) . ' - ' . date("m/d/Y H:i", $tf[0][1] + $timezone_info['ga_offset']);
-      $output .= ', ' . Intel_Df::t('After') . ': '  . ' ' . date("m/d/Y H:i", $tf[1][0] + $timezone_info['ga_offset']) . ' - ' . date("m/d/Y H:i", $tf[1][1] + $timezone_info['ga_offset']) . ')';
+      $footer .= ' (' . Intel_Df::t('Before') . ': ' . date("m/d/Y H:i", $tf[0][0] + $timezone_info['offset']) . ' - ' . date("m/d/Y H:i", $tf[0][1] + $timezone_info['offset']);
+      $footer .= ', ' . Intel_Df::t('After') . ': '  . ' ' . date("m/d/Y H:i", $tf[1][0] + $timezone_info['offset']) . ' - ' . date("m/d/Y H:i", $tf[1][1] + $timezone_info['offset']) . ')';
     }
-
   }
   else {
-    $output .= '<div class="card-block">' . Intel_Df::t('No analytics have been gathered on this annotation yet.') . '</div>';
-    $output .= '<div class="card-footer"><small>';
+    $footer .= Intel_Df::t('No analytics have been gathered on this annotation yet.');
   }
 
-  $output .= '<div>' . Intel_Df::l(Intel_Df::t('refresh data'), 'annotation/' . $annotation->aid . '/sync_ga') . '</div>';
-  $output .= '</small>';
-  $output .= '</div>';
-  $output .= '</div>';
+  $footer .= '<div>' . Intel_Df::l(Intel_Df::t('refresh data'), 'annotation/' . $annotation->aid . '/sync_ga') . '</div>';
 
+  /*
+  if (!empty($timezone_info['ga_timezone'])) {
+    $footer .= '<div>' . Intel_Df::t('All displayed times based on %timezone timezone set in Google Analytics.', array(
+        '%timezone' => $timezone_info['ga_timezone'],
+      )) . '</div>';
+  }
+  else {
+    $footer .= '<div>' . Intel_Df::t('All displayed times based on %timezone timezone.', array(
+        '%timezone' => $timezone_info['timezone'],
+      )) . '</div>';
+  }
+  */
 
+  $build['analytics'] = array(
+    '#theme' => 'intel_bootstrap_card',
+    '#header' => Intel_Df::t('Analytics'),
+    '#body' => $body,
+    '#footer' => $footer,
+  );
 
-
-  $output .= '<div>' . Intel_Df::t('All displayed times based on %timezone timezone set in Google Analytics.', array(
-    '%timezone' => $timezone_info['ga_timezone'],
-  )) . '</div>';
+  return $build;
 
 
   //return $form;

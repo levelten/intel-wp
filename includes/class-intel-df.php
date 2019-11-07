@@ -1105,7 +1105,13 @@ class Intel_Df  {
 		return ($a_weight < $b_weight) ? -1 : 1;
 	}
 
+  public static function entity_get_controller($entity_type) {
+    return intel()->get_entity_controller($entity_type);
+  }
 
+  public static function entity_get_info($entity_type = NULL) {
+    return intel()->entity_info($entity_type);
+  }
 
 	public static function format_date($time, $format = '') {
 		$formats = array(
@@ -1897,6 +1903,7 @@ class Intel_Df  {
 
 	public static function theme_table($variables) {
 		$defs = array(
+		  'header' => array(),
 			'rows' => array(),
 			'attributes' => array(),
 			'caption' => '',
@@ -1956,15 +1963,15 @@ class Intel_Df  {
 
 				// Build colgroup
 				if (is_array($cols) && count($cols)) {
-					$output .= ' <colgroup' . Intl_Df::drupal_attributes($attributes) . '>';
+					$output .= ' <colgroup' . Intel_Df::drupal_attributes($attributes) . '>';
 					$i = 0;
 					foreach ($cols as $col) {
-						$output .= ' <col' . Intl_Df::drupal_attributes($col) . ' />';
+						$output .= ' <col' . Intel_Df::drupal_attributes($col) . ' />';
 					}
 					$output .= " </colgroup>\n";
 				}
 				else {
-					$output .= ' <colgroup' . Intl_Df::drupal_attributes($attributes) . " />\n";
+					$output .= ' <colgroup' . Intel_Df::drupal_attributes($attributes) . " />\n";
 				}
 			}
 		}

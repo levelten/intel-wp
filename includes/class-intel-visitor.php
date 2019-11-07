@@ -400,28 +400,28 @@ class Intel_Visitor extends Intel_Entity  {
 
 		$this->setVar($scope, $namespace, '', $var);
 
-		// process with special identifiers
-		if ($prop_name == 'email') {
-			if (empty($this->email)) {
-				$this->setIdentifier('email', $values['@value']);
-				if (empty($this->contact_created)) {
-					$this->setContactCreated(REQUEST_TIME);
-				}
-			}
-		}
-		elseif ($prop_name == 'phone' || $prop_name == 'telephone' ) {
-			if (empty($this->phone)) {
-				$this->setIdentifier('phone', $values['@value']);
-				if (empty($this->contact_created)) {
-					$this->setContactCreated($this->intel->request_time);
-				}
-			}
-		}
-		elseif ($prop_name == 'name') {
-			if (empty($this->name)) {
-				$this->setName($values['@value']);
-			}
-		}
+    // process with special identifiers
+    if ($prop_name == 'email') {
+      if (empty($this->email) && !empty($values['@value'])) {
+        $this->setIdentifier('email', $values['@value']);
+        if (empty($this->contact_created)) {
+          $this->setContactCreated($this->intel->request_time);
+        }
+      }
+    }
+    elseif (($prop_name == 'phone' || $prop_name == 'telephone') && !empty($values['@value']) ) {
+      if (empty($this->phone)) {
+        $this->setIdentifier('phone', $values['@value']);
+        if (empty($this->contact_created)) {
+          $this->setContactCreated($this->intel->request_time);
+        }
+      }
+    }
+    elseif ($prop_name == 'name' && !empty($values['@value'])) {
+      if (empty($this->name)) {
+        $this->setName($values['@value']);
+      }
+    }
 	}
 	/**
 	 * TODO manage aliases

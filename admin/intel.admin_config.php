@@ -78,7 +78,7 @@ function intel_admin_settings($form, &$form_state) {
   $ga_profile = get_option('intel_ga_profile', array());
   $ga_viewid = get_option('intel_ga_view', '');
   $ga_profile_base = get_option('intel_ga_profile_base', array());
-
+intel_d($ga_profile);
   if (!empty($imapi_property) && (empty($ga_profile) || empty($ga_viewid))) {
     $ga_profile = $imapi_property['ga_profile'];
     $ga_viewid = $ga_profile['id'];

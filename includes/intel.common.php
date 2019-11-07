@@ -55,7 +55,6 @@ function intel_l_options_add_target ($target, $l_options = array()) {
 
 function intel_get_current_user() {
   if (INTEL_PLATFORM == 'wp') {
-    global $user;
     return wp_get_current_user();
   }
   else {
@@ -64,12 +63,25 @@ function intel_get_current_user() {
   }
 }
 
-function intel_get_user_id($user) {
+/**
+ * Returs a user id from a user or the current user if account is not provided.
+ *
+ * @param null $account
+ *
+ * @return bool
+ */
+function intel_get_user_id($account = NULL) {
+  // if user account not provided, use current user
+  if (empty($account)) {
+    $account = intel_get_current_user();
+  }
+
   if (INTEL_PLATFORM == 'wp') {
-    return isset($user->ID) ? $user->ID : FALSE;
+    return isset($account->ID) ? $account->ID : FALSE;
   }
   else {
-    return isset($user->uid) ? $user->uid : FALSE;
+
+    return isset($account->uid) ? $account->uid : FALSE;
   }
 }
 

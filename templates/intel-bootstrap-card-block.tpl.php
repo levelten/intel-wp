@@ -22,20 +22,9 @@
  * @see template_preprocess_user_profile_item()
  */
 ?>
-<?php if ($header || $body || $footer): ?>
-<div<?php print !empty($attributes) ? $attributes : ' class="card"'; ?>>
-  <?php if ($header): ?>
-    <div<?php print !empty($header_attributes) ? $header_attributes : ' class="card-header"'; ?>>
-      <?php print $header; ?>
-    </div>
-  <?php endif; ?>
-  <?php if ($body): ?>
-    <?php print $body; ?>
-  <?php endif; ?>
-  <?php if ($footer): ?>
-    <div<?php print !empty($footer_attributes) ? $footer_attributes : ' class="card-footer"'; ?>>
-      <?php print $footer; ?>
-    </div>
-  <?php endif; ?>
+<?php if () {
+
+}
+<div<?php print !empty(attributes) ? attributes : ' class="card-block"'; ?>>
+  <?php print $value; ?>
 </div>
-<?php endif; ?>

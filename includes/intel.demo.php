@@ -1178,6 +1178,16 @@ function intel_demo_contact_form($form, &$form_state, $options = array()) {
   $form_state['options'] = $options;
 
   $account = wp_get_current_user();
+  
+  $form_id = $form_state['build_info']['form_id'];
+  $form_def = array(
+    'formType' => 'intel_form',
+    'formId' => $form_id,
+    'formTitle' => ucwords(str_replace('_', ' ', $form_id)),
+    'selector' => "form#{$form_id}",
+    'trackView' => 1,
+  );
+  intel_add_page_intel_push(array('formtracker:trackForm', $form_def));
 
   $form['givenName'] = array(
     '#type' => 'textfield',

@@ -7,36 +7,40 @@ function L10iFormTracker(_ioq, config) {
 
     var ths = {};
 
-    this.formDefs = {};
+    this.formDefs = [];
+    this.formDefsIndex = {};
 
 
     this.init = function init() {
         var ths = this;
-        $('form').not('.formtracker-0').on('submit', ths.eventHandler);
+        //$('form').not('.formtracker-0').on('submit', ths.eventHandler);
         //$('a').on('mouseover', {eventType: 'click'}, ths.eventHandler); // for testing event sends
     };
 
-    ths.trackForm = function trackForm(def) {
+    this.trackForm = function trackForm(def) {
         if (ioq.isArray(def)) {
             for (var i = 0; i < def.length; i++) {
-                ths.trackFormInit(def[i]);
+                this.trackFormInit(def[i]);
             }
         }
         else {
-            ths.trackFormInit(def);
+            this.trackFormInit(def);
         }
     };
 
-    ths.trackFormInit = function trackFormInit(def) {
+    this.trackFormInit = function trackFormInit(def) {
         //console.log('trackFormInit()');
         //console.log(def);
+        var ths = _ioq.plugins.formtracker;
 
         var $obj, $this, $onObj, enable = 1, $dataField, def2;
+        var key = def.key || def.formId;
+
         if (ioq.isNull(def)) {
             def = {};
         }
-        if (!ioq.isNull(def.landingpage)) {
-            def.landingpage = ths.trackLandingpage(def.landingpage);
+        if (!ioq.isNull(def.landingpage) && !ioq.isNull(ioq.plugins.convtracker)) {
+            def.landingpage = ioq.plugins.convtracker.trackLandingpage(def.landingpage);
         }
 
         if (ioq.isNull(def.selector)) {
@@ -85,6 +89,15 @@ function L10iFormTracker(_ioq, config) {
             evtDef.nonInteraction = 1;
             io('event', evtDef);
         }
+        if ($onObj.length && def.trackSubmission) {
+            //delete def.trackView;
+            evtDef = ioq.objectMerge({}, def);
+            evtDef.eventCategory = 'Form submission';
+            evtDef.onEvent = 'submission';
+            evtDef.eid = 'formSubmission';
+            evtDef.nonInteraction = 1;
+            io('event', evtDef);
+        }
 
         /* Disabling logic until full conversion tracking can be implemented
         if (ioq.isNull(def.onEvent)) {
@@ -130,11 +143,19 @@ function L10iFormTracker(_ioq, config) {
             ths.setCookie('l10i_lf', ioq.settings.pageUri, 1);
         }
 
+
+        if (key) {
+            if (!ths.formDefsIndex[key]) {
+                ths.formDefsIndex[key] = ths.formDefs.length;
+                ths.formDefs.push(def);
+            }
+        }
+
         return def;
 
     };
 
-    ths.processFormSpecialFields = function (def, $obj, event) {
+    this.processFormSpecialFields = function (def, $obj, event) {
         var pf = 'io';
         if ($obj.is('form')) {
             // check if field has been set to not track
@@ -195,7 +216,6 @@ function L10iFormTracker(_ioq, config) {
 
     this.init();
 
-    return ths;
 }
 
 _ioq.push(['providePlugin', 'formtracker', L10iFormTracker, {}]);

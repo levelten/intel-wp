@@ -58,16 +58,69 @@ class Intel_Entity_Controller {
 	}
 
 	public function create(array $values = array()) {
-	  intel_d($values);
+    $values += array('is_new' => TRUE);
 		if (class_exists($this->entity_class)) {
 			$entity = new $this->entity_class($values, $this);
 		}
 		else {
 			$entity = new Intel_Entity($values, $this);
 		}
-		$entity->is_new = 1;
+
 		return $entity;
 	}
+
+  /**
+   * Implements EntityAPIControllerInterface.
+   *
+   * @return
+   *   A serialized string in JSON format suitable for the import() method.
+   */
+  public function export($entity, $prefix = '') {
+    $vars = get_object_vars($entity);
+    unset($vars['is_new']);
+    return entity_var_json_export($vars, $prefix);
+  }
+
+  /**
+   * Export a variable in pretty formatted JSON.
+   */
+  function entity_var_json_export($var, $prefix = '') {
+    if (is_array($var) && $var) {
+      // Defines whether we use a JSON array or object.
+      $use_array = ($var == array_values($var));
+      $output = $use_array ? "[" : "{";
+
+      foreach ($var as $key => $value) {
+        if ($use_array) {
+          $values[] = entity_var_json_export($value, '  ');
+        }
+        else {
+          $values[] = entity_var_json_export((string) $key, '  ') . ' : ' . entity_var_json_export($value, '  ');
+        }
+      }
+      // Use several lines for long content. However for objects with a single
+      // entry keep the key in the first line.
+      if (strlen($content = implode(', ', $values)) > 70 && ($use_array || count($values) > 1)) {
+        $output .= "\n  " . implode(",\n  ", $values) . "\n";
+      }
+      elseif (strpos($content, "\n") !== FALSE) {
+        $output .= " " . $content . "\n";
+      }
+      else {
+        $output .= " " . $content . ' ';
+      }
+      $output .= $use_array ? ']' : '}';
+    }
+    else {
+      //$output = Intel_Df::drupal_json_encode($var);
+      $output = json_encode($var);
+    }
+
+    if ($prefix) {
+      $output = str_replace("\n", "\n$prefix", $output);
+    }
+    return $output;
+  }
 
 	public function get_fields() {
 		return $this->fields;
@@ -306,53 +359,7 @@ class Intel_Entity_Controller {
 	  return $sql;
   }
 
-  public function loadByFilter($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
-    global $wpdb;
-
-    $sql = "
-		  SELECT *
-		  FROM {$wpdb->prefix}{$this->base_table}
-		";
-    $data = array();
-
-    if (!empty($filter['where'])) {
-      $where = $this->processWhere($filter['where'], $data);
-      if ($where) {
-        $sql .= "\n";
-        $sql .= "WHERE\n";
-        $sql .= $where;
-      }
-    }
-    if (!empty($filter['conditions'])) {
-      foreach ($filter['conditions'] AS $condition) {
-        if (count($condition) == 3) {
-          $query->condition($condition[0], $condition[1], $condition[2]);
-        }
-        else {
-          $query->condition($condition[0], $condition[1]);
-        }
-      }
-    }
-
-    if ($options['order_by']) {
-      $sql .= "\n";
-      $sql .= "ORDER BY {$options['order_by']}\n";
-    }
-
-    $sql .= "\n";
-    $sql .= "LIMIT %d";
-    $data[] = $limit;
-    if ($offset) {
-      $sql .= " OFFSET %d";
-      $data[] = $offset;
-    }
-
-    $results = $wpdb->get_results( $wpdb->prepare($sql, $data) );
-
-    return $results;
-  }
-
-	public function deleteOne($id) {
+  public function deleteOne($id) {
 		global $wpdb;
 		$wpdb->delete( $wpdb->prefix . $this->base_table, array( $this->key_id => $id ) );
   }

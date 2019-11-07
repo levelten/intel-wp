@@ -38,7 +38,7 @@ class Intel_Annotation_Controller extends Intel_Entity_Controller  {
 	public function load($ids, $conditions = array(), $reset = FALSE) {
 		global $wpdb;
 
-		$entities = parrent::load($ids, $conditions, $reset);
+		$entities = parent::load($ids, $conditions, $reset);
 
 		// create summary for annotation
 		foreach ($entities as $k => $v) {
@@ -50,7 +50,7 @@ class Intel_Annotation_Controller extends Intel_Entity_Controller  {
 
 	public static function sync_ga($annotation, $options = array()) {
 
-		include_once INTEL_DIR . 'includes/intel.annotation.php';
+		intel_load_include('includes/intel.annotation');
 
 		$available_period = intel_annotation_get_latest_available_period($annotation);
 
@@ -98,8 +98,9 @@ class Intel_Annotation_Controller extends Intel_Entity_Controller  {
 	}
 
 	public static function fetch_ga_data($annotation, $timeframe, $options = array()) {
-		require_once INTEL_DIR . "includes/intel.reports.php";
-		require_once INTEL_DIR . "includes/intel.ga.php";
+
+    intel_load_include('includes/intel.reports');
+    intel_load_include('includes/intel.ga');
 		intel_include_library_file('ga/class.ga_model.php');
 
 		$data = array();

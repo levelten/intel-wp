@@ -4307,7 +4307,7 @@ function intel_sync_visitordata_page($visitor = null, $count = 5) {
   return $output;
 }
 
-function intel_sync_visitordata($visitor, $options = array()) {
+function intel_sync_visitordata(IntelVisitor $visitor, $options = array()) {
   require_once Intel_Df::drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.php";
 
   if (!empty($_GET['debug'])) {
@@ -4578,6 +4578,24 @@ function intel_print_var($var, $console = FALSE) {
  */
 function intel_theme_info($themes = array()) {
   //$themes = array();
+  $themes['intel_bootstrap_card'] = array(
+    'variables' => array(
+      'header' => NULL,
+      'body' => NULL,
+      'footer' => NULL,
+    ),
+    'template' => 'intel-bootstrap-card',
+    'file' => 'intel.pages.php',
+  );
+  $themes['intel_bootstrap_card_block'] = array(
+    'variables' => array(
+      'value' => NULL,
+    ),
+    'template' => 'intel-bootstrap-card',
+    'file' => 'intel.pages.php',
+  );
+
+  // WP admin page element theming
   $themes['intel_page'] = array(
     'variables' => array(
       'title' => NULL,
@@ -4666,23 +4684,7 @@ function intel_theme_info($themes = array()) {
     'template' => 'intel-visitor-profile-item-list',
     'file' => 'intel.pages.php',
   );
-  $theme['bootstrap_card'] = array(
-    'variables' => array(
-      'header' => NULL,
-      'body' => NULL,
-      'footer' => NULL,
-    ),
-    'template' => 'intel-bootstrap-card',
-    'file' => 'intel.pages.php',
-  );
-  $theme['bootstrap_element'] = array(
-    'variables' => array(
-      'wrapper' => NULL,
-      'markup' => NULL,
-    ),
-    'template' => 'intel-bootstrap-element',
-    'file' => 'intel.pages.php',
-  );
+
   $themes['intel_visitor_profile_block'] = array(
     'render element' => 'element',
     'variables' => array(
@@ -5491,33 +5493,37 @@ function intel_get_timezone_info() {
 
   if (empty($timezone_info)) {
     $ga_profile = get_option('intel_ga_profile', array());
-    $timezone_info['ga_timezone'] = '';
-    $timezone_info['ga_offset'] = 0;
-    if (!empty($ga_profile['timezone'])) {
-      $timezone_info['ga_timezone'] = $ga_profile['timezone'];
-      $dtz = new DateTimeZone($timezone_info['ga_timezone']);
-      $time = new DateTime("now", $dtz);
-      $timezone_info['ga_timezone_abv'] = $time->format('T');
-      $timezone_info['ga_offset'] = $dtz->getOffset($time);
-      $timezone_info['ga_offset_hours'] = $timezone_info['ga_offset'] / 60 / 60;
-    }
 
-    $timezone_info['cms_timezone'] = get_option('timezone_string', '');
-    $timezone_info['cms_offset_hours'] = get_option('gmt_offset', '');
+    $timezone_info['timezone'] = '';
+    $timezone_info['timezone_abv'] = '';
+    $timezone_info['offset'] = 0;
+    $timezone_info['offset_hours'] = 0;
+
+    $timezone_info['timezone'] = $timezone_info['cms_timezone'] = get_option('timezone_string', '');
+    $timezone_info['offset_hours'] = $timezone_info['cms_offset_hours'] = get_option('gmt_offset', '');
 
     if (!empty($timezone_info['cms_timezone'])) {
       $dtz = new DateTimeZone($timezone_info['cms_timezone']);
       $time = new DateTime("now", $dtz);
-      $timezone_info['cms_timezone_abv'] = $time->format('T');
-      $timezone_info['cms_offset'] = $dtz->getOffset($time);
-      $timezone_info['cms_offset_hours'] = $timezone_info['cms_offset'] / 60 / 60;
+      $timezone_info['timezone_abv'] = $timezone_info['cms_timezone_abv'] = $time->format('T');
+      $timezone_info['offset'] = $timezone_info['cms_offset'] = $dtz->getOffset($time);
+      $timezone_info['offset_hours'] = $timezone_info['cms_offset_hours'] = $timezone_info['cms_offset'] / 60 / 60;
     }
     else if ($timezone_info['cms_offset_hours'] != '' ) {
-      $timezone_info['cms_offset_hours'] = (int) $timezone_info['cms_offset_hours'];
-      $timezone_info['cms_offset'] = $timezone_info['cms_offset_hours'] * 60 * 60;
+      $timezone_info['offset_hours'] = $timezone_info['cms_offset_hours'] = (int) $timezone_info['cms_offset_hours'];
+      $timezone_info['offset'] = $timezone_info['cms_offset'] = $timezone_info['cms_offset_hours'] * 60 * 60;
     }
     else {
       $timezone_info['cms_offset_hours'] = $timezone_info['cms_offset'] = 0;
+    }
+
+    if (!empty($ga_profile['timezone'])) {
+      $timezone_info['timezone'] = $timezone_info['ga_timezone'] = $ga_profile['timezone'];
+      $dtz = new DateTimeZone($timezone_info['ga_timezone']);
+      $time = new DateTime("now", $dtz);
+      $timezone_info['timezone_abv'] = $timezone_info['ga_timezone_abv'] = $time->format('T');
+      $timezone_info['offset'] = $timezone_info['ga_offset'] = $dtz->getOffset($time);
+      $timezone_info['offset_hours'] = $timezone_info['ga_offset_hours'] = $timezone_info['ga_offset'] / 60 / 60;
     }
   }
 

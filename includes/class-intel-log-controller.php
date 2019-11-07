@@ -40,8 +40,6 @@ class Intel_Log_Controller extends Intel_Entity_Controller  {
 	  $entity->link = substr($entity->link, 0, 255);
     $entity->hostname = substr($entity->hostname, 0, 128);
 
-    intel_d($entity);
-
     parent::save($entity);
 
     return $entity;

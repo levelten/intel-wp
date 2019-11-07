@@ -191,9 +191,11 @@ class Intel_Activator {
 
 		$sql = "CREATE TABLE $table_name (
     aid int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    uid int(11) NOT NULL DEFAULT '0',
     created int(10) UNSIGNED NOT NULL DEFAULT 0,
     updated int(10) UNSIGNED NOT NULL DEFAULT 0,
     started int(10) UNSIGNED NOT NULL DEFAULT 0,
+    transient_period int(10) UNSIGNED NOT NULL DEFAULT 0,
     ended int(10) UNSIGNED NOT NULL DEFAULT 0,
     analytics_period int(10) UNSIGNED NOT NULL DEFAULT 0,
     type varchar(128) NOT NULL DEFAULT '',
@@ -201,8 +203,9 @@ class Intel_Activator {
     variables longtext NOT NULL,
     data longtext NOT NULL,
     PRIMARY KEY (aid),
-    KEY timestamp (timestamp),
-    KEY type (type)
+    KEY started (started),
+    KEY analytics_period (analytics_period),
+    KEY type (type(14))
     ) $charset_collate;";
 
 		dbDelta( $sql );

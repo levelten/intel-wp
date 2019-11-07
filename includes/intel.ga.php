@@ -1091,22 +1091,24 @@ function intel_get_intel_event_info_default($event = array()) {
     );
   }
 
-
-  if (intel_is_extended()) {
-    $event['landing_page_view'] = array(
+  if (intel_is_intel_script_enabled('lptracker')) {
+    $event['landing_page_view'] = [
       'title' => Intel_Df::t('Landing page view'),
       'description' => Intel_Df::t('Landing page pageview'),
       //'event' => 'pageshow',
-    );
-    $event['landing_page_conversion'] = array(
+    ];
+    $event['landing_page_conversion'] = [
       'title' => Intel_Df::t('Landing page conversion'),
       'description' => Intel_Df::t('Form submission from a landing page'),
       'valued_event' => 1,
       'value' => 0,
-    );
+    ];
+  }
+
+  if (intel_is_intel_script_enabled('ctatracker')) {
     $event['cta_view'] = array(
-      'title' => Intel_Df::t('CTA view'),
-      'description' => Intel_Df::t('Call to action impression'),
+      'title' => t('CTA view'),
+      'description' => t('Call to action impression'),
     );
     $event['cta_click'] = array(
       'title' => Intel_Df::t('CTA click'),
@@ -1121,20 +1123,6 @@ function intel_get_intel_event_info_default($event = array()) {
       'value' => 0,
     );
   }
-
-  /*
-  $event['cta_click'] = array(
-    'title' => Intel_Df::t('CTA click'),
-    'description' => Intel_Df::t('Call to action is clicked'),
-    'mode' => 'valued',
-    //'valued_event' => 1,
-    'value' => 0,
-    'selector' => '.track-cta-click',
-    'on_event' => 'click',
-    'enable_all_pages' => 1,
-    'js_settings' => 1,
-  );
-  */
 
   if (intel_is_intel_script_enabled('linktracker')) {
 
