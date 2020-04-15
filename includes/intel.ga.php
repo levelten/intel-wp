@@ -4803,7 +4803,7 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
     'lasthit' => 0,
   );
 
-  list($start_date, $end_date, $number_of_days) = _intel_get_report_dates("-1 year", "Today");
+  list($start_date, $end_date, $number_of_days) = _intel_get_report_dates("-1 year", "Today 23:59");
   $cache = array(
     'refresh' => 1,
   );
@@ -4816,6 +4816,7 @@ function intel_fetch_analytics_visitor_meta_data($vtkids) {
     'mode' => 'visitor',
     'segment' => 'sessions::condition::ga:dimension5==' . implode(',ga:dimension5==', $vtkids),
   );
+
   $visits = intel_fetch_analytics_visits($options);
 
   $score_components = '';
@@ -4922,7 +4923,7 @@ function intel_fetch_analytics_visits($options = array()) {
     $request['sort_metric'] = '';
 
     $data = intel_ga_api_data($request, $cache_options);
-    //dsm($request); dsm($data);
+    intel_d($request); intel_d($data);
     $rows = intel_get_ga_feed_rows($data);
     if (!empty($rows) && is_array($rows)) {
       foreach ($rows AS $row) {

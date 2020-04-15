@@ -103,18 +103,30 @@ function intel_work_sync_visitor_request_queue($limit = 10, $runtime = 60) {
   return $items;
 }
 
-add_filter( 'intel_sync_visitor', 'intel_ga_sync_visitordata', 5, 2);
+add_filter( 'intel_sync_visitor', 'intel_intel_sync_visitor', 5, 2);
+function intel_intel_sync_visitor(IntelVisitor $visitor, $options = array()) {
+  $visitor = intel_ga_sync_visitor($visitor, $options);
+  //$visitor = intel_l10iapi_sync_visitordata($visitor, $options);
+
+  return $visitor;
+}
+
+//add_filter( 'intel_sync_visitor', 'intel_ga_sync_visitordata', 5, 2);
 /**
  * Implements intel_sync_visitordata
  * @param unknown_type $visitor
  */
-function intel_ga_sync_visitordata($visitor, $options = array()) {
-Intel_Df::watchdog('intel_ga_sync_visitordata options', print_r($options, 1));
+function intel_ga_sync_visitor($visitor, $options = array()) {
+//$args = func_get_args();
+//Intel_Df::watchdog('intel_ga_sync_visitordata', 'args', $args);
+  intel_d($visitor);
+  intel_d($options);
   if (!empty($options['processes']) && !in_array('ga', $options['processes'])) {
     return $visitor;
   }
 
-  require_once INTEL_DIR . "includes/intel.ga.php";
+  intel_load_include('includes/intel.ga');
+
   $vtkids = array();
 
   if (!empty($visitor->identifiers['vtk']) && is_array($visitor->identifiers['vtk'])) {
@@ -130,6 +142,7 @@ Intel_Df::watchdog('intel_ga_sync_visitordata options', print_r($options, 1));
   }
 
   $gadata = intel_fetch_analytics_visitor_meta_data($vtkids);
+  intel_d($gadata);
   if (!empty($_GET['debug'])) {
     dpm('gadata'); dpm($gadata);//
   }
@@ -184,7 +197,7 @@ function intel_sync_fullcontact_page($vtk) {
   return $output;
 }
 
-add_filter( 'intel_sync_visitor', 'intel_l10iapi_sync_visitordata', 10, 2);
+//add_filter( 'intel_sync_visitor', 'intel_l10iapi_sync_visitordata', 10, 2);
 function intel_l10iapi_sync_visitordata($visitor, $options = array()) {
   if (!empty($options['processes']) && !in_array('l10iapi', $options['processes'])) {
     return $visitor;

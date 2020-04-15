@@ -27,7 +27,7 @@
  * @subpackage Intl/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-class Intel_Submission extends Intel_Entity {
+class IntelSubmission extends IntelEntity {
 
   public static function build_content(&$entity, $view_mode = 'full', $langcode = NULL) {
     if (!isset($langcode)) {

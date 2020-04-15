@@ -27,7 +27,7 @@
  * @subpackage Intl/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-class Intel_Log_Controller extends Intel_Entity_Controller  {
+class IntelLogController extends IntelEntityController  {
 
 	public function __construct($entityType, $entity_info) {
 		parent::__construct($entityType, $entity_info);

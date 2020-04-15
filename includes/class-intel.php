@@ -283,8 +283,10 @@ class Intel {
 		/**
 		 * Crud super class
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-intel-entity-controller.php';
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-intel-entity.php';
+		//require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-intel-entity-controller.php';
+		//require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-intel-entity.php';
+    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/intel.IntelEntityController.php';
+    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/intel.IntelEntity.php';
 
 		$this->loader = new Intel_Loader();
 	}
@@ -507,13 +509,13 @@ class Intel {
 	}
 
 	public function quick_session_init($options = array()) {
-		include_once INTEL_DIR . 'includes/class-intel-visitor.php';
+		include_once INTEL_DIR . 'includes/intel.IntelVisitor.php';
 
 		$_SESSION['intel'] = !empty($_SESSION['intel']) ? $_SESSION['intel'] : array();
 
-		$this->vtk = Intel_Visitor::extractVtk();
+		$this->vtk = IntelVisitor::extractVtk();
 
-		$this->gacid = Intel_Visitor::extractCid();
+		$this->gacid = IntelVisitor::extractCid();
 
 		$this->session_hash = !empty($this->vtk) ? $this->vtk : $this->gacid;
 

@@ -27,7 +27,7 @@
  * @subpackage Intl/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-class Intel_Entity_Controller {
+class IntelEntityController {
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -50,7 +50,7 @@ class Intel_Entity_Controller {
 	public function __construct($entityType, $entity_info) {
 		$this->entity_type = $entityType;
 		$this->entity_info = $entity_info;
-		$this->entity_class = !empty($entity_info['entity class']) ? $entity_info['entity class'] : 'Intel_Entity';
+		$this->entity_class = !empty($entity_info['entity class']) ? $entity_info['entity class'] : 'IntelEntity';
 		$this->base_table = $entity_info['base table'];
 
 		$this->fields = $entity_info['fields'];
@@ -63,7 +63,7 @@ class Intel_Entity_Controller {
 			$entity = new $this->entity_class($values, $this);
 		}
 		else {
-			$entity = new Intel_Entity($values, $this);
+			$entity = new IntelEntity($values, $this);
 		}
 
 		return $entity;

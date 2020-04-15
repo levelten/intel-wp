@@ -59,7 +59,7 @@ class Intel_Visitor_Page  {
 		}
 
 		// Retrieve all profile fields and attach to $entity->content.
-		Intel_Visitor::build_content($entity);
+		IntelVisitor::build_content($entity);
 
 		$build = $entity->content;
 		$build = array(

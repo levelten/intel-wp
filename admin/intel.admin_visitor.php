@@ -528,7 +528,7 @@ function intel_visitor_page($entity) {
   }
 
   // Retrieve all profile fields and attach to $entity->content.
-  Intel_Visitor::build_content($entity);
+  IntelVisitor::build_content($entity);
 
   $build = $entity->content;
   $build = array(

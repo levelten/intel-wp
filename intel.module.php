@@ -2458,8 +2458,8 @@ function intel_entity_info($info = array()) {
   $info['intel_visitor'] = array(
     // A human readable label to identify our entity.
     'label' => Intel_Df::t('Intel visitor'),
-    'entity class' => 'Intel_Visitor',
-    'controller class' => 'Intel_Visitor_Controller',
+    'entity class' => 'IntelVisitor',
+    'controller class' => 'IntelVisitorController',
     'base table' => 'intel_visitor',
     'label callback' => 'intel_visitor_label',
     'uri callback' => 'intel_visitor_uri',
@@ -2469,8 +2469,8 @@ function intel_entity_info($info = array()) {
       'id' => 'vid',
     ),
     'file' => array(
-      'includes/class-intel-visitor.php',
-      'includes/class-intel-visitor-controller.php',
+      'includes/intel.IntelVisitor.php',
+      'includes/intel.IntelVisitorController.php',
     ),
     'fields' => array(
       'vid' => null,
@@ -2526,8 +2526,8 @@ function intel_entity_info($info = array()) {
   $info['intel_submission'] = array(
     // A human readable label to identify our entity.
     'label' => Intel_Df::t('Intel submission'),
-    'entity class' => 'Intel_Submission',
-    'controller class' => 'Intel_Submission_Controller',
+    'entity class' => 'IntelSubmission',
+    'controller class' => 'IntelSubmissionController',
     'base table' => 'intel_submission',
     'label callback' => 'intel_submission_label',
     'uri callback' => 'intel_submission_uri',
@@ -2537,8 +2537,8 @@ function intel_entity_info($info = array()) {
       'id' => 'sid',
     ),
     'file' => array(
-      'includes/class-intel-submission.php',
-      'includes/class-intel-submission-controller.php',
+      'includes/intel.IntelSubmission.php',
+      'includes/intel.IntelSubmissionController.php',
     ),
     'fields' => array(
       'sid' => null,
@@ -2567,8 +2567,8 @@ function intel_entity_info($info = array()) {
   $info['intel_annotation'] = array(
     // A human readable label to identify our entity.
     'label' => Intel_Df::t('Intel annotation'),
-    'entity class' => 'Intel_Annotation',
-    'controller class' => 'Intel_Annotation_Controller',
+    'entity class' => 'IntelAnnotation',
+    'controller class' => 'IntelAnnotationController',
     'base table' => 'intel_annotation',
     'label callback' => 'intel_annotation_label',
     'uri callback' => 'intel_annotation_uri',
@@ -2578,8 +2578,8 @@ function intel_entity_info($info = array()) {
       'id' => 'aid',
     ),
     'file' => array(
-      'includes/class-intel-annotation.php',
-      'includes/class-intel-annotation-controller.php',
+      'includes/intel.IntelAnnotation.php',
+      'includes/intel.IntelAnnotationController.php',
     ),
     'fields' => array(
       'aid' => null,
@@ -2598,8 +2598,8 @@ function intel_entity_info($info = array()) {
   $info['intel_log'] = array(
     // A human readable label to identify our entity.
     'label' => Intel_Df::t('Intel log'),
-    'entity class' => 'Intel_Log',
-    'controller class' => 'Intel_Log_Controller',
+    'entity class' => 'IntelLog',
+    'controller class' => 'IntelLogController',
     'base table' => 'intel_log',
     'label callback' => 'intel_log_label',
     'uri callback' => 'intel_log_uri',
@@ -2609,8 +2609,8 @@ function intel_entity_info($info = array()) {
       'id' => 'lid',
     ),
     'file' => array(
-      'includes/class-intel-log.php',
-      'includes/class-intel-log-controller.php',
+      'includes/intel.IntelLog.php',
+      'includes/intel.IntelLogController.php',
     ),
     'fields' => array(
       'lid' => null,
@@ -4271,7 +4271,7 @@ function intel_taxonomy_vocabulary_delete($vocabulary) {
  * @return string
  */
 function intel_sync_visitordata_page($visitor = null, $count = 5) {
-  require_once Intel_Df:: drupal_get_path('module', 'intel') . "/includes/intel.visitor_sync.php";
+  intel_load_include('includes/intel.visitor_sync');
 
   $output = '';
   if ($visitor) {

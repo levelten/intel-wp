@@ -13,6 +13,8 @@
  * @subpackage Intl/includes
  */
 
+include_once INTEL_DIR . 'includes/intel.annotation.php';
+
 /**
  * The core plugin class.
  *
@@ -27,6 +29,15 @@
  * @subpackage Intl/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-class Intel_Log extends Intel_Entity {
+class IntelAnnotation extends IntelEntity {
+
+
+  public function label() {
+    return intel_annotation_format_summary($this->message);
+  }
+
+  public function uri() {
+    return 'annotation/' . $this->aid;
+  }
 
 }

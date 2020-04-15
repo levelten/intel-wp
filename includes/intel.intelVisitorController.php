@@ -27,7 +27,7 @@
  * @subpackage Intl/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-class Intel_Visitor_Controller extends Intel_Entity_Controller  {
+class IntelVisitorController extends IntelEntityController  {
 
 	public $idType = '';
 
@@ -78,8 +78,8 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 			$vtk = '';
 			$gacid = '';
 			if ($values['id'] == 'user') {
-				$vtk = Intel_Visitor::extractVtk();
-				$gacid = Intel_Visitor::extractCid();
+				$vtk = IntelVisitor::extractVtk();
+				$gacid = IntelVisitor::extractCid();
 
 				if ($uid = get_current_user_id()) {
 					$values['uid'] = $uid;
@@ -101,6 +101,17 @@ class Intel_Visitor_Controller extends Intel_Entity_Controller  {
 				$values['identifiers']['gacid'] = array();
 				$values['identifiers']['gacid'][] = $gacid;
 			}
+      if ($vtk && $gacid) {
+        if (empty($values['data']['gacid_log'])) {
+          $values['data']['gacid_log'] = array();
+        }
+        if (empty($values['data']['gacid_log'][$gacid])) {
+          $values['data']['gacid_log'][".$gacid"] = array();
+        }
+        $values['data']['gacid_log'][".$gacid"]['_created'] = REQUEST_TIME;
+        $values['data']['gacid_log'][".$gacid"]['gacid'] = $gacid;
+        $values['data']['gacid_log'][".$gacid"]['vtk'] = $vtk;
+      }
 		}
 
 

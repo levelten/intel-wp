@@ -541,7 +541,7 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   }
 
   // ? not sure if this is needed or enhances performance
-  $created = Intel_Entity::entity_get($entity_type, $entity, 'created');
+  $created = IntelEntity::entity_get($entity_type, $entity, 'created');
   if (isset($created)) {
     $val = date('YmdHiw', $created);
     if (empty($page_attrs['pd']) || ($page_attrs['pd'] != $val)) {
@@ -584,7 +584,7 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
   
   // Only load URI if entity has been created (has ID).
   if ($entity_id) {
-    $uri = Intel_Entity::entity_uri($entity_type, $entity);
+    $uri = IntelEntity::entity_uri($entity_type, $entity);
     if (!empty($uri['id'])) {
       $page_attrs['ri'] = $uri['id'];
     }
@@ -636,7 +636,7 @@ function intel_get_entity_intel_attributes($entity = '', $entity_type = '', $inc
     if ($key == 1) {
       $key = 'a';
     }
-    $author_id = Intel_Entity::entity_get($entity_type, $entity, 'author_id');
+    $author_id = IntelEntity::entity_get($entity_type, $entity, 'author_id');
     $page_attrs[$key] = $author_id;
     //$page_ld['author'] = $base_path . "user/" . $entity->uid;
 
@@ -1692,7 +1692,7 @@ function intel_check_form_submission($page) {
   return;
 
   include_once INTEL_DIR . 'includes/class-intel-visitor.php';
-  $vtk = Intel_Visitor::extractVtk();
+  $vtk = IntelVisitor::extractVtk();
 
   $api_level = intel_api_level();
 
@@ -2331,7 +2331,7 @@ Intel_Df::watchdog('intel_process_form', 'vars', $vars);
     }
   }
 
-  //$userId = Intel_Visitor::extractUserId();
+  //$userId = IntelVisitor::extractUserId();
 
   //intel_set_ga_userid($visitor);
   /*
@@ -2559,13 +2559,13 @@ function intel_visitor_sync_user($account) {
 
     // if account is currently logged in user, set $vtk
     // otherwise another user is saving user data
-    $vtk = ($uid && ($user->uid == $account->uid)) ? Intel_Visitor::extractVtk() : '';
+    $vtk = ($uid && ($user->uid == $account->uid)) ? IntelVisitor::extractVtk() : '';
   }
   elseif (INTEL_PLATFORM == 'wp') {
     $uid = $account->ID;
     $email = $account->user_email;
     $name = $account->display_name;
-    $vtk = Intel_Visitor::extractVtk();
+    $vtk = IntelVisitor::extractVtk();
   }
 
 
@@ -2733,7 +2733,7 @@ add_action( 'comment_post', 'intel_comment_post', 10, 3 );
 function intel_comment_post( $comment_ID, $comment_approved, $commentdata = array() ) {
 
   // don't save "visitors" that don't have a vtk. They are likely spam bots
-  $vtk = Intel_Visitor::extractVtk();
+  $vtk = IntelVisitor::extractVtk();
   if (empty($vtk)) {
     return;
   }

@@ -27,7 +27,7 @@
  * @subpackage Intel/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-class Intel_Visitor extends Intel_Entity  {
+class IntelVisitor extends IntelEntity  {
 
 	// holds the apiVisitor data
 	public $apiVisitor;
@@ -526,6 +526,10 @@ class Intel_Visitor extends Intel_Entity  {
 				$this_vid = $this->vid;
 				$dup_vid = $dup->vid;
 				$this->mergeDupVisitor($dup, $merge_dir);
+        // if this has vid remove is_new status;
+        if ($this->vid && !empty($this->is_new)) {
+          unset($this->is_new);
+        }
 				// if dup has different vid, delete it and make sure merged data is saved
 				if ($merge_dir) {
 					if ($merge_dir == 'into_this') {
@@ -535,9 +539,6 @@ class Intel_Visitor extends Intel_Entity  {
 						intel_visitor_delete($this_vid);
 					}
 					$this->save();
-				}
-				if ($this->vid && !empty($this->is_new)) {
-					unset($this->is_new);
 				}
 			}
 		}

@@ -27,7 +27,7 @@
  * @subpackage Intl/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-interface Intel_Entity_Interface {
+interface IntelEntityInterface {
 	/*
 	 * Defines the table structure and default values
 	 *
@@ -37,7 +37,7 @@ interface Intel_Entity_Interface {
 	public static function fields();
 }
 
-class Intel_Entity {
+class IntelEntity {
 
 	protected $id;
 

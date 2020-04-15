@@ -371,7 +371,7 @@ class Intel_Admin {
 					}
 				}
                 else if (!empty($path_args[1]) && $path_args[1] == 'util') {
-                  if ($path_args[2] == 'log') {
+                  if (!empty($path_args[2]) && $path_args[2] == 'log') {
                     $bc_title = Intel_Df::t('Log');
                   }
                   if (!empty($bc_title)) {
@@ -497,7 +497,7 @@ class Intel_Admin {
                         );
                         $a = array_slice($path_args, 0, $load_index + 1);
                         $breadcrumbs[] = array(
-                            'text' => ($entity instanceof Intel_Entity) ? $entity->label() : $entity['title'],
+                            'text' => ($entity instanceof IntelEntity) ? $entity->label() : $entity['title'],
                             //'path' => Intel_Df::url(implode('/', $a)),
                         );
                     }

@@ -27,12 +27,12 @@
  * @subpackage Intl/includes
  * @author     Tom McCracken <tomm@getlevelten.com>
  */
-class Intel_Submission_Controller extends Intel_Entity_Controller  {
+class IntelSubmissionController extends IntelEntityController  {
 
 	public function __construct($entityType, $entity_info) {
 		parent::__construct($entityType, $entity_info);
 
-		add_filter('intel_sync_submission', 'Intel_Submission_Controller::sync_ga');
+		add_filter('intel_sync_submission', 'IntelSubmissionController::sync_ga');
 	}
 
 	public static function sync_ga($submission) {
