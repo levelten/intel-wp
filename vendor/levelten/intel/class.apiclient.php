@@ -75,9 +75,9 @@ class ApiClient {
       $data_str = substr($data_str, 0, -1);
     }
     if (!empty($_GET['debug'])) {
-      Debug::printVar($url);
-      Debug::printVar($params);
-      Debug::printVar($data);
+      //Debug::printVar($url);
+      //Debug::printVar($params);
+      //Debug::printVar($data);
     }
     if ($this->apiUrlCallMethod == 'none') {
       $retjson = '{}';
@@ -162,7 +162,7 @@ class ApiClient {
       }
       $ret = json_decode($response, true);
       if (!empty($_GET['debug'])) {
-        Debug::printVar($ret);
+        //Debug::printVar($ret);
       }
       if (empty($ret['status'])) {
         $msg = !empty($ret['message']) ? $ret['message'] : $response;

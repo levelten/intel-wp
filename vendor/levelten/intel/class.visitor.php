@@ -61,8 +61,8 @@ class ApiVisitor {
       return '';
     }
     $cid = explode('.', $cid);
-    if (!empty($cid[2])) {
-      return $cid[2];
+    if (!empty($cid[2]) && !empty($cid[3])) {
+      return $cid[2] . '.' . $cid[3];
     }
     return '';
   }
