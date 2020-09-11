@@ -119,8 +119,6 @@ function intel_intel_sync_visitor(IntelVisitor $visitor, $options = array()) {
 function intel_ga_sync_visitor($visitor, $options = array()) {
 //$args = func_get_args();
 //Intel_Df::watchdog('intel_ga_sync_visitordata', 'args', $args);
-  intel_d($visitor);
-  intel_d($options);
   if (!empty($options['processes']) && !in_array('ga', $options['processes'])) {
     return $visitor;
   }
@@ -142,7 +140,6 @@ function intel_ga_sync_visitor($visitor, $options = array()) {
   }
 
   $gadata = intel_fetch_analytics_visitor_meta_data($vtkids);
-  intel_d($gadata);
   if (!empty($_GET['debug'])) {
     dpm('gadata'); dpm($gadata);//
   }

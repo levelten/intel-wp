@@ -213,9 +213,8 @@ function intel_ga_explorer_report($form) {
       $dates['ga_end_date_hour_minute'] = date('YmdHi', $dates['ga_end_date']);
       $dates['ga_end_date_readable'] = date('D m/d/Y H:i', $dates['ga_end_date']);
       $tzi = $dates['timezone_info'];
-intel_d($dates);
 
-      intel_d("Annotation datetime: {$dates['ga_start_date_readable']} ({$tzi['ga_timezone_abv']}) - {$dates['ga_end_date_readable']} ({$tzi['ga_timezone_abv']})");
+      //intel_d("Annotation datetime: {$dates['ga_start_date_readable']} ({$tzi['ga_timezone_abv']}) - {$dates['ga_end_date_readable']} ({$tzi['ga_timezone_abv']})");
 
       if (!isset($req['filters'])) {
         $req['filters'] = '';

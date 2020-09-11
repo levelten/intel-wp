@@ -75,8 +75,7 @@ function intel_imapi_property_get($options = array()) {
   $data = array(
     'apikey' => $vars['apikey'],
   );
-intel_d($params);
-intel_d($data);
+
   try {
     $response = $apiclient->getJSON('property/get', $params, $data);
   }

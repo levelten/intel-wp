@@ -31,35 +31,8 @@ function intel_util() {
  * Testing function
  */
 function intel_util_temp() {
-  intel_load_include('includes/intel.imapi');
-
-  $ga_tid = get_option('intel_ga_tid', '');
-  $apikey = get_option('intel_apikey', '');
-
-  $options = array(
-    'tid' => $ga_tid,
-    'apikey' => $apikey,
-  );
-  $imapi_property = intel_imapi_property_get($options);
-  intel_d($imapi_property);
 
   return '';
-
-
-  return '';
-  $result = d7\db_query($sql, $data);
-  foreach ($result as $row) {
-    intel_d($row);
-  }
-
-
-  return '';
-  $visitor = Intel_Df::entity_get_controller('intel_visitor')->create();
-  intel_d($visitor);
-
-  $annotation = intel_annotation_construct();
-  intel_d($annotation);
-  return 'OK';
 }
 
 /**

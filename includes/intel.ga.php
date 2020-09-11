@@ -4923,7 +4923,7 @@ function intel_fetch_analytics_visits($options = array()) {
     $request['sort_metric'] = '';
 
     $data = intel_ga_api_data($request, $cache_options);
-    intel_d($request); intel_d($data);
+
     $rows = intel_get_ga_feed_rows($data);
     if (!empty($rows) && is_array($rows)) {
       foreach ($rows AS $row) {

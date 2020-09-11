@@ -94,7 +94,6 @@ class IntelVisitor extends IntelEntity  {
 
 		if (class_exists('\Kint\Parser\BlacklistPlugin')) {
       Kint\Parser\BlacklistPlugin::$shallow_blacklist[] = 'Intel';
-      intel_d('YES');
     }
 	}
 

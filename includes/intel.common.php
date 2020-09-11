@@ -92,7 +92,7 @@ function intel_get_user_id($account = NULL) {
  * @return mixed
  */
 function intel_format_un($name) {
-  return str_replace('-', '_', strtolower(drupal_clean_css_identifier($name)));
+  return str_replace('-', '_', strtolower(Intel_Df::drupal_clean_css_identifier($name)));
 }
 
 /**

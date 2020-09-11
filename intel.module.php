@@ -5306,14 +5306,17 @@ function intel_get_imapi_url($component = '') {
 
   if (empty($url_obj)) {
     $url = get_option('intel_imapi_url', '');
-    $a = explode('//', $url);
-    if (count($a) == 1) {
-      $url = '//' . $url;
-    }
 
-    if (!$url) {
+    if ($url) {
+      $a = explode('//', $url);
+      if (count($a) == 1) {
+        $url = '//' . $url;
+      }
+    }
+    else {
       $url = INTEL_IMAPI_URL;
     }
+
     $url_obj = parse_url($url);
   }
 

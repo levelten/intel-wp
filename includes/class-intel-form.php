@@ -1197,7 +1197,7 @@ class Intel_Form  {
 				// length if it's a string, and the item count if it's an array.
 				// An unchecked checkbox has a #value of integer 0, different than string
 				// '0', which could be a valid value.
-				$is_empty_multiple = (!count($elements['#value']));
+				$is_empty_multiple = (is_array($elements['#value']) && !count($elements['#value']));
 				$is_empty_string = (is_string($elements['#value']) && strlen(trim($elements['#value'])) == 0);
 				$is_empty_value = ($elements['#value'] === 0);
 				if ($is_empty_multiple || $is_empty_string || $is_empty_value) {
