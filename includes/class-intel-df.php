@@ -1251,7 +1251,7 @@ class Intel_Df  {
 
 		// The base_url might be rewritten from the language rewrite in domain mode.
 		if (!isset($options['base_url'])) {
-			if (isset($options['https']) && variable_get('https', FALSE)) {
+			if (isset($options['https']) && get_option('https', FALSE)) {
 				if ($options['https'] === TRUE) {
 					$options['base_url'] = $base_secure_url;
 					$options['absolute'] = TRUE;
