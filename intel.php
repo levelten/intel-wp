@@ -33,6 +33,10 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+//define('SCRIPT_DEBUG', true);
+//define( 'WP_DEBUG', true );
+//define('WP_DEBUG_LOG', 1);
+
 define('INTEL_VER', '1.3.4-dev');
 
 /*******************************************

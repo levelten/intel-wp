@@ -96,7 +96,13 @@ class Intel_Public {
 		 * class.
 		 */
 
-		// core js support functions
+
+		// don't add public scripts if in framework mode
+    if (intel_is_framework()) {
+      return;
+    }
+
+    // core js support functions
 		wp_register_script('intel', INTEL_URL . 'js/intel.js', array('jquery'), $this->version, true);
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/intel-public.js', array( 'jquery' ), $this->version, false );

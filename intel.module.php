@@ -1127,18 +1127,6 @@ function intel_menu($items = array()) {
     'type' => Intel_Df::MENU_DEFAULT_LOCAL_TASK,
   );
 
-  /*
-  $items['admin/util/log'] = array(
-    'title' => 'Messages',
-    'description' => 'View messages log',
-    'page callback' => 'intel_util_log_page',
-    'access callback' => 'user_access',
-    'access arguments' => array('admin intel'),
-    'type' => Intel_Df::MENU_LOCAL_TASK,
-    'file' => 'admin/intel.admin_util.php',
-  );
-  */
-
   $items['admin/util/update'] = array(
     'title' => 'Update',
     'description' => 'View and run plugin updates',
@@ -1157,6 +1145,7 @@ function intel_menu($items = array()) {
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_TASK,
     'file' => 'admin/intel.admin_util.php',
+    'intel_install_access' => 'active',
   );
 
   $items['admin/util/log/%intel_log'] = array(
@@ -1168,6 +1157,7 @@ function intel_menu($items = array()) {
     'access arguments' => array('admin intel'),
     'type' => Intel_Df::MENU_LOCAL_TASK,
     'file' => 'admin/intel.admin_util.php',
+    'intel_install_access' => 'active',
   );
 
   $items['admin/util/update/run'] = array(
@@ -2436,6 +2426,9 @@ function intel_is_framework() {
 
   if (!isset($flag)) {
     $flag = (boolean) get_option('intel_framework_mode', FALSE);
+    if (intel()->is_network_framework_mode) {
+      $flag = TRUE;
+    }
   }
 
 
@@ -3875,6 +3868,9 @@ function _intel_intel_script_info($info = array()) {
  * @return bool
  */
 function intel_is_intel_script_enabled($name) {
+  if (intel_is_framework()) {
+    return 0;
+  }
   $scripts_enabled = get_option('intel_intel_scripts_enabled', array());
   if (isset($scripts_enabled[$name])) {
     return !empty($scripts_enabled[$name]) ? 1 : 0;
@@ -4365,9 +4361,11 @@ function intel_cron_queue() {
 
     $cq_item = $queue->claimItem();
 
-    $func = $info['worker callback'];
-    $func($cq_item['data']);
-    $queue->deleteItem($cq_item);
+    if (!empty($cq_item)) {
+      $func = $info['worker callback'];
+      $func($cq_item['data']);
+      $queue->deleteItem($cq_item);
+    }
   }
 }
 

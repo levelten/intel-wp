@@ -166,13 +166,13 @@ class Intel_Df  {
 		$current_url = home_url(add_query_arg(array(),$wp->request));
 
 
-		Intel_Df::watchdog('$request_uri', $request_uri);
+		Intel_Df::watchdog('$request_uri', $request_uri);//
 
-		Intel_Df::watchdog('current_url', $current_url);
+		Intel_Df::watchdog('current_url', $current_url);//
 		$site_url = get_site_url();
-		Intel_Df::watchdog('get_site_url', $site_url);
-		$path = str_replace($site_url, '', $current_url);
-		Intel_Df::watchdog('path', $path);
+		Intel_Df::watchdog('get_site_url', $site_url);//
+		$path = str_replace($site_url, '', $current_url);//
+		Intel_Df::watchdog('path', $path);//
 		return $path;
 	}
 
@@ -656,6 +656,7 @@ class Intel_Df  {
 
 		// The 'Location' HTTP header must be absolute.
 		$options['absolute'] = TRUE;
+
 		$url = self::url($path, $options);
 
 		// remove anything set to the output buffer as to not block the location
@@ -1322,7 +1323,6 @@ class Intel_Df  {
 			$is_admin_path = 1;
 		}
 
-
 		// if path uses /wp-admin/ or /subdir/wp-admin/ format, strip off base_path_admin
 		if (substr($path0, 0, strlen($intel->base_path_admin)) == $intel->base_path_admin) {
 			$path = substr($path0, strlen($intel->base_path_admin));
@@ -1344,6 +1344,10 @@ class Intel_Df  {
 
 		if ($is_admin_path) {
 			$base = $options['absolute'] ? $options['base_url'] . $intel->base_path_admin : $intel->base_path_admin;
+			// check if current context is network admin and add correct url to stay on network admin
+			if ($intel->is_network_admin) {
+			  $base .= 'network/';
+      }
 			$prefix = empty($path) ? rtrim($options['prefix'], '/') : $options['prefix'];
 		}
 		else {
@@ -1447,6 +1451,9 @@ class Intel_Df  {
 		foreach ($args as $k => $v) {
 			$search = '';
 			if (strpos($string, $k) !== FALSE) {
+			  if (!is_string($v)) {
+          continue;
+        }
 				if (substr($k, 1, 0) == '@' ) {
 					$v = self::check_plain($v);
 				}
@@ -2267,7 +2274,8 @@ class Intel_Df  {
 
       $log_entry = apply_filters('intel_watchdog', $log_entry);
 
-      $mode = get_option('intel_watchdog_mode', '');
+      $mode = self::watchdog_mode();
+
       if ($mode == 'db') {
         $intel_log = intel_log_create($log_entry);
         intel_log_save($intel_log);
@@ -2283,6 +2291,19 @@ class Intel_Df  {
       $in_error_state = FALSE;
     }
 	}
+
+	public static function watchdog_mode() {
+
+	  if (isset($intel_wp_config_options['intel_watchdog_mode'])) {
+      return $intel_wp_config_options['intel_watchdog_mode'];
+    }
+
+    if (intel()->is_network_active) {
+      return get_site_option('intel_watchdog_mode', '');
+    }
+
+    return get_option('intel_watchdog_mode', '');
+  }
 }
 
 /**

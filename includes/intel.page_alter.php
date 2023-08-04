@@ -315,6 +315,7 @@ function intel_page_alter(&$page) {
   intel_do_hook_action('intel_page_intel_pushes');
 
   $pushes = intel_get_flush_page_intel_pushes();
+  $pushes_cookie = intel_get_flush_page_intel_pushes_cookie();
 
   // add page title and system path to any IntelEvent that is missing values
   /*
@@ -337,6 +338,7 @@ function intel_page_alter(&$page) {
     'intel' => array(
       'config' => $config,
       'pushes' => $pushes,
+      'pushes_cookie' => $pushes_cookie,
     ),
     // TODO: move this to intel_disqus
     'disqus' => array(
@@ -927,19 +929,19 @@ function intel_save_cookie_flush_page_intel_pushes() {
 
 function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') {
 
-  if (!isset($_SESSION['intel'])) {
-    $_SESSION['intel'] = array();
+  if (!isset($_SESSION['intel_pushes'])) {
+    $_SESSION['intel_pushes'] = array();
   }
-  if (!isset($_SESSION['intel']['page_pushes'])) {
-    $_SESSION['intel']['page_pushes'] = array();
+  if (!isset($_SESSION['intel_pushes']['page_pushes'])) {
+    $_SESSION['intel_pushes']['page_pushes'] = array();
   }
-  if (!isset($_SESSION['intel']['page_pushes_cookie'])) {
-    $_SESSION['intel']['page_pushes_cookie'] = array();
+  if (!isset($_SESSION['intel_pushes']['page_pushes_cookie'])) {
+    $_SESSION['intel_pushes']['page_pushes_cookie'] = array();
   }
 
-  $data = &$_SESSION['intel']['page_pushes'];
+  $data = &$_SESSION['intel_pushes']['page_pushes'];
   if (!empty($options['cookie'])) {
-    $data = &$_SESSION['intel']['page_pushes_cookie'];
+    $data = &$_SESSION['intel_pushes']['page_pushes_cookie'];
   }
 
   if ($action == 'add') {
@@ -1006,30 +1008,40 @@ function intel_page_intel_pushes($action = 'get', $push = array(), $index = '') 
 
   if ($action == 'save_flush' || $action == 'save_db_flush') {
     intel()->quick_session_cache();
-    unset($_SESSION['intel']['page_pushes']);
+    unset($_SESSION['intel_pushes']['page_pushes']);
   }
   elseif ($action == 'save_cookie_flush') {
     // format pushes into an array
     $pushes = array();
 
-    foreach ($_SESSION['intel']['page_pushes'] as $k => $v) {
+    foreach ($_SESSION['intel_pushes']['page_pushes'] as $k => $v) {
       $a = array('');
       $pushes[] = array($k, $v);
     }
     $json = json_encode($pushes);
     intel_setrawcookie('l10i_page_pushes', $json);
-    unset($_SESSION['intel']['page_pushes']);
-    unset($_SESSION['intel']['page_pushes_cookie']);
+    unset($_SESSION['intel_pushes']['page_pushes']);
+    unset($_SESSION['intel_pushes']['page_pushes_cookie']);
   }
   elseif ($action == 'get_flush') {
-    unset($_SESSION['intel']['page_pushes']);
+    unset($_SESSION['intel_pushes']['page_pushes']);
   }
   elseif ($action == 'get_cookie') {
-    $ret = $_SESSION['intel']['page_pushes_cookie'];
+    $ret = $_SESSION['intel_pushes']['page_pushes_cookie'];
   }
   elseif ($action == 'get_cookie_flush') {
-    $ret = $_SESSION['intel']['page_pushes_cookie'];
-    unset($_SESSION['intel']['page_pushes_cookie']);
+    $ret = $_SESSION['intel_pushes']['page_pushes_cookie'];
+    unset($_SESSION['intel_pushes']['page_pushes_cookie']);
+  }
+
+  /*
+   * Unset session var if empty on flush
+   */
+  if ((substr($action, -5) == 'flush')
+    && empty($_SESSION['intel_pushes']['page_pushes'])
+    && empty($_SESSION['intel_pushes']['page_pushes_cookie'])
+  ) {
+    unset($_SESSION['intel_pushes']);
   }
 
   return $ret;
@@ -1223,13 +1235,13 @@ function intel_filter_link_info_for_push($def) {
   return $def;
 }
 
-function intel_cache_busting_url($url) {
+function intel_cache_busting_url($url, $force = FALSE) {
   $enable = &Intel_Df::drupal_static( __FUNCTION__ );
 
   if (!isset($enable)) {
     $enable = get_option('intel_cache_busting', INTEL_CACHE_BUSTING_DEFAULT);
   }
-  if (!$enable) {
+  if (!$enable && !$force) {
     return $url;
   }
   $parse_url = parse_url($url);
@@ -2483,7 +2495,7 @@ function intel_setcookie($name, $value, $time = 0, $path = '/', $domain = '', $r
     $domain = get_option('intel_domain_name', '');
   }
   if (!$domain) {
-    $domain = '.';
+    //$domain = '.';
   }
 
   //Intel_Df::watchdog('intel_setcookie', "$name\n$value\n$time\n$path\n$domain\n$raw");
@@ -2498,7 +2510,7 @@ function intel_setcookie($name, $value, $time = 0, $path = '/', $domain = '', $r
   }
 }
 
-function intel_setrawcookie($name, $value, $time = 0, $path = '/', $domain = '.') {
+function intel_setrawcookie($name, $value, $time = 0, $path = '/', $domain = '') {
   intel_setcookie($name, $value, $time, $path, $domain, 1);
 }
 

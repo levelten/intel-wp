@@ -183,7 +183,11 @@ class Intel_Tracker {
 	}
 
 	public function enqueue_intel_scripts() {
-		// add intel_scripts
+		// don't add scripts if in framework mode
+    if (intel_is_framework()) {
+      return;
+    }
+    // add intel_scripts
 		$scripts = intel()->intel_script_info();
 		$enabled = get_option('intel_intel_scripts_enabled', array());
 		foreach ($scripts AS $key => $script) {

@@ -32,6 +32,8 @@ class IntelLogController extends IntelEntityController  {
 	public function __construct($entityType, $entity_info) {
 		parent::__construct($entityType, $entity_info);
 
+		// if network installed, use the base table
+    parent::set_use_base_prefix(intel()->is_network_active);
 	}
 
   public function save($entity) {

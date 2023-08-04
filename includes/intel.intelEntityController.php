@@ -45,6 +45,7 @@ class IntelEntityController {
 	public $base_table;
 	public $key_id;
 	public $fields;
+	public $use_base_prefix;
 
 
 	public function __construct($entityType, $entity_info) {
@@ -55,6 +56,7 @@ class IntelEntityController {
 
 		$this->fields = $entity_info['fields'];
 		$this->key_id = $entity_info['entity keys']['id'];
+    $this->use_base_prefix = FALSE;
 	}
 
 	public function create(array $values = array()) {
@@ -156,12 +158,14 @@ class IntelEntityController {
 			$i++;
 		}
 
+		$wpdb_prefix = ($this->use_base_prefix) ? $wpdb->base_prefix : $wpdb->prefix;
+
 		if (empty($data[$this->key_id])) {
-			$wpdb->insert($wpdb->prefix . $this->base_table, $data, $format );
+			$wpdb->insert($wpdb_prefix . $this->base_table, $data, $format );
 			$entity->{$this->key_id} = $wpdb->insert_id;
 		}
 		else {
-			$wpdb->replace($wpdb->prefix . $this->base_table, $data, $format);
+			$wpdb->replace($wpdb_prefix . $this->base_table, $data, $format);
 		}
 		return $entity;
 	}
@@ -179,9 +183,11 @@ class IntelEntityController {
 		$id_placeholders = array_fill(0, $id_cnt, $id_placeholder);
 		$ids_query = implode(', ', $id_placeholders);
 
+    $wpdb_prefix = ($this->use_base_prefix) ? $wpdb->base_prefix : $wpdb->prefix;
+
 		$sql = "
 		  SELECT *
-		  FROM {$wpdb->prefix}{$this->base_table}
+		  FROM {$wpdb_prefix}{$this->base_table}
 		  WHERE {$this->key_id} IN ( $ids_query )
 		";
 
@@ -209,9 +215,11 @@ class IntelEntityController {
 	public function loadByVars($vars, $select_options = array(), $construct_entity = 1) {
 		global $wpdb;
 
+    $wpdb_prefix = ($this->use_base_prefix) ? $wpdb->base_prefix : $wpdb->prefix;
+
 		$sql = "
 		  SELECT *
-		  FROM {$wpdb->prefix}{$this->base_table}
+		  FROM {$wpdb_prefix}{$this->base_table}
 		";
 		if (!empty($vars)) {
 			$sql .= "\nWHERE\n";
@@ -273,9 +281,11 @@ class IntelEntityController {
   public function loadByFilter($filter = array(), $options = array(), $header = array(), $limit = 100, $offset = NULL) {
     global $wpdb;
 
+    $wpdb_prefix = ($this->use_base_prefix) ? $wpdb->base_prefix : $wpdb->prefix;
+
     $sql = "
 		  SELECT *
-		  FROM {$wpdb->prefix}{$this->base_table}
+		  FROM {$wpdb_prefix}{$this->base_table}
 		";
     $data = array();
 
@@ -361,7 +371,10 @@ class IntelEntityController {
 
   public function deleteOne($id) {
 		global $wpdb;
-		$wpdb->delete( $wpdb->prefix . $this->base_table, array( $this->key_id => $id ) );
+
+    $wpdb_prefix = ($this->use_base_prefix) ? $wpdb->base_prefix : $wpdb->prefix;
+
+		$wpdb->delete( $wpdb_prefix . $this->base_table, array( $this->key_id => $id ) );
   }
 
 	public function delete($ids) {
@@ -373,7 +386,11 @@ class IntelEntityController {
 		}
 	}
 
-	public static function syncData($entity, $options = array()) {
+  public function set_use_base_prefix($value) {
+    $this->use_base_prefix = $value;
+  }
+
+  public static function syncData($entity, $options = array()) {
 		if (!empty($_GET['debug'])) {
 			intel_d('entity0');//
 			intel_d($entity);//
@@ -414,4 +431,6 @@ class IntelEntityController {
 	public static function get_class_from_entity_type($entity_type) {
 		return str_replace(' ', '_', (ucwords( str_replace('_', ' ', $entity_type) ) ));
 	}
+
+
 }

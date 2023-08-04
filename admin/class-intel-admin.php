@@ -188,27 +188,38 @@ class Intel_Admin {
 			Intel_Df::drupal_set_message($e->getMessage() . '[' , $e->getCode());
 		}
 
-  }
+    }
 
-	public function site_menu() {
+	public function site_menu($network_site_menu = FALSE) {
 		global $wp_version;
 
+		$capability = ($network_site_menu) ? 'manage_network_options' : 'manage_options';
+
+		// if network framework mode, hide admin menu for subsites
+        if (intel()->is_network_framework_mode && !$network_site_menu) {
+            return;
+        }
+
 		if ( current_user_can( 'manage_options' ) ) {
-			if (intel_is_framework_only()) {
-              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ), 'dashicons-analytics');
+			if (0 && intel_is_framework_only()) {
+              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), $capability, 'intel_config', array( $this, 'menu_router' ), 'dashicons-analytics');
             }
 			else {
-              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
-              add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), 'manage_options', 'intel_admin', array( $this, 'menu_router' ) );
-              add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), 'manage_options', 'intel_reports', array( $this, 'menu_router' ) );
-              add_submenu_page( 'intel_admin', esc_html__( "Annotations", 'intel' ), esc_html__( "Annotations", 'intel' ), 'manage_options', 'intel_annotation', array( $this, 'menu_router' ) );
-              add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), 'manage_options', 'intel_visitor', array( $this, 'menu_router' ) );
-              add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), 'manage_options', 'intel_config', array( $this, 'menu_router' ) );
-              add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), 'manage_options', 'intel_util', array( $this, 'menu_router' ) );
-              add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), 'manage_options', 'intel_help', array( $this, 'menu_router' ) );
+              add_menu_page( esc_html__( "Intelligence", 'intel' ), esc_html__( "Intelligence", 'intel' ), $capability, 'intel_admin', array( $this, 'menu_router' ), 'dashicons-analytics');
+              add_submenu_page( 'intel_admin', esc_html__( "Dashboard", 'intel' ), esc_html__( "Dashboard", 'intel' ), $capability, 'intel_admin', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Reports", 'intel' ), esc_html__( "Reports", 'intel' ), $capability, 'intel_reports', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Annotations", 'intel' ), esc_html__( "Annotations", 'intel' ), $capability, 'intel_annotation', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Contacts", 'intel' ), esc_html__( "Contacts", 'intel' ), $capability, 'intel_visitor', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Settings", 'intel' ), esc_html__( "Settings", 'intel' ), $capability, 'intel_config', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Utilities", 'intel' ), esc_html__( "Utilities", 'intel' ), $capability, 'intel_util', array( $this, 'menu_router' ) );
+              add_submenu_page( 'intel_admin', esc_html__( "Help", 'intel' ), esc_html__( "Help", 'intel' ), $capability, 'intel_help', array( $this, 'menu_router' ) );
             }
   	    }
 	}
+
+	public function network_site_menu() {
+	    $this->site_menu(TRUE);
+    }
 
 	// for return_type json, page needs to be called earlier than standard menu routing
 	public function init_menu_routing() {

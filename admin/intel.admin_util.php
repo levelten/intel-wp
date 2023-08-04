@@ -268,7 +268,7 @@ function intel_util_log_list_page() {
   );
   //Intel_Df::watchdog('test', 'foo: %foo', $variables, Intel_Df::WATCHDOG_INFO);
 
-  $watchdog_mode = get_option('intel_watchdog_mode', '');
+  $watchdog_mode = Intel_Df::watchdog_mode();
 
   if ($watchdog_mode != 'db') {
     return $output;
@@ -321,7 +321,9 @@ function intel_util_log_list_page() {
 
 function intel_util_log_form($form, &$form_state) {
 
-  $watchdog_mode = get_option('intel_watchdog_mode', '');
+  $watchdog_mode = Intel_Df::watchdog_mode();
+
+  intel_d($watchdog_mode);
 
   $form['settings'] = array(
     '#type' => 'fieldset',
@@ -375,7 +377,13 @@ function intel_util_log_form_submit($form, &$form_state) {
   //intel_d($values); //
 
   if (!empty($form_state['input']['submit_settings'])) {
-    update_option('intel_watchdog_mode', $values['watchdog_mode']);
+    if (intel()->is_network_active) {
+      update_site_option('intel_watchdog_mode', $values['watchdog_mode']);
+    }
+    else {
+      update_option('intel_watchdog_mode', $values['watchdog_mode']);
+    }
+
     if ($values['watchdog_mode'] == 'db') {
       if (!intel_log_table_exists()) {
         intel_log_table_create();
@@ -440,7 +448,7 @@ function intel_log_table_create() {
   dbDelta( $sql );
 }
 
-function intel_log_table_drop() {
+function  intel_log_table_drop() {
   global $wpdb;
 
   require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );

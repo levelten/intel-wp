@@ -79,6 +79,10 @@ class Intel {
 
 	public $time_delta;
 
+	public $is_network_active;
+
+  public $is_network_framework_mode;
+
 	protected $js_inline = array();
 
 
@@ -113,6 +117,8 @@ class Intel {
 	public $admin_url;
 
 	public $admin_dir;
+
+  public $is_network_admin;
 
 	public $vtk;
 
@@ -156,6 +162,19 @@ class Intel {
 		$this->home_url = home_url();
 		$this->admin_url = admin_url();
 		$this->admin_dir = ABSPATH . 'wp-admin/';
+
+    if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+      require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+    }
+
+    $this->is_network_admin = 0;
+    $this->is_network_active = is_plugin_active_for_network('intelligence/intel.php' );
+
+    $this->is_network_framework_mode = FALSE;
+    if ($this->is_network_active) {
+      $this->is_network_framework_mode = get_site_option('intel_framework_mode', FALSE);
+      $this->is_network_admin = is_network_admin();
+    }
 
 		// determine admin paths
 		$this->base_path = '';
@@ -354,6 +373,12 @@ class Intel {
 		// site menu
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'site_menu' );
 
+		$this->is_network_active;
+
+		if ($this->is_network_active) {
+      $this->loader->add_action( 'network_admin_menu', $plugin_admin, 'network_site_menu' );
+    }
+
 		// column headers
 		$this->loader->add_filter('manage_intelligence_page_intel_visitor_columns', $plugin_admin, 'contacts_column_headers');
 
@@ -547,12 +572,12 @@ class Intel {
 		//$cache = get_transient('intel_session_' . $this->session_hash);
 		$cache = isset($_SESSION['intel_quick_cache']) ? $_SESSION['intel_quick_cache'] : array();
 
-		if (!empty($_SESSION['intel']) && is_array($_SESSION['intel'])) {
+		if (!empty($_SESSION['intel_pushes']) && is_array($_SESSION['intel_pushes'])) {
 			if (!empty($cache)) {
-				$cache = Intel_Df::drupal_array_merge_deep($cache, $_SESSION['intel']);
+				$cache = Intel_Df::drupal_array_merge_deep($cache, $_SESSION['intel_pushes']);
 			}
 			else {
-				$cache = $_SESSION['intel'];
+				$cache = $_SESSION['intel_pushes'];
 			}
 		}
 

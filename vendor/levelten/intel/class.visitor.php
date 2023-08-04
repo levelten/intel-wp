@@ -187,6 +187,7 @@ class ApiVisitor {
     }
     if (isset($_SESSION) && isset($_SESSION['l10i_cookie']) && is_array($_SESSION['l10i_cookie'])) {
       self::$cookieStrings += $_SESSION['l10i_cookie'];
+      unset($_SESSION['l10i_cookie']);
     }
   }
   
