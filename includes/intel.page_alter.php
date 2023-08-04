@@ -1539,6 +1539,13 @@ function intel_get_js_embed($type = 'l10i', $mode = 'external', $version = 'late
         }
         $l10ijs_path = '/js/' . $api_js_ver . '/l10i' . $sv . '.js';
 
+        if (intel_is_no_api()) {
+          $a = explode('//', get_site_url());
+          $api_hostpath = $a[1];
+          $purl = parse_url(plugin_dir_url(__DIR__));
+          $l10ijs_path = $purl['path'] . 'js/l10i' . $sv . '.js';
+          $l10ijs_propdir = '';
+        }
 
         $script .= "(function(w,d,o,u,b,i,r,a,s,c,t){" . $terminator;
         $script .= "w['L10iObject']=r;" . $terminator;

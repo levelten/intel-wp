@@ -8,6 +8,7 @@
 define('INTEL_PLATFORM', 'wp');
 define('INTEL_L10IAPI_URL', 'https://api.getlevelten.com/v1/intel');
 define('INTEL_IMAPI_URL', 'https://admin.intelligencewp.com/imapi/v1/intel');
+define('INTEL_NO_API', 1);  // set to 1 to remove API connections
 //define('INTEL_IMAPI_URL', 'intl.getlevelten.com/imapi/v1/intel');
 define('INTEL_L10IAPI_JS_VER', '0.3.1');
 define('INTEL_L10IAPI_VER_MIN', '2.0.0');
@@ -1901,6 +1902,10 @@ function intel_goto_user($account) {
   drupal_goto('user/' . $account->uid);
 }
 
+function intel_is_no_api() {
+  return INTEL_NO_API;
+}
+
 /**
  * Determines if the api access level is adequate to access the
  * data needed to build the current page/path (e.g. a report). Used to prevent
@@ -2329,6 +2334,11 @@ function intel_iapi_get_client() {
 }
 
 function intel_verify_apikey(&$message = '', &$property = array(), $options = array()) {
+  if (intel_is_no_api()) {
+    $api_level = 'basic';
+    update_option('intel_api_level', $api_level);
+    return $api_level;
+  }
   if (!intel_verify_library($message)) {
     return FALSE;
   }

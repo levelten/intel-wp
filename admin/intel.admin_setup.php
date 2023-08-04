@@ -136,6 +136,10 @@ function intel_admin_setup_start($form, &$form_state) {
   );
 
   $items = array();
+  $items[] = '<div class="alert alert-danger">';
+  $items[] = Intel_Df::t('This plugin was designed to work with Google Universal Analytics which has been discontinued by Google as of 7/1/2023.');
+  $items[] = Intel_Df::t('As such, the Intelligence API has been discontinued. This plugin should no longer be installed on new sites.');
+  $items[] = '</div>';
   $items[] = '<div class="text-center">';
   $items[] = '<h3>' . Intel_Df::t('Results oriented Google Analytics made easy.') . '</h3>';
   $items[] = '<h4 class="lead text-muted">' . Intel_Df::t('measure what matters!') . '</h4>';

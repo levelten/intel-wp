@@ -16,7 +16,7 @@
  * Plugin Name:       Intelligence
  * Plugin URI:        http://intelligencewp.com
  * Description:       Provides behavior and visitor intelligence.
- * Version:           1.3.4-dev
+ * Version:           1.4.0
  * Minimum PHP:       5.4
  * Author:            LevelTen
  * Author URI:        http://getlevelten.com
@@ -37,7 +37,7 @@ if ( ! defined( 'WPINC' ) ) {
 //define( 'WP_DEBUG', true );
 //define('WP_DEBUG_LOG', 1);
 
-define('INTEL_VER', '1.3.4-dev');
+define('INTEL_VER', '1.4.0');
 
 /*******************************************
 /* Begin Freemius setup

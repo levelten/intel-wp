@@ -125,6 +125,11 @@ For installation instructions, visit [intelligencewp.com/doc/installation](https
 = 1.3.3 =
 * Verified support for WP 5.2
 
+= 1.4.0 =
+* Added framework mode
+* Removed Intelligence API dependency
+* Verified support for WP 6.2
+
 == Upgrade Notice ==
 
 = 1.0.0 =
