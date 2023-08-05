@@ -872,7 +872,7 @@ class Intel_ItemProp {
     $this->name = $name;
     $this->info = intel()->visitor_property_info($name);
     foreach ($this->info['variables'] as $k => $v) {
-      $this->data{$k} = isset($values[$k]) ? $values[$k] : $v;
+      $this->data[$k] = isset($values[$k]) ? $values[$k] : $v;
     }
   }
 

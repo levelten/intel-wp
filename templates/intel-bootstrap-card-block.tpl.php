@@ -22,9 +22,6 @@
  * @see template_preprocess_user_profile_item()
  */
 ?>
-<?php if () {
-
-}
 <div<?php print !empty(attributes) ? attributes : ' class="card-block"'; ?>>
   <?php print $value; ?>
 </div>
